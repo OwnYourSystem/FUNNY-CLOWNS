@@ -610,7 +610,7 @@
 
 // The unlock date. Gifts stay locked until the LOCAL device date/time
 // reaches this moment. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
-const BIRTHDAY_ISO = "2026-11-14T00:00:00";
+const BIRTHDAY_ISO = "2026-09-25T00:00:00";
 
 // Minimum percentage score required, alongside the date, to unlock gifts.
 const PASSING_SCORE_PERCENT = 70;
@@ -619,60 +619,61 @@ const PASSING_SCORE_PERCENT = 70;
 const ALLOW_RETRIES = true;
 
 // ----------------------------------------------------------------
-// QUIZ QUESTIONS
+// QUIZ QUESTIONS — TODO: replace all 10 with your own private questions.
 // Each question needs: text, an options array, and the index (0-based)
-// of the correct option in `options`.
+// of the correct option in `options`. Keep 4 options per question so
+// scoring and the 70% threshold stay meaningful.
 // ----------------------------------------------------------------
 const QUIZ_QUESTIONS = [
   {
-    text: "Which city is your surprise weekend in?",
-    options: ["Paris", "Rome", "Lisbon", "Santorini"],
+    text: "TODO — question 1: something only the two of you would know",
+    options: ["Option A", "Option B", "Option C", "Option D"],
     correctIndex: 0
   },
   {
-    text: "What's inside the smallest box?",
-    options: ["A ring", "A watch", "A bracelet", "Earrings"],
-    correctIndex: 1
-  },
-  {
-    text: "Where will dinner be, on the night itself?",
-    options: ["A rooftop restaurant", "Her favorite bistro", "A private chef at home", "A vineyard"],
-    correctIndex: 2
-  },
-  {
-    text: "Which spa treatment is booked?",
-    options: ["Hot stone massage", "Couples' spa day", "Facial only", "Sauna ritual"],
-    correctIndex: 1
-  },
-  {
-    text: "What color is the biggest gift box?",
-    options: ["Ivory", "Emerald", "Midnight blue", "Blush pink"],
-    correctIndex: 2
-  },
-  {
-    text: "Which designer is behind the handbag?",
-    options: ["Chanel", "Saint Laurent", "Dior", "Bottega Veneta"],
+    text: "TODO — question 2",
+    options: ["Option A", "Option B", "Option C", "Option D"],
     correctIndex: 0
   },
   {
-    text: "What's the theme of the photo album?",
-    options: ["Travel memories", "Family through the years", "Just the two of us", "Friends & laughter"],
-    correctIndex: 1
-  },
-  {
-    text: "Which flowers fill the room that morning?",
-    options: ["White roses", "Peonies", "Orchids", "Lilies"],
-    correctIndex: 2
-  },
-  {
-    text: "What's the surprise activity planned?",
-    options: ["Hot air balloon ride", "Wine tasting tour", "Sunset sailing", "Cooking class"],
+    text: "TODO — question 3",
+    options: ["Option A", "Option B", "Option C", "Option D"],
     correctIndex: 0
   },
   {
-    text: "Who's in on the surprise besides you?",
-    options: ["Just close family", "Her best friend", "The whole guest list", "No one else"],
-    correctIndex: 2
+    text: "TODO — question 4",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 5",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 6",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 7",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 8",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 9",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
+  },
+  {
+    text: "TODO — question 10",
+    options: ["Option A", "Option B", "Option C", "Option D"],
+    correctIndex: 0
   }
 ];
 
