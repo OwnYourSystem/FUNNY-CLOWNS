@@ -202,7 +202,36 @@
     font-family: var(--serif);
     font-size: clamp(20px, 4vw, 25px);
     line-height: 1.4;
-    margin: 0 0 26px;
+    margin: 0 0 14px;
+  }
+
+  .hint-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 22px;
+    opacity: 0.85;
+  }
+
+  .hint-toggle:hover { opacity: 1; }
+
+  .hint-box {
+    border: 1px dashed var(--card-border);
+    border-radius: var(--radius-sm);
+    background: rgba(212,175,122,0.06);
+    padding: 13px 16px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin: -6px 0 22px;
+    font-style: italic;
   }
 
   .options {
@@ -537,6 +566,10 @@
       <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       <div class="q-index" id="qIndex">Question 1 of 10</div>
       <h2 class="q-text" id="qText"></h2>
+      <button class="hint-toggle" id="hintToggle" type="button" hidden>
+        <span id="hintToggleLabel">Need a clue?</span>
+      </button>
+      <div class="hint-box" id="hintBox" hidden></div>
       <div class="options" id="qOptions"></div>
       <div class="quiz-footer">
         <span class="quiz-meta" id="quizMeta"></span>
@@ -620,60 +653,76 @@ const ALLOW_RETRIES = true;
 
 // ----------------------------------------------------------------
 // QUIZ QUESTIONS — TODO: replace all 10 with your own private questions.
-// Each question needs: text, an options array, and the index (0-based)
-// of the correct option in `options`. Keep 4 options per question so
-// scoring and the 70% threshold stay meaningful.
+// Each question needs:
+//   text          — the real quiz question
+//   options       — 4 choices, keep this length so the 70% threshold
+//                   stays meaningful
+//   correctIndex  — 0-based index of the right option in `options`
+//   hint          — OPTIONAL. A clue sentence shown only if she taps
+//                   "Need a clue?" on that question. Leave it "" (empty
+//                   string) to hide the hint button on a question that
+//                   doesn't need one.
 // ----------------------------------------------------------------
 const QUIZ_QUESTIONS = [
   {
     text: "TODO — question 1: something only the two of you would know",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: "TODO — optional clue for question 1, or leave as \"\""
   },
   {
     text: "TODO — question 2",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 3",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 4",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 5",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 6",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 7",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 8",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 9",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   },
   {
     text: "TODO — question 10",
     options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0
+    correctIndex: 0,
+    hint: ""
   }
 ];
 
@@ -809,9 +858,11 @@ function route(preferQuiz) {
    ================================================================ */
 let quizAnswers = [];
 let quizIndex = 0;
+let hintsShown = [];
 
 function startQuiz() {
   quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+  hintsShown = new Array(QUIZ_QUESTIONS.length).fill(false);
   quizIndex = 0;
   document.getElementById("quizPlay").hidden = false;
   document.getElementById("quizDone").hidden = true;
@@ -826,6 +877,8 @@ function renderQuestion() {
   document.getElementById("qIndex").textContent = `Question ${quizIndex + 1} of ${total}`;
   document.getElementById("qText").textContent = q.text;
   document.getElementById("quizMeta").textContent = `${quizAnswers.filter(a => a !== null).length}/${total} answered`;
+
+  renderHint(q);
 
   const optWrap = document.getElementById("qOptions");
   optWrap.innerHTML = "";
@@ -843,6 +896,32 @@ function renderQuestion() {
   const nextBtn = document.getElementById("nextBtn");
   nextBtn.disabled = quizAnswers[quizIndex] === null;
   nextBtn.textContent = quizIndex === total - 1 ? "See result" : "Next";
+}
+
+// Hints are plain clue text, shown only if she asks for one. They never
+// affect scoring — QUIZ_QUESTIONS's `hint` field is the only place this
+// text lives, so a question with hint: "" simply hides the button.
+function renderHint(q) {
+  const toggle = document.getElementById("hintToggle");
+  const toggleLabel = document.getElementById("hintToggleLabel");
+  const box = document.getElementById("hintBox");
+  const isShown = hintsShown[quizIndex];
+
+  if (!q.hint) {
+    toggle.hidden = true;
+    box.hidden = true;
+    return;
+  }
+
+  toggle.hidden = false;
+  toggleLabel.textContent = isShown ? "Hide clue" : "Need a clue?";
+  box.hidden = !isShown;
+  box.textContent = q.hint;
+
+  toggle.onclick = () => {
+    hintsShown[quizIndex] = !hintsShown[quizIndex];
+    renderHint(q);
+  };
 }
 
 document.getElementById("nextBtn").addEventListener("click", () => {
