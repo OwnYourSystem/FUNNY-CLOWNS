@@ -228,12 +228,37 @@
     transition: width 0.4s ease;
   }
 
+  .quiz-rule {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin: 0 0 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .quiz-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .q-timer {
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--gold-bright);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .q-timer.warn { color: var(--danger); }
+
   .q-index {
     font-size: 12px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-faint);
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
 
   .q-text {
@@ -317,31 +342,23 @@
     background: var(--gold);
   }
 
-  .quiz-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 30px;
+  .option.correct {
+    border-color: var(--success);
+    background: rgba(159,201,163,0.14);
+    pointer-events: none;
   }
+  .option.correct .dot { border-color: var(--success); }
+  .option.correct .dot::after { background: var(--success); }
 
-  .quiz-meta {
-    font-size: 13px;
-    color: var(--text-faint);
+  .option.wrong {
+    border-color: var(--danger);
+    background: rgba(217,112,90,0.14);
+    pointer-events: none;
   }
+  .option.wrong .dot { border-color: var(--danger); }
+  .option.wrong .dot::after { background: var(--danger); }
 
-  /* Quiz results (post-submit, pre-birthday) */
-  .result-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-dim);
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--card-border);
-    padding: 8px 16px;
-    border-radius: 999px;
-    margin-top: 6px;
-  }
+  .option.disabled { pointer-events: none; opacity: 0.55; }
 
   /* ============================================================
      LOCKED SCREEN — her portrait stands in for a generic lock icon,
@@ -523,6 +540,65 @@
     align-items: center;
     gap: 6px;
   }
+
+  /* ============================================================
+     GIFT RIDDLES — a free-text guess per gift, gated to one
+     attempt a day across all five.
+     ============================================================ */
+  .gifts-status {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    margin: 4px 0 22px;
+  }
+
+  .riddle-card {
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    background: var(--bg-soft);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .riddle-text {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+    margin: 0 0 16px;
+    flex: 1;
+  }
+
+  .riddle-form { display: flex; flex-direction: column; gap: 10px; }
+
+  .riddle-input {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+
+  .riddle-input:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  .riddle-input::placeholder { color: var(--text-faint); }
+
+  .riddle-input:disabled { opacity: 0.5; }
+
+  .riddle-feedback {
+    font-size: 12.5px;
+    min-height: 1.4em;
+    margin: 0;
+  }
+
+  .riddle-feedback.wrong { color: var(--danger); }
+  .riddle-feedback.correct { color: var(--success); }
 
   /* Detail modal */
   .modal-overlay {
@@ -823,29 +899,28 @@
        ============================================================ -->
   <main id="quizScreen" class="panel" hidden>
     <div id="quizPlay">
+      <p class="quiz-rule">All 10, correct, in one run. <span id="quizRuleSeconds">30</span>s each — one slip or one timeout, and it's back to question 1.</p>
       <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <div class="q-index" id="qIndex">Question 1 of 10</div>
+      <div class="quiz-top-row">
+        <div class="q-index" id="qIndex">Question 1 of 10</div>
+        <div class="q-timer" id="qTimer">30s</div>
+      </div>
+      <p class="status-line warn" id="quizFailMsg" style="margin:0 0 14px;" hidden></p>
       <h2 class="q-text" id="qText"></h2>
       <button class="hint-toggle" id="hintToggle" type="button" hidden>
         <span id="hintToggleLabel">Need a clue?</span>
       </button>
       <div class="hint-box" id="hintBox" hidden></div>
       <div class="options" id="qOptions"></div>
-      <div class="quiz-footer">
-        <span class="quiz-meta" id="quizMeta"></span>
-        <button class="btn btn-primary" id="nextBtn" disabled>Next</button>
-      </div>
     </div>
 
     <div id="quizDone" hidden>
       <div class="portrait-medallion portrait-medallion--sm" style="margin-bottom:14px;" aria-hidden="true"></div>
-      <div class="eyebrow">Quiz complete</div>
-      <h2 class="q-text" style="margin-bottom:6px;">Your guesses are locked in.</h2>
-      <div class="result-badge" id="scoreBadge"></div>
-      <p class="status-line" id="quizDoneMsg" style="margin-top:20px;"></p>
+      <div class="eyebrow">All 10, correct</div>
+      <h2 class="q-text" style="margin-bottom:6px;">The gate is open.</h2>
+      <p class="status-line" style="margin-top:14px;">Five gifts wait behind five riddles. Come back on the morning of, and you can start guessing.</p>
       <div class="btn-row">
-        <button class="btn" id="retryBtn">Play again</button>
-        <button class="btn btn-ghost" id="checkLockBtn">Check the boxes</button>
+        <button class="btn btn-primary" id="checkLockBtn">Continue</button>
       </div>
     </div>
   </main>
@@ -892,7 +967,7 @@
     <div id="stepNumberReveal" class="panel celebration-step" hidden>
       <div class="eyebrow">Both gates, open</div>
       <div class="big-forty">40</div>
-      <p class="subtitle" id="numberRevealCopy"></p>
+      <p class="subtitle">All 10, answered right, in one perfect run. Confidence, beauty, memory, adventure — a new chapter starts today.</p>
       <div class="step-continue">
         <button class="btn btn-primary" id="toGalleryBtn">Continue</button>
       </div>
@@ -926,11 +1001,12 @@
       <div class="hero-portrait" aria-hidden="true"></div>
       <div class="reveal-header">
         <div class="eyebrow">Both gates, open</div>
-        <h2 class="title" style="font-size:28px;">Happy 40th. Here's the vault.</h2>
-        <p class="subtitle" id="revealScoreLine"></p>
+        <h2 class="title" style="font-size:28px;">Five boxes. Five riddles.</h2>
+        <p class="subtitle">No multiple choice this time — type your guess. One try a day, and the riddle changes if you miss.</p>
       </div>
+      <p class="gifts-status" id="giftsStatus"></p>
       <div class="gift-grid" id="giftGrid"></div>
-      <div class="step-continue">
+      <div class="step-continue" id="toFinaleWrap" hidden>
         <button class="btn btn-primary" id="toFinaleBtn">One more thing</button>
       </div>
     </div>
@@ -1019,11 +1095,10 @@ const FINAL_CTA_NOTE = "With all my love, today and always.";
 // reaches this moment. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
 const BIRTHDAY_ISO = "2026-09-25T00:00:00";
 
-// Minimum percentage score required, alongside the date, to unlock gifts.
-const PASSING_SCORE_PERCENT = 70;
-
-// Set to false to allow only one quiz attempt total (no retries).
-const ALLOW_RETRIES = true;
+// Seconds allowed per question. A wrong answer or running out of time
+// sends her back to question 1 — she must get all 10 right in one run.
+// Unlimited attempts are always allowed.
+const QUESTION_TIME_LIMIT_SECONDS = 30;
 
 // ----------------------------------------------------------------
 // QUIZ QUESTIONS — TODO: replace all 10 with your own private questions.
@@ -1101,51 +1176,81 @@ const QUIZ_QUESTIONS = [
 ];
 
 // ----------------------------------------------------------------
-// GIFT LIST — the luxury boxes revealed once both gates pass.
-// image: any URL, or leave "" for a soft placeholder gradient.
-// link: reservation / booking / product URL.
+// GIFT LIST — exactly 5 luxury boxes, guessed by free text instead
+// of multiple choice. For each gift:
+//   title, description, image, link  — same as before.
+//   answers   — array of acceptable guesses (case-insensitive, spacing
+//               ignored). Add every reasonable phrasing she might type.
+//   riddles   — array of clue sentences. The first shows on the first
+//               attempt; each wrong guess moves to the next one (and
+//               loops back to the first if she goes through them all).
 // ----------------------------------------------------------------
 const GIFTS = [
   {
     title: "Weekend in Santorini",
     description: "Two nights, cliffside suite, private terrace over the caldera. Flights included.",
     image: "",
-    link: "https://example.com/reservation/santorini"
+    link: "https://example.com/reservation/santorini",
+    answers: ["santorini", "a trip to santorini", "santorini trip"],
+    riddles: [
+      "TODO — riddle 1 for gift 1: white walls, blue domes, a sea that goes on forever.",
+      "TODO — riddle 2 for gift 1: think Greek islands, sunsets, and a caldera view.",
+      "TODO — riddle 3 for gift 1: where we said we'd go, someday, over dinner once."
+    ]
   },
   {
     title: "Cartier Tank Watch",
     description: "The classic she's mentioned for years, in rose gold, engraved on the back.",
     image: "",
-    link: "https://example.com/reservation/cartier-tank"
+    link: "https://example.com/reservation/cartier-tank",
+    answers: ["cartier tank watch", "cartier watch", "a watch"],
+    riddles: [
+      "TODO — riddle 1 for gift 2: something you wear that never stops moving forward.",
+      "TODO — riddle 2 for gift 2: a French maison, a rectangle face, and rose gold.",
+      "TODO — riddle 3 for gift 2: you tried one on once and didn't say why."
+    ]
   },
   {
     title: "Private Chef Evening",
     description: "A five-course tasting menu at home, wine pairing included, on the night of.",
     image: "",
-    link: "https://example.com/reservation/private-chef"
+    link: "https://example.com/reservation/private-chef",
+    answers: ["private chef", "private chef evening", "a private chef"],
+    riddles: [
+      "TODO — riddle 1 for gift 3: someone else cooks, and the kitchen isn't yours to clean.",
+      "TODO — riddle 2 for gift 3: five courses, one night, no reservation to drive to.",
+      "TODO — riddle 3 for gift 3: wine pairings and a stranger in your own kitchen."
+    ]
   },
   {
     title: "Couples' Spa Day",
     description: "Full day at the retreat: massage, sauna, thermal pools, lunch on the terrace.",
     image: "",
-    link: "https://example.com/reservation/spa-day"
+    link: "https://example.com/reservation/spa-day",
+    answers: ["spa day", "couples spa day", "a spa day"],
+    riddles: [
+      "TODO — riddle 1 for gift 4: warm water, quiet rooms, and nowhere to be.",
+      "TODO — riddle 2 for gift 4: robes, massages, and a lunch you didn't cook.",
+      "TODO — riddle 3 for gift 4: a full day of doing absolutely nothing, together."
+    ]
   },
   {
     title: "Chanel Classic Flap",
     description: "Midnight blue caviar leather, gold hardware. The one she tried on twice and put back.",
     image: "",
-    link: "https://example.com/reservation/chanel-flap"
-  },
-  {
-    title: "Hot Air Balloon at Sunrise",
-    description: "Champagne on landing. Just the two of you, above everything, for one hour.",
-    image: "",
-    link: "https://example.com/reservation/balloon-ride"
+    link: "https://example.com/reservation/chanel-flap",
+    answers: ["chanel classic flap", "chanel bag", "a chanel bag"],
+    riddles: [
+      "TODO — riddle 1 for gift 5: quilted leather, a chain strap, and 2 interlocking Cs.",
+      "TODO — riddle 2 for gift 5: the one you put back on the shelf, twice.",
+      "TODO — riddle 3 for gift 5: midnight blue, gold hardware, a very famous house."
+    ]
   }
 ];
 
 /* ================================================================
-   2) STORAGE HELPERS
+   2) STORAGE HELPERS — one object holds the quiz-passed flag and
+      every gift's guess progress.
    ================================================================ */
 const STORAGE_KEY = "birthday_gift_app_v1";
 
@@ -1166,10 +1271,23 @@ function saveState(state) {
   }
 }
 
-function getLatestScore() {
-  const s = loadState();
-  if (!s || typeof s.scorePercent !== "number") return null;
-  return s;
+function getAppState() {
+  const raw = loadState() || {};
+  const gifts = Array.isArray(raw.gifts) && raw.gifts.length === GIFTS.length
+    ? raw.gifts
+    : GIFTS.map(() => ({ guessed: false, riddleIndex: 0 }));
+  return {
+    quizPassed: !!raw.quizPassed,
+    quizPassedAt: raw.quizPassedAt || null,
+    celebrationSeen: !!raw.celebrationSeen,
+    lastGuessDate: raw.lastGuessDate || null,
+    gifts
+  };
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /* ================================================================
@@ -1179,13 +1297,16 @@ function isBirthdayReached() {
   return new Date() >= new Date(BIRTHDAY_ISO);
 }
 
-function hasPassingScore() {
-  const s = getLatestScore();
-  return !!s && s.scorePercent >= PASSING_SCORE_PERCENT;
+function hasQuizPassed() {
+  return getAppState().quizPassed;
 }
 
 function bothGatesPass() {
-  return isBirthdayReached() && hasPassingScore();
+  return isBirthdayReached() && hasQuizPassed();
+}
+
+function allGiftsGuessed() {
+  return getAppState().gifts.every(g => g.guessed);
 }
 
 /* ================================================================
@@ -1232,27 +1353,31 @@ function route(preferQuiz) {
 /* ================================================================
    5) QUIZ SCREEN
    ================================================================ */
-let quizAnswers = [];
 let quizIndex = 0;
 let hintsShown = [];
+let quizTimer = null;
+let quizSecondsLeft = QUESTION_TIME_LIMIT_SECONDS;
+let quizLocked = false; // true briefly while a right/wrong flash plays, to ignore extra clicks
+
+document.getElementById("quizRuleSeconds").textContent = QUESTION_TIME_LIMIT_SECONDS;
 
 function startQuiz() {
-  quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
-  hintsShown = new Array(QUIZ_QUESTIONS.length).fill(false);
   quizIndex = 0;
+  hintsShown = new Array(QUIZ_QUESTIONS.length).fill(false);
   document.getElementById("quizPlay").hidden = false;
   document.getElementById("quizDone").hidden = true;
+  document.getElementById("quizFailMsg").hidden = true;
   renderQuestion();
 }
 
 function renderQuestion() {
   const total = QUIZ_QUESTIONS.length;
   const q = QUIZ_QUESTIONS[quizIndex];
+  quizLocked = false;
 
   document.getElementById("progressFill").style.width = `${(quizIndex / total) * 100}%`;
   document.getElementById("qIndex").textContent = `Question ${quizIndex + 1} of ${total}`;
   document.getElementById("qText").textContent = q.text;
-  document.getElementById("quizMeta").textContent = `${quizAnswers.filter(a => a !== null).length}/${total} answered`;
 
   renderHint(q);
 
@@ -1260,23 +1385,70 @@ function renderQuestion() {
   optWrap.innerHTML = "";
   q.options.forEach((optText, i) => {
     const div = document.createElement("div");
-    div.className = "option" + (quizAnswers[quizIndex] === i ? " selected" : "");
+    div.className = "option";
     div.innerHTML = `<span class="dot"></span><span>${escapeHtml(optText)}</span>`;
-    div.addEventListener("click", () => {
-      quizAnswers[quizIndex] = i;
-      renderQuestion();
-    });
+    div.addEventListener("click", () => handleAnswer(i, q));
     optWrap.appendChild(div);
   });
 
-  const nextBtn = document.getElementById("nextBtn");
-  nextBtn.disabled = quizAnswers[quizIndex] === null;
-  nextBtn.textContent = quizIndex === total - 1 ? "See result" : "Next";
+  startQuestionTimer();
 }
 
-// Hints are plain clue text, shown only if she asks for one. They never
-// affect scoring — QUIZ_QUESTIONS's `hint` field is the only place this
-// text lives, so a question with hint: "" simply hides the button.
+function startQuestionTimer() {
+  clearInterval(quizTimer);
+  quizSecondsLeft = QUESTION_TIME_LIMIT_SECONDS;
+  updateTimerDisplay();
+  quizTimer = setInterval(() => {
+    quizSecondsLeft -= 1;
+    updateTimerDisplay();
+    if (quizSecondsLeft <= 0) {
+      clearInterval(quizTimer);
+      if (!quizLocked) restartQuiz("Time's up — back to question 1.");
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById("qTimer");
+  el.textContent = `${quizSecondsLeft}s`;
+  el.classList.toggle("warn", quizSecondsLeft <= 10);
+}
+
+function handleAnswer(i, q) {
+  if (quizLocked) return;
+  quizLocked = true;
+  clearInterval(quizTimer);
+
+  const options = document.querySelectorAll("#qOptions .option");
+  const isCorrect = i === q.correctIndex;
+  options[i].classList.add(isCorrect ? "correct" : "wrong");
+  options.forEach((el, idx) => { if (idx !== i) el.classList.add("disabled"); });
+
+  if (isCorrect) {
+    document.getElementById("quizFailMsg").hidden = true;
+    setTimeout(() => {
+      if (quizIndex === QUIZ_QUESTIONS.length - 1) {
+        quizPassed();
+      } else {
+        quizIndex += 1;
+        renderQuestion();
+      }
+    }, 550);
+  } else {
+    setTimeout(() => restartQuiz("Not quite — back to question 1."), 700);
+  }
+}
+
+function restartQuiz(message) {
+  quizIndex = 0;
+  const failMsg = document.getElementById("quizFailMsg");
+  failMsg.textContent = message;
+  failMsg.hidden = false;
+  renderQuestion();
+}
+
+// Hints are plain clue text, shown only if she asks for one. They cost
+// time off the clock, same as reading the question does.
 function renderHint(q) {
   const toggle = document.getElementById("hintToggle");
   const toggleLabel = document.getElementById("hintToggleLabel");
@@ -1300,53 +1472,17 @@ function renderHint(q) {
   };
 }
 
-document.getElementById("nextBtn").addEventListener("click", () => {
-  if (quizAnswers[quizIndex] === null) return;
-  if (quizIndex < QUIZ_QUESTIONS.length - 1) {
-    quizIndex += 1;
-    renderQuestion();
-  } else {
-    finishQuiz();
-  }
-});
-
-function finishQuiz() {
-  const total = QUIZ_QUESTIONS.length;
-  let correct = 0;
-  QUIZ_QUESTIONS.forEach((q, i) => {
-    if (quizAnswers[i] === q.correctIndex) correct += 1;
-  });
-  const scorePercent = Math.round((correct / total) * 100);
-
-  saveState({
-    scorePercent,
-    correct,
-    total,
-    completedAt: new Date().toISOString()
-  });
+function quizPassed() {
+  clearInterval(quizTimer);
+  const state = getAppState();
+  state.quizPassed = true;
+  state.quizPassedAt = new Date().toISOString();
+  saveState(state);
 
   document.getElementById("quizPlay").hidden = true;
   document.getElementById("quizDone").hidden = false;
-
-  const passed = scorePercent >= PASSING_SCORE_PERCENT;
-  document.getElementById("scoreBadge").textContent =
-    `${correct} / ${total} correct — ${scorePercent}%`;
-
-  const msg = document.getElementById("quizDoneMsg");
-  if (!isBirthdayReached()) {
-    msg.innerHTML = passed
-      ? `You've cleared the ${PASSING_SCORE_PERCENT}% mark. The boxes still wait for the morning of the birthday.`
-      : `You're under ${PASSING_SCORE_PERCENT}%. ${ALLOW_RETRIES ? "Play again anytime before the big day." : "This was your one attempt."}`;
-  } else {
-    msg.innerHTML = passed
-      ? `You've cleared ${PASSING_SCORE_PERCENT}% and it's the day. Go check the boxes.`
-      : `You're under ${PASSING_SCORE_PERCENT}%. ${ALLOW_RETRIES ? "Try again to unlock the boxes." : "This was your one attempt."}`;
-  }
-
-  document.getElementById("retryBtn").hidden = !ALLOW_RETRIES;
 }
 
-document.getElementById("retryBtn").addEventListener("click", () => startQuiz());
 document.getElementById("checkLockBtn").addEventListener("click", () => route(false));
 document.getElementById("lockedPlayBtn").addEventListener("click", () => route(true));
 document.getElementById("lockedRefreshBtn").addEventListener("click", () => route(false));
@@ -1356,8 +1492,7 @@ document.getElementById("lockedRefreshBtn").addEventListener("click", () => rout
    ================================================================ */
 function renderLocked() {
   const dateOk = isBirthdayReached();
-  const scoreOk = hasPassingScore();
-  const s = getLatestScore();
+  const quizOk = hasQuizPassed();
 
   document.getElementById("lockedTitle").textContent = dateOk
     ? "So close."
@@ -1365,7 +1500,7 @@ function renderLocked() {
 
   document.getElementById("lockedSubtitle").textContent = dateOk
     ? "The day is here. One more gate to clear."
-    : "The boxes open only on the morning of the birthday, and only if the guesses are good enough.";
+    : "The boxes open only on the morning of the birthday, and only once all 10 questions are answered right.";
 
   const cdWrap = document.getElementById("countdownWrap");
   if (dateOk) {
@@ -1381,19 +1516,14 @@ function renderLocked() {
     ? `<p class="status-line ok">Date gate: <strong>open</strong> — today is the day.</p>`
     : `<p class="status-line">Date gate: <strong>closed</strong> — waiting for the birthday.</p>`;
 
-  let scoreLine;
-  if (!s) {
-    scoreLine = `<p class="status-line">Score gate: <strong>closed</strong> — no quiz attempt yet.</p>`;
-  } else if (scoreOk) {
-    scoreLine = `<p class="status-line ok">Score gate: <strong>open</strong> — last score ${s.scorePercent}%.</p>`;
-  } else {
-    scoreLine = `<p class="status-line warn">Score gate: <strong>closed</strong> — last score ${s.scorePercent}%, needs ${PASSING_SCORE_PERCENT}%.</p>`;
-  }
+  const quizLine = quizOk
+    ? `<p class="status-line ok">Quiz gate: <strong>open</strong> — all 10 answered right.</p>`
+    : `<p class="status-line warn">Quiz gate: <strong>closed</strong> — needs a perfect run.</p>`;
 
-  lines.innerHTML = dateLine + scoreLine;
+  lines.innerHTML = dateLine + quizLine;
 
   document.getElementById("lockedPlayBtn").textContent =
-    s ? "Play again" : "Play the guessing game";
+    quizOk ? "Play again" : "Play the guessing game";
 }
 
 function tickCountdown() {
@@ -1420,8 +1550,19 @@ function tickCountdown() {
 const CELEBRATION_STEPS = ["stepNumberReveal", "stepGallery", "stepLetter", "stepGifts", "stepFinale"];
 let celebrationIndex = 0;
 
+// The number reveal / gallery / letter only play once, the first time
+// she gets here. After that (and on every day she comes back to guess
+// more gifts), she lands straight on the gifts step — or the finale,
+// once all 5 are guessed.
 function startCelebrationFlow() {
-  celebrationIndex = 0;
+  const state = getAppState();
+  if (state.gifts.every(g => g.guessed)) {
+    celebrationIndex = CELEBRATION_STEPS.indexOf("stepFinale");
+  } else if (state.celebrationSeen) {
+    celebrationIndex = CELEBRATION_STEPS.indexOf("stepGifts");
+  } else {
+    celebrationIndex = 0;
+  }
   showCelebrationStep();
 }
 
@@ -1430,16 +1571,16 @@ function showCelebrationStep() {
   const stepId = CELEBRATION_STEPS[celebrationIndex];
   document.getElementById(stepId).hidden = false;
 
-  if (stepId === "stepNumberReveal") {
-    const s = getLatestScore();
-    document.getElementById("numberRevealCopy").textContent = s
-      ? `Guessed with ${s.correct}/${s.total} correct. Confidence, beauty, memory, adventure — a new chapter starts today.`
-      : "Confidence, beauty, memory, adventure — a new chapter starts today.";
-  } else if (stepId === "stepGallery") {
+  if (stepId === "stepGallery") {
     renderGallery();
   } else if (stepId === "stepLetter") {
     renderLetter();
   } else if (stepId === "stepGifts") {
+    const state = getAppState();
+    if (!state.celebrationSeen) {
+      state.celebrationSeen = true;
+      saveState(state);
+    }
     renderReveal();
   } else if (stepId === "stepFinale") {
     renderFinale();
@@ -1522,35 +1663,97 @@ function launchConfetti() {
 }
 
 /* ================================================================
-   7b) GIFTS STEP — gift data only touches the DOM here, and this
-       function only ever runs after bothGatesPass() is true.
+   7b) GIFTS STEP — riddle-guessed, one attempt a day across all 5.
+       Gift data (title/description/link) only touches the DOM for a
+       gift already marked guessed, and this whole function only ever
+       runs after bothGatesPass() is true.
    ================================================================ */
+function normalizeGuess(str) {
+  return String(str).trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 function renderReveal() {
-  const s = getLatestScore();
-  document.getElementById("revealScoreLine").textContent = s
-    ? `Unlocked with ${s.correct}/${s.total} correct (${s.scorePercent}%).`
-    : "";
+  const state = getAppState();
+  const usedToday = state.lastGuessDate === todayStr();
+  const discoveredCount = state.gifts.filter(g => g.guessed).length;
+
+  const status = document.getElementById("giftsStatus");
+  status.textContent = usedToday
+    ? `${discoveredCount} of ${GIFTS.length} discovered. Today's guess is used — come back tomorrow.`
+    : `${discoveredCount} of ${GIFTS.length} discovered. You have 1 guess today.`;
 
   const grid = document.getElementById("giftGrid");
   grid.innerHTML = "";
 
   GIFTS.forEach((gift, i) => {
+    const progress = state.gifts[i];
     const card = document.createElement("div");
-    card.className = "gift-card";
-    const mediaStyle = gift.image
-      ? `background-image:url('${escapeAttr(gift.image)}')`
-      : `background-image: linear-gradient(135deg, #4a2c44, #3c2536)`;
-    card.innerHTML = `
-      <div class="gift-media" style="${mediaStyle}"></div>
-      <div class="gift-body">
-        <h3 class="gift-title">${escapeHtml(gift.title)}</h3>
-        <p class="gift-desc">${escapeHtml(gift.description)}</p>
-        <span class="gift-cta">Open the box &rarr;</span>
-      </div>
-    `;
-    card.addEventListener("click", () => openGiftModal(i));
+
+    if (progress.guessed) {
+      card.className = "gift-card";
+      const mediaStyle = gift.image
+        ? `background-image:url('${escapeAttr(gift.image)}')`
+        : `background-image: linear-gradient(135deg, #4a2c44, #3c2536)`;
+      card.innerHTML = `
+        <div class="gift-media" style="${mediaStyle}"></div>
+        <div class="gift-body">
+          <h3 class="gift-title">${escapeHtml(gift.title)}</h3>
+          <p class="gift-desc">${escapeHtml(gift.description)}</p>
+          <span class="gift-cta">Open the box &rarr;</span>
+        </div>
+      `;
+      card.addEventListener("click", () => openGiftModal(i));
+    } else {
+      const riddle = gift.riddles[progress.riddleIndex % gift.riddles.length];
+      card.className = "riddle-card";
+      card.innerHTML = `
+        <p class="riddle-text">${escapeHtml(riddle)}</p>
+        <form class="riddle-form" data-gift-index="${i}">
+          <input
+            class="riddle-input"
+            type="text"
+            placeholder="Type your guess"
+            autocomplete="off"
+            ${usedToday ? "disabled" : ""}
+          />
+          <button class="btn" type="submit" ${usedToday ? "disabled" : ""}>Guess</button>
+          <p class="riddle-feedback"></p>
+        </form>
+      `;
+      card.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = e.target.querySelector(".riddle-input");
+        checkGiftGuess(i, input.value, e.target.querySelector(".riddle-feedback"));
+      });
+    }
+
     grid.appendChild(card);
   });
+
+  document.getElementById("toFinaleWrap").hidden = discoveredCount < GIFTS.length;
+}
+
+function checkGiftGuess(index, rawValue, feedbackEl) {
+  const state = getAppState();
+  if (state.lastGuessDate === todayStr()) return; // defense in depth
+
+  const gift = GIFTS[index];
+  const guess = normalizeGuess(rawValue);
+  const isCorrect = gift.answers.some(a => normalizeGuess(a) === guess);
+
+  state.lastGuessDate = todayStr();
+  if (isCorrect) {
+    state.gifts[index].guessed = true;
+    feedbackEl.textContent = "That's the one. Box unlocked.";
+    feedbackEl.className = "riddle-feedback correct";
+  } else {
+    state.gifts[index].riddleIndex += 1;
+    feedbackEl.textContent = "Not quite. A new clue tomorrow.";
+    feedbackEl.className = "riddle-feedback wrong";
+  }
+  saveState(state);
+
+  setTimeout(renderReveal, isCorrect ? 500 : 900);
 }
 
 function openGiftModal(index) {
