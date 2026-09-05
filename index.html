@@ -360,6 +360,16 @@
 
   .option.disabled { pointer-events: none; opacity: 0.55; }
 
+  .range-form {
+    display: flex;
+    gap: 10px;
+  }
+
+  .range-input { flex: 1; }
+
+  .range-input.correct { border-color: var(--success); background: rgba(159,201,163,0.14); }
+  .range-input.wrong { border-color: var(--danger); background: rgba(217,112,90,0.14); }
+
   /* ============================================================
      LOCKED SCREEN — her portrait stands in for a generic lock icon,
      with a small gold lock badge overlapping the corner.
@@ -912,6 +922,10 @@
       </button>
       <div class="hint-box" id="hintBox" hidden></div>
       <div class="options" id="qOptions"></div>
+      <form class="range-form" id="rangeForm" hidden>
+        <input class="riddle-input range-input" type="number" id="rangeInput" placeholder="Type a number" inputmode="numeric" autocomplete="off">
+        <button class="btn btn-primary" type="submit">Submit</button>
+      </form>
     </div>
 
     <div id="quizDone" hidden>
@@ -1101,24 +1115,25 @@ const BIRTHDAY_ISO = "2026-09-25T00:00:00";
 const QUESTION_TIME_LIMIT_SECONDS = 30;
 
 // ----------------------------------------------------------------
-// QUIZ QUESTIONS — TODO: replace all 10 with your own private questions.
-// Each question needs:
-//   text          — the real quiz question
-//   options       — 4 choices, keep this length so the 70% threshold
-//                   stays meaningful
-//   correctIndex  — 0-based index of the right option in `options`
-//   hint          — OPTIONAL. A clue sentence shown only if she taps
-//                   "Need a clue?" on that question. Leave it "" (empty
-//                   string) to hide the hint button on a question that
-//                   doesn't need one.
+// QUIZ QUESTIONS — 2 shapes, picked with `type`:
+//
+//   type: "choice" (default, can be omitted)
+//     text, options (4 choices), hint (optional clue, "" hides it), and
+//     either:
+//       correctIndex   — one right option (0-based)
+//       correctIndices — array of right options, when more than one
+//                        answer should count (e.g. [1, 2, 3])
+//
+//   type: "range"
+//     text, min, max (any number typed in between counts, inclusive),
+//     hint (optional).
 // ----------------------------------------------------------------
 const QUIZ_QUESTIONS = [
   {
-    // TODO — CONFIRM: you listed 4 shows but didn't say which is right.
-    // Defaulted to "Ozark" (listed first) — tell me if it's a different one.
+    // Any answer but Ozark counts, per your call.
     text: "What's the most enjoyable TV show we've watched together?",
     options: ["Ozark", "The Walking Dead", "Supernatural", "Lost"],
-    correctIndex: 0,
+    correctIndices: [1, 2, 3],
     hint: ""
   },
   {
@@ -1170,13 +1185,12 @@ const QUIZ_QUESTIONS = [
     hint: ""
   },
   {
-    // TODO — DECIDE: you gave a range (59,468–60,000), not one fixed
-    // number, and mileage keeps climbing as the car gets driven. This
-    // is a placeholder multiple-choice version — see my note about
-    // switching this one question to free-text with a range check.
-    text: "What's your car's mileage today?",
-    options: ["Under 59,000 km", "59,468–60,000 km", "Over 60,500 km", "Exactly 61,000 km"],
-    correctIndex: 1,
+    // Free-text range instead of multiple choice, since the real number
+    // moves as the car gets driven. Update min/max as the range shifts.
+    type: "range",
+    text: "What's your car's mileage today (in km)?",
+    min: 59468,
+    max: 60000,
     hint: ""
   }
 ];
@@ -1391,14 +1405,29 @@ function renderQuestion() {
   renderHint(q);
 
   const optWrap = document.getElementById("qOptions");
-  optWrap.innerHTML = "";
-  q.options.forEach((optText, i) => {
-    const div = document.createElement("div");
-    div.className = "option";
-    div.innerHTML = `<span class="dot"></span><span>${escapeHtml(optText)}</span>`;
-    div.addEventListener("click", () => handleAnswer(i, q));
-    optWrap.appendChild(div);
-  });
+  const rangeForm = document.getElementById("rangeForm");
+  const rangeInput = document.getElementById("rangeInput");
+
+  if (q.type === "range") {
+    optWrap.hidden = true;
+    optWrap.innerHTML = "";
+    rangeForm.hidden = false;
+    rangeInput.value = "";
+    rangeInput.classList.remove("correct", "wrong");
+    rangeInput.disabled = false;
+    setTimeout(() => rangeInput.focus(), 0);
+  } else {
+    rangeForm.hidden = true;
+    optWrap.hidden = false;
+    optWrap.innerHTML = "";
+    q.options.forEach((optText, i) => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.innerHTML = `<span class="dot"></span><span>${escapeHtml(optText)}</span>`;
+      div.addEventListener("click", () => handleAnswer(i, q));
+      optWrap.appendChild(div);
+    });
+  }
 
   startQuestionTimer();
 }
@@ -1428,11 +1457,33 @@ function handleAnswer(i, q) {
   quizLocked = true;
   clearInterval(quizTimer);
 
+  const acceptable = q.correctIndices || [q.correctIndex];
+  const isCorrect = acceptable.includes(i);
   const options = document.querySelectorAll("#qOptions .option");
-  const isCorrect = i === q.correctIndex;
   options[i].classList.add(isCorrect ? "correct" : "wrong");
   options.forEach((el, idx) => { if (idx !== i) el.classList.add("disabled"); });
 
+  advanceOrRestart(isCorrect);
+}
+
+document.getElementById("rangeForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (quizLocked) return;
+  const q = QUIZ_QUESTIONS[quizIndex];
+  const input = document.getElementById("rangeInput");
+  const value = parseFloat(input.value);
+  if (Number.isNaN(value)) return;
+
+  quizLocked = true;
+  clearInterval(quizTimer);
+  const isCorrect = value >= q.min && value <= q.max;
+  input.classList.add(isCorrect ? "correct" : "wrong");
+  input.disabled = true;
+
+  advanceOrRestart(isCorrect);
+});
+
+function advanceOrRestart(isCorrect) {
   if (isCorrect) {
     document.getElementById("quizFailMsg").hidden = true;
     setTimeout(() => {
