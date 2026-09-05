@@ -1114,63 +1114,69 @@ const QUESTION_TIME_LIMIT_SECONDS = 30;
 // ----------------------------------------------------------------
 const QUIZ_QUESTIONS = [
   {
-    text: "TODO — question 1: something only the two of you would know",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
-    hint: "TODO — optional clue for question 1, or leave as \"\""
-  },
-  {
-    text: "TODO — question 2",
-    options: ["Option A", "Option B", "Option C", "Option D"],
+    // TODO — CONFIRM: you listed 4 shows but didn't say which is right.
+    // Defaulted to "Ozark" (listed first) — tell me if it's a different one.
+    text: "What's the most enjoyable TV show we've watched together?",
+    options: ["Ozark", "The Walking Dead", "Supernatural", "Lost"],
     correctIndex: 0,
     hint: ""
   },
   {
-    text: "TODO — question 3",
-    options: ["Option A", "Option B", "Option C", "Option D"],
+    text: "What's the most visited spot we went to together before we got married?",
+    options: ["Boo Ali", "Mellat Park", "Laleh Park", "Saei Park"],
     correctIndex: 0,
     hint: ""
   },
   {
-    text: "TODO — question 4",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "What was the name of our first pet?",
+    options: ["Max", "Charlie", "Luna", "Bella"],
+    correctIndex: 1,
     hint: ""
   },
   {
-    text: "TODO — question 5",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "When did we buy our first house in Denmark?",
+    options: ["15-06-2020", "30-07-2020", "12-08-2020", "01-09-2020"],
+    correctIndex: 1,
     hint: ""
   },
   {
-    text: "TODO — question 6",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "What year did you first travel home from Denmark?",
+    options: ["2012", "2013", "2014", "2015"],
+    correctIndex: 1,
     hint: ""
   },
   {
-    text: "TODO — question 7",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "What was your first phone number in Denmark?",
+    options: ["71985408", "20985407", "71985407", "71984507"],
+    correctIndex: 2,
     hint: ""
   },
   {
-    text: "TODO — question 8",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "What was the first movie we watched in a cinema in a foreign country?",
+    options: ["The Lord of the Rings", "Harry Potter", "Spider-Man", "Avatar"],
+    correctIndex: 1,
     hint: ""
   },
   {
-    text: "TODO — question 9",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "What was the name of the restaurant in Gorgan we went to?",
+    options: ["Shandiz", "Kourosh", "Khayam", "Boof"],
+    correctIndex: 2,
     hint: ""
   },
   {
-    text: "TODO — question 10",
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    correctIndex: 0,
+    text: "Which singer's concert did we go to together?",
+    options: ["Mohsen Yeganeh", "Ehsan Khaje Amiri", "Benyamin Bahadori", "Sirvan Khosravi"],
+    correctIndex: 1,
+    hint: ""
+  },
+  {
+    // TODO — DECIDE: you gave a range (59,468–60,000), not one fixed
+    // number, and mileage keeps climbing as the car gets driven. This
+    // is a placeholder multiple-choice version — see my note about
+    // switching this one question to free-text with a range check.
+    text: "What's your car's mileage today?",
+    options: ["Under 59,000 km", "59,468–60,000 km", "Over 60,500 km", "Exactly 61,000 km"],
+    correctIndex: 1,
     hint: ""
   }
 ];
@@ -1187,63 +1193,66 @@ const QUIZ_QUESTIONS = [
 // ----------------------------------------------------------------
 const GIFTS = [
   {
-    title: "Weekend in Santorini",
-    description: "Two nights, cliffside suite, private terrace over the caldera. Flights included.",
+    title: "Blueprint Essential Capsules",
+    description: "A subscription to Bryan Johnson's Blueprint Essential Capsules — his longevity supplement line, delivered on repeat.",
     image: "",
-    link: "https://example.com/reservation/santorini",
-    answers: ["santorini", "a trip to santorini", "santorini trip"],
+    link: "https://share.google/RKfmc5J7sHmtb2SWe",
+    answers: ["blueprint", "essential capsules", "blueprint essential capsules", "bryan johnson blueprint", "blueprint subscription"],
     riddles: [
-      "TODO — riddle 1 for gift 1: white walls, blue domes, a sea that goes on forever.",
-      "TODO — riddle 2 for gift 1: think Greek islands, sunsets, and a caldera view.",
-      "TODO — riddle 3 for gift 1: where we said we'd go, someday, over dinner once."
+      "Not a meal, not a nightcap — a daily ritual built for a longer story.",
+      "A famous man spent a fortune trying to outlive his own age. This is his.",
+      "Capsules, not champagne. The toast here is to more years, not tonight."
     ]
   },
   {
-    title: "Cartier Tank Watch",
-    description: "The classic she's mentioned for years, in rose gold, engraved on the back.",
+    title: "Heat Studio Gift Card",
+    description: "An 1800 kr gift card to Heat Studio.",
     image: "",
-    link: "https://example.com/reservation/cartier-tank",
-    answers: ["cartier tank watch", "cartier watch", "a watch"],
+    link: "https://share.google/Zh67iVjBM5ZTUBR6g",
+    answers: ["heat studio", "heat studio gift card"],
     riddles: [
-      "TODO — riddle 1 for gift 2: something you wear that never stops moving forward.",
-      "TODO — riddle 2 for gift 2: a French maison, a rectangle face, and rose gold.",
-      "TODO — riddle 3 for gift 2: you tried one on once and didn't say why."
+      "Not a kitchen, not a sauna at home — a studio built entirely around warmth.",
+      "A gift card where the sweat is included.",
+      "The temperature is the whole point of going."
     ]
   },
   {
-    title: "Private Chef Evening",
-    description: "A five-course tasting menu at home, wine pairing included, on the night of.",
+    title: "EveryHuman Copenhagen",
+    description: "A 2000 DKK gift card to EveryHuman's Copenhagen location.",
     image: "",
-    link: "https://example.com/reservation/private-chef",
-    answers: ["private chef", "private chef evening", "a private chef"],
+    link: "https://share.google/9YSS07HW7VnTW2QiO",
+    answers: ["everyhuman", "every human", "everyhuman copenhagen", "everyhuman gift card"],
     riddles: [
-      "TODO — riddle 1 for gift 3: someone else cooks, and the kitchen isn't yours to clean.",
-      "TODO — riddle 2 for gift 3: five courses, one night, no reservation to drive to.",
-      "TODO — riddle 3 for gift 3: wine pairings and a stranger in your own kitchen."
+      "A place that trains every kind of person — and for a while, that's you.",
+      "A studio membership, dressed up as a gift card, waiting in Copenhagen.",
+      "The name says who it's for. All of them. Including you."
     ]
   },
   {
-    title: "Couples' Spa Day",
-    description: "Full day at the retreat: massage, sauna, thermal pools, lunch on the terrace.",
+    title: "Halberstadt Jewelry",
+    description: "A piece from Halberstadt — sparkling, timeless diamond jewelry.",
     image: "",
-    link: "https://example.com/reservation/spa-day",
-    answers: ["spa day", "couples spa day", "a spa day"],
+    link: "https://share.google/YLXhMARDb4qfCUaMP",
+    answers: ["halberstadt", "halberstadt jewelry", "halberstadt jewellery", "diamond jewelry", "halberstadt diamond"],
     riddles: [
-      "TODO — riddle 1 for gift 4: warm water, quiet rooms, and nowhere to be.",
-      "TODO — riddle 2 for gift 4: robes, massages, and a lunch you didn't cook.",
-      "TODO — riddle 3 for gift 4: a full day of doing absolutely nothing, together."
+      "Small box, big sparkle — the kind of shine that doesn't go out of style.",
+      "A name that sounds German. A shine that isn't temporary.",
+      "Faceted, timeless, and small enough to fit in your palm."
     ]
   },
   {
-    title: "Chanel Classic Flap",
-    description: "Midnight blue caviar leather, gold hardware. The one she tried on twice and put back.",
+    // TODO — you sent 4 gifts; the app is built for 5. Send the 5th
+    // and I'll swap this placeholder for it — or tell me to cut the
+    // app down to 4 boxes instead.
+    title: "TODO — gift 5: title",
+    description: "TODO — gift 5: description",
     image: "",
-    link: "https://example.com/reservation/chanel-flap",
-    answers: ["chanel classic flap", "chanel bag", "a chanel bag"],
+    link: "https://example.com/reservation/gift-5",
+    answers: ["TODO — accepted guess"],
     riddles: [
-      "TODO — riddle 1 for gift 5: quilted leather, a chain strap, and 2 interlocking Cs.",
-      "TODO — riddle 2 for gift 5: the one you put back on the shelf, twice.",
-      "TODO — riddle 3 for gift 5: midnight blue, gold hardware, a very famous house."
+      "TODO — riddle 1 for gift 5",
+      "TODO — riddle 2 for gift 5",
+      "TODO — riddle 3 for gift 5"
     ]
   }
 ];
