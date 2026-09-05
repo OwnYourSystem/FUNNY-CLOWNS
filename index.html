@@ -1268,18 +1268,15 @@ const GIFTS = [
     ]
   },
   {
-    // TODO — you sent 4 gifts; the app is built for 5. Send the 5th
-    // and I'll swap this placeholder for it — or tell me to cut the
-    // app down to 4 boxes instead.
-    title: "TODO — gift 5: title",
-    description: "TODO — gift 5: description",
+    title: "A Statue, From Herman",
+    description: "A statue of you, ordered by Herman himself — his own gift, just for his mom.",
     image: "",
-    link: "https://example.com/reservation/gift-5",
-    answers: ["TODO — accepted guess"],
+    link: "",
+    answers: ["a statue", "a statue of me", "a statue of mom", "statue", "a statue from herman", "herman's statue"],
     riddles: [
-      "TODO — riddle 1 for gift 5",
-      "TODO — riddle 2 for gift 5",
-      "TODO — riddle 3 for gift 5"
+      "Not a photo, not a painting — a shape of you that doesn't move, made by someone who loves you completely.",
+      "Herman didn't buy this one. He ordered it, just for you.",
+      "A little figure that looks like you, made because someone couldn't imagine forty without a version of you standing still, forever."
     ]
   }
 ];
@@ -1838,6 +1835,10 @@ function openGiftModal(index) {
     ? `background-image:url('${escapeAttr(gift.image)}')`
     : `background-image: linear-gradient(135deg, #4a2c44, #3c2536)`;
 
+  const linkHtml = gift.link
+    ? `<a class="modal-link" href="${escapeAttr(gift.link)}" target="_blank" rel="noopener noreferrer">View reservation &rarr;</a>`
+    : "";
+
   root.innerHTML = `
     <div class="modal-overlay" id="modalOverlay">
       <div class="modal">
@@ -1846,9 +1847,7 @@ function openGiftModal(index) {
         <div class="modal-body">
           <h2 class="modal-title">${escapeHtml(gift.title)}</h2>
           <p class="modal-desc">${escapeHtml(gift.description)}</p>
-          <a class="modal-link" href="${escapeAttr(gift.link)}" target="_blank" rel="noopener noreferrer">
-            View reservation &rarr;
-          </a>
+          ${linkHtml}
         </div>
       </div>
     </div>
