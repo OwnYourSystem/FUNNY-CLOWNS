@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40 &mdash; A Birthday Reveal</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     ============================================================ */
+  :root {
+    --bg: #0e0c10;
+    --bg-soft: #17141b;
+    --card: #1c1822;
+    --card-border: rgba(212, 175, 122, 0.18);
+    --gold: #d4af7a;
+    --gold-bright: #e8c896;
+    --text: #f3ede4;
+    --text-dim: #a89e97;
+    --text-faint: #6f6660;
+    --success: #9fc9a3;
+    --danger: #d98c8c;
+    --radius: 18px;
+    --radius-sm: 10px;
+    --serif: 'Georgia', 'Iowan Old Style', 'Palatino Linotype', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 20px 60px rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(ellipse at top, #201a26 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 18px 64px;
+  }
+
+  /* subtle background sparkle */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, rgba(212,175,122,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 70% 20%, rgba(212,175,122,0.25), transparent),
+      radial-gradient(1px 1px at 40% 70%, rgba(212,175,122,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 85% 65%, rgba(212,175,122,0.2), transparent),
+      radial-gradient(1px 1px at 60% 90%, rgba(212,175,122,0.25), transparent),
+      radial-gradient(1.5px 1.5px at 10% 85%, rgba(212,175,122,0.2), transparent);
+    z-index: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header.site-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  h1.title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(28px, 6vw, 42px);
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  h1.title em {
+    font-style: italic;
+    color: var(--gold-bright);
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 15px;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  /* ============================================================
+     SHARED CARD / PANEL
+     ============================================================ */
+  .panel {
+    background: linear-gradient(180deg, var(--card) 0%, var(--bg-soft) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px 22px;
+    animation: rise 0.5s ease both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (min-width: 560px) {
+    .panel { padding: 40px 44px; }
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--card-border), transparent);
+    margin: 24px 0;
+    border: none;
+  }
+
+  /* ============================================================
+     BUTTONS
+     ============================================================ */
+  .btn {
+    appearance: none;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold-bright);
+    font-family: var(--sans);
+    font-size: 15px;
+    letter-spacing: 0.03em;
+    padding: 13px 26px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+    text-align: center;
+  }
+
+  .btn:hover { background: rgba(212,175,122,0.1); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .btn-primary {
+    background: var(--gold);
+    color: #1a1510;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(212,175,122,0.25);
+  }
+  .btn-primary:hover { background: var(--gold-bright); box-shadow: 0 10px 28px rgba(212,175,122,0.35); }
+
+  .btn-ghost {
+    border-color: transparent;
+    color: var(--text-dim);
+  }
+  .btn-ghost:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  /* ============================================================
+     QUIZ SCREEN
+     ============================================================ */
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .q-index {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+
+  .q-text {
+    font-family: var(--serif);
+    font-size: clamp(20px, 4vw, 25px);
+    line-height: 1.4;
+    margin: 0 0 26px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+    font-size: 15px;
+  }
+
+  .option:hover { border-color: rgba(212,175,122,0.4); background: rgba(212,175,122,0.05); }
+
+  .option.selected {
+    border-color: var(--gold);
+    background: rgba(212,175,122,0.12);
+  }
+
+  .option .dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-faint);
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color 0.2s ease;
+  }
+
+  .option.selected .dot { border-color: var(--gold); }
+  .option.selected .dot::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .quiz-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+  }
+
+  .quiz-meta {
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+
+  /* Quiz results (post-submit, pre-birthday) */
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    padding: 8px 16px;
+    border-radius: 999px;
+    margin-top: 6px;
+  }
+
+  /* ============================================================
+     LOCKED SCREEN
+     ============================================================ */
+  .lock-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    color: var(--gold);
+  }
+
+  .locked-panel { text-align: center; }
+
+  .countdown {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 26px 0 6px;
+    flex-wrap: wrap;
+  }
+
+  .countdown .unit {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    min-width: 66px;
+  }
+
+  .countdown .num {
+    font-family: var(--serif);
+    font-size: 24px;
+    color: var(--gold-bright);
+    display: block;
+  }
+
+  .countdown .lbl {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .status-line {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 22px;
+    line-height: 1.6;
+  }
+
+  .status-line strong { color: var(--text); }
+  .status-line.warn strong { color: var(--danger); }
+  .status-line.ok strong { color: var(--success); }
+
+  /* ============================================================
+     REVEAL SCREEN
+     ============================================================ */
+  .reveal-header { text-align: center; margin-bottom: 32px; }
+
+  .gift-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 620px) {
+    .gift-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .gift-card {
+    background: linear-gradient(180deg, var(--card) 0%, var(--bg-soft) 100%);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gift-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    border-color: rgba(212,175,122,0.45);
+  }
+
+  .gift-media {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background-size: cover;
+    background-position: center;
+    background-color: #221c28;
+    position: relative;
+  }
+
+  .gift-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .gift-body {
+    padding: 18px 20px 22px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gift-title {
+    font-family: var(--serif);
+    font-size: 19px;
+    margin: 0 0 6px;
+  }
+
+  .gift-desc {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .gift-cta {
+    margin-top: 14px;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Detail modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 5, 8, 0.78);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+    animation: fadeIn 0.25s ease both;
+  }
+
+  @media (min-width: 620px) {
+    .modal-overlay { align-items: center; }
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    max-width: 560px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease both;
+  }
+
+  @media (min-width: 620px) {
+    .modal { border-radius: var(--radius); }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-media {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-size: cover;
+    background-position: center;
+    background-color: #221c28;
+  }
+
+  .modal-body { padding: 26px 24px 30px; }
+
+  .modal-close {
+    position: sticky;
+    top: 12px;
+    float: right;
+    margin: 12px 12px 0 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 2;
+  }
+
+  .modal-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+
+  .modal-desc {
+    color: var(--text-dim);
+    font-size: 14.5px;
+    line-height: 1.65;
+    margin-bottom: 22px;
+  }
+
+  .modal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold);
+    color: #1a1510;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px 24px;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+
+  .modal-link:hover { background: var(--gold-bright); }
+
+  footer.dev-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    line-height: 1.7;
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="site-header">
+    <div class="eyebrow">A gift, guarded</div>
+    <h1 class="title">Forty &amp; <em>Fabulous</em></h1>
+    <p class="subtitle" id="headerSubtitle">Guess well. Wait for the morning. Then open the boxes.</p>
+  </header>
+
+  <!-- ============================================================
+       SCREEN 1: QUIZ
+       ============================================================ -->
+  <main id="quizScreen" class="panel" hidden>
+    <div id="quizPlay">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="q-index" id="qIndex">Question 1 of 10</div>
+      <h2 class="q-text" id="qText"></h2>
+      <div class="options" id="qOptions"></div>
+      <div class="quiz-footer">
+        <span class="quiz-meta" id="quizMeta"></span>
+        <button class="btn btn-primary" id="nextBtn" disabled>Next</button>
+      </div>
+    </div>
+
+    <div id="quizDone" hidden>
+      <div class="eyebrow">Quiz complete</div>
+      <h2 class="q-text" style="margin-bottom:6px;">Your guesses are locked in.</h2>
+      <div class="result-badge" id="scoreBadge"></div>
+      <p class="status-line" id="quizDoneMsg" style="margin-top:20px;"></p>
+      <div class="btn-row">
+        <button class="btn" id="retryBtn">Play again</button>
+        <button class="btn btn-ghost" id="checkLockBtn">Check the boxes</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       SCREEN 2: LOCKED
+       ============================================================ -->
+  <main id="lockedScreen" class="panel locked-panel" hidden>
+    <div class="lock-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="4" y="11" width="16" height="9" rx="2"/>
+        <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+      </svg>
+    </div>
+    <h2 class="q-text" id="lockedTitle" style="font-size:22px;">Not yet.</h2>
+    <p class="subtitle" id="lockedSubtitle"></p>
+
+    <div class="countdown" id="countdownWrap">
+      <div class="unit"><span class="num" id="cdDays">0</span><span class="lbl">Days</span></div>
+      <div class="unit"><span class="num" id="cdHours">0</span><span class="lbl">Hrs</span></div>
+      <div class="unit"><span class="num" id="cdMins">0</span><span class="lbl">Min</span></div>
+      <div class="unit"><span class="num" id="cdSecs">0</span><span class="lbl">Sec</span></div>
+    </div>
+
+    <div id="lockedStatusLines"></div>
+
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn" id="lockedPlayBtn">Play the guessing game</button>
+      <button class="btn btn-ghost" id="lockedRefreshBtn">Refresh</button>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       SCREEN 3: REVEAL
+       ============================================================ -->
+  <main id="revealScreen" hidden>
+    <div class="reveal-header">
+      <div class="eyebrow">Both gates, open</div>
+      <h2 class="title" style="font-size:28px;">Happy 40th. Here's the vault.</h2>
+      <p class="subtitle" id="revealScoreLine"></p>
+    </div>
+    <div class="gift-grid" id="giftGrid"></div>
+  </main>
+
+  <footer class="dev-footer">
+    Made with care, one box at a time.
+  </footer>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+/* ================================================================
+   1) CONFIGURATION  —  edit everything below this line freely
+   ================================================================ */
+
+// The unlock date. Gifts stay locked until the LOCAL device date/time
+// reaches this moment. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
+const BIRTHDAY_ISO = "2026-11-14T00:00:00";
+
+// Minimum percentage score required, alongside the date, to unlock gifts.
+const PASSING_SCORE_PERCENT = 70;
+
+// Set to false to allow only one quiz attempt total (no retries).
+const ALLOW_RETRIES = true;
+
+// ----------------------------------------------------------------
+// QUIZ QUESTIONS
+// Each question needs: text, an options array, and the index (0-based)
+// of the correct option in `options`.
+// ----------------------------------------------------------------
+const QUIZ_QUESTIONS = [
+  {
+    text: "Which city is your surprise weekend in?",
+    options: ["Paris", "Rome", "Lisbon", "Santorini"],
+    correctIndex: 0
+  },
+  {
+    text: "What's inside the smallest box?",
+    options: ["A ring", "A watch", "A bracelet", "Earrings"],
+    correctIndex: 1
+  },
+  {
+    text: "Where will dinner be, on the night itself?",
+    options: ["A rooftop restaurant", "Her favorite bistro", "A private chef at home", "A vineyard"],
+    correctIndex: 2
+  },
+  {
+    text: "Which spa treatment is booked?",
+    options: ["Hot stone massage", "Couples' spa day", "Facial only", "Sauna ritual"],
+    correctIndex: 1
+  },
+  {
+    text: "What color is the biggest gift box?",
+    options: ["Ivory", "Emerald", "Midnight blue", "Blush pink"],
+    correctIndex: 2
+  },
+  {
+    text: "Which designer is behind the handbag?",
+    options: ["Chanel", "Saint Laurent", "Dior", "Bottega Veneta"],
+    correctIndex: 0
+  },
+  {
+    text: "What's the theme of the photo album?",
+    options: ["Travel memories", "Family through the years", "Just the two of us", "Friends & laughter"],
+    correctIndex: 1
+  },
+  {
+    text: "Which flowers fill the room that morning?",
+    options: ["White roses", "Peonies", "Orchids", "Lilies"],
+    correctIndex: 2
+  },
+  {
+    text: "What's the surprise activity planned?",
+    options: ["Hot air balloon ride", "Wine tasting tour", "Sunset sailing", "Cooking class"],
+    correctIndex: 0
+  },
+  {
+    text: "Who's in on the surprise besides you?",
+    options: ["Just close family", "Her best friend", "The whole guest list", "No one else"],
+    correctIndex: 2
+  }
+];
+
+// ----------------------------------------------------------------
+// GIFT LIST — the luxury boxes revealed once both gates pass.
+// image: any URL, or leave "" for a soft placeholder gradient.
+// link: reservation / booking / product URL.
+// ----------------------------------------------------------------
+const GIFTS = [
+  {
+    title: "Weekend in Santorini",
+    description: "Two nights, cliffside suite, private terrace over the caldera. Flights included.",
+    image: "",
+    link: "https://example.com/reservation/santorini"
+  },
+  {
+    title: "Cartier Tank Watch",
+    description: "The classic she's mentioned for years, in rose gold, engraved on the back.",
+    image: "",
+    link: "https://example.com/reservation/cartier-tank"
+  },
+  {
+    title: "Private Chef Evening",
+    description: "A five-course tasting menu at home, wine pairing included, on the night of.",
+    image: "",
+    link: "https://example.com/reservation/private-chef"
+  },
+  {
+    title: "Couples' Spa Day",
+    description: "Full day at the retreat: massage, sauna, thermal pools, lunch on the terrace.",
+    image: "",
+    link: "https://example.com/reservation/spa-day"
+  },
+  {
+    title: "Chanel Classic Flap",
+    description: "Midnight blue caviar leather, gold hardware. The one she tried on twice and put back.",
+    image: "",
+    link: "https://example.com/reservation/chanel-flap"
+  },
+  {
+    title: "Hot Air Balloon at Sunrise",
+    description: "Champagne on landing. Just the two of you, above everything, for one hour.",
+    image: "",
+    link: "https://example.com/reservation/balloon-ride"
+  }
+];
+
+/* ================================================================
+   2) STORAGE HELPERS
+   ================================================================ */
+const STORAGE_KEY = "birthday_gift_app_v1";
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveState(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    /* localStorage unavailable — app still works, just won't persist */
+  }
+}
+
+function getLatestScore() {
+  const s = loadState();
+  if (!s || typeof s.scorePercent !== "number") return null;
+  return s;
+}
+
+/* ================================================================
+   3) GATE LOGIC
+   ================================================================ */
+function isBirthdayReached() {
+  return new Date() >= new Date(BIRTHDAY_ISO);
+}
+
+function hasPassingScore() {
+  const s = getLatestScore();
+  return !!s && s.scorePercent >= PASSING_SCORE_PERCENT;
+}
+
+function bothGatesPass() {
+  return isBirthdayReached() && hasPassingScore();
+}
+
+/* ================================================================
+   4) ROUTER — decides which of the 3 screens to show
+   ================================================================ */
+const screens = {
+  quiz: document.getElementById("quizScreen"),
+  locked: document.getElementById("lockedScreen"),
+  reveal: document.getElementById("revealScreen")
+};
+
+let countdownTimer = null;
+
+function showScreen(name) {
+  Object.values(screens).forEach(el => el.hidden = true);
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  screens[name].hidden = false;
+}
+
+function route(preferQuiz) {
+  const subtitle = document.getElementById("headerSubtitle");
+
+  if (bothGatesPass()) {
+    subtitle.textContent = "Both gates are open. Every box, unlocked.";
+    renderReveal();
+    showScreen("reveal");
+    return;
+  }
+
+  if (preferQuiz) {
+    subtitle.textContent = "Guess well. Wait for the morning. Then open the boxes.";
+    startQuiz();
+    showScreen("quiz");
+    return;
+  }
+
+  subtitle.textContent = "Guess well. Wait for the morning. Then open the boxes.";
+  renderLocked();
+  showScreen("locked");
+}
+
+/* ================================================================
+   5) QUIZ SCREEN
+   ================================================================ */
+let quizAnswers = [];
+let quizIndex = 0;
+
+function startQuiz() {
+  quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null);
+  quizIndex = 0;
+  document.getElementById("quizPlay").hidden = false;
+  document.getElementById("quizDone").hidden = true;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const total = QUIZ_QUESTIONS.length;
+  const q = QUIZ_QUESTIONS[quizIndex];
+
+  document.getElementById("progressFill").style.width = `${(quizIndex / total) * 100}%`;
+  document.getElementById("qIndex").textContent = `Question ${quizIndex + 1} of ${total}`;
+  document.getElementById("qText").textContent = q.text;
+  document.getElementById("quizMeta").textContent = `${quizAnswers.filter(a => a !== null).length}/${total} answered`;
+
+  const optWrap = document.getElementById("qOptions");
+  optWrap.innerHTML = "";
+  q.options.forEach((optText, i) => {
+    const div = document.createElement("div");
+    div.className = "option" + (quizAnswers[quizIndex] === i ? " selected" : "");
+    div.innerHTML = `<span class="dot"></span><span>${escapeHtml(optText)}</span>`;
+    div.addEventListener("click", () => {
+      quizAnswers[quizIndex] = i;
+      renderQuestion();
+    });
+    optWrap.appendChild(div);
+  });
+
+  const nextBtn = document.getElementById("nextBtn");
+  nextBtn.disabled = quizAnswers[quizIndex] === null;
+  nextBtn.textContent = quizIndex === total - 1 ? "See result" : "Next";
+}
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  if (quizAnswers[quizIndex] === null) return;
+  if (quizIndex < QUIZ_QUESTIONS.length - 1) {
+    quizIndex += 1;
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+});
+
+function finishQuiz() {
+  const total = QUIZ_QUESTIONS.length;
+  let correct = 0;
+  QUIZ_QUESTIONS.forEach((q, i) => {
+    if (quizAnswers[i] === q.correctIndex) correct += 1;
+  });
+  const scorePercent = Math.round((correct / total) * 100);
+
+  saveState({
+    scorePercent,
+    correct,
+    total,
+    completedAt: new Date().toISOString()
+  });
+
+  document.getElementById("quizPlay").hidden = true;
+  document.getElementById("quizDone").hidden = false;
+
+  const passed = scorePercent >= PASSING_SCORE_PERCENT;
+  document.getElementById("scoreBadge").textContent =
+    `${correct} / ${total} correct — ${scorePercent}%`;
+
+  const msg = document.getElementById("quizDoneMsg");
+  if (!isBirthdayReached()) {
+    msg.innerHTML = passed
+      ? `You've cleared the ${PASSING_SCORE_PERCENT}% mark. The boxes still wait for the morning of the birthday.`
+      : `You're under ${PASSING_SCORE_PERCENT}%. ${ALLOW_RETRIES ? "Play again anytime before the big day." : "This was your one attempt."}`;
+  } else {
+    msg.innerHTML = passed
+      ? `You've cleared ${PASSING_SCORE_PERCENT}% and it's the day. Go check the boxes.`
+      : `You're under ${PASSING_SCORE_PERCENT}%. ${ALLOW_RETRIES ? "Try again to unlock the boxes." : "This was your one attempt."}`;
+  }
+
+  document.getElementById("retryBtn").hidden = !ALLOW_RETRIES;
+}
+
+document.getElementById("retryBtn").addEventListener("click", () => startQuiz());
+document.getElementById("checkLockBtn").addEventListener("click", () => route(false));
+document.getElementById("lockedPlayBtn").addEventListener("click", () => route(true));
+document.getElementById("lockedRefreshBtn").addEventListener("click", () => route(false));
+
+/* ================================================================
+   6) LOCKED SCREEN
+   ================================================================ */
+function renderLocked() {
+  const dateOk = isBirthdayReached();
+  const scoreOk = hasPassingScore();
+  const s = getLatestScore();
+
+  document.getElementById("lockedTitle").textContent = dateOk
+    ? "So close."
+    : "Not yet.";
+
+  document.getElementById("lockedSubtitle").textContent = dateOk
+    ? "The day is here. One more gate to clear."
+    : "The boxes open only on the morning of the birthday, and only if the guesses are good enough.";
+
+  const cdWrap = document.getElementById("countdownWrap");
+  if (dateOk) {
+    cdWrap.hidden = true;
+  } else {
+    cdWrap.hidden = false;
+    tickCountdown();
+    countdownTimer = setInterval(tickCountdown, 1000);
+  }
+
+  const lines = document.getElementById("lockedStatusLines");
+  const dateLine = dateOk
+    ? `<p class="status-line ok">Date gate: <strong>open</strong> — today is the day.</p>`
+    : `<p class="status-line">Date gate: <strong>closed</strong> — waiting for the birthday.</p>`;
+
+  let scoreLine;
+  if (!s) {
+    scoreLine = `<p class="status-line">Score gate: <strong>closed</strong> — no quiz attempt yet.</p>`;
+  } else if (scoreOk) {
+    scoreLine = `<p class="status-line ok">Score gate: <strong>open</strong> — last score ${s.scorePercent}%.</p>`;
+  } else {
+    scoreLine = `<p class="status-line warn">Score gate: <strong>closed</strong> — last score ${s.scorePercent}%, needs ${PASSING_SCORE_PERCENT}%.</p>`;
+  }
+
+  lines.innerHTML = dateLine + scoreLine;
+
+  document.getElementById("lockedPlayBtn").textContent =
+    s ? "Play again" : "Play the guessing game";
+}
+
+function tickCountdown() {
+  const diff = new Date(BIRTHDAY_ISO).getTime() - Date.now();
+  if (diff <= 0) {
+    route(false);
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const sec = Math.floor((diff % 60000) / 1000);
+  document.getElementById("cdDays").textContent = d;
+  document.getElementById("cdHours").textContent = String(h).padStart(2, "0");
+  document.getElementById("cdMins").textContent = String(m).padStart(2, "0");
+  document.getElementById("cdSecs").textContent = String(sec).padStart(2, "0");
+}
+
+/* ================================================================
+   7) REVEAL SCREEN — gift data only touches the DOM here,
+      and this function only ever runs after bothGatesPass() is true.
+   ================================================================ */
+function renderReveal() {
+  const s = getLatestScore();
+  document.getElementById("revealScoreLine").textContent = s
+    ? `Unlocked with ${s.correct}/${s.total} correct (${s.scorePercent}%).`
+    : "";
+
+  const grid = document.getElementById("giftGrid");
+  grid.innerHTML = "";
+
+  GIFTS.forEach((gift, i) => {
+    const card = document.createElement("div");
+    card.className = "gift-card";
+    const mediaStyle = gift.image
+      ? `background-image:url('${escapeAttr(gift.image)}')`
+      : `background-image: linear-gradient(135deg, #2a2230, #17141b)`;
+    card.innerHTML = `
+      <div class="gift-media" style="${mediaStyle}"></div>
+      <div class="gift-body">
+        <h3 class="gift-title">${escapeHtml(gift.title)}</h3>
+        <p class="gift-desc">${escapeHtml(gift.description)}</p>
+        <span class="gift-cta">Open the box &rarr;</span>
+      </div>
+    `;
+    card.addEventListener("click", () => openGiftModal(i));
+    grid.appendChild(card);
+  });
+}
+
+function openGiftModal(index) {
+  if (!bothGatesPass()) return; // defense in depth
+  const gift = GIFTS[index];
+  const root = document.getElementById("modalRoot");
+
+  const mediaStyle = gift.image
+    ? `background-image:url('${escapeAttr(gift.image)}')`
+    : `background-image: linear-gradient(135deg, #2a2230, #17141b)`;
+
+  root.innerHTML = `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal">
+        <div class="modal-close" id="modalClose">&times;</div>
+        <div class="modal-media" style="${mediaStyle}"></div>
+        <div class="modal-body">
+          <h2 class="modal-title">${escapeHtml(gift.title)}</h2>
+          <p class="modal-desc">${escapeHtml(gift.description)}</p>
+          <a class="modal-link" href="${escapeAttr(gift.link)}" target="_blank" rel="noopener noreferrer">
+            View reservation &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("modalOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "modalOverlay") closeGiftModal();
+  });
+  document.getElementById("modalClose").addEventListener("click", closeGiftModal);
+}
+
+function closeGiftModal() {
+  document.getElementById("modalRoot").innerHTML = "";
+}
+
+/* ================================================================
+   8) UTIL
+   ================================================================ */
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+/* ================================================================
+   9) BOOT
+   ================================================================ */
+route(false);
+</script>
+
+</body>
+</html>
