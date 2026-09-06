@@ -932,7 +932,7 @@
       <div class="portrait-medallion portrait-medallion--sm" style="margin-bottom:14px;" aria-hidden="true"></div>
       <div class="eyebrow">All 10, correct</div>
       <h2 class="q-text" style="margin-bottom:6px;">The gate is open.</h2>
-      <p class="status-line" style="margin-top:14px;">Five gifts wait behind five riddles. Come back on the morning of, and you can start guessing.</p>
+      <p class="status-line" style="margin-top:14px;">Six gifts wait behind six riddles. Come back on the morning of, and you can start guessing.</p>
       <div class="btn-row">
         <button class="btn btn-primary" id="checkLockBtn">Continue</button>
       </div>
@@ -1015,8 +1015,8 @@
       <div class="hero-portrait" aria-hidden="true"></div>
       <div class="reveal-header">
         <div class="eyebrow">Both gates, open</div>
-        <h2 class="title" style="font-size:28px;">Five boxes. Five riddles.</h2>
-        <p class="subtitle">No multiple choice this time — type your guess. One try a day, and the riddle changes if you miss.</p>
+        <h2 class="title" style="font-size:28px;">Six boxes. Six riddles.</h2>
+        <p class="subtitle">No multiple choice this time — type your guess. One try every 2 hours, and the riddle changes if you miss.</p>
       </div>
       <p class="gifts-status" id="giftsStatus"></p>
       <div class="gift-grid" id="giftGrid"></div>
@@ -1126,6 +1126,9 @@ const BIRTHDAY_ISO = "2026-09-25T00:00:00";
 // sends her back to question 1 — she must get all 10 right in one run.
 // Unlimited attempts are always allowed.
 const QUESTION_TIME_LIMIT_SECONDS = 30;
+
+// How long she waits between gift guesses (across all boxes combined).
+const GIFT_GUESS_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // ----------------------------------------------------------------
 // QUIZ QUESTIONS — 2 shapes, picked with `type`:
@@ -1268,15 +1271,27 @@ const GIFTS = [
     ]
   },
   {
-    title: "A Statue, From Herman",
-    description: "A statue of you, ordered by Herman himself — his own gift, just for his mom.",
+    title: "Custom Bobblehead, From Herman",
+    description: "A custom bobblehead made from a photo of you, ordered by Herman himself — his own gift, just for his mom.",
     image: "",
-    link: "",
-    answers: ["a statue", "a statue of me", "a statue of mom", "statue", "a statue from herman", "herman's statue"],
+    link: "https://www.etsy.com/dk-en/listing/4343216850/custom-bobblehead-from-photo-custom-mens",
+    answers: ["a bobblehead", "bobblehead", "a custom bobblehead", "a statue", "a statue of me", "a statue of mom", "herman's bobblehead", "a bobblehead from herman"],
     riddles: [
-      "Not a photo, not a painting — a shape of you that doesn't move, made by someone who loves you completely.",
-      "Herman didn't buy this one. He ordered it, just for you.",
-      "A little figure that looks like you, made because someone couldn't imagine forty without a version of you standing still, forever."
+      "Not a photo, not a painting — a little version of you that doesn't move, made by someone who loves you completely.",
+      "Herman didn't buy this one off a shelf. He had it made, just for you, from a photo.",
+      "A tiny figure with your face on it, nodding along, made because someone couldn't imagine forty without a version of you on his desk."
+    ]
+  },
+  {
+    title: "Bold Knot Stud Earrings, From Hanna",
+    description: "A pair of Bold Knot stud earrings, picked out by Hanna — her own gift, just for her mom.",
+    image: "",
+    link: "https://www.etsy.com/dk-en/listing/1698539731/bold-knot-stud-earrings-by-caitlyn",
+    answers: ["earrings", "stud earrings", "knot earrings", "knot stud earrings", "bold knot earrings", "hanna's earrings", "earrings from hanna"],
+    riddles: [
+      "Small, gold, and tied in a knot — worn on the part of you that always listens.",
+      "Hanna picked this one out herself. It goes in your ears.",
+      "Two of them, a matching pair, each shaped like something that can't come undone."
     ]
   }
 ];
@@ -1313,14 +1328,25 @@ function getAppState() {
     quizPassed: !!raw.quizPassed,
     quizPassedAt: raw.quizPassedAt || null,
     celebrationSeen: !!raw.celebrationSeen,
-    lastGuessDate: raw.lastGuessDate || null,
+    lastGuessAt: raw.lastGuessAt || null,
     gifts
   };
 }
 
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+// Milliseconds remaining until another gift guess is allowed (0 if free).
+function guessCooldownRemainingMs(state) {
+  if (!state.lastGuessAt) return 0;
+  const remaining = GIFT_GUESS_COOLDOWN_MS - (Date.now() - state.lastGuessAt);
+  return Math.max(0, remaining);
+}
+
+function formatCooldown(ms) {
+  const totalMinutes = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
 }
 
 /* ================================================================
@@ -1354,10 +1380,12 @@ const screens = {
 };
 
 let countdownTimer = null;
+let giftCooldownTimer = null;
 
 function showScreen(name) {
   Object.values(screens).forEach(el => el.hidden = true);
   if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+  if (giftCooldownTimer) { clearInterval(giftCooldownTimer); giftCooldownTimer = null; }
   screens[name].hidden = false;
 }
 
@@ -1743,14 +1771,28 @@ function normalizeGuess(str) {
 }
 
 function renderReveal() {
+  if (giftCooldownTimer) { clearInterval(giftCooldownTimer); giftCooldownTimer = null; }
+
   const state = getAppState();
-  const usedToday = state.lastGuessDate === todayStr();
+  const cooldownMs = guessCooldownRemainingMs(state);
+  const onCooldown = cooldownMs > 0;
   const discoveredCount = state.gifts.filter(g => g.guessed).length;
 
   const status = document.getElementById("giftsStatus");
-  status.textContent = usedToday
-    ? `${discoveredCount} of ${GIFTS.length} discovered. Today's guess is used — come back tomorrow.`
-    : `${discoveredCount} of ${GIFTS.length} discovered. You have 1 guess today.`;
+  status.textContent = onCooldown
+    ? `${discoveredCount} of ${GIFTS.length} discovered. Next guess in ${formatCooldown(cooldownMs)}.`
+    : `${discoveredCount} of ${GIFTS.length} discovered. You have 1 guess, right now.`;
+
+  if (onCooldown) {
+    giftCooldownTimer = setInterval(() => {
+      const remaining = guessCooldownRemainingMs(getAppState());
+      if (remaining <= 0) {
+        renderReveal();
+      } else {
+        status.textContent = `${discoveredCount} of ${GIFTS.length} discovered. Next guess in ${formatCooldown(remaining)}.`;
+      }
+    }, 30000);
+  }
 
   const grid = document.getElementById("giftGrid");
   grid.innerHTML = "";
@@ -1784,9 +1826,9 @@ function renderReveal() {
             type="text"
             placeholder="Type your guess"
             autocomplete="off"
-            ${usedToday ? "disabled" : ""}
+            ${onCooldown ? "disabled" : ""}
           />
-          <button class="btn" type="submit" ${usedToday ? "disabled" : ""}>Guess</button>
+          <button class="btn" type="submit" ${onCooldown ? "disabled" : ""}>Guess</button>
           <p class="riddle-feedback"></p>
         </form>
       `;
@@ -1805,20 +1847,20 @@ function renderReveal() {
 
 function checkGiftGuess(index, rawValue, feedbackEl) {
   const state = getAppState();
-  if (state.lastGuessDate === todayStr()) return; // defense in depth
+  if (guessCooldownRemainingMs(state) > 0) return; // defense in depth
 
   const gift = GIFTS[index];
   const guess = normalizeGuess(rawValue);
   const isCorrect = gift.answers.some(a => normalizeGuess(a) === guess);
 
-  state.lastGuessDate = todayStr();
+  state.lastGuessAt = Date.now();
   if (isCorrect) {
     state.gifts[index].guessed = true;
     feedbackEl.textContent = "That's the one. Box unlocked.";
     feedbackEl.className = "riddle-feedback correct";
   } else {
     state.gifts[index].riddleIndex += 1;
-    feedbackEl.textContent = "Not quite. A new clue tomorrow.";
+    feedbackEl.textContent = "Not quite. A new clue in 2 hours.";
     feedbackEl.className = "riddle-feedback wrong";
   }
   saveState(state);
