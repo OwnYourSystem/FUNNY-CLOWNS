@@ -883,7 +883,7 @@
     <div class="portrait-medallion portrait-medallion--header" aria-hidden="true"></div>
     <div class="eyebrow">A gift, guarded</div>
     <h1 class="title">Forty &amp; <em>Fabulous</em></h1>
-    <p class="subtitle" id="headerSubtitle">Guess well. Wait for the morning. Then open the boxes.</p>
+    <p class="subtitle" id="headerSubtitle">Guess well. Wait for the countdown. Then open the boxes.</p>
   </header>
 
   <!-- ============================================================
@@ -932,7 +932,7 @@
       <div class="portrait-medallion portrait-medallion--sm" style="margin-bottom:14px;" aria-hidden="true"></div>
       <div class="eyebrow">All 10, correct</div>
       <h2 class="q-text" style="margin-bottom:6px;">The gate is open.</h2>
-      <p class="status-line" style="margin-top:14px;">Six gifts wait behind six riddles. Come back on the morning of, and you can start guessing.</p>
+      <p class="status-line" style="margin-top:14px;">Six gifts wait behind six riddles. Come back once the countdown ends, and you can start guessing.</p>
       <div class="btn-row">
         <button class="btn btn-primary" id="checkLockBtn">Continue</button>
       </div>
@@ -981,7 +981,7 @@
     <div id="stepNumberReveal" class="panel celebration-step" hidden>
       <div class="eyebrow">Both gates, open</div>
       <div class="big-forty">40</div>
-      <p class="subtitle">All 10, answered right, in one perfect run. Confidence, beauty, memory, adventure — a new chapter starts today.</p>
+      <p class="subtitle">All 10, answered right, in one perfect run. Confidence, beauty, memory, adventure — a new chapter is here.</p>
       <div class="step-continue">
         <button class="btn btn-primary" id="toGalleryBtn">Continue</button>
       </div>
@@ -1119,8 +1119,10 @@ const FINAL_CTA_LINK = "";
 const FINAL_CTA_NOTE = "With all my love, today and always.";
 
 // The unlock date. Gifts stay locked until the LOCAL device date/time
-// reaches this moment. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
-const BIRTHDAY_ISO = "2026-09-25T00:00:00";
+// reaches this moment. Set 5 days ahead of the actual birthday (Sep 25)
+// on purpose — 6 gifts with a 2-hour cooldown between guesses need that
+// runway. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
+const BIRTHDAY_ISO = "2026-09-20T00:00:00";
 
 // Seconds allowed per question. A wrong answer or running out of time
 // sends her back to question 1 — she must get all 10 right in one run.
@@ -1400,13 +1402,13 @@ function route(preferQuiz) {
   }
 
   if (preferQuiz) {
-    subtitle.textContent = "Guess well. Wait for the morning. Then open the boxes.";
+    subtitle.textContent = "Guess well. Wait for the countdown. Then open the boxes.";
     startQuiz();
     showScreen("quiz");
     return;
   }
 
-  subtitle.textContent = "Guess well. Wait for the morning. Then open the boxes.";
+  subtitle.textContent = "Guess well. Wait for the countdown. Then open the boxes.";
   renderLocked();
   showScreen("locked");
 }
@@ -1597,8 +1599,8 @@ function renderLocked() {
     : "Not yet.";
 
   document.getElementById("lockedSubtitle").textContent = dateOk
-    ? "The day is here. One more gate to clear."
-    : "The boxes open only on the morning of the birthday, and only once all 10 questions are answered right.";
+    ? "The countdown is over. One more gate to clear."
+    : "The boxes open once the countdown ends, and only once all 10 questions are answered right.";
 
   const cdWrap = document.getElementById("countdownWrap");
   if (dateOk) {
@@ -1611,8 +1613,8 @@ function renderLocked() {
 
   const lines = document.getElementById("lockedStatusLines");
   const dateLine = dateOk
-    ? `<p class="status-line ok">Date gate: <strong>open</strong> — today is the day.</p>`
-    : `<p class="status-line">Date gate: <strong>closed</strong> — waiting for the birthday.</p>`;
+    ? `<p class="status-line ok">Date gate: <strong>open</strong> — the countdown is over.</p>`
+    : `<p class="status-line">Date gate: <strong>closed</strong> — waiting for the countdown.</p>`;
 
   const quizLine = quizOk
     ? `<p class="status-line ok">Quiz gate: <strong>open</strong> — all 10 answered right.</p>`
