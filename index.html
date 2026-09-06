@@ -150,6 +150,7 @@
     box-shadow: var(--shadow);
     padding: 28px 22px;
     animation: rise 0.5s ease both;
+    transition: background 0.7s ease, border-color 0.7s ease, box-shadow 0.7s ease;
   }
 
   @keyframes rise {
@@ -854,6 +855,64 @@
     background: #000;
   }
 
+  /* ============================================================
+     THE TWIST — a hidden second quiz (Q11-20), free text only,
+     10s each. body.twist-theme swaps the whole palette dark while
+     it plays; removing the class brings back the normal theme.
+     ============================================================ */
+  html, body {
+    transition: background 0.7s ease, color 0.7s ease;
+  }
+
+  body.twist-theme {
+    background: radial-gradient(ellipse at top, #2a0a0a 0%, #050303 60%);
+    --bg: #050303;
+    --bg-soft: #0c0505;
+    --card: #140707;
+    --card-border: rgba(150, 30, 30, 0.35);
+    --gold: #a13333;
+    --gold-bright: #d65454;
+    --coral: #8f2323;
+    --coral-bright: #c94848;
+    --botanical: #5a2020;
+    --text: #ece0e0;
+    --text-dim: #a98686;
+    --text-faint: #6b4c4c;
+    --success: #7fae6f;
+    --danger: #ff4141;
+    --shadow: 0 20px 60px rgba(0,0,0,0.7);
+  }
+
+  #twistSkull {
+    text-align: center;
+    padding: 30px 10px 10px;
+  }
+
+  .twist-skull {
+    font-size: 76px;
+    line-height: 1;
+    animation: twist-shake 0.35s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(200, 40, 40, 0.55));
+  }
+
+  @keyframes twist-shake {
+    0%, 100% { transform: rotate(-4deg) scale(1); }
+    50% { transform: rotate(4deg) scale(1.05); }
+  }
+
+  .twist-laugh {
+    margin-top: 18px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--gold-bright, var(--gold));
+    min-height: 26px;
+  }
+
+  .twist-input { flex: 1; }
+  .twist-input.correct { border-color: var(--success); background: rgba(159,201,163,0.14); }
+  .twist-input.wrong { border-color: var(--danger); background: rgba(217,112,90,0.14); }
+
   /* Personal letter */
   .letter-card {
     text-align: left;
@@ -1100,11 +1159,46 @@
 
     <!-- 3b. Personal video -->
     <div id="stepVideo" class="panel celebration-step" hidden>
-      <div class="eyebrow">Before the letter</div>
+      <div class="eyebrow">One more thing</div>
       <h2 class="title" style="font-size:24px;">One more thing.</h2>
       <div class="personal-video-wrap" id="personalVideoWrap"></div>
       <div class="step-continue">
-        <button class="btn btn-primary" id="toLetterBtn">Continue</button>
+        <button class="btn btn-primary" id="toTwistBtn">Continue</button>
+      </div>
+    </div>
+
+    <!-- 3b-twist. The twist — 10 more questions, no multiple choice,
+         10s each, dark theme while it lasts. Not mentioned in the
+         original tour on purpose. -->
+    <div id="stepTwist" class="panel celebration-step" hidden>
+
+      <div id="twistSkull">
+        <div class="twist-skull" aria-hidden="true">💀</div>
+        <p class="twist-laugh" id="twistLaughText"></p>
+      </div>
+
+      <div id="twistPlay" hidden>
+        <p class="quiz-rule">Ten more, correct, in one run. <span id="twistRuleSeconds">10</span>s each — one slip or one timeout, and it's back to question 11.</p>
+        <div class="progress-track"><div class="progress-fill" id="twistProgressFill" style="width:0%"></div></div>
+        <div class="quiz-top-row">
+          <div class="q-index" id="twistQIndex">Question 11 of 20</div>
+          <div class="q-timer" id="twistQTimer">10s</div>
+        </div>
+        <p class="status-line warn" id="twistFailMsg" style="margin:0 0 14px;" hidden></p>
+        <h2 class="q-text" id="twistQText"></h2>
+        <form class="range-form" id="twistForm" autocomplete="off">
+          <input class="riddle-input twist-input" type="text" id="twistInput" placeholder="Type your answer" autocomplete="off">
+          <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
+      </div>
+
+      <div id="twistDone" hidden>
+        <div class="eyebrow">Nice work.</div>
+        <h2 class="q-text" style="margin-bottom:6px;">You survived.</h2>
+        <p class="status-line" style="margin-top:14px;">Twenty questions, all correct, in one run. Back to the good part now.</p>
+        <div class="step-continue">
+          <button class="btn btn-primary" id="toLetterBtn">Continue</button>
+        </div>
       </div>
     </div>
 
@@ -1319,6 +1413,60 @@ const QUIZ_QUESTIONS = [
     min: 59468,
     max: 60000,
     hint: ""
+  }
+];
+
+// Seconds allowed per twist question — much tighter than the first 10.
+const TWIST_TIME_LIMIT_SECONDS = 10;
+
+// ----------------------------------------------------------------
+// THE TWIST — 10 more questions (11-20), never mentioned in the tour.
+// Free text only, checked the same forgiving way as gift guesses:
+// case/spacing-insensitive, and correct as long as one of `answers`
+// appears anywhere in what she typed. Set `anyAnswer: true` to accept
+// literally anything (non-empty) instead of a fixed list.
+// ----------------------------------------------------------------
+const TWIST_QUESTIONS = [
+  {
+    text: "Where is our best travel experience for us?",
+    answers: ["Rome", "Roma"]
+  },
+  {
+    text: "What is your worst habit from Behnam's point of view?",
+    answers: ["silence", "silent"]
+  },
+  {
+    text: "Who is your favorite actress?",
+    answers: ["Jennifer Lawrence", "Jennifer", "J Law", "JLaw"]
+  },
+  {
+    text: "What is the name of Barcelona's stadium?",
+    answers: ["Camp Nou", "Nou Camp", "Camp Now"]
+  },
+  {
+    text: "What is the real name of your husband's mom?",
+    answers: ["Eshrat"]
+  },
+  {
+    text: "What is the second family name of your husband's father?",
+    answers: ["Jamshid"]
+  },
+  {
+    text: "What is the name of the hospital you were born in?",
+    anyAnswer: true,
+    answers: []
+  },
+  {
+    text: "What is your birth year animal sign?",
+    answers: ["Tiger"]
+  },
+  {
+    text: "What is your birth month stone?",
+    answers: ["Opal"]
+  },
+  {
+    text: "What was the street number of Behnam's home on Piroozi street?",
+    answers: ["2/22", "2 22", "2-22", "222"]
   }
 ];
 
@@ -1758,7 +1906,7 @@ function tickCountdown() {
       pass: number reveal, memory gallery, letter, gifts, finale.
       Nothing here ever renders before bothGatesPass() is true.
    ================================================================ */
-const CELEBRATION_STEPS = ["stepNumberReveal", "stepVideo", "stepLetter", "stepGifts", "stepFinale"];
+const CELEBRATION_STEPS = ["stepNumberReveal", "stepVideo", "stepTwist", "stepLetter", "stepGifts", "stepFinale"];
 let celebrationIndex = 0;
 
 // The number reveal / gallery / letter only play once, the first time
@@ -1784,6 +1932,8 @@ function showCelebrationStep() {
 
   if (stepId === "stepVideo") {
     renderPersonalVideo();
+  } else if (stepId === "stepTwist") {
+    startTwistFlow();
   } else if (stepId === "stepLetter") {
     renderLetter();
   } else if (stepId === "stepGifts") {
@@ -1806,6 +1956,7 @@ function advanceCelebration() {
 }
 
 document.getElementById("toVideoBtn").addEventListener("click", advanceCelebration);
+document.getElementById("toTwistBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toLetterBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toGiftsBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toFinaleBtn").addEventListener("click", advanceCelebration);
@@ -1822,6 +1973,134 @@ function renderPersonalVideo() {
       </div>
     `;
   }
+}
+
+/* ================================================================
+   5b) THE TWIST — a hidden second quiz (Q11-20), sprung right after
+   the video. Skull, laugh, dark theme, 10s free-text questions, one
+   slip sends her back to the start of this set. Reverts to the
+   normal theme the moment all 10 are answered right.
+   ================================================================ */
+let twistIndex = 0;
+let twistTimer = null;
+let twistSecondsLeft = TWIST_TIME_LIMIT_SECONDS;
+let twistLocked = false;
+
+document.getElementById("twistRuleSeconds").textContent = TWIST_TIME_LIMIT_SECONDS;
+
+function startTwistFlow() {
+  document.body.classList.add("twist-theme");
+  document.getElementById("twistSkull").hidden = false;
+  document.getElementById("twistPlay").hidden = true;
+  document.getElementById("twistDone").hidden = true;
+
+  const laughEl = document.getElementById("twistLaughText");
+  const lines = ["Ha.", "Ha ha ha...", "You didn't think ten was all, did you?"];
+  laughEl.textContent = "";
+  lines.forEach((line, i) => {
+    setTimeout(() => { laughEl.textContent = line; }, i * 900);
+  });
+  setTimeout(startTwistQuiz, lines.length * 900 + 400);
+}
+
+function startTwistQuiz() {
+  twistIndex = 0;
+  document.getElementById("twistSkull").hidden = true;
+  document.getElementById("twistPlay").hidden = false;
+  document.getElementById("twistDone").hidden = true;
+  document.getElementById("twistFailMsg").hidden = true;
+  renderTwistQuestion();
+}
+
+function renderTwistQuestion() {
+  const total = TWIST_QUESTIONS.length;
+  const q = TWIST_QUESTIONS[twistIndex];
+  twistLocked = false;
+
+  document.getElementById("twistProgressFill").style.width = `${(twistIndex / total) * 100}%`;
+  document.getElementById("twistQIndex").textContent = `Question ${11 + twistIndex} of 20`;
+  document.getElementById("twistQText").textContent = q.text;
+
+  const input = document.getElementById("twistInput");
+  input.value = "";
+  input.classList.remove("correct", "wrong");
+  input.disabled = false;
+  setTimeout(() => input.focus(), 0);
+
+  startTwistQuestionTimer();
+}
+
+function startTwistQuestionTimer() {
+  clearInterval(twistTimer);
+  twistSecondsLeft = TWIST_TIME_LIMIT_SECONDS;
+  updateTwistTimerDisplay();
+  twistTimer = setInterval(() => {
+    twistSecondsLeft -= 1;
+    updateTwistTimerDisplay();
+    if (twistSecondsLeft <= 0) {
+      clearInterval(twistTimer);
+      if (!twistLocked) restartTwistQuiz("Time's up — back to question 11.");
+    }
+  }, 1000);
+}
+
+function updateTwistTimerDisplay() {
+  const el = document.getElementById("twistQTimer");
+  el.textContent = `${twistSecondsLeft}s`;
+  el.classList.toggle("warn", twistSecondsLeft <= 4);
+}
+
+function checkTwistAnswer(rawValue, q) {
+  if (q.anyAnswer) return String(rawValue).trim().length > 0;
+  const guess = normalizeGuess(rawValue);
+  if (!guess) return false;
+  return q.answers.some(a => guess.includes(normalizeGuess(a)));
+}
+
+document.getElementById("twistForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (twistLocked) return;
+  const q = TWIST_QUESTIONS[twistIndex];
+  const input = document.getElementById("twistInput");
+
+  twistLocked = true;
+  clearInterval(twistTimer);
+  const isCorrect = checkTwistAnswer(input.value, q);
+  input.classList.add(isCorrect ? "correct" : "wrong");
+  input.disabled = true;
+
+  advanceOrRestartTwist(isCorrect);
+});
+
+function advanceOrRestartTwist(isCorrect) {
+  if (isCorrect) {
+    document.getElementById("twistFailMsg").hidden = true;
+    setTimeout(() => {
+      if (twistIndex === TWIST_QUESTIONS.length - 1) {
+        twistPassed();
+      } else {
+        twistIndex += 1;
+        renderTwistQuestion();
+      }
+    }, 550);
+  } else {
+    setTimeout(() => restartTwistQuiz("Not quite — back to question 11."), 700);
+  }
+}
+
+function restartTwistQuiz(message) {
+  twistIndex = 0;
+  const failMsg = document.getElementById("twistFailMsg");
+  failMsg.textContent = message;
+  failMsg.hidden = false;
+  renderTwistQuestion();
+}
+
+function twistPassed() {
+  clearInterval(twistTimer);
+  document.body.classList.remove("twist-theme");
+  document.getElementById("twistPlay").hidden = true;
+  document.getElementById("twistDone").hidden = false;
 }
 
 function renderLetter() {
