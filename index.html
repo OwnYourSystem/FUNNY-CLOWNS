@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>40 &mdash; A Birthday Reveal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&family=Vazirmatn:wght@400;500;600&display=swap">
 <style>
   /* ============================================================
      DESIGN TOKENS
@@ -31,6 +31,7 @@
     --radius-sm: 10px;
     --serif: 'Bodoni Moda', 'Didot', 'Georgia', 'Iowan Old Style', serif;
     --sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --farsi: 'Vazirmatn', Tahoma, 'Segoe UI', sans-serif;
     --shadow: 0 20px 60px rgba(15,6,14,0.5);
     /* Set from WIFE_AVATAR_URI / WIFE_PORTRAIT_URI at boot, see script */
     --wife-avatar: none;
@@ -913,7 +914,8 @@
   .twist-input.correct { border-color: var(--success); background: rgba(159,201,163,0.14); }
   .twist-input.wrong { border-color: var(--danger); background: rgba(217,112,90,0.14); }
 
-  /* Personal letter */
+  /* Personal letter — written in Persian, so this card runs RTL with
+     a Farsi-capable face (Bodoni Moda has no Arabic-script glyphs). */
   .letter-card {
     text-align: left;
     margin-top: 22px;
@@ -921,6 +923,10 @@
     border: 1px solid var(--card-border);
     border-radius: var(--radius-sm);
     background: rgba(203,164,104,0.05);
+  }
+
+  .letter-card[dir="rtl"] {
+    text-align: right;
   }
 
   .letter-title {
@@ -931,11 +937,23 @@
     margin: 0 0 14px;
   }
 
+  .letter-card[dir="rtl"] .letter-title {
+    font-family: var(--farsi);
+    font-style: normal;
+    font-weight: 600;
+  }
+
   .letter-body p {
     font-size: 14.5px;
     line-height: 1.75;
     color: var(--text-dim);
     margin: 0 0 14px;
+  }
+
+  .letter-card[dir="rtl"] .letter-body p {
+    font-family: var(--farsi);
+    font-size: 15px;
+    line-height: 2;
   }
 
   .letter-signoff {
@@ -944,6 +962,12 @@
     font-size: 16px;
     color: var(--text);
     margin-top: 18px;
+  }
+
+  .letter-card[dir="rtl"] .letter-signoff {
+    font-family: var(--farsi);
+    font-style: normal;
+    font-weight: 500;
   }
 
   /* Finale */
@@ -1205,7 +1229,7 @@
     <!-- 3c. Personal letter -->
     <div id="stepLetter" class="panel celebration-step" hidden>
       <div class="eyebrow">Before the gifts</div>
-      <div class="letter-card">
+      <div class="letter-card" dir="rtl" lang="fa">
         <h2 class="letter-title" id="letterTitle"></h2>
         <div class="letter-body" id="letterBody"></div>
         <p class="letter-signoff" id="letterSignoff"></p>
@@ -1306,9 +1330,8 @@ const PERSONAL_VIDEO_URL = "";
 // ----------------------------------------------------------------
 const LETTER_TITLE = "TODO — letter title, e.g. \"To you, at forty\"";
 const LETTER_PARAGRAPHS = [
-  "TODO — first paragraph of your letter to her.",
-  "TODO — second paragraph.",
-  "TODO — third paragraph."
+  "همسفر روزهای سخت و زیبای من، حالا که در آستانه چهل‌سالگی ایستاده‌ای، وقتی به خطوط ظریف و خستگی‌های پنهانِ چشمانت نگاه می‌کنم، قلبم از دردی آمیخته به جنون و عشق فشرده می‌شود. این چهل سال، تنها عبور بی‌رحمانه تقویم نبود؛ مقتلِ جوانیِ تو بود که آن را بی‌صدا به پای آشیانه‌مان، به پای قد کشیدن هرمان و دختر کوچکمان، و تاب آوردن در سرمای این غربت سوزاندی. هر تار موی سپیدی که امروز در آینه با حسرت نگاهش می‌کنی، طنابی است که به دور گلوی من می‌پیچد؛ چرا که می‌دانم تک‌تک آن‌ها تاوانِ شب‌بیداری‌ها، بغض‌های فروخورده و دردهایی است که در تنهایی به دوش کشیدی تا ما در این گوشه دنیا فرو نریزیم. دلم آتش می‌گیرد وقتی می‌بینم چگونه با شانه‌هایی که از بار روزگار خسته شده، هنوز هم تنها ستونِ استوارِ این خانه‌ای و من گاهی در هیاهوی زنده ماندن، فراموش کردم که تو نیز به پناهگاهی برای گریستن نیاز داری.",
+  "امروز که به شعله‌های لرزانِ شمع‌های چهل‌سالگی‌ات خیره می‌شوی، می‌خواهم بدانی زنی که روبروی من نشسته، با تمام زخم‌های روحش و اندوه پنهانش، هزار بار از روزهای اولِ آشنایی‌مان پرستیدنی‌تر است. من شرمسارِ تمام لحظاتی هستم که ندیدم چگونه ذره‌ذره آب می‌شوی تا ما جان بگیریم؛ اما از تو عاجزانه تمنا می‌کنم در این فصل جدید از عمرت، اجازه دهی من مرهمِ ترک‌های قلبت باشم و بار این‌همه خستگیِ باشکوه را به تنهایی به دوش نکشی. تو دردناک‌ترین و در عین حال زیباترین حقیقتِ زندگیِ منی؛ همسری که عصاره‌ی جانش را داد تا ما زنده بمانیم. تولد چهل‌سالگی‌ات مبارک، ای تمامِ سهمِ بهنام از این دنیای بی‌رحم؛ قسم می‌خورم تا آخرین تپشِ قلبم، شانه‌ای برای اشک‌هایت و آغوشی برای التیام دردهایت باشم."
 ];
 const LETTER_SIGNOFF = "TODO — how you sign it, e.g. \"Always, ___\"";
 
