@@ -741,6 +741,78 @@
   .welcome-cta { margin-top: 30px; }
 
   /* ============================================================
+     DEMO + TOUR SCREENS — shown once, between Welcome and the quiz.
+     ============================================================ */
+  .demo-video-wrap {
+    margin: 22px 0 6px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    background: var(--bg-soft);
+  }
+
+  .demo-video-wrap video {
+    display: block;
+    width: 100%;
+    max-height: 480px;
+    background: #000;
+  }
+
+  .demo-placeholder {
+    padding: 40px 22px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .demo-placeholder strong { color: var(--text); }
+
+  .tour-list {
+    list-style: none;
+    margin: 24px 0 4px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .tour-list li {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .tour-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    color: var(--gold-bright);
+    font-family: var(--serif);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tour-step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 4px 0 4px;
+  }
+
+  .tour-step-desc {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* ============================================================
      CELEBRATION FLOW — 5 sequential steps once both gates pass:
      number reveal, memory gallery, letter, gifts, finale.
      ============================================================ */
@@ -901,6 +973,62 @@
     <p class="subtitle">A quiet secret, kept until the right morning. Guess well, and it opens on its own.</p>
     <div class="welcome-cta">
       <button class="btn btn-primary" id="welcomeEnterBtn">Enter</button>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       SCREEN 0b: DEMO — a short video message before the rules.
+       Leave DEMO_VIDEO_URL ("" by default) unset to show a plain
+       placeholder card instead of a broken player.
+       ============================================================ -->
+  <main id="demoScreen" class="panel" hidden>
+    <div class="eyebrow">Before anything else</div>
+    <h2 class="title" style="font-size:26px;">A little something first.</h2>
+    <div class="demo-video-wrap" id="demoVideoWrap"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="demoContinueBtn">Continue</button>
+    </div>
+  </main>
+
+  <!-- ============================================================
+       SCREEN 0c: TOUR — a quick, non-interactive walkthrough of
+       what's ahead, before the real quiz begins.
+       ============================================================ -->
+  <main id="tourScreen" class="panel" hidden>
+    <div class="eyebrow">How this works</div>
+    <h2 class="title" style="font-size:26px;">Four steps, then it's yours.</h2>
+    <ol class="tour-list">
+      <li>
+        <span class="tour-num">1</span>
+        <div>
+          <p class="tour-step-title">Answer all 10, perfectly</p>
+          <p class="tour-step-desc">One run, no mistakes. A wrong answer or a slow one sends you back to question 1.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tour-num">2</span>
+        <div>
+          <p class="tour-step-title">Wait for the countdown</p>
+          <p class="tour-step-desc">Even a perfect run stays sealed until the date arrives.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tour-num">3</span>
+        <div>
+          <p class="tour-step-title">Solve 6 riddles</p>
+          <p class="tour-step-desc">Type your guess, no multiple choice. One try every 2 hours.</p>
+        </div>
+      </li>
+      <li>
+        <span class="tour-num">4</span>
+        <div>
+          <p class="tour-step-title">A letter, and every surprise</p>
+          <p class="tour-step-desc">Memories, a letter, and the gifts themselves, once every box is found.</p>
+        </div>
+      </li>
+    </ol>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="tourStartBtn">Let's start</button>
     </div>
   </main>
 
@@ -1081,7 +1209,20 @@ const MEMORY_PHOTO_6 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDA
 // ----------------------------------------------------------------
 // HER NAME — shown on the welcome screen ("For ___").
 // ----------------------------------------------------------------
-const HER_NAME = "TODO — her name";
+const HER_NAME = "Pardis";
+
+// ----------------------------------------------------------------
+// DEMO VIDEO — shown once, right after Welcome, before the quiz
+// rules. Leave "" to show a plain placeholder card instead.
+//
+// This file stays a single self-contained HTML document for
+// everything else, but video is the one asset NOT worth embedding
+// as base64 here — even a short clip balloons the file by tens of
+// MB. Instead, host the video somewhere (a direct link to an MP4,
+// an unlisted YouTube/Vimeo link, a Google Drive share link with
+// public view access) and paste that URL below.
+// ----------------------------------------------------------------
+const DEMO_VIDEO_URL = "";
 
 // ----------------------------------------------------------------
 // MEMORY GALLERY — shown once both gates pass, before the letter.
@@ -1376,6 +1517,8 @@ function allGiftsGuessed() {
    ================================================================ */
 const screens = {
   welcome: document.getElementById("welcomeScreen"),
+  demo: document.getElementById("demoScreen"),
+  tour: document.getElementById("tourScreen"),
   quiz: document.getElementById("quizScreen"),
   locked: document.getElementById("lockedScreen"),
   celebration: document.getElementById("celebrationScreen")
@@ -1921,11 +2064,35 @@ function escapeAttr(str) {
 }
 
 /* ================================================================
+   8b) DEMO SCREEN — a video message, shown once before the tour.
+   ================================================================ */
+function renderDemo() {
+  const wrap = document.getElementById("demoVideoWrap");
+  if (DEMO_VIDEO_URL) {
+    wrap.innerHTML = `<video src="${escapeAttr(DEMO_VIDEO_URL)}" controls playsinline></video>`;
+  } else {
+    wrap.innerHTML = `
+      <div class="demo-placeholder">
+        <strong>No video yet.</strong><br>
+        Set <code>DEMO_VIDEO_URL</code> near the top of the script to a hosted video link,
+        and it plays right here.
+      </div>
+    `;
+  }
+}
+
+document.getElementById("demoContinueBtn").addEventListener("click", () => showScreen("tour"));
+document.getElementById("tourStartBtn").addEventListener("click", () => route(false));
+
+/* ================================================================
    9) BOOT — always opens on the mysterious welcome screen; her
       quiz/locked/celebration state loads once she taps Enter.
    ================================================================ */
 document.getElementById("welcomeName").textContent = HER_NAME;
-document.getElementById("welcomeEnterBtn").addEventListener("click", () => route(false));
+document.getElementById("welcomeEnterBtn").addEventListener("click", () => {
+  renderDemo();
+  showScreen("demo");
+});
 showScreen("welcome");
 </script>
 
