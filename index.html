@@ -977,6 +977,13 @@
   /* Finale */
   .finale-panel { position: relative; }
 
+  .finale-recap {
+    margin-top: 34px;
+    text-align: left;
+  }
+
+  .finale-recap .eyebrow { text-align: center; margin-bottom: 18px; }
+
   .finale-cta {
     margin-top: 30px;
     background: var(--coral);
@@ -1275,6 +1282,10 @@
       <div class="eyebrow">A new chapter</div>
       <h2 class="title" style="font-size:28px;">Happy 40th, my love.</h2>
       <p class="subtitle">Here's to confidence, beauty, memory, and every adventure still ahead.</p>
+      <div class="finale-recap">
+        <div class="eyebrow">Everything you found today</div>
+        <div class="gift-grid" id="finaleGiftGrid"></div>
+      </div>
       <div class="step-continue">
         <button class="btn finale-cta" id="finaleCtaBtn">Begin the day</button>
       </div>
@@ -2164,6 +2175,20 @@ function renderLetter() {
   });
 }
 
+function unlockedGiftCardHTML(gift) {
+  const mediaStyle = gift.image
+    ? `background-image:url('${escapeAttr(gift.image)}')`
+    : `background-image: linear-gradient(135deg, #4a2c44, #3c2536)`;
+  return `
+    <div class="gift-media" style="${mediaStyle}"></div>
+    <div class="gift-body">
+      <h3 class="gift-title">${escapeHtml(gift.title)}</h3>
+      <p class="gift-desc">${escapeHtml(gift.description)}</p>
+      <span class="gift-cta">Open the box &rarr;</span>
+    </div>
+  `;
+}
+
 function renderFinale() {
   const btn = document.getElementById("finaleCtaBtn");
   const note = document.getElementById("finaleNote");
@@ -2177,6 +2202,16 @@ function renderFinale() {
       note.textContent = FINAL_CTA_NOTE;
     }
   };
+
+  const grid = document.getElementById("finaleGiftGrid");
+  grid.innerHTML = "";
+  GIFTS.forEach((gift, i) => {
+    const card = document.createElement("div");
+    card.className = "gift-card";
+    card.innerHTML = unlockedGiftCardHTML(gift);
+    card.addEventListener("click", () => openGiftModal(i));
+    grid.appendChild(card);
+  });
 
   launchConfetti();
 }
@@ -2241,17 +2276,7 @@ function renderReveal() {
 
     if (progress.guessed) {
       card.className = "gift-card";
-      const mediaStyle = gift.image
-        ? `background-image:url('${escapeAttr(gift.image)}')`
-        : `background-image: linear-gradient(135deg, #4a2c44, #3c2536)`;
-      card.innerHTML = `
-        <div class="gift-media" style="${mediaStyle}"></div>
-        <div class="gift-body">
-          <h3 class="gift-title">${escapeHtml(gift.title)}</h3>
-          <p class="gift-desc">${escapeHtml(gift.description)}</p>
-          <span class="gift-cta">Open the box &rarr;</span>
-        </div>
-      `;
+      card.innerHTML = unlockedGiftCardHTML(gift);
       card.addEventListener("click", () => openGiftModal(i));
     } else {
       const riddle = gift.riddles[progress.riddleIndex % gift.riddles.length];
