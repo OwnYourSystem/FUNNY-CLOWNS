@@ -914,6 +914,26 @@
   .twist-input.correct { border-color: var(--success); background: rgba(159,201,163,0.14); }
   .twist-input.wrong { border-color: var(--danger); background: rgba(217,112,90,0.14); }
 
+  /* Camera gate — a live selfie mirror, nothing recorded or sent. */
+  .camera-wrap {
+    margin: 22px 0 6px;
+    aspect-ratio: 3 / 4;
+    max-height: 420px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    background: var(--bg-soft);
+  }
+
+  .camera-wrap video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    background: #000;
+  }
+
   /* Personal letter — written in Persian, so this card runs RTL with
      a Farsi-capable face (Bodoni Moda has no Arabic-script glyphs). */
   .letter-card {
@@ -1235,7 +1255,23 @@
         <p class="letter-signoff" id="letterSignoff"></p>
       </div>
       <div class="step-continue">
-        <button class="btn btn-primary" id="toGiftsBtn">Open the boxes</button>
+        <button class="btn btn-primary" id="toCameraBtn">Continue</button>
+      </div>
+    </div>
+
+    <!-- 3c-2. Camera gate — a fun beat before the gifts, not a real
+         check. The camera is only ever mirrored live on-screen here;
+         nothing is recorded, saved, or sent anywhere. -->
+    <div id="stepCamera" class="panel celebration-step" hidden>
+      <div class="eyebrow">One last thing</div>
+      <h2 class="title" style="font-size:24px;">Show me that smile.</h2>
+      <p class="subtitle" style="margin-bottom:0;">Turn on your camera and give your best laugh before the boxes open.</p>
+      <div class="camera-wrap" id="cameraWrap">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+      </div>
+      <p class="status-line" id="cameraStatus" hidden></p>
+      <div class="step-continue">
+        <button class="btn btn-primary" id="toGiftsBtn">I laughed — open the boxes</button>
       </div>
     </div>
 
@@ -1929,7 +1965,7 @@ function tickCountdown() {
       pass: number reveal, memory gallery, letter, gifts, finale.
       Nothing here ever renders before bothGatesPass() is true.
    ================================================================ */
-const CELEBRATION_STEPS = ["stepNumberReveal", "stepVideo", "stepTwist", "stepLetter", "stepGifts", "stepFinale"];
+const CELEBRATION_STEPS = ["stepNumberReveal", "stepVideo", "stepTwist", "stepLetter", "stepCamera", "stepGifts", "stepFinale"];
 let celebrationIndex = 0;
 
 // The number reveal / gallery / letter only play once, the first time
@@ -1949,6 +1985,7 @@ function startCelebrationFlow() {
 }
 
 function showCelebrationStep() {
+  stopCameraStream(); // leaving stepCamera (or never having entered it) — always safe to call
   CELEBRATION_STEPS.forEach(id => { document.getElementById(id).hidden = true; });
   const stepId = CELEBRATION_STEPS[celebrationIndex];
   document.getElementById(stepId).hidden = false;
@@ -1959,6 +1996,8 @@ function showCelebrationStep() {
     startTwistFlow();
   } else if (stepId === "stepLetter") {
     renderLetter();
+  } else if (stepId === "stepCamera") {
+    startCameraGate();
   } else if (stepId === "stepGifts") {
     const state = getAppState();
     if (!state.celebrationSeen) {
@@ -1981,8 +2020,47 @@ function advanceCelebration() {
 document.getElementById("toVideoBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toTwistBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toLetterBtn").addEventListener("click", advanceCelebration);
+document.getElementById("toCameraBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toGiftsBtn").addEventListener("click", advanceCelebration);
 document.getElementById("toFinaleBtn").addEventListener("click", advanceCelebration);
+
+// Camera gate — a live selfie mirror before the gifts. Nothing is
+// captured, recorded, or sent anywhere; the stream is only ever
+// piped straight to the <video> element and stopped the moment she
+// leaves this step. Needs HTTPS (or localhost) — browsers refuse
+// camera access on a plain file:// page.
+let cameraStream = null;
+
+function startCameraGate() {
+  const video = document.getElementById("cameraVideo");
+  const statusEl = document.getElementById("cameraStatus");
+  statusEl.hidden = true;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    statusEl.textContent = "Camera not available here — that's fine, just hit the button below.";
+    statusEl.hidden = false;
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+    .then(stream => {
+      cameraStream = stream;
+      video.srcObject = stream;
+    })
+    .catch(() => {
+      statusEl.textContent = "Couldn't reach the camera — that's fine, just hit the button below.";
+      statusEl.hidden = false;
+    });
+}
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById("cameraVideo");
+  if (video) video.srcObject = null;
+}
 
 function renderPersonalVideo() {
   const wrap = document.getElementById("personalVideoWrap");
