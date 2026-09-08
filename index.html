@@ -1089,7 +1089,7 @@
         <span class="tour-num">3</span>
         <div>
           <p class="tour-step-title">Solve 6 riddles</p>
-          <p class="tour-step-desc">Type your guess, no multiple choice. One try every 2 hours.</p>
+          <p class="tour-step-desc">Type your guess, no multiple choice. One try every hour.</p>
         </div>
       </li>
       <li>
@@ -1252,7 +1252,7 @@
       <div class="reveal-header">
         <div class="eyebrow">Both gates, open</div>
         <h2 class="title" style="font-size:28px;">Six boxes. Six riddles.</h2>
-        <p class="subtitle">No multiple choice this time — type your guess. One try every 2 hours, and the riddle changes if you miss.</p>
+        <p class="subtitle">No multiple choice this time — type your guess. One try every hour, and the riddle changes if you miss.</p>
       </div>
       <p class="gifts-status" id="giftsStatus"></p>
       <div class="gift-grid" id="giftGrid"></div>
@@ -1356,7 +1356,7 @@ const FINAL_CTA_NOTE = "With all my love, today and always.";
 
 // The unlock date. Gifts stay locked until the LOCAL device date/time
 // reaches this moment. Set 5 days ahead of the actual birthday (Sep 25)
-// on purpose — 6 gifts with a 2-hour cooldown between guesses need that
+// on purpose — 6 gifts with a 1-hour cooldown between guesses need that
 // runway. Format: "YYYY-MM-DDTHH:MM:SS" (24-hour clock).
 const BIRTHDAY_ISO = "2026-09-20T00:00:00";
 
@@ -1366,7 +1366,7 @@ const BIRTHDAY_ISO = "2026-09-20T00:00:00";
 const QUESTION_TIME_LIMIT_SECONDS = 30;
 
 // How long she waits between gift guesses (across all boxes combined).
-const GIFT_GUESS_COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 hours
+const GIFT_GUESS_COOLDOWN_MS = 1 * 60 * 60 * 1000; // 1 hour
 
 // ----------------------------------------------------------------
 // QUIZ QUESTIONS — 2 shapes, picked with `type`:
@@ -2296,7 +2296,7 @@ function checkGiftGuess(index, rawValue, feedbackEl) {
     feedbackEl.className = "riddle-feedback correct";
   } else {
     state.gifts[index].riddleIndex += 1;
-    feedbackEl.textContent = "Not quite. A new clue in 2 hours.";
+    feedbackEl.textContent = "Not quite. A new clue in 1 hour.";
     feedbackEl.className = "riddle-feedback wrong";
   }
   saveState(state);
