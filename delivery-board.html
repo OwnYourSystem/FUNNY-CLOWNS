@@ -288,6 +288,7 @@ body.dragging .cursor-ring{opacity:0}
 .pill.s-block{color:#fff; background:var(--accent); border-color:transparent}
 .pill.s-block i{background:#fff}
 .pill.s-idle{color:var(--muted)}
+.pill.rep{color:var(--accent-ink); border-color:rgba(255,59,48,.35)}
 
 /* editors + add rows */
 .editor{margin:12px 0 4px; padding:16px; background:var(--raised); border:1px solid var(--hair);
@@ -476,6 +477,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div id="group-editor"></div>
       <div class="addrow" id="add-sub-row">
         <input class="f" id="ns-name" placeholder="New subtask" aria-label="New subtask name">
+        <select class="f s" id="ns-rep" aria-label="How often it repeats"></select>
         <button class="btn" id="ns-add">Add</button>
       </div>
       <div class="bars" id="sub-bars"></div>
@@ -672,6 +674,50 @@ var SEED=[
 
 var KEY="oys-min-deliveries-v1";
 var STATUSES=[["todo","Todo"],["doing","Doing"],["blocked","Blocked"],["done","Done"]];
+var REPEATS=[["","Once"],["daily","Daily"],["weekdays","Weekdays"],["weekly","Weekly"],
+             ["biweekly","Every 2 weeks"],["monthly","Monthly"]];
+function repLabel(r){
+  for(var i=0;i<REPEATS.length;i++) if(REPEATS[i][0]===r) return REPEATS[i][1];
+  return "Once";
+}
+/* The period a recurring subtask is currently in. "" means it is not due
+   today at all, which is how weekdays skips the weekend. */
+function periodKey(r,d){
+  d=d||new Date();
+  if(r==="daily") return dstr(d);
+  if(r==="weekdays"){ var w=d.getDay(); return (w===0||w===6)?"":dstr(d); }
+  if(r==="weekly") return d.getFullYear()+"-W"+pad2(weekNo(d));
+  if(r==="biweekly") return d.getFullYear()+"-B"+pad2(Math.floor(weekNo(d)/2));
+  if(r==="monthly") return d.getFullYear()+"-"+pad2(d.getMonth()+1);
+  return "";
+}
+/* Opening a new period closes the last one: a period finished lengthens the
+   streak, a period missed ends it, and either way the task comes back clean. */
+function rollRecurring(){
+  var due=[];
+  allSubs().forEach(function(sb){
+    if(!sb.rep) return;
+    var key=periodKey(sb.rep);
+    if(!key || sb.period===key) return;
+    if(sb.period){
+      if(sb.pct>=100||sb.status==="done"){
+        sb.streak=(sb.streak||0)+1;
+        sb.best=Math.max(sb.best||0,sb.streak);
+      } else sb.streak=0;
+    }
+    sb.period=key; sb.pct=0; sb.status="todo"; sb.upd=todayStr();
+    due.push(sb);
+  });
+  if(due.length){
+    due.forEach(function(sb){
+      if(!state.plan.some(function(c){ return c.id===sb.id; }) &&
+         !state.oftad.some(function(c){ return c.id===sb.id; }))
+        state.plan.push({k:"sub",id:sb.id,done:false});
+    });
+    save();
+  }
+  return due;
+}
 
 /* ---------------- helpers ---------------- */
 function $(s){ return document.querySelector(s); }
@@ -701,6 +747,7 @@ function boot(){
   state=s; sync();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
+  rollRecurring();          /* bring every habit into today before the first draw */
   return state;
 }
 function migrate1(old){
@@ -797,6 +844,10 @@ function alerts(){
       var s=state.subs[id]; if(!s||s.pct>=100||s.status==="done") return;
       var a=ageOf(s.upd);
       if(s.status==="blocked") out.push({sev:"crit",kind:"Blocked",t:s.name,w:g.name+" · held at "+s.pct+"% for "+a+" days"});
+      else if(s.rep){
+        if(periodKey(s.rep)) out.push({sev:"serious",kind:"Due",t:s.name,
+          w:g.name+" \u00b7 "+repLabel(s.rep).toLowerCase()+(s.streak?", "+s.streak+" in a row so far":"")});
+      }
       else if(s.pct>0 && a>=14) out.push({sev:"warn",kind:"Stalled",t:s.name,w:g.name+" · no movement in "+a+" days"});
       else if(s.pct===0 && gp>=45) out.push({sev:"serious",kind:"Not started",t:s.name,w:g.name+" is already at "+gp+"%"});
     });
@@ -855,6 +906,8 @@ function axis(el){ el.innerHTML=[0,25,50,75,100].map(function(v,i){
   var st=i===0?"left:0":(i===4?"right:0":"left:"+v+"%;transform:translateX(-50%)");
   return '<span style="'+st+'">'+v+"%</span>"; }).join(""); }
 axis($("#axis-main")); axis($("#axis-sub"));
+$("#ns-rep").innerHTML=REPEATS.map(function(o){
+  return '<option value="'+o[0]+'">'+o[1]+"</option>"; }).join("");
 
 function renderMain(){
   $("#main-bars").innerHTML=state.groups.map(function(g){
@@ -889,6 +942,8 @@ function renderSubs(){
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
       '<span class="rname">'+esc(s.name)+'</span>'+
+      (s.rep?'<span class="pill rep">'+esc(repLabel(s.rep))+'</span>':"")+
+      (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval">'+s.pct+'%</span>'+
@@ -908,6 +963,8 @@ function subEditor(s){
     '<label class="wide">Name<input class="f" data-ed="name" value="'+esc(s.name)+'"></label>'+
     '<label>Status<select class="f" data-ed="status">'+STATUSES.map(function(o){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
+    '<label>Repeats<select class="f" data-ed="rep">'+REPEATS.map(function(o){
+      return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
     '<label>Last moved<input class="f" type="date" data-ed="upd" value="'+esc(s.upd)+'"></label>'+
@@ -1067,6 +1124,10 @@ document.addEventListener("change",function(e){
     else if(k==="status"){ s.status=v; if(v==="done") s.pct=100; else if(s.pct>=100) s.pct=95; s.upd=todayStr(); }
     else if(k==="pct"){ s.pct=clamp(Math.round(+v/5)*5,0,100); s.upd=todayStr();
       s.status = s.pct>=100?"done":(s.pct>0&&s.status==="todo"?"doing":s.status); }
+    else if(k==="rep"){
+      s.rep=v; s.period=v?periodKey(v):""; s.streak=s.streak||0;
+      if(v){ s.pct=0; s.status="todo"; s.upd=todayStr(); }
+    }
     else if(k==="tag") s.tag=v.trim();
     else if(k==="upd") s.upd=v||todayStr();
     touchHist(); save(); renderAll(); return;
@@ -1089,7 +1150,9 @@ $("#ns-add").addEventListener("click",function(){
   var g=gById(state.sel); if(!g){ return; }
   var n=$("#ns-name").value.trim(); if(!n){ $("#ns-name").focus(); return; }
   var id=uid("s");
-  state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id};
+  var rp=$("#ns-rep").value||"";
+  state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id,
+                  rep:rp,period:rp?periodKey(rp):"",streak:0,best:0};
   g.subs.push(id);
   $("#ns-name").value="";
   touchHist(); save(); renderAll();
@@ -1621,6 +1684,8 @@ function mirrorToday(){
         plan: state.plan.map(cardLine),
         done: state.done.map(cardLine),
         attention: alerts().slice(0,6).map(function(a){ return a.kind+" — "+a.t+" ("+a.w+")"; }),
+        recurringDue: allSubs().filter(function(x){ return x.rep && periodKey(x.rep) && x.pct<100 && x.status!=="done"; })
+          .map(function(x){ return {name:x.name, every:repLabel(x.rep), streak:x.streak||0}; }),
         recentDays: state.dayLog.slice(0,7)
       }).catch(function(){});
     }catch(e){}
@@ -1865,6 +1930,8 @@ function botSnapshot(){
     g.subs.forEach(function(id){
       var sb=state.subs[id]; if(!sb) return;
       out.push("  - "+sb.name+" | "+sb.pct+"% | "+statusOf(sb).label+
+        (sb.rep?" | repeats "+repLabel(sb.rep)+(sb.streak?", streak "+sb.streak:"")+
+          (periodKey(sb.rep)?", due now":", not due today"):"")+
         (sb.tag?" | tag "+sb.tag:"")+" | last moved "+sb.upd);
     });
   });
@@ -1884,7 +1951,7 @@ var BOT_RULES=
 "and stop.\n\n"+
 "When the person asks for a change, MAKE it with the tools instead of describing how to do it by hand. "+
 "You can do everything the buttons can: set progress and status, add, rename, remove and move subtasks, "+
-"add main tasks, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
+"add main tasks, set how often a subtask repeats, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
 "is ambiguous the tool will tell you, so ask which one.\n\n"+
 "Answer in at most 50 words unless you are listing tasks. No preamble, no restating the question. "+
 "After a change, say what changed in one short line.\n\n"+
@@ -1987,6 +2054,17 @@ function botTools(){
      if(["oftad","plan","done"].indexOf(z)<0) throw new Error("Dock must be focus, plan or done.");
      var n=state[z].length; state[z]=[];
      return done("Cleared "+n+" card"+(n===1?"":"s")+".");
+   }},
+  {name:"set_recurrence",description:"Make a subtask repeat, or stop it repeating. Values: none, daily, weekdays, weekly, biweekly, monthly. A repeating subtask resets to 0% at the start of each period and keeps a streak of periods finished in a row.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},every:{type:"string",enum:["none","daily","weekdays","weekly","biweekly","monthly"]}},required:["subtask","every"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), v=String(a.every||"").toLowerCase();
+     if(v==="none"||v==="once") v="";
+     if(v && ["daily","weekdays","weekly","biweekly","monthly"].indexOf(v)<0)
+       throw new Error("Repeat must be none, daily, weekdays, weekly, biweekly or monthly.");
+     sb.rep=v; sb.period=v?periodKey(v):""; sb.streak=sb.streak||0;
+     if(v){ sb.pct=0; sb.status="todo"; sb.upd=todayStr(); }
+     return done(sb.name+(v?" now repeats "+repLabel(v).toLowerCase()+".":" no longer repeats."));
    }},
   {name:"open_main_task",description:"Open one main task so its subtasks show in the subtask chart. Returns confirmation.",
    inputSchema:{type:"object",properties:{main_task:{type:"string"}},required:["main_task"]},
