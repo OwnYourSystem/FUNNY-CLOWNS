@@ -80,6 +80,10 @@
 
 *{box-sizing:border-box}
 html,body{margin:0}
+/* A panel drag reads scrollY. Scroll anchoring silently adjusts scrollY when
+   the canvas grows underneath, which fed straight back into the drag and ran
+   the panel away down the page. */
+html{overflow-anchor:none}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{background:var(--ground); color:var(--ink); font-family:var(--font); font-size:15px;
   line-height:1.5; -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased;
@@ -91,15 +95,13 @@ img{max-width:100%}
 :focus-visible{outline:1.5px solid var(--accent); outline-offset:3px; border-radius:6px}
 #river{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; display:block}
 .wrap{max-width:1200px; margin-inline:auto; padding-inline:20px; padding-block:34px 60px;
-  display:flex; flex-direction:column; gap:22px; perspective:1600px; perspective-origin:50% 32%}
-#canvas{transform-style:preserve-3d; will-change:transform}
-/* depth: what you act on today rides closest to the camera */
-#canvas>[data-panel="oftad"]{transform:translateZ(24px)}
-#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{transform:translateZ(13px)}
-#canvas>[data-panel="mains"],#canvas>[data-panel="subs"]{transform:translateZ(3px)}
-#canvas>[data-panel="kpis"]{transform:translateZ(-7px)}
-#canvas>[data-panel="alerts"]{transform:translateZ(-17px)}
-body.flat #canvas,body.flat #canvas>[data-panel]{transform:none!important}
+  display:flex; flex-direction:column; gap:22px}
+/* The camera is one transform on the board itself. Per-panel translateZ inside
+   a perspective context made hit testing drift from what was painted — the
+   further a panel sat from the perspective origin, the further a click landed
+   from it — so depth now comes from the single camera transform only. */
+#canvas{will-change:transform; transform-origin:50% 30%}
+body.flat #canvas{transform:none!important}
 
 /* header */
 .masthead{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:18px}
@@ -1407,8 +1409,10 @@ function hits(a,b){
 }
 /* the panel under your hand holds its place; whatever it touches steps below it,
    and the push cascades until nothing overlaps. */
+var lastMoved="";
 function resolveOverlaps(activeId){
   if(!isFree()) return;
+  if(activeId===null||activeId===undefined) activeId=lastMoved;
   var all=panels().map(pRect);
   var active=null, rest=[];
   all.forEach(function(r){ if(r.id===activeId) active=r; else rest.push(r); });
@@ -1490,44 +1494,59 @@ document.addEventListener("pointerdown",function(e){
   if(!el) return;
   e.preventDefault(); e.stopPropagation();
   goFree();
-  var r=el.getBoundingClientRect(), box=CANVAS.getBoundingClientRect();
   pdrag={el:el,pid:e.pointerId,mode:cz?"corner":(rz?"size":"move"),
-         dx:e.clientX-r.left, dy:e.clientY-r.top,
-         w0:r.width, h0:r.height, x0:e.clientX, y0:e.clientY,
-         left:Math.round(r.left-box.left)};
+         ox:el.offsetLeft, oy:el.offsetTop, w0:el.offsetWidth, h0:el.offsetHeight,
+         x0:e.clientX, y0:e.clientY, s0:window.scrollY, lx:e.clientX, ly:e.clientY};
   el.style.zIndex=++zTop; el.classList.add("lifted");
   document.body.classList.add("panning");
   try{ (rz||h).setPointerCapture(e.pointerId); }catch(err){}
   hideTip();
 },true);
-document.addEventListener("pointermove",function(e){
-  if(!pdrag||e.pointerId!==pdrag.pid) return;
-  e.preventDefault();
-  var box=CANVAS.getBoundingClientRect(), W=box.width;
+function panelStep(){
+  if(!pdrag) return;
+  var W=CANVAS.clientWidth;
+  var dx=pdrag.lx-pdrag.x0, dy=(pdrag.ly-pdrag.y0)+(window.scrollY-pdrag.s0);
+  var L=state.layout[pdrag.el.dataset.panel];
   if(pdrag.mode==="size"||pdrag.mode==="corner"){
-    var L=state.layout[pdrag.el.dataset.panel];
-    var w=Math.round((e.clientX-pdrag.x0+pdrag.w0)/10)*10;
-    w=Math.max(280,Math.min(w,W-pdrag.left));
-    pdrag.el.style.width=w+"px"; L.w=w;
+    var w=Math.round((pdrag.w0+dx)/10)*10;
+    w=Math.max(280,Math.min(w,W-pdrag.ox));
+    pdrag.el.style.width=w+"px"; if(L) L.w=w;
     if(pdrag.mode==="corner"){
-      var hh=Math.round((e.clientY-pdrag.y0+pdrag.h0)/10)*10;
-      hh=Math.max(140,hh);
-      pdrag.el.style.height=hh+"px"; pdrag.el.style.overflowY="auto"; L.h=hh;
+      var hh=Math.max(140,Math.round((pdrag.h0+dy)/10)*10);
+      pdrag.el.style.height=hh+"px"; pdrag.el.style.overflowY="auto"; if(L) L.h=hh;
     }
   } else {
-    var x=Math.round((e.clientX-box.left-pdrag.dx)/10)*10;
-    var y=Math.round((e.clientY-box.top-pdrag.dy)/10)*10;
+    var x=Math.round((pdrag.ox+dx)/10)*10, y=Math.round((pdrag.oy+dy)/10)*10;
     x=Math.max(0,Math.min(x,Math.max(0,W-pdrag.el.offsetWidth)));
-    y=Math.max(0,y);
-    place(pdrag.el,x,y,pdrag.el.offsetWidth);
+    place(pdrag.el,x,Math.max(0,y),pdrag.el.offsetWidth);
   }
   resolveOverlaps(pdrag.el.dataset.panel);
   fitCanvas();
+}
+/* a panel drag scrolls the page at the edges too, so a panel at the
+   bottom of a long board can be carried to the top */
+var panRAF=null;
+function panLoop(){
+  if(!pdrag){ panRAF=null; return; }
+  var y=pdrag.ly, H=window.innerHeight, Z=130, sp=0;
+  if(y<Z) sp=-(1-y/Z)*26;
+  else if(y>H-Z) sp=(1-(H-y)/Z)*26;
+  if(sp) window.scrollBy(0,sp);
+  panelStep();
+  panRAF=requestAnimationFrame(panLoop);
+}
+document.addEventListener("pointermove",function(e){
+  if(!pdrag||e.pointerId!==pdrag.pid) return;
+  e.preventDefault();
+  pdrag.lx=e.clientX; pdrag.ly=e.clientY;
+  panelStep();
+  if(!panRAF) panRAF=requestAnimationFrame(panLoop);
 },true);
 function endPanel(e){
   if(!pdrag||e.pointerId!==pdrag.pid) return;
   pdrag.el.classList.remove("lifted");
-  var id=pdrag.el.dataset.panel; pdrag=null;
+  var id=pdrag.el.dataset.panel; lastMoved=id; pdrag=null;
+  if(panRAF){ cancelAnimationFrame(panRAF); panRAF=null; }
   document.body.classList.remove("panning");
   resolveOverlaps(id); save(); fitCanvas();
 }
@@ -1618,6 +1637,7 @@ function buildFlow(){
 function riverFrame(ts){
   if(!rctx){ riverRAF=null; return; }
   var dt=Math.min(64, ts-tNow||16); tNow=ts;
+  driftCam(ts);
   var ck=cam.hold?0.24:0.055;          /* settles decisively when a hand reaches in */
   cam.x+=(cam.tx-cam.x)*ck; cam.y+=(cam.ty-cam.y)*ck;
   var cx=W*0.5 + cam.x*W*0.16;
@@ -1686,9 +1706,15 @@ function riverFrame(ts){
 }
 
 /* ---------------- drone camera ---------------- */
+/* Only a real device tilt banks the board. A pointer must never move it:
+   the board would shift out from under whatever you were reaching for, and
+   panels far from the perspective origin shifted far enough to miss. */
+var tiltSource="";
 function applyCam(){
   if(!CANVAS) return;
-  CANVAS.style.transform="rotateX("+(-cam.y*4.2).toFixed(3)+"deg) rotateY("+(cam.x*5.4).toFixed(3)+"deg)";
+  if(tiltSource!=="device"||cam.hold){ CANVAS.style.transform=""; return; }
+  CANVAS.style.transform="perspective(1600px) rotateX("+(-cam.y*4.2).toFixed(3)+
+    "deg) rotateY("+(cam.x*5.4).toFixed(3)+"deg)";
 }
 function camLoop(){
   applyCam();
@@ -1711,16 +1737,18 @@ document.addEventListener("pointercancel",function(){
 
 var motionOn=false, tiltBound=false;
 function onTilt(e){
-  if(cam.hold) return;
   if(e.gamma==null&&e.beta==null) return;
+  tiltSource="device";
+  if(cam.hold) return;
   cam.tx=Math.max(-1,Math.min(1,(e.gamma||0)/34));
   cam.ty=Math.max(-1,Math.min(1,((e.beta||0)-48)/40));
 }
-function onMouseCam(e){
-  if(cam.hold) return;
-  if(e.pointerType&&e.pointerType!=="mouse") return;
-  cam.tx=(e.clientX/window.innerWidth-0.5)*2;
-  cam.ty=(e.clientY/window.innerHeight-0.5)*2;
+/* with no device to tilt, the valley drifts on its own so the scene still
+   breathes, but the board itself stays put */
+function driftCam(ts){
+  if(tiltSource==="device") return;
+  cam.tx=Math.sin(ts/9000)*0.55;
+  cam.ty=Math.cos(ts/13000)*0.35;
 }
 function startMotion(){
   motionOn=true; document.body.classList.remove("flat");
@@ -1730,7 +1758,6 @@ function startMotion(){
   if(!tiltBound){
     tiltBound=true;
     window.addEventListener("deviceorientation",onTilt);
-    window.addEventListener("pointermove",onMouseCam,{passive:true});
   }
   state.motion=true; save(); paintMotionBtn();
 }
