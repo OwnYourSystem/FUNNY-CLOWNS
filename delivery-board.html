@@ -146,9 +146,35 @@ body.flat #canvas{transform:none!important}
 
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
-#canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"],
-#canvas>[data-panel="bot"]{grid-column:1/-1}
-.bot-log{margin-top:14px; max-height:340px; overflow-y:auto; display:flex; flex-direction:column;
+#canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"]{grid-column:1/-1}
+#botdock{position:fixed; z-index:120; width:390px; display:flex; flex-direction:column;
+  background:color-mix(in srgb, var(--panel) 88%, transparent);
+  -webkit-backdrop-filter:blur(26px) saturate(1.3); backdrop-filter:blur(26px) saturate(1.3);
+  border:1px solid var(--rule); border-radius:20px; padding:0 16px 16px;
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.72); max-height:76vh}
+#botdock.collapsed{display:none}
+.bot-head{display:flex; align-items:center; gap:10px; padding:14px 0 12px; cursor:move;
+  touch-action:none; border-bottom:1px solid var(--hair)}
+.bot-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:var(--glow); flex:none}
+.bot-name{font-size:14px; font-weight:500; letter-spacing:-.01em; flex:1}
+.bot-tools{display:flex; gap:6px; flex:none}
+.bot-tools .mini{padding:5px 9px}
+#bot-min{font-size:15px; line-height:1; padding:4px 10px}
+#bot-launch{position:fixed; z-index:120; right:22px; bottom:22px; width:54px; height:54px;
+  border-radius:50%; border:1px solid var(--rule); background:var(--panel); color:var(--ink);
+  display:grid; place-items:center; cursor:pointer; box-shadow:0 18px 40px -14px rgba(0,0,0,.7);
+  transition:transform .3s var(--ease), border-color .3s var(--ease)}
+#bot-launch:hover{transform:translateY(-2px); border-color:var(--accent)}
+.bot-size{position:absolute; right:2px; bottom:2px; width:20px; height:20px; cursor:nwse-resize;
+  touch-action:none}
+.bot-size::after{content:""; position:absolute; right:5px; bottom:5px; width:8px; height:8px;
+  border-right:2px solid var(--muted); border-bottom:2px solid var(--muted)}
+.bot-mic{width:38px; flex:none; color:var(--muted); display:grid; place-items:center; padding:7px 0}
+.bot-mic.on{color:#fff; background:var(--accent); border-color:var(--accent)}
+.bot-mic.on{animation:mic 1.1s ease-in-out infinite}
+@keyframes mic{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.5)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
+@media (prefers-reduced-motion:reduce){ .bot-mic.on{animation:none} }
+.bot-log{margin-top:14px; flex:1 1 auto; min-height:120px; max-height:none; overflow-y:auto; display:flex; flex-direction:column;
   gap:10px; padding-right:4px; cursor:auto}
 .bot-msg{max-width:74ch; font-size:13.5px; line-height:1.55; padding:10px 13px; border-radius:14px;
   white-space:pre-wrap; overflow-wrap:anywhere}
@@ -165,7 +191,13 @@ body.flat #canvas{transform:none!important}
   border:1px solid var(--hair); border-radius:999px; padding:7px 13px; cursor:pointer;
   transition:border-color .3s var(--ease), color .3s var(--ease)}
 .bot-chip:hover{color:var(--ink); border-color:var(--rule)}
-.bot-ask{display:flex; gap:10px; margin-top:12px; align-items:center}
+.bot-ask{display:flex; gap:8px; margin-top:12px; align-items:center}
+@media (max-width:900px){
+  #botdock{left:12px!important; right:12px; top:auto!important; bottom:12px!important;
+    width:auto; max-height:64vh}
+  .bot-head{cursor:default}
+  .bot-size{display:none}
+}
 .bot-ask .f{flex:1 1 auto; width:auto}
 #canvas.free{display:block}
 #canvas.free>[data-panel]{position:absolute; margin:0}
@@ -531,23 +563,31 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     <div class="alerts" id="alerts"></div>
   </section>
 
-  <section class="panel bot-panel" data-panel="bot" hidden>
-    <div class="p-head">
-      <div>
-        <div class="p-title">Board assistant</div>
-        <div class="p-note">Ask for anything you could do by hand and it does it. It only talks about this board.</div>
-      </div>
-      <div class="p-tools"><button class="mini" id="bot-clear">Clear</button></div>
+  </div>
+
+  <div id="botdock" hidden>
+    <div class="bot-head" id="bot-head">
+      <span class="bot-dot"></span>
+      <span class="bot-name">Board tutor</span>
+      <span class="bot-tools">
+        <button class="mini" id="bot-speak" aria-pressed="false" title="Read replies aloud">Speak</button>
+        <button class="mini" id="bot-clear" title="Start over">Clear</button>
+        <button class="mini" id="bot-min" title="Collapse">&minus;</button>
+      </span>
     </div>
     <div class="bot-log" id="bot-log"></div>
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
-      <input class="f" id="bot-input" autocomplete="off" placeholder="Set Fine Tuning to 40 percent" aria-label="Ask the board assistant">
+      <button class="mini bot-mic" id="bot-mic" title="Speak to it" aria-label="Speak to it"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+      <input class="f" id="bot-input" autocomplete="off" placeholder="Ask, or tap the dot and talk" aria-label="Ask the board tutor">
       <button class="btn" id="bot-send">Send</button>
       <button class="btn" id="bot-stop" hidden>Stop</button>
     </div>
-  </section>
+    <span class="bot-size" id="bot-size" aria-hidden="true"></span>
   </div>
+  <button id="bot-launch" hidden aria-label="Open the board tutor">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>
+  </button>
 
   <footer>
     <details class="drawer">
@@ -1945,7 +1985,8 @@ function botSnapshot(){
   return out.join("\n");
 }
 var BOT_RULES=
-"You are the assistant built into this Minimum Deliveries board. You speak only about this board: "+
+"You are the tutor built into this Minimum Deliveries board: patient, concrete, and on the person's side. "+
+"You speak only about this board: "+
 "its main tasks, subtasks, progress, status, the three docks (One Task A Day, Today's Plan, Done Today), "+
 "and what to work on next. If asked about anything else, say in one line that you only handle this board, "+
 "and stop.\n\n"+
@@ -1953,8 +1994,9 @@ var BOT_RULES=
 "You can do everything the buttons can: set progress and status, add, rename, remove and move subtasks, "+
 "add main tasks, set how often a subtask repeats, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
 "is ambiguous the tool will tell you, so ask which one.\n\n"+
-"Answer in at most 50 words unless you are listing tasks. No preamble, no restating the question. "+
-"After a change, say what changed in one short line.\n\n"+
+"Teach rather than lecture. Ask one question at a time, never a list of them. Keep every answer under "+
+"50 words unless you are listing tasks. No preamble, no restating the question. After a change, say what "+
+"changed in one short line, then offer the single next step. When a streak is running, say so.\n\n"+
 "Here is the board right now:\n";
 
 function botTools(){
@@ -2091,6 +2133,7 @@ function botRender(){
   }
   botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
   log.scrollTop=log.scrollHeight;
+  botClamp();
 }
 var BOT_ERR={
   not_granted:"You declined, so the assistant cannot run on this page. Reload to be asked again.",
@@ -2104,6 +2147,7 @@ async function botAsk(text){
   if(botBusy||!botSample) return;
   botBusy=true;
   $("#bot-send").disabled=true; $("#bot-stop").hidden=false; $("#bot-input").value="";
+  if(!SR||!hearing) micUI(false);
   botTurns.push({role:"user",content:text});
   if(botTurns.length>14) botTurns=botTurns.slice(-14);
   botRender();
@@ -2118,6 +2162,7 @@ async function botAsk(text){
     );
     botTurns.push({role:"assistant",content:res.text});
     botRender();
+    speakOut(res.text);
   }catch(e){
     var msg=BOT_ERR[e&&e.code]||("Something went wrong"+(e&&e.code?" ("+e.code+")":"")+".");
     if(e&&e.text){ botTurns.push({role:"assistant",content:e.text}); botRender(); }
@@ -2128,15 +2173,178 @@ async function botAsk(text){
     $("#bot-send").disabled=false; $("#bot-stop").hidden=true;
   }
 }
+
+/* ---------------- how the tutor opens ---------------- */
+function botGreeting(){
+  var a=allSubs(), fin=0;
+  a.forEach(function(x){ if(x.pct>=100||x.status==="done") fin++; });
+  var al=alerts(), h=new Date().getHours();
+  var hi = h<5?"Late one." : h<12?"Good morning." : h<18?"Good afternoon." : "Good evening.";
+  var due=a.filter(function(x){ return x.rep&&periodKey(x.rep)&&x.pct<100&&x.status!=="done"; });
+  var worst=null;
+  al.forEach(function(x){ if(!worst&&(x.kind==="Blocked"||x.kind==="Overdue")) worst=x; });
+  var L=[hi+" Here is where the board stands."];
+  L.push("");
+  L.push(overall().toFixed(1)+"% overall, "+fin+" of "+a.length+" subtasks finished across "+state.groups.length+" main tasks.");
+  if(worst) L.push(worst.kind.toLowerCase()==="blocked" ? ("The one that is properly stuck is “"+worst.t+"” — "+worst.w+".")
+                                                        : ("“"+worst.t+"” is overdue."));
+  else if(al.length) L.push(al.length+" things want a look, nothing blocked.");
+  else L.push("Nothing blocked, nothing stalled.");
+  if(due.length) L.push(due.length+" repeating task"+(due.length>1?"s are":" is")+" due today: "+
+    due.slice(0,3).map(function(x){ return x.name; }).join(", ")+".");
+  L.push("");
+  L.push("I can change anything here as we talk — progress, status, what repeats, what you do today.");
+  L.push(state.oftad.length? "Shall we look at what is blocked, or at the task you picked for today?"
+                           : "Shall we pick your one task for today, or start with what is stuck?");
+  return L.join("\n");
+}
+
+/* ---------------- voice ---------------- */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var canSpeak=("speechSynthesis" in window), rec=null, hearing=false, handsFree=false, spokeLast=false;
+var VOICE_ERR={
+  "not-allowed":"The microphone is blocked here. Inside this frame the browser may refuse it — the typed box still works.",
+  "service-not-allowed":"This browser will not run speech recognition in an embedded page. Type instead.",
+  "audio-capture":"No microphone found.",
+  "network":"Speech recognition could not reach its service.",
+  "no-speech":""
+};
+function micUI(on){
+  hearing=on;
+  var m=$("#bot-mic"); if(m) m.classList.toggle("on",!!on);
+}
+function stopHearing(){
+  handsFree=false;
+  try{ if(rec) rec.stop(); }catch(e){}
+  micUI(false);
+}
+function listen(){
+  if(!SR||hearing||botBusy) return;
+  try{
+    rec=new SR();
+    rec.lang=navigator.language||"en-US";
+    rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
+    rec.onresult=function(e){
+      var txt="";
+      for(var i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript;
+      $("#bot-input").value=txt;
+      if(e.results[e.results.length-1].isFinal){
+        var said=txt.trim();
+        micUI(false);
+        try{ rec.stop(); }catch(err){}
+        if(said){ spokeLast=true; botAsk(said); }
+      }
+    };
+    rec.onerror=function(e){
+      micUI(false);
+      var msg=VOICE_ERR[e&&e.error];
+      if(msg===undefined) msg="The microphone stopped ("+(e&&e.error||"unknown")+").";
+      if(msg) botBubble("err",msg);
+      handsFree=false;
+    };
+    rec.onend=function(){ micUI(false); };
+    micUI(true);
+    rec.start();
+  }catch(err){ micUI(false); botBubble("err","This browser cannot listen. Type instead."); }
+}
+function speakOut(text){
+  if(!state.speak||!canSpeak||!text) return;
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g," ").slice(0,700));
+    u.lang=navigator.language||"en-US"; u.rate=1.03; u.pitch=1;
+    u.onend=function(){ if(handsFree&&spokeLast) setTimeout(listen,250); };
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------------- the window floats where you put it ---------------- */
+/* The transcript grows, so the window has to be kept on screen: let it use the
+   room below wherever it sits, and move it up before it would run off. */
+function botClamp(){
+  var d=$("#botdock"); if(!d||d.hidden||window.innerWidth<900) return;
+  d.style.maxHeight=(window.innerHeight-16)+"px";
+  var w=d.offsetWidth, h=d.offsetHeight;
+  var x=Math.min(Math.max(8,parseFloat(d.style.left)||0),Math.max(8,window.innerWidth-w-8));
+  var y=Math.min(Math.max(8,parseFloat(d.style.top)||0),Math.max(8,window.innerHeight-h-8));
+  d.style.left=x+"px"; d.style.top=y+"px";
+  d.style.maxHeight=(window.innerHeight-y-10)+"px";
+  state.botPos={x:x,y:y};
+}
+function botPlace(){
+  var d=$("#botdock"); if(!d) return;
+  if(window.innerWidth<900){ d.style.left=d.style.top=""; return; }
+  var P=state.botPos;
+  if(!P){ P={x:Math.max(8,window.innerWidth-410), y:Math.max(8,window.innerHeight-560)}; }
+  d.style.left=P.x+"px"; d.style.top=P.y+"px";
+  if(state.botSize){ d.style.width=state.botSize.w+"px"; d.style.height=state.botSize.h+"px"; }
+  botClamp();
+}
+(function(){
+  var d=$("#botdock"), head=$("#bot-head"), grip=$("#bot-size"), drag=null;
+  function down(e,mode){
+    if(window.innerWidth<900) return;
+    if(e.target.closest("button,input")) return;
+    e.preventDefault(); e.stopPropagation();
+    drag={mode:mode,pid:e.pointerId,x0:e.clientX,y0:e.clientY,
+          ox:parseFloat(d.style.left)||d.getBoundingClientRect().left,
+          oy:parseFloat(d.style.top)||d.getBoundingClientRect().top,
+          w0:d.offsetWidth,h0:d.offsetHeight};
+    try{ (mode==="size"?grip:head).setPointerCapture(e.pointerId); }catch(err){}
+  }
+  head.addEventListener("pointerdown",function(e){ down(e,"move"); });
+  grip.addEventListener("pointerdown",function(e){ down(e,"size"); });
+  document.addEventListener("pointermove",function(e){
+    if(!drag||e.pointerId!==drag.pid) return;
+    e.preventDefault();
+    var dx=e.clientX-drag.x0, dy=e.clientY-drag.y0;
+    if(drag.mode==="move"){ d.style.left=(drag.ox+dx)+"px"; d.style.top=(drag.oy+dy)+"px"; }
+    else{
+      d.style.width=Math.max(300,Math.min(drag.w0+dx,window.innerWidth-40))+"px";
+      d.style.height=Math.max(260,Math.min(drag.h0+dy,window.innerHeight-40))+"px";
+      state.botSize={w:d.offsetWidth,h:d.offsetHeight};
+    }
+  },true);
+  function up(e){
+    if(!drag||e.pointerId!==drag.pid) return;
+    drag=null; botClamp(); save();
+  }
+  document.addEventListener("pointerup",up,true);
+  document.addEventListener("pointercancel",up,true);
+  addEventListener("resize",botClamp);
+})();
+function botOpen(on){
+  state.botOpen=!!on; save();
+  $("#botdock").hidden=!on || !botSample;
+  $("#bot-launch").hidden=on || !botSample;
+  if(on){ botPlace(); botRender(); }
+}
+$("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
+$("#bot-launch").addEventListener("click",function(e){ e.stopPropagation(); botOpen(true); });
+$("#bot-mic").addEventListener("click",function(e){
+  e.stopPropagation();
+  if(!SR){ botBubble("err","This browser cannot listen. Chrome and Safari can; Firefox cannot."); return; }
+  if(hearing){ stopHearing(); return; }
+  handsFree=!!state.speak;       /* with Speak on, it keeps the conversation going */
+  listen();
+});
+$("#bot-speak").addEventListener("click",function(e){
+  e.stopPropagation();
+  state.speak=!state.speak; save();
+  this.setAttribute("aria-pressed",state.speak?"true":"false");
+  if(!state.speak){ try{ speechSynthesis.cancel(); }catch(err){} handsFree=false; }
+});
+
 (function(){
   if(!window.claude||typeof claude.use!=="function") return;
   try{
     claude.use("sample").then(function(fn){
       if(!fn) return;
       botSample=fn;
-      var panel=document.querySelector('[data-panel="bot"]');
-      if(panel) panel.hidden=false;
-      botRender();
+      if(!botTurns.length) botTurns.push({role:"assistant",content:botGreeting()});
+      $("#bot-speak").setAttribute("aria-pressed",state.speak?"true":"false");
+      if(!SR) $("#bot-mic").title="This browser cannot listen";
+      botOpen(state.botOpen!==false);
       var chips=[["What needs a look?","What needs a look right now?"],
                  ["Pick today's task","Pick one task for today from the main task that is furthest behind, and put it in One Task A Day."],
                  ["What did I do today?","What have I logged as done today?"],
@@ -2148,8 +2356,7 @@ async function botAsk(text){
         b.addEventListener("click",function(e){ e.stopPropagation(); botAsk(c[1]); });
         box.appendChild(b);
       });
-      if(typeof resolveOverlaps==="function") resolveOverlaps(null);
-      if(typeof fitCanvas==="function") fitCanvas();
+
     }).catch(function(){});
   }catch(e){}
 })();
