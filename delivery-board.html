@@ -81,7 +81,7 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{background:var(--ground); color:var(--ink); font-family:var(--font); font-size:14px;
+body{background:var(--ground); color:var(--ink); font-family:var(--font); font-size:15px;
   line-height:1.5; -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased;
   letter-spacing:-.005em; position:relative}
 body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:200; opacity:var(--grain);
@@ -94,16 +94,16 @@ img{max-width:100%}
 
 /* header */
 .masthead{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:18px}
-.eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
   color:var(--muted)}
 .clockline{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-top:10px}
-.dateline{font-size:clamp(23px,2.7vw,33px); font-weight:400; line-height:1.02; letter-spacing:-.035em;
+.dateline{font-size:clamp(25px,3vw,36px); font-weight:400; line-height:1.02; letter-spacing:-.035em;
   text-wrap:balance}
-.clock{font-family:var(--mono); font-size:15px; color:var(--accent-ink); font-variant-numeric:tabular-nums;
+.clock{font-family:var(--mono); font-size:16px; color:var(--accent-ink); font-variant-numeric:tabular-nums;
   letter-spacing:.02em}
-.wk{font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.18em}
+.wk{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.18em}
 .controls{display:flex; gap:10px; flex-wrap:wrap}
-.btn{font:inherit; font-size:12.5px; font-weight:500; color:var(--ink-2); background:transparent;
+.btn{font:inherit; font-size:13.5px; font-weight:500; color:var(--ink-2); background:transparent;
   border:1px solid var(--hair); border-radius:999px; padding:9px 16px; cursor:pointer;
   display:inline-flex; align-items:center; gap:9px;
   transition:border-color .3s var(--ease), color .3s var(--ease), background .3s var(--ease)}
@@ -120,13 +120,13 @@ img{max-width:100%}
 .kpi{padding:20px 22px 22px; display:flex; flex-direction:column; gap:6px; min-width:0;
   border-left:1px solid var(--hair)}
 .kpi:first-child{border-left:0}
-.k-label{font-family:var(--mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+.k-label{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
   color:var(--muted)}
-.k-val{font-size:30px; font-weight:400; line-height:1; letter-spacing:-.035em}
-.kpi:first-child .k-val{font-size:clamp(46px,5.6vw,68px); letter-spacing:-.05em; margin:2px 0 4px}
-.k-sub{font-size:12px; color:var(--ink-2)}
+.k-val{font-size:31px; font-weight:400; line-height:1; letter-spacing:-.035em}
+.kpi:first-child .k-val{font-size:clamp(52px,6.2vw,76px); letter-spacing:-.05em; margin:2px 0 4px}
+.k-sub{font-size:13px; color:var(--ink-2)}
 .spark{display:block; width:100%; height:auto; margin-top:auto}
-.delta{font-family:var(--mono); font-size:11.5px; color:var(--ink-2)}
+.delta{font-family:var(--mono); font-size:12.5px; color:var(--ink-2)}
 .delta.up{color:var(--accent-ink)}
 
 /* panels */
@@ -158,10 +158,10 @@ body.panning,body.panning *{cursor:move!important; user-select:none; -webkit-use
 .p-head{display:flex; align-items:flex-start; justify-content:flex-start; gap:14px}
 .p-head>div{min-width:0}
 .p-tools{margin-left:auto}
-.p-title{font-size:15px; font-weight:500; letter-spacing:-.02em}
-.p-note{font-size:11.5px; color:var(--muted); margin-top:5px; max-width:60ch; line-height:1.55}
+.p-title{font-size:16px; font-weight:500; letter-spacing:-.02em}
+.p-note{font-size:12.5px; color:var(--muted); margin-top:5px; max-width:60ch; line-height:1.55}
 .p-tools{display:flex; gap:8px; flex:none}
-.mini{font:inherit; font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+.mini{font:inherit; font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--muted); background:transparent; border:1px solid var(--hair); border-radius:999px;
   padding:6px 11px; cursor:pointer; flex:none;
   transition:color .3s var(--ease), border-color .3s var(--ease)}
@@ -200,10 +200,10 @@ body.dragging .cursor-ring{opacity:0}
 .ghost{will-change:transform; transition:none}
 
 .grip svg{display:block}
-.rname{flex:1 1 40%; min-width:0; font-size:13.5px; font-weight:450; overflow-wrap:anywhere;
+.rname{flex:1 1 40%; min-width:0; font-size:14.5px; font-weight:450; overflow-wrap:anywhere;
   letter-spacing:-.01em}
-.rmeta{font-family:var(--mono); font-size:10.5px; color:var(--muted); white-space:nowrap}
-.rval{font-family:var(--mono); font-size:12.5px; font-variant-numeric:tabular-nums; color:var(--ink);
+.rmeta{font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap}
+.rval{font-family:var(--mono); font-size:13.5px; font-variant-numeric:tabular-nums; color:var(--ink);
   min-width:44px; text-align:right}
 .pen{flex:none; width:22px; height:22px; border:0; background:none; padding:0; cursor:pointer;
   color:var(--muted); border-radius:6px; display:grid; place-items:center;
@@ -222,12 +222,12 @@ body.dragging .cursor-ring{opacity:0}
 .mains .row.sel .fill{opacity:1}
 .fill.done{background:var(--ink); box-shadow:none}
 @media (prefers-reduced-motion:no-preference){ .fill{transition:width .4s var(--ease)} }
-.axis{position:relative; height:18px; margin:12px 12px 0; font-family:var(--mono); font-size:9.5px;
+.axis{position:relative; height:18px; margin:12px 12px 0; font-family:var(--mono); font-size:10.5px;
   letter-spacing:.1em; color:var(--muted); border-top:1px solid var(--hair)}
 .axis span{position:absolute; top:5px}
 
 /* status — dot plus label, never hue alone */
-.pill{font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+.pill{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
   padding:3px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px;
   color:var(--ink-2); background:transparent; border:1px solid var(--hair); white-space:nowrap}
 .pill i{width:5px; height:5px; border-radius:50%; background:var(--muted); flex:none; font-style:normal}
@@ -242,11 +242,11 @@ body.dragging .cursor-ring{opacity:0}
 /* editors + add rows */
 .editor{margin:12px 0 4px; padding:16px; background:var(--raised); border:1px solid var(--hair);
   border-radius:14px; display:grid; gap:13px; grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
-.editor label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:9.5px;
+.editor label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:10.5px;
   letter-spacing:.16em; text-transform:uppercase; color:var(--muted); min-width:0}
 .editor .wide{grid-column:1/-1}
 .editor .acts{grid-column:1/-1; display:flex; gap:12px; flex-wrap:wrap; align-items:center}
-.f{font:inherit; font-family:var(--font); font-size:13px; color:var(--ink); background:var(--inset);
+.f{font:inherit; font-family:var(--font); font-size:14px; color:var(--ink); background:var(--inset);
   border:1px solid transparent; border-radius:10px; padding:9px 12px; min-width:0; width:100%;
   text-transform:none; letter-spacing:-.005em;
   transition:border-color .25s var(--ease), background .25s var(--ease)}
@@ -257,8 +257,8 @@ body.dragging .cursor-ring{opacity:0}
 .addrow .f{flex:1 1 180px; width:auto}
 .addrow .f.s{flex:0 0 90px}
 
-table.tv{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:14px}
-table.tv th{text-align:left; font-family:var(--mono); font-size:9.5px; letter-spacing:.18em;
+table.tv{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:14px}
+table.tv th{text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
   text-transform:uppercase; color:var(--muted); font-weight:400; padding:8px 10px;
   border-bottom:1px solid var(--hair)}
 table.tv td{padding:9px 10px; border-bottom:1px solid var(--hair); vertical-align:top}
@@ -272,62 +272,62 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 .sev.warn{background:linear-gradient(var(--accent),var(--accent)) 0 0/100% 50% no-repeat, var(--hair)}
 .sev.serious{background:var(--rule)}
 .a-body{min-width:0; flex:1}
-.a-title{font-size:13px; font-weight:450; overflow-wrap:anywhere; letter-spacing:-.01em}
-.a-why{font-size:11.5px; color:var(--muted); overflow-wrap:anywhere; margin-top:1px}
-.a-kind{font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase;
+.a-title{font-size:14px; font-weight:450; overflow-wrap:anywhere; letter-spacing:-.01em}
+.a-why{font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; margin-top:1px}
+.a-kind{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
   color:var(--muted); white-space:nowrap; align-self:flex-start; padding-top:2px}
-.calm{font-size:13px; color:var(--ink-2); padding:14px 0}
+.calm{font-size:14px; color:var(--ink-2); padding:14px 0}
 
 /* docks */
 .oftad-panel{position:relative; overflow:hidden; border-color:rgba(255,59,48,.22)}
 .oftad-panel::before{content:""; position:absolute; inset:-40% 40% 40% -10%; pointer-events:none;
   background:radial-gradient(circle at 25% 30%, rgba(255,59,48,.16), transparent 62%)}
 .oftad-panel>*{position:relative}
-#oftad-flash{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; color:var(--accent-ink)}
+#oftad-flash{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--accent-ink)}
 .drop{margin-top:16px; border:1px dashed var(--rule); border-radius:16px; padding:16px; min-height:128px;
   display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start; background:var(--inset);
   transition:border-color .3s var(--ease), background .3s var(--ease)}
 .drop.hot{border-style:solid; border-color:rgba(255,59,48,.6); background:var(--accent-wash)}
-.drop .hint{color:var(--muted); font-size:12.5px; margin:auto; text-align:center; max-width:34ch;
+.drop .hint{color:var(--muted); font-size:13.5px; margin:auto; text-align:center; max-width:34ch;
   line-height:1.6}
-.drop .hint b{color:var(--ink-2); font-weight:500; display:block; font-size:13.5px; margin-bottom:3px;
+.drop .hint b{color:var(--ink-2); font-weight:500; display:block; font-size:14.5px; margin-bottom:3px;
   letter-spacing:-.01em}
 .chip{background:var(--raised); border:1px solid var(--hair); border-radius:14px; padding:12px 14px 13px;
   display:flex; flex-direction:column; gap:5px; min-width:158px; max-width:250px; cursor:grab;
   touch-action:none; user-select:none; -webkit-user-select:none;
   transition:transform .3s var(--ease), border-color .3s var(--ease)}
 .chip:hover{transform:translateY(-2px); border-color:var(--rule)}
-.chip .c-from{font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+.chip .c-from{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--muted); overflow-wrap:anywhere}
-.chip .c-name{font-size:13px; font-weight:450; overflow-wrap:anywhere; line-height:1.35; letter-spacing:-.01em}
-.chip .c-prog{font-family:var(--mono); font-size:10px; color:var(--muted)}
+.chip .c-name{font-size:14px; font-weight:450; overflow-wrap:anywhere; line-height:1.35; letter-spacing:-.01em}
+.chip .c-prog{font-family:var(--mono); font-size:11px; color:var(--muted)}
 .chip.carried{border-style:dashed}
 .done-zone .chip .c-name{color:var(--ink-2)}
 .done-zone .chip::after{content:""; position:absolute}
 .ghost{position:fixed; left:0; top:0; z-index:210; pointer-events:none;
   border-color:var(--rule); box-shadow:0 24px 50px -12px rgba(0,0,0,.6); opacity:.97}
 .dock-foot{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:13px;
-  font-size:11.5px; color:var(--muted)}
-.daylog{font-size:11.5px; color:var(--muted); margin-top:13px; border-top:1px solid var(--hair);
+  font-size:12.5px; color:var(--muted)}
+.daylog{font-size:12.5px; color:var(--muted); margin-top:13px; border-top:1px solid var(--hair);
   padding-top:12px}
 .daylog b{font-family:var(--mono); color:var(--ink-2)}
 
 .tip{position:fixed; z-index:98; pointer-events:none; background:var(--raised); color:var(--ink);
-  border:1px solid var(--rule); border-radius:12px; padding:10px 12px; font-size:11.5px; line-height:1.5;
+  border:1px solid var(--rule); border-radius:12px; padding:10px 12px; font-size:12.5px; line-height:1.5;
   max-width:260px; box-shadow:0 20px 44px -14px rgba(0,0,0,.65); backdrop-filter:blur(12px)}
-.tip b{display:block; font-size:12.5px; font-weight:500; margin-bottom:2px; letter-spacing:-.01em}
-.tip .m{font-family:var(--mono); font-size:10.5px; color:var(--ink-2)}
-footer{color:var(--muted); font-size:11.5px; display:flex; flex-direction:column; gap:14px}
+.tip b{display:block; font-size:13.5px; font-weight:500; margin-bottom:2px; letter-spacing:-.01em}
+.tip .m{font-family:var(--mono); font-size:11.5px; color:var(--ink-2)}
+footer{color:var(--muted); font-size:12.5px; display:flex; flex-direction:column; gap:14px}
 .drawer{background:var(--panel); border:1px solid var(--hair); border-radius:18px; padding:16px 20px}
-.drawer summary{cursor:pointer; font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+.drawer summary{cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.18em;
   text-transform:uppercase; color:var(--ink-2)}
 .drawer summary:hover{color:var(--ink)}
 .drawer .d-body{margin-top:14px; display:flex; flex-direction:column; gap:13px}
-textarea{width:100%; min-height:86px; font-family:var(--mono); font-size:11px; color:var(--ink);
+textarea{width:100%; min-height:86px; font-family:var(--mono); font-size:12px; color:var(--ink);
   background:var(--inset); border:1px solid transparent; border-radius:12px; padding:11px; resize:vertical}
 textarea:focus{outline:none; border-color:rgba(255,59,48,.5)}
 .row-btns{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:100%}
+input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:100%}
 
 @media (max-width:900px){
   .kpis{grid-template-columns:1fr 1fr}
@@ -340,7 +340,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
 @media (max-width:460px){
   .wrap{padding-inline:16px; padding-block:24px 40px; gap:16px}
   .kpi{padding:16px 17px 18px}
-  .kpi:first-child .k-val{font-size:44px}
+  .kpi:first-child .k-val{font-size:50px}
   .panel{padding:17px 16px 15px}
   .chip{max-width:none; flex:1 1 100%}
   .addrow .f,.addrow .f.s{flex:1 1 100%}
@@ -841,7 +841,7 @@ function subEditor(s){
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
     '<label>Last moved<input class="f" type="date" data-ed="upd" value="'+esc(s.upd)+'"></label>'+
     '<div class="acts"><button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
-    '<span style="font-size:11px;color:var(--muted)">Drag this row onto another main task to move it there.</span></div>'+
+    '<span style="font-size:12px;color:var(--muted)">Drag this row onto another main task to move it there.</span></div>'+
   '</div>';
 }
 function tbl(rows,head){
@@ -918,6 +918,7 @@ function renderDocks(){
   $("#plan-count").textContent=state.plan.length?state.plan.length+" queued":"Nothing queued";
   $("#plan-roll").textContent=rollNote;
   $("#done-count").textContent=state.done.length?state.done.length+" finished today":"Nothing finished yet today";
+  if(typeof mirrorToday==="function") mirrorToday();
   $("#daylog").innerHTML=state.dayLog.length
     ? "Earlier days: "+state.dayLog.slice(0,5).map(function(d){
         return "<b>"+d.d.slice(5)+"</b> "+d.done+"/"+d.planned; }).join(" · ")
@@ -927,7 +928,7 @@ function saysFlash(msg){ flash=msg; flashT=Date.now()+4000; setTimeout(renderDoc
 
 function renderAll(){ renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); if(typeof fitCanvas==="function") fitCanvas(); }
 renderAll();
-$("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
+$("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Opened from the claude.ai link, the board mirrors today\u2019s three docks so the 05:00 and 20:00 reminders can name real tasks; the saved file keeps everything local and mirrors nothing. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
 
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
@@ -1417,6 +1418,41 @@ document.addEventListener("pointerup",endPanel,true);
 document.addEventListener("pointercancel",endPanel,true);
 addEventListener("resize",function(){ applyLayout(); });
 applyLayout();
+
+/* ---------------- daily mirror ----------------
+   The board lives in this browser. A scheduled reminder cannot read
+   localStorage, so when the page runs inside claude.ai it mirrors just
+   today's docks into the artifact store. Nothing else leaves the page,
+   and the downloaded file skips this entirely.                        */
+var boardDb=null, syncT=null;
+(function(){
+  if(!window.claude||typeof claude.use!=="function") return;
+  try{
+    claude.use("db").then(function(db){
+      if(!db) return;
+      boardDb=db; mirrorToday();
+    }).catch(function(){});
+  }catch(e){}
+})();
+function cardLine(c){ return {task:cardFrom(c), name:cardName(c), percent:cardPct(c)}; }
+function mirrorToday(){
+  if(!boardDb) return;
+  clearTimeout(syncT);
+  syncT=setTimeout(function(){
+    try{
+      boardDb.doc("board/today").set({
+        day: state.day,
+        updatedAt: new Date().toISOString(),
+        overall: overall(),
+        focus: state.oftad.map(cardLine),
+        plan: state.plan.map(cardLine),
+        done: state.done.map(cardLine),
+        attention: alerts().slice(0,6).map(function(a){ return a.kind+" — "+a.t+" ("+a.w+")"; }),
+        recentDays: state.dayLog.slice(0,7)
+      }).catch(function(){});
+    }catch(e){}
+  },900);
+}
 
 /* ---------------- motion ---------------- */
 function flashIn(el){
