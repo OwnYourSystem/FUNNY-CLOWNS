@@ -122,6 +122,8 @@ body.flat #canvas,body.flat #canvas>[data-panel]{transform:none!important}
   transition:background .3s var(--ease), box-shadow .3s var(--ease)}
 .btn[aria-pressed="true"] .dot{background:var(--accent); box-shadow:var(--glow)}
 .btn.danger:hover{color:var(--accent-ink); border-color:rgba(255,59,48,.5)}
+.armed{color:#fff!important; background:var(--accent)!important; border-color:var(--accent)!important}
+#io-msg{font-size:12px; color:var(--accent-ink)}
 
 /* kpi strip — one surface divided by hairlines, with an oversized lead figure */
 .kpis{display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; gap:0;
@@ -154,13 +156,27 @@ body.flat #canvas,body.flat #canvas>[data-panel]{transform:none!important}
 [data-panel]:hover .pmove,.pmove:focus-visible{opacity:1}
 .pmove:hover{color:var(--ink); background:var(--inset)}
 .pmove:active{cursor:grabbing}
-[data-pmove]{cursor:default}
-#canvas.free [data-pmove]{cursor:move}
-#canvas.free [data-pmove] button,#canvas.free [data-pmove] input{cursor:pointer}
-.presize{display:none}
-#canvas.free .presize{display:block; position:absolute; right:-3px; top:16px; bottom:16px; width:10px;
-  cursor:ew-resize; touch-action:none; border-radius:6px}
-#canvas.free .presize:hover{background:var(--accent-wash); box-shadow:inset -2px 0 0 var(--accent)}
+.presize,.presize-c{position:absolute; touch-action:none; z-index:3}
+.presize{right:0; top:18px; bottom:30px; width:12px; cursor:ew-resize; border-radius:6px}
+.presize:hover{background:var(--accent-wash); box-shadow:inset -2px 0 0 var(--accent)}
+.presize-c{right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; border-radius:0 0 18px 0}
+.presize-c::after{content:""; position:absolute; right:7px; bottom:7px; width:9px; height:9px;
+  border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); border-radius:0 0 3px 0;
+  transition:border-color .25s var(--ease)}
+[data-panel]:hover .presize-c::after{border-color:var(--ink-2)}
+.presize-c:hover::after{border-color:var(--accent)}
+@media (max-width:900px){ .presize,.presize-c{display:none} }
+/* the whole panel is a handle; its working parts are not */
+@media (min-width:901px){
+  [data-panel]{cursor:move}
+  [data-panel] .row,[data-panel] .chip,[data-panel] .track,[data-panel] .editor,
+  [data-panel] table,[data-panel] input,[data-panel] select,[data-panel] textarea,
+  [data-panel] button:not(.pmove),[data-panel] .drop{cursor:auto}
+  [data-panel] .row.pick{cursor:pointer}
+  [data-panel] .track.scrub{cursor:ew-resize}
+  [data-panel] button:not(.pmove){cursor:pointer}
+  [data-panel] [data-grip],[data-panel] .chip{cursor:grab}
+}
 #canvas.free>[data-panel]{transition:box-shadow .3s var(--ease)}
 #canvas.free>[data-panel].lifted{box-shadow:0 28px 60px -18px rgba(0,0,0,.75); border-color:var(--rule)}
 body.panning,body.panning *{cursor:move!important; user-select:none; -webkit-user-select:none}
@@ -295,6 +311,7 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 .oftad-panel::before{content:""; position:absolute; inset:-40% 40% 40% -10%; pointer-events:none;
   background:radial-gradient(circle at 25% 30%, rgba(255,59,48,.16), transparent 62%)}
 .oftad-panel>*{position:relative}
+.oftad-panel>.presize,.oftad-panel>.presize-c{position:absolute}
 #oftad-flash{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--accent-ink)}
 .drop{margin-top:16px; border:1px dashed var(--rule); border-radius:16px; padding:16px; min-height:128px;
   display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start; background:var(--inset);
@@ -505,6 +522,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
         </div>
         <div class="row-btns">
           <button class="btn danger" id="io-reset">Reset to the shipped list</button>
+          <span id="io-msg"></span>
         </div>
       </div>
     </details>
@@ -939,7 +957,28 @@ function renderDocks(){
         return "<b>"+d.d.slice(5)+"</b> "+d.done+"/"+d.planned; }).join(" · ")
     : "No earlier days recorded yet.";
 }
-function saysFlash(msg){ flash=msg; flashT=Date.now()+4000; setTimeout(renderDocks,4100); }
+function saysFlash(msg){ flash=msg; flashT=Date.now()+4600; setTimeout(renderDocks,4700); }
+/* The artifact frame silently refuses native modal dialogs, so every
+   destructive action arms on its own button and fires on a second click. */
+var armed="", armedT=null;
+function armGate(key,btn,label){
+  if(armed===key){
+    armed=""; clearTimeout(armedT); btn.classList.remove("armed");
+    if(btn.dataset.lbl) btn.textContent=btn.dataset.lbl;
+    return true;
+  }
+  var prev=document.querySelector(".armed");
+  if(prev){ prev.classList.remove("armed"); if(prev.dataset.lbl) prev.textContent=prev.dataset.lbl; }
+  clearTimeout(armedT);
+  armed=key; btn.dataset.lbl=btn.dataset.lbl||btn.textContent;
+  btn.textContent=label; btn.classList.add("armed");
+  armedT=setTimeout(function(){
+    armed=""; btn.classList.remove("armed");
+    if(btn.dataset.lbl) btn.textContent=btn.dataset.lbl;
+  },4000);
+  return false;
+}
+function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t); m._t=setTimeout(function(){ m.textContent=""; },6000); } }
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks();
@@ -965,14 +1004,14 @@ document.addEventListener("click",function(e){
   var d=e.target.closest("[data-del]");
   if(d){
     var s=state.subs[d.dataset.del]; if(!s) return;
-    if(!confirm("Remove “"+s.name+"”?")) return;
+    if(!armGate("del:"+s.id,d,"Remove for good?")) return;
     detach(s.id); delete state.subs[s.id]; state.killed.push(s.id);
     openEd=""; touchHist(); save(); renderAll(); return;
   }
   var gd=e.target.closest("[data-gdel]");
   if(gd){
     var g=gById(gd.dataset.gdel); if(!g) return;
-    if(!confirm("Remove “"+g.name+"” and its "+g.subs.length+" subtasks?")) return;
+    if(!armGate("gdel:"+g.id,gd,"Remove it and all "+g.subs.length+"?")) return;
     g.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); });
     state.groups.splice(state.groups.indexOf(g),1); state.killed.push(g.id);
     state.sel=state.groups.length?state.groups[0].id:"";
@@ -1233,9 +1272,9 @@ document.addEventListener("pointercancel",function(e){
   if(pend.ghost) pend.ghost.remove();
   pend.el.style.opacity=""; pend=null; stopDragVisuals();
 });
-$("#oftad-clear").addEventListener("click",function(){ if(state.oftad.length&&confirm("Clear the day’s one-task list?")){ state.oftad=[]; save(); renderKpis(); renderDocks(); } });
-$("#plan-clear").addEventListener("click",function(){ if(state.plan.length&&confirm("Clear the plan?")){ state.plan=[]; save(); renderKpis(); renderDocks(); } });
-$("#done-clear").addEventListener("click",function(){ if(state.done.length&&confirm("Clear what you finished today?")){ state.done=[]; save(); renderKpis(); renderDocks(); } });
+$("#oftad-clear").addEventListener("click",function(e){ e.stopPropagation(); if(state.oftad.length&&armGate("c-oftad",this,"Clear?")){ state.oftad=[]; save(); renderKpis(); renderAlerts(); renderDocks(); } });
+$("#plan-clear").addEventListener("click",function(e){ e.stopPropagation(); if(state.plan.length&&armGate("c-plan",this,"Clear?")){ state.plan=[]; save(); renderKpis(); renderAlerts(); renderDocks(); } });
+$("#done-clear").addEventListener("click",function(e){ e.stopPropagation(); if(state.done.length&&armGate("c-done",this,"Clear?")){ state.done=[]; save(); renderKpis(); renderAlerts(); renderDocks(); } });
 
 /* ---------------- tooltip ---------------- */
 var TIP=null;
@@ -1279,7 +1318,7 @@ function checkRemind(){
   }
 }
 RB.addEventListener("click",function(){
-  if(!("Notification" in window)){ alert("This browser will not show reminders for a local file. Open the board from a web address to use them."); return; }
+  if(!("Notification" in window)){ saysFlash("This browser will not show reminders for a local file. Open the board from its web link instead."); return; }
   if(Notification.permission==="granted"){
     clearInterval(timer); timer=null;
     RB.setAttribute("aria-pressed","false"); RB.lastChild.textContent="Reminders off";
@@ -1299,7 +1338,7 @@ $("#io-load").addEventListener("click",function(){
     var s=JSON.parse(IO.value);
     if(!s||!(s.v===1||s.v===2)) throw new Error("bad");
     localStorage.setItem(KEY,JSON.stringify(s)); location.reload();
-  }catch(e){ alert("That text is not a board backup. Paste the whole line, from the first brace to the last."); }
+  }catch(e){ ioMsg("That is not a board backup. Paste the whole line, first brace to last."); }
 });
 $("#io-save").addEventListener("click",function(){
   if(sandboxed){
@@ -1312,14 +1351,14 @@ $("#io-save").addEventListener("click",function(){
     a.href=URL.createObjectURL(new Blob([JSON.stringify(state)],{type:"application/json"}));
     a.download="minimum-deliveries-"+todayStr()+".json";
     document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){ IO.value=JSON.stringify(state); IO.focus(); IO.select(); alert("This browser will not save the file. The backup text is selected instead, copy it."); }
+  }catch(e){ IO.value=JSON.stringify(state); IO.focus(); IO.select(); ioMsg("This browser will not save a file. The backup text is selected instead, copy it."); }
 });
 $("#io-file").addEventListener("change",function(e){
   var f=e.target.files[0]; if(!f) return;
   var r=new FileReader(); r.onload=function(){ IO.value=r.result; $("#io-load").click(); }; r.readAsText(f);
 });
 $("#io-reset").addEventListener("click",function(){
-  if(!confirm("Throw away every edit and go back to the shipped list?")) return;
+  if(!armGate("reset",this,"Throw everything away?")) return;
   try{ localStorage.removeItem(KEY); }catch(e){}
   location.reload();
 });
@@ -1345,11 +1384,18 @@ panels().forEach(function(el){
   var rz=document.createElement("span");
   rz.className="presize"; rz.setAttribute("data-presize",""); rz.setAttribute("aria-hidden","true");
   el.appendChild(rz);
+  var cz=document.createElement("span");
+  cz.className="presize-c"; cz.setAttribute("data-presize-c",""); cz.setAttribute("aria-hidden","true");
+  el.appendChild(cz);
 });
 
-function place(el,x,y,w){
+function place(el,x,y,w,h){
+  var id=el.dataset.panel, prev=state.layout[id]||{};
+  if(h===undefined) h=prev.h;
   el.style.left=x+"px"; el.style.top=y+"px"; el.style.width=w+"px";
-  state.layout[el.dataset.panel]={x:x,y:y,w:w};
+  if(h){ el.style.height=h+"px"; el.style.overflowY="auto"; }
+  else { el.style.height=""; el.style.overflowY=""; }
+  state.layout[id]={x:x,y:y,w:w,h:h||0};
 }
 var PGAP=28;   /* wide enough that the camera tilt can never fake a collision */
 function pRect(el){
@@ -1405,7 +1451,10 @@ function goFree(){
 function setFlow(){
   if(!CANVAS) return;
   CANVAS.classList.remove("free"); CANVAS.style.height="";
-  panels().forEach(function(el){ el.style.left=el.style.top=el.style.width=el.style.zIndex=""; });
+  panels().forEach(function(el){
+    el.style.left=el.style.top=el.style.width=el.style.zIndex="";
+    el.style.height=""; el.style.overflowY="";
+  });
 }
 function applyLayout(){
   if(!CANVAS) return;
@@ -1413,7 +1462,7 @@ function applyLayout(){
   CANVAS.classList.add("free");
   panels().forEach(function(el){
     var L=state.layout[el.dataset.panel];
-    if(L) place(el,L.x,L.y,L.w);
+    if(L) place(el,L.x,L.y,L.w,L.h);
   });
   $("#btn-layout").hidden=false;
   resolveOverlaps(null);          /* a layout saved before this rule still lands clean */
@@ -1424,19 +1473,27 @@ $("#btn-layout").addEventListener("click",function(){
 });
 
 var pdrag=null;
+/* anything that does its own job with a pointer is never a drag handle */
+var NOGRAB=".row,.chip,.editor,table,input,select,textarea,a,label,"+
+           "button:not(.pmove),[data-grip],[data-card],[data-scrub],.track,summary";
 document.addEventListener("pointerdown",function(e){
   if(e.button!==undefined&&e.button>0) return;
   if(!wide()) return;
-  var rz=e.target.closest("[data-presize]");
-  var h=rz?null:e.target.closest("[data-pmove]");
-  if(!rz&&!h) return;
-  if(!rz&&e.target.closest("button:not(.pmove),input,select,textarea,a,label")) return;
-  var el=(rz||h).closest("[data-panel]"); if(!el) return;
+  var cz=e.target.closest("[data-presize-c]");
+  var rz=cz?null:e.target.closest("[data-presize]");
+  var el;
+  if(cz||rz) el=(cz||rz).closest("[data-panel]");
+  else {
+    if(e.target.closest(NOGRAB)) return;
+    el=e.target.closest("[data-panel]");
+  }
+  if(!el) return;
   e.preventDefault(); e.stopPropagation();
   goFree();
   var r=el.getBoundingClientRect(), box=CANVAS.getBoundingClientRect();
-  pdrag={el:el,pid:e.pointerId,mode:rz?"size":"move",
-         dx:e.clientX-r.left, dy:e.clientY-r.top, w0:r.width, x0:e.clientX,
+  pdrag={el:el,pid:e.pointerId,mode:cz?"corner":(rz?"size":"move"),
+         dx:e.clientX-r.left, dy:e.clientY-r.top,
+         w0:r.width, h0:r.height, x0:e.clientX, y0:e.clientY,
          left:Math.round(r.left-box.left)};
   el.style.zIndex=++zTop; el.classList.add("lifted");
   document.body.classList.add("panning");
@@ -1447,11 +1504,16 @@ document.addEventListener("pointermove",function(e){
   if(!pdrag||e.pointerId!==pdrag.pid) return;
   e.preventDefault();
   var box=CANVAS.getBoundingClientRect(), W=box.width;
-  if(pdrag.mode==="size"){
+  if(pdrag.mode==="size"||pdrag.mode==="corner"){
+    var L=state.layout[pdrag.el.dataset.panel];
     var w=Math.round((e.clientX-pdrag.x0+pdrag.w0)/10)*10;
     w=Math.max(280,Math.min(w,W-pdrag.left));
-    pdrag.el.style.width=w+"px";
-    state.layout[pdrag.el.dataset.panel].w=w;
+    pdrag.el.style.width=w+"px"; L.w=w;
+    if(pdrag.mode==="corner"){
+      var hh=Math.round((e.clientY-pdrag.y0+pdrag.h0)/10)*10;
+      hh=Math.max(140,hh);
+      pdrag.el.style.height=hh+"px"; pdrag.el.style.overflowY="auto"; L.h=hh;
+    }
   } else {
     var x=Math.round((e.clientX-box.left-pdrag.dx)/10)*10;
     var y=Math.round((e.clientY-box.top-pdrag.dy)/10)*10;
