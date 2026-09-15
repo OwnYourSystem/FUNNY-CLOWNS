@@ -94,11 +94,11 @@ img{max-width:100%}
   display:flex; flex-direction:column; gap:22px; perspective:1600px; perspective-origin:50% 32%}
 #canvas{transform-style:preserve-3d; will-change:transform}
 /* depth: what you act on today rides closest to the camera */
-#canvas>[data-panel="oftad"]{transform:translateZ(46px)}
-#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{transform:translateZ(26px)}
-#canvas>[data-panel="mains"],#canvas>[data-panel="subs"]{transform:translateZ(6px)}
-#canvas>[data-panel="kpis"]{transform:translateZ(-14px)}
-#canvas>[data-panel="alerts"]{transform:translateZ(-34px)}
+#canvas>[data-panel="oftad"]{transform:translateZ(24px)}
+#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{transform:translateZ(13px)}
+#canvas>[data-panel="mains"],#canvas>[data-panel="subs"]{transform:translateZ(3px)}
+#canvas>[data-panel="kpis"]{transform:translateZ(-7px)}
+#canvas>[data-panel="alerts"]{transform:translateZ(-17px)}
 body.flat #canvas,body.flat #canvas>[data-panel]{transform:none!important}
 
 /* header */
@@ -941,9 +941,14 @@ function renderDocks(){
 }
 function saysFlash(msg){ flash=msg; flashT=Date.now()+4000; setTimeout(renderDocks,4100); }
 
-function renderAll(){ renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); if(typeof fitCanvas==="function") fitCanvas(); }
+function renderAll(){
+  renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks();
+  /* content can change a panel's height, so re-separate before measuring */
+  if(typeof resolveOverlaps==="function") resolveOverlaps(null);
+  if(typeof fitCanvas==="function") fitCanvas();
+}
 renderAll();
-$("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Opened from the claude.ai link, the board mirrors today\u2019s three docks so the 05:00 and 20:00 reminders can name real tasks; the saved file keeps everything local and mirrors nothing. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
+$("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Panels never overlap: whatever you drop onto steps out below. Opened from the claude.ai link, the board mirrors today\u2019s three docks so the 05:00 and 20:00 reminders can name real tasks; the saved file keeps everything local and mirrors nothing. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
 
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
@@ -1346,6 +1351,38 @@ function place(el,x,y,w){
   el.style.left=x+"px"; el.style.top=y+"px"; el.style.width=w+"px";
   state.layout[el.dataset.panel]={x:x,y:y,w:w};
 }
+var PGAP=28;   /* wide enough that the camera tilt can never fake a collision */
+function pRect(el){
+  var L=state.layout[el.dataset.panel]||{x:0,y:0,w:el.offsetWidth};
+  return {el:el, id:el.dataset.panel, x:L.x, y:L.y, w:L.w||el.offsetWidth, h:el.offsetHeight};
+}
+function hits(a,b){
+  return a.x < b.x+b.w-1 && b.x < a.x+a.w-1 && a.y < b.y+b.h-1 && b.y < a.y+a.h-1;
+}
+/* the panel under your hand holds its place; whatever it touches steps below it,
+   and the push cascades until nothing overlaps. */
+function resolveOverlaps(activeId){
+  if(!isFree()) return;
+  var all=panels().map(pRect);
+  var active=null, rest=[];
+  all.forEach(function(r){ if(r.id===activeId) active=r; else rest.push(r); });
+  rest.sort(function(a,b){ return a.y-b.y || a.x-b.x; });
+  var order=(active?[active]:[]).concat(rest);
+  for(var pass=0; pass<8; pass++){
+    var moved=false;
+    for(var i=0;i<order.length;i++){
+      for(var j=i+1;j<order.length;j++){
+        if(hits(order[i],order[j])){
+          order[j].y=order[i].y+order[i].h+PGAP;
+          moved=true;
+        }
+      }
+    }
+    if(!moved) break;
+    order.sort(function(a,b){ return (a.id===activeId?-1:b.id===activeId?1:0) || a.y-b.y; });
+  }
+  order.forEach(function(r){ if(r.id!==activeId) place(r.el,r.x,Math.max(0,Math.round(r.y)),r.w); });
+}
 function fitCanvas(){
   if(!CANVAS) return;
   if(!isFree()){ CANVAS.style.height=""; return; }
@@ -1379,6 +1416,7 @@ function applyLayout(){
     if(L) place(el,L.x,L.y,L.w);
   });
   $("#btn-layout").hidden=false;
+  resolveOverlaps(null);          /* a layout saved before this rule still lands clean */
   fitCanvas();
 }
 $("#btn-layout").addEventListener("click",function(){
@@ -1421,13 +1459,15 @@ document.addEventListener("pointermove",function(e){
     y=Math.max(0,y);
     place(pdrag.el,x,y,pdrag.el.offsetWidth);
   }
+  resolveOverlaps(pdrag.el.dataset.panel);
   fitCanvas();
 },true);
 function endPanel(e){
   if(!pdrag||e.pointerId!==pdrag.pid) return;
   pdrag.el.classList.remove("lifted");
-  pdrag=null; document.body.classList.remove("panning");
-  save(); fitCanvas();
+  var id=pdrag.el.dataset.panel; pdrag=null;
+  document.body.classList.remove("panning");
+  resolveOverlaps(id); save(); fitCanvas();
 }
 document.addEventListener("pointerup",endPanel,true);
 document.addEventListener("pointercancel",endPanel,true);
