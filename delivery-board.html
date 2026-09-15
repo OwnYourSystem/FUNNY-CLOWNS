@@ -158,10 +158,23 @@ img{max-width:100%}
   height:1.5px; background:var(--accent); border-radius:2px; box-shadow:var(--glow); top:auto; bottom:auto; width:auto}
 .row.drop-before::before{top:-1px} .row.drop-after::after{bottom:-1px}
 .rhead{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
-.grip{flex:none; width:18px; height:22px; border:0; background:none; padding:0; cursor:grab;
-  touch-action:none; display:grid; place-items:center; color:var(--muted); border-radius:5px;
-  transition:color .25s var(--ease)}
-.grip:hover{color:var(--ink)}
+.grip{flex:none; width:28px; height:28px; margin-left:-4px; border:0; background:transparent; padding:0;
+  cursor:grab; touch-action:none; display:grid; place-items:center; color:var(--muted); border-radius:9px;
+  transition:color .25s var(--ease), background .25s var(--ease)}
+.grip:hover{color:var(--ink); background:var(--inset)}
+.grip:active{cursor:grabbing}
+.cursor-ring{position:fixed; left:0; top:0; width:28px; height:28px; border:1px solid var(--rule);
+  border-radius:50%; pointer-events:none; z-index:150; opacity:.45; will-change:transform;
+  transition:opacity .35s var(--ease), border-color .35s var(--ease)}
+.cursor-ring.on{border-color:var(--accent); opacity:.85}
+.spotlight{position:fixed; left:0; top:0; width:660px; height:660px; border-radius:50%;
+  pointer-events:none; z-index:0; will-change:transform; filter:blur(30px);
+  background:radial-gradient(circle, var(--accent-wash), transparent 60%)}
+.wrap{position:relative; z-index:1}
+body.dragging,body.dragging *{cursor:grabbing!important}
+body.dragging .cursor-ring{opacity:0}
+.ghost{will-change:transform; transition:none}
+
 .grip svg{display:block}
 .rname{flex:1 1 40%; min-width:0; font-size:13.5px; font-weight:450; overflow-wrap:anywhere;
   letter-spacing:-.01em}
@@ -267,8 +280,8 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 .chip.carried{border-style:dashed}
 .done-zone .chip .c-name{color:var(--ink-2)}
 .done-zone .chip::after{content:""; position:absolute}
-.ghost{position:fixed; z-index:99; pointer-events:none; transform:rotate(-1.5deg);
-  border-color:var(--rule); box-shadow:0 24px 50px -12px rgba(0,0,0,.6)}
+.ghost{position:fixed; left:0; top:0; z-index:210; pointer-events:none;
+  border-color:var(--rule); box-shadow:0 24px 50px -12px rgba(0,0,0,.6); opacity:.97}
 .dock-foot{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:13px;
   font-size:11.5px; color:var(--muted)}
 .daylog{font-size:11.5px; color:var(--muted); margin-top:13px; border-top:1px solid var(--hair);
@@ -357,7 +370,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       <div class="p-head">
         <div>
           <div class="p-title">Main tasks &mdash; completion</div>
-          <div class="p-note">Tap a bar to open its subtasks. Drag the grip into a dock, or onto another main task to reorder.</div>
+          <div class="p-note">Tap a bar to open its subtasks. To move one, drag it by the handle on the left, or by its name. The page scrolls itself while you drag.</div>
         </div>
         <div class="p-tools"><button class="mini" id="tv-main" aria-pressed="false">Table</button></div>
       </div>
@@ -396,7 +409,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
     <div class="p-head">
       <div>
         <div class="p-title">One Fucking Task A Day</div>
-        <div class="p-note">One subtask per main task, no more. Drag a bar in from the subtask chart. A second card from the same main task swaps the first one out.</div>
+        <div class="p-note">One subtask per main task, no more. Drag one in by its handle from the chart above. A second from the same main task swaps the first one out.</div>
       </div>
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
@@ -409,7 +422,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       <div class="p-head">
         <div>
           <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
-          <div class="p-note">Drag in from either chart. Drag a card right into Done when you finish it.</div>
+          <div class="p-note">Everything else. Drag in from either chart, and drag a card into Done when you finish it.</div>
         </div>
         <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
       </div>
@@ -765,7 +778,7 @@ function renderSubs(){
   var g=gById(state.sel);
   if(!g){ $("#sub-bars").innerHTML=""; $("#sub-title").textContent="nothing selected"; return; }
   $("#sub-title").textContent=g.name;
-  $("#sub-note").textContent="Drag across a bar to set progress. "+groupDone(g)+" of "+g.subs.length+" done, "+groupPct(g)+"% overall.";
+  $("#sub-note").textContent="Drag across a bar to set its progress, or drag it away by the handle. "+groupDone(g)+" of "+g.subs.length+" done, "+groupPct(g)+"% overall.";
   $("#group-editor").innerHTML = openGroupEd ?
     '<div class="editor">'+
       '<label class="wide">Name<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
@@ -813,11 +826,11 @@ function tbl(rows,head){
 function renderKpis(){
   var a=allSubs(), o=overall(), done=0;
   a.forEach(function(s){ if(s.pct>=100||s.status==="done") done++; });
-  $("#kpi-overall").textContent=o.toFixed(1)+"%";
-  $("#kpi-done").textContent=done;
+  ease($("#kpi-overall"),o,1,"%");
+  ease($("#kpi-done"),done,0,"");
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
   var al=alerts();
-  $("#kpi-alert").textContent=al.length;
+  ease($("#kpi-alert"),al.length,0,"");
   $("#kpi-alert-sub").textContent=al.length?"blocked, stalled or untouched":"nothing needs chasing";
   var planned=state.oftad.length+state.plan.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
@@ -895,7 +908,7 @@ function mark(id,field){ state.ue[id+"|"+field]=1; }
 $("#main-bars").addEventListener("click",function(e){
   if(e.target.closest("[data-grip]")) return;
   var r=e.target.closest("[data-group]"); if(!r) return;
-  if(state.sel!==r.dataset.group){ state.sel=r.dataset.group; openEd=""; openGroupEd=false; save(); renderMain(); renderSubs(); }
+  if(state.sel!==r.dataset.group){ state.sel=r.dataset.group; openEd=""; openGroupEd=false; save(); renderMain(); renderSubs(); flashIn($("#sub-bars")); }
 });
 $("#edit-group").addEventListener("click",function(){ openGroupEd=!openGroupEd; renderSubs(); });
 
@@ -1005,7 +1018,8 @@ $("#sub-bars").addEventListener("keydown",function(e){
 
 /* ---------------- drag and drop ---------------- */
 var ZONES={oftad:$("#oftad"),plan:$("#plan"),done:$("#done")};
-var pend=null;
+var pend=null, dragRAF=null;
+var REDUCE=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function inRect(el,x,y){ var r=el.getBoundingClientRect(); return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom; }
 function zoneAt(x,y){ for(var z in ZONES) if(inRect(ZONES[z],x,y)) return z; return null; }
 function clearMarks(){
@@ -1014,24 +1028,68 @@ function clearMarks(){
   Object.keys(ZONES).forEach(function(z){ ZONES[z].classList.remove("hot"); });
 }
 function rowAt(x,y){
-  var el=document.elementFromPoint(x,y); if(!el) return null;
+  var el=document.elementFromPoint(x,y); if(!el||!el.closest) return null;
   return el.closest("[data-group]")||el.closest("[data-sub]");
+}
+function markEdge(row,y){
+  var r=row.getBoundingClientRect();
+  row.classList.add(y<r.top+r.height/2?"drop-before":"drop-after");
+}
+function paintTargets(x,y,z){
+  clearMarks();
+  if(z===undefined) z=zoneAt(x,y);
+  if(z){ ZONES[z].classList.add("hot"); return; }
+  if(!pend||pend.src!=="grip") return;
+  var kind=pend.key.split(":")[0], row=rowAt(x,y);
+  if(!row) return;
+  if(kind==="sub" && row.dataset.group) row.classList.add("drop-on");
+  else if(kind==="sub" && row.dataset.sub) markEdge(row,y);
+  else if(kind==="task" && row.dataset.group) markEdge(row,y);
+}
+/* one loop: carries the card, scrolls the page at the edges, repaints the target */
+function dragLoop(){
+  if(!pend||!pend.moved||!pend.ghost){ dragRAF=null; return; }
+  var x=pend.lx, y=pend.ly, H=window.innerHeight, Z=140, sp=0;
+  var over=zoneAt(x,y);
+  /* the edge band drives the scroll; moving onto a dock leaves the band and it stops */
+  if(y<Z) sp=-(1-y/Z)*28;
+  else if(y>H-Z) sp=(1-(H-y)/Z)*28;
+  if(sp) window.scrollBy(0,sp);
+  var tx=x-pend.ox, ty=y-pend.oy, k=REDUCE?1:.24;
+  pend.gx+=(tx-pend.gx)*k; pend.gy+=(ty-pend.gy)*k;
+  var tilt=REDUCE?0:Math.max(-9,Math.min(9,(tx-pend.gx)*.3));
+  pend.ghost.style.transform="translate3d("+pend.gx.toFixed(1)+"px,"+pend.gy.toFixed(1)+"px,0) rotate("+tilt.toFixed(2)+"deg)";
+  paintTargets(x,y,over);
+  dragRAF=requestAnimationFrame(dragLoop);
+}
+function stopDragVisuals(){
+  document.body.classList.remove("dragging");
+  if(dragRAF){ cancelAnimationFrame(dragRAF); dragRAF=null; }
+  clearMarks();
 }
 document.addEventListener("pointerdown",function(e){
   if(e.button!==undefined&&e.button>0) return;
+  var el=null, src=null, key=null;
   var grip=e.target.closest("[data-grip]"), chip=e.target.closest("[data-card]");
-  if(!grip&&!chip) return;
+  if(grip){ el=grip; src="grip"; key=grip.dataset.grip; }
+  else if(chip){ el=chip; src="card"; key=chip.dataset.card; }
+  else if(e.pointerType==="mouse"){
+    /* with a mouse the whole label is a handle; touch keeps to the grip so the page still scrolls */
+    var nm=e.target.closest(".rname"), row=nm&&nm.closest("[data-sub],[data-group]");
+    if(row){ el=nm; src="grip"; key=row.dataset.sub?("sub:"+row.dataset.sub):("task:"+row.dataset.group); }
+  }
+  if(!el) return;
   e.preventDefault();
-  var el=grip||chip;
   try{ el.setPointerCapture(e.pointerId); }catch(err){}
-  pend={el:el,pid:e.pointerId,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,
-        src:grip?"grip":"card", key:grip?grip.dataset.grip:chip.dataset.card};
+  pend={el:el,pid:e.pointerId,x0:e.clientX,y0:e.clientY,lx:e.clientX,ly:e.clientY,
+        moved:false,ghost:null,src:src,key:key,ox:80,oy:26,gx:0,gy:0};
   hideTip();
 });
 document.addEventListener("pointermove",function(e){
   if(!pend||e.pointerId!==pend.pid) return;
-  var dx=e.clientX-pend.x0, dy=e.clientY-pend.y0;
+  pend.lx=e.clientX; pend.ly=e.clientY;
   if(!pend.moved){
+    var dx=e.clientX-pend.x0, dy=e.clientY-pend.y0;
     if(dx*dx+dy*dy<49) return;
     pend.moved=true;
     var html;
@@ -1042,32 +1100,17 @@ document.addEventListener("pointermove",function(e){
     pend.ghost=document.createElement("div");
     pend.ghost.className="chip ghost"; pend.ghost.innerHTML=html;
     document.body.appendChild(pend.ghost);
-    pend.el.style.opacity=".35";
+    pend.ox=Math.min(150,pend.ghost.offsetWidth/2); pend.oy=28;
+    pend.gx=e.clientX-pend.ox; pend.gy=e.clientY-pend.oy;
+    if(pend.src==="card") pend.el.style.opacity=".28";
+    document.body.classList.add("dragging");
+    if(!dragRAF) dragRAF=requestAnimationFrame(dragLoop);
   }
   e.preventDefault();
-  pend.ghost.style.transform="translate("+(e.clientX-80)+"px,"+(e.clientY-26)+"px) rotate(-1.5deg)";
-  clearMarks();
-  var z=zoneAt(e.clientX,e.clientY);
-  if(z){ ZONES[z].classList.add("hot"); return; }
-  if(pend.src!=="grip") return;
-  var kind=pend.key.split(":")[0], row=rowAt(e.clientX,e.clientY);
-  if(!row) return;
-  if(kind==="sub" && row.dataset.group) row.classList.add("drop-on");
-  else if(kind==="sub" && row.dataset.sub) markEdge(row,e.clientY);
-  else if(kind==="task" && row.dataset.group) markEdge(row,e.clientY);
 });
-function markEdge(row,y){
-  var r=row.getBoundingClientRect();
-  row.classList.add(y<r.top+r.height/2?"drop-before":"drop-after");
-}
-function edgeIndex(list,id,row,y){
-  var i=list.indexOf(row.dataset.sub||row.dataset.group);
-  var r=row.getBoundingClientRect();
-  return y<r.top+r.height/2 ? i : i+1;
-}
 function addCard(zone,c,at){
   if(zone==="oftad"){
-    if(c.k!=="sub"){ saysFlash("One subtask at a time in here. Main tasks go in the plan."); return false; }
+    if(c.k!=="sub"){ saysFlash("One subtask at a time in here. Whole main tasks go in the plan."); return false; }
     var gid=cardGid(c), replaced=null;
     state.oftad=state.oftad.filter(function(x){
       if(cardGid(x)===gid && x.id!==c.id){ replaced=cardName(x); return false; } return true; });
@@ -1086,21 +1129,28 @@ function insertPos(zone,x,y){
   }
   return chips.length;
 }
+function edgeIndex(list,row,y){
+  var i=list.indexOf(row.dataset.sub||row.dataset.group);
+  var r=row.getBoundingClientRect();
+  return y<r.top+r.height/2 ? i : i+1;
+}
 document.addEventListener("pointerup",function(e){
   if(!pend||e.pointerId!==pend.pid) return;
   var p=pend; pend=null;
   if(p.ghost) p.ghost.remove();
   p.el.style.opacity="";
-  clearMarks();
+  stopDragVisuals();
   var bits=p.key.split(":");
   if(!p.moved){
-    if(p.src==="grip"&&bits[0]==="task"&&state.sel!==bits[1]){ state.sel=bits[1]; openEd=""; openGroupEd=false; save(); renderMain(); renderSubs(); }
+    if(p.src==="grip"&&bits[0]==="task"&&state.sel!==bits[1]){
+      state.sel=bits[1]; openEd=""; openGroupEd=false; save(); renderMain(); renderSubs(); flashIn($("#sub-bars"));
+    }
     return;
   }
   var z=zoneAt(e.clientX,e.clientY);
   if(p.src==="card"){
     var from=bits[0], idx=+bits[1], card=state[from][idx];
-    if(!card) { renderDocks(); return; }
+    if(!card){ renderDocks(); return; }
     state[from].splice(idx,1);
     if(z){ if(!addCard(z,card,insertPos(z,e.clientX,e.clientY)) && z===from) state[from].splice(idx,0,card); }
     save(); renderKpis(); renderAlerts(); renderDocks(); return;
@@ -1110,14 +1160,14 @@ document.addEventListener("pointerup",function(e){
   var row=rowAt(e.clientX,e.clientY);
   if(!row) return;
   if(c.k==="sub"&&row.dataset.group){
-    var s=state.subs[c.id], g=gById(row.dataset.group);
-    if(s&&g&&s.gid!==g.id){ detach(s.id); g.subs.push(s.id); s.gid=g.id; mark(s.id,"group"); save(); renderAll(); }
+    var sb=state.subs[c.id], g=gById(row.dataset.group);
+    if(sb&&g&&sb.gid!==g.id){ detach(sb.id); g.subs.push(sb.id); sb.gid=g.id; mark(sb.id,"group"); save(); renderAll(); }
     return;
   }
   if(c.k==="sub"&&row.dataset.sub){
     var g2=gById(state.sel); if(!g2) return;
     var cur=g2.subs.indexOf(c.id); if(cur<0) return;
-    var at=edgeIndex(g2.subs,c.id,row,e.clientY);
+    var at=edgeIndex(g2.subs,row,e.clientY);
     g2.subs.splice(cur,1);
     g2.subs.splice(at>cur?at-1:at,0,c.id);
     save(); renderSubs(); return;
@@ -1125,7 +1175,7 @@ document.addEventListener("pointerup",function(e){
   if(c.k==="task"&&row.dataset.group){
     var ids=state.groups.map(function(g){ return g.id; });
     var cur2=ids.indexOf(c.id); if(cur2<0) return;
-    var at2=edgeIndex(ids,c.id,row,e.clientY);
+    var at2=edgeIndex(ids,row,e.clientY);
     var moved=state.groups.splice(cur2,1)[0];
     state.groups.splice(at2>cur2?at2-1:at2,0,moved);
     save(); renderMain();
@@ -1134,7 +1184,7 @@ document.addEventListener("pointerup",function(e){
 document.addEventListener("pointercancel",function(e){
   if(!pend||e.pointerId!==pend.pid) return;
   if(pend.ghost) pend.ghost.remove();
-  pend.el.style.opacity=""; pend=null; clearMarks();
+  pend.el.style.opacity=""; pend=null; stopDragVisuals();
 });
 $("#oftad-clear").addEventListener("click",function(){ if(state.oftad.length&&confirm("Clear the day’s one-task list?")){ state.oftad=[]; save(); renderKpis(); renderDocks(); } });
 $("#plan-clear").addEventListener("click",function(){ if(state.plan.length&&confirm("Clear the plan?")){ state.plan=[]; save(); renderKpis(); renderDocks(); } });
@@ -1226,6 +1276,48 @@ $("#io-reset").addEventListener("click",function(){
   try{ localStorage.removeItem(KEY); }catch(e){}
   location.reload();
 });
+
+/* ---------------- motion ---------------- */
+function flashIn(el){
+  if(REDUCE||!el||!el.animate) return;
+  try{ el.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],
+        {duration:380,easing:"cubic-bezier(.22,.61,.36,1)"}); }catch(e){}
+}
+/* figures ease to their new value instead of snapping */
+function ease(el,to,dec,suffix){
+  if(!el) return;
+  var from=parseFloat(el.textContent)||0;
+  if(REDUCE||!el.animate||Math.abs(to-from)<0.05){ el.textContent=to.toFixed(dec)+suffix; return; }
+  var t0=performance.now(), ms=620;
+  (function step(t){
+    var k=Math.min(1,(t-t0)/ms), e=1-Math.pow(1-k,3);
+    el.textContent=(from+(to-from)*e).toFixed(dec)+suffix;
+    if(k<1) requestAnimationFrame(step);
+  })(t0);
+}
+/* a ring that trails the cursor, and a slow bloom that follows it across the page */
+(function(){
+  if(REDUCE||!window.matchMedia("(pointer: fine)").matches) return;
+  var ring=document.createElement("div"); ring.className="cursor-ring";
+  var glow=document.createElement("div"); glow.className="spotlight";
+  document.body.appendChild(glow); document.body.appendChild(ring);
+  var cx=innerWidth/2, cy=innerHeight/2, rx=cx, ry=cy, gx=cx, gy=cy, sc=1, ts=1;
+  var HOT="[data-grip],[data-card],.btn,.mini,.pen,.track,.rname,summary";
+  addEventListener("pointermove",function(e){
+    if(e.pointerType!=="mouse") return;
+    cx=e.clientX; cy=e.clientY;
+    var hot=e.target.closest&&e.target.closest(HOT);
+    ts=hot?2.05:1; ring.classList.toggle("on",!!hot);
+  },{passive:true});
+  (function loop(){
+    rx+=(cx-rx)*.18; ry+=(cy-ry)*.18;
+    gx+=(cx-gx)*.035; gy+=(cy-gy)*.035;
+    sc+=(ts-sc)*.15;
+    ring.style.transform="translate3d("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px,0) translate(-50%,-50%) scale("+sc.toFixed(3)+")";
+    glow.style.transform="translate3d("+(gx-330).toFixed(1)+"px,"+(gy-330).toFixed(1)+"px,0)";
+    requestAnimationFrame(loop);
+  })();
+})();
 
 })();
 </script>
