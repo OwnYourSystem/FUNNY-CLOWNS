@@ -130,10 +130,34 @@ img{max-width:100%}
 .delta.up{color:var(--accent-ink)}
 
 /* panels */
-.charts{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start}
+#canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
+#canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"]{grid-column:1/-1}
+#canvas.free{display:block}
+#canvas.free>[data-panel]{position:absolute; margin:0}
+[data-panel]{position:relative}
+.pmove{flex:none; width:24px; height:24px; margin:-2px 2px 0 -4px; border:0; padding:0; border-radius:8px;
+  background:transparent; color:var(--muted); cursor:grab; display:grid; place-items:center;
+  opacity:.32; touch-action:none; transition:opacity .25s var(--ease), color .25s var(--ease),
+  background .25s var(--ease)}
+.pmove.corner{position:absolute; left:10px; top:10px; margin:0}
+[data-panel]:hover .pmove,.pmove:focus-visible{opacity:1}
+.pmove:hover{color:var(--ink); background:var(--inset)}
+.pmove:active{cursor:grabbing}
+[data-pmove]{cursor:default}
+#canvas.free [data-pmove]{cursor:move}
+#canvas.free [data-pmove] button,#canvas.free [data-pmove] input{cursor:pointer}
+.presize{display:none}
+#canvas.free .presize{display:block; position:absolute; right:-3px; top:16px; bottom:16px; width:10px;
+  cursor:ew-resize; touch-action:none; border-radius:6px}
+#canvas.free .presize:hover{background:var(--accent-wash); box-shadow:inset -2px 0 0 var(--accent)}
+#canvas.free>[data-panel]{transition:box-shadow .3s var(--ease)}
+#canvas.free>[data-panel].lifted{box-shadow:0 28px 60px -18px rgba(0,0,0,.75); border-color:var(--rule)}
+body.panning,body.panning *{cursor:move!important; user-select:none; -webkit-user-select:none}
 .panel{background:var(--panel); border:1px solid var(--hair); border-radius:20px;
   padding:20px 22px 18px; min-width:0}
-.p-head{display:flex; align-items:flex-start; justify-content:space-between; gap:14px}
+.p-head{display:flex; align-items:flex-start; justify-content:flex-start; gap:14px}
+.p-head>div{min-width:0}
+.p-tools{margin-left:auto}
 .p-title{font-size:15px; font-weight:500; letter-spacing:-.02em}
 .p-note{font-size:11.5px; color:var(--muted); margin-top:5px; max-width:60ch; line-height:1.55}
 .p-tools{display:flex; gap:8px; flex:none}
@@ -260,7 +284,6 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
   background:radial-gradient(circle at 25% 30%, rgba(255,59,48,.16), transparent 62%)}
 .oftad-panel>*{position:relative}
 #oftad-flash{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; color:var(--accent-ink)}
-.docks{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start}
 .drop{margin-top:16px; border:1px dashed var(--rule); border-radius:16px; padding:16px; min-height:128px;
   display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start; background:var(--inset);
   transition:border-color .3s var(--ease), background .3s var(--ease)}
@@ -310,7 +333,8 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
   .kpis{grid-template-columns:1fr 1fr}
   .kpi:nth-child(odd){border-left:0}
   .kpi:nth-child(n+3){border-top:1px solid var(--hair)}
-  .charts,.docks{grid-template-columns:1fr}
+  #canvas{grid-template-columns:1fr}
+  #canvas>[data-panel]{grid-column:auto!important}
   .alerts{grid-template-columns:1fr}
 }
 @media (max-width:460px){
@@ -338,11 +362,13 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       </div>
     </div>
     <div class="controls">
+      <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
     </div>
   </header>
 
-  <section class="kpis" aria-label="Summary">
+  <div id="canvas">
+  <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
       <div class="k-label">Overall</div>
       <div class="k-val" id="kpi-overall">0%</div>
@@ -366,8 +392,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
     </div>
   </section>
 
-  <section class="charts">
-    <div class="panel mains">
+  <div class="panel mains" data-panel="mains">
       <div class="p-head">
         <div>
           <div class="p-title">Main tasks &mdash; completion</div>
@@ -384,7 +409,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       </div>
     </div>
 
-    <div class="panel subs">
+  <div class="panel subs" data-panel="subs">
       <div class="p-head">
         <div>
           <div class="p-title">Subtasks &mdash; <span id="sub-title">&nbsp;</span></div>
@@ -403,10 +428,9 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       <div class="bars" id="sub-bars"></div>
       <div class="axis" id="axis-sub"></div>
       <div id="sub-table" hidden></div>
-    </div>
-  </section>
+  </div>
 
-  <section class="panel oftad-panel">
+  <section class="panel oftad-panel" data-panel="oftad">
     <div class="p-head">
       <div>
         <div class="p-title">One Fucking Task A Day</div>
@@ -418,8 +442,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
     <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
   </section>
 
-  <section class="docks">
-    <div class="panel">
+  <div class="panel" data-panel="plan">
       <div class="p-head">
         <div>
           <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
@@ -429,8 +452,8 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       </div>
       <div class="drop" id="plan"></div>
       <div class="dock-foot"><span id="plan-count"></span><span id="plan-roll"></span></div>
-    </div>
-    <div class="panel">
+  </div>
+  <div class="panel" data-panel="done">
       <div class="p-head">
         <div>
           <div class="p-title">Done today</div>
@@ -441,10 +464,9 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
       <div class="drop done-zone" id="done"></div>
       <div class="dock-foot"><span id="done-count"></span></div>
       <div class="daylog" id="daylog"></div>
-    </div>
-  </section>
+  </div>
 
-  <section class="panel">
+  <section class="panel" data-panel="alerts">
     <div class="p-head">
       <div>
         <div class="p-title">Needs a look</div>
@@ -453,6 +475,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--muted); max-width:1
     </div>
     <div class="alerts" id="alerts"></div>
   </section>
+  </div>
 
   <footer>
     <details class="drawer">
@@ -595,7 +618,7 @@ var state=boot();
 
 function blankState(){
   return {v:2,seedRev:0,day:todayStr(),groups:[],subs:{},oftad:[],plan:[],done:[],
-          hist:[],dayLog:[],log:[],sel:"",notified:"",ue:{},killed:[]};
+          hist:[],dayLog:[],log:[],sel:"",notified:"",ue:{},killed:[],layout:{},free:false};
 }
 function boot(){
   var s=null;
@@ -902,9 +925,9 @@ function renderDocks(){
 }
 function saysFlash(msg){ flash=msg; flashT=Date.now()+4000; setTimeout(renderDocks,4100); }
 
-function renderAll(){ renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); }
+function renderAll(){ renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); if(typeof fitCanvas==="function") fitCanvas(); }
 renderAll();
-$("#revnote").textContent="Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
+$("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
 
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
@@ -1279,6 +1302,121 @@ $("#io-reset").addEventListener("click",function(){
   try{ localStorage.removeItem(KEY); }catch(e){}
   location.reload();
 });
+
+/* ---------------- movable panels ---------------- */
+var CANVAS=$("#canvas"), zTop=10;
+var MOVEICON='<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'+
+ '<circle cx="4" cy="4" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="12" cy="4" r="1.4"/>'+
+ '<circle cx="4" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12" cy="8" r="1.4"/>'+
+ '<circle cx="4" cy="12" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/></svg>';
+function panels(){ return Array.prototype.slice.call(CANVAS.querySelectorAll("[data-panel]")); }
+function wide(){ return window.innerWidth>=900; }
+function isFree(){ return !!CANVAS && CANVAS.classList.contains("free"); }
+if(!state.layout) state.layout={};
+
+panels().forEach(function(el){
+  var head=el.querySelector(".p-head");
+  var grip=document.createElement("button");
+  grip.type="button"; grip.className="pmove"; grip.setAttribute("data-pmove","");
+  grip.setAttribute("aria-label","Move this panel"); grip.innerHTML=MOVEICON;
+  if(head){ head.setAttribute("data-pmove",""); head.insertBefore(grip,head.firstChild); }
+  else { grip.classList.add("corner"); el.appendChild(grip); }
+  var rz=document.createElement("span");
+  rz.className="presize"; rz.setAttribute("data-presize",""); rz.setAttribute("aria-hidden","true");
+  el.appendChild(rz);
+});
+
+function place(el,x,y,w){
+  el.style.left=x+"px"; el.style.top=y+"px"; el.style.width=w+"px";
+  state.layout[el.dataset.panel]={x:x,y:y,w:w};
+}
+function fitCanvas(){
+  if(!CANVAS) return;
+  if(!isFree()){ CANVAS.style.height=""; return; }
+  var h=0;
+  panels().forEach(function(el){ h=Math.max(h,el.offsetTop+el.offsetHeight); });
+  CANVAS.style.height=(h+40)+"px";
+}
+/* freeze every panel exactly where it already sits, then let it float */
+function goFree(){
+  if(!CANVAS||isFree()) return;
+  var box=CANVAS.getBoundingClientRect();
+  var snap=panels().map(function(el){
+    var r=el.getBoundingClientRect();
+    return [el,Math.round(r.left-box.left),Math.round(r.top-box.top),Math.round(r.width)];
+  });
+  CANVAS.classList.add("free");
+  snap.forEach(function(a){ place(a[0],a[1],a[2],a[3]); });
+  state.free=true; $("#btn-layout").hidden=false; save(); fitCanvas();
+}
+function setFlow(){
+  if(!CANVAS) return;
+  CANVAS.classList.remove("free"); CANVAS.style.height="";
+  panels().forEach(function(el){ el.style.left=el.style.top=el.style.width=el.style.zIndex=""; });
+}
+function applyLayout(){
+  if(!CANVAS) return;
+  if(!state.free||!wide()){ setFlow(); $("#btn-layout").hidden=!state.free; return; }
+  CANVAS.classList.add("free");
+  panels().forEach(function(el){
+    var L=state.layout[el.dataset.panel];
+    if(L) place(el,L.x,L.y,L.w);
+  });
+  $("#btn-layout").hidden=false;
+  fitCanvas();
+}
+$("#btn-layout").addEventListener("click",function(){
+  state.free=false; state.layout={}; save(); setFlow(); $("#btn-layout").hidden=true;
+});
+
+var pdrag=null;
+document.addEventListener("pointerdown",function(e){
+  if(e.button!==undefined&&e.button>0) return;
+  if(!wide()) return;
+  var rz=e.target.closest("[data-presize]");
+  var h=rz?null:e.target.closest("[data-pmove]");
+  if(!rz&&!h) return;
+  if(!rz&&e.target.closest("button:not(.pmove),input,select,textarea,a,label")) return;
+  var el=(rz||h).closest("[data-panel]"); if(!el) return;
+  e.preventDefault(); e.stopPropagation();
+  goFree();
+  var r=el.getBoundingClientRect(), box=CANVAS.getBoundingClientRect();
+  pdrag={el:el,pid:e.pointerId,mode:rz?"size":"move",
+         dx:e.clientX-r.left, dy:e.clientY-r.top, w0:r.width, x0:e.clientX,
+         left:Math.round(r.left-box.left)};
+  el.style.zIndex=++zTop; el.classList.add("lifted");
+  document.body.classList.add("panning");
+  try{ (rz||h).setPointerCapture(e.pointerId); }catch(err){}
+  hideTip();
+},true);
+document.addEventListener("pointermove",function(e){
+  if(!pdrag||e.pointerId!==pdrag.pid) return;
+  e.preventDefault();
+  var box=CANVAS.getBoundingClientRect(), W=box.width;
+  if(pdrag.mode==="size"){
+    var w=Math.round((e.clientX-pdrag.x0+pdrag.w0)/10)*10;
+    w=Math.max(280,Math.min(w,W-pdrag.left));
+    pdrag.el.style.width=w+"px";
+    state.layout[pdrag.el.dataset.panel].w=w;
+  } else {
+    var x=Math.round((e.clientX-box.left-pdrag.dx)/10)*10;
+    var y=Math.round((e.clientY-box.top-pdrag.dy)/10)*10;
+    x=Math.max(0,Math.min(x,Math.max(0,W-pdrag.el.offsetWidth)));
+    y=Math.max(0,y);
+    place(pdrag.el,x,y,pdrag.el.offsetWidth);
+  }
+  fitCanvas();
+},true);
+function endPanel(e){
+  if(!pdrag||e.pointerId!==pdrag.pid) return;
+  pdrag.el.classList.remove("lifted");
+  pdrag=null; document.body.classList.remove("panning");
+  save(); fitCanvas();
+}
+document.addEventListener("pointerup",endPanel,true);
+document.addEventListener("pointercancel",endPanel,true);
+addEventListener("resize",function(){ applyLayout(); });
+applyLayout();
 
 /* ---------------- motion ---------------- */
 function flashIn(el){
