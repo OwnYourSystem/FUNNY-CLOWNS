@@ -111,9 +111,7 @@ img{max-width:100%}
 .ptag{font-family:var(--mono); font-size:10px; font-weight:500; color:var(--muted);
   border:1px solid var(--hair); border-radius:4px; padding:1px 4px; flex:none}
 .rname{flex:1 1 40%; min-width:0; font-size:13px; font-weight:500; overflow-wrap:anywhere}
-.rmeta,.rhrs{font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap}
-.rdue{font-family:var(--mono); font-size:10.5px; color:var(--muted); white-space:nowrap}
-.rdue.late{color:var(--crit)}
+.rmeta{font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap}
 .rval{font-family:var(--mono); font-size:13px; font-weight:500; font-variant-numeric:tabular-nums;
   color:var(--ink-2); min-width:38px; text-align:right}
 .pen{flex:none; width:22px; height:22px; border:0; background:none; padding:0; cursor:pointer;
@@ -138,7 +136,7 @@ img{max-width:100%}
 .pill i{width:7px; height:7px; border-radius:2px; flex:none; font-style:normal}
 .pill.s-done i{background:var(--good)} .pill.s-run i{background:var(--series)}
 .pill.s-risk i{background:var(--warn)} .pill.s-block i{background:var(--crit)}
-.pill.s-late i{background:var(--crit)} .pill.s-idle i{background:var(--grip)}
+.pill.s-idle i{background:var(--grip)}
 
 /* editors + add rows */
 .editor{margin:6px 0 4px 10px; padding:11px 12px; background:var(--panel-2); border:1px solid var(--hair);
@@ -153,7 +151,6 @@ img{max-width:100%}
 .addrow{display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; align-items:center}
 .addrow .f{flex:1 1 150px; width:auto}
 .addrow .f.s{flex:0 0 78px}
-.addrow .f.d{flex:0 0 140px}
 .hintline{font-size:11px; color:var(--muted); margin-top:8px}
 
 table.tv{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:10px}
@@ -225,7 +222,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--ink-2); max-width:1
   .dateline,.clock{font-size:19px}
   .k-val{font-size:25px}
   .chip{max-width:none; flex:1 1 100%}
-  .addrow .f,.addrow .f.s,.addrow .f.d{flex:1 1 100%}
+  .addrow .f,.addrow .f.s{flex:1 1 100%}
 }
 </style>
 <!--ARTIFACT-HEAD-END-->
@@ -306,9 +303,6 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--ink-2); max-width:1
       <div id="group-editor"></div>
       <div class="addrow" id="add-sub-row">
         <input class="f" id="ns-name" placeholder="New subtask" aria-label="New subtask name">
-        <select class="f s" id="ns-pri" aria-label="Priority"><option value="3">P3</option><option value="2">P2</option><option value="1">P1</option></select>
-        <input class="f s" id="ns-est" type="number" min="0" placeholder="hrs" aria-label="Estimated hours">
-        <input class="f d" id="ns-due" type="date" aria-label="Due date">
         <button class="btn" id="ns-add">Add</button>
       </div>
       <div class="bars" id="sub-bars"></div>
@@ -359,7 +353,7 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--ink-2); max-width:1
     <div class="p-head">
       <div>
         <div class="p-title">Needs a look</div>
-        <div class="p-note">Blocked work, overdue work, anything stalled 14 days, and anything untouched in a main task already past halfway.</div>
+        <div class="p-note">Blocked work, anything stalled 14 days, and anything untouched in a main task already past halfway.</div>
       </div>
     </div>
     <div class="alerts" id="alerts"></div>
@@ -398,93 +392,93 @@ input[type=file]{font:inherit; font-size:11.5px; color:var(--ink-2); max-width:1
    pct/ago are placeholder figures for items that predate the real
    data; everything added later starts at 0 and todo.
 ================================================================*/
-var SEED_REV = 4;
+var SEED_REV = 5;
 var RETIRED = ["tch","enb"];   /* withdrawn; a group goes only if it ends up empty */
 
 var SEED=[
  {id:"svc",icon:"🎧",name:"Service Desk + client requests",mp:4,subs:[
-   {id:"svc1",name:"Service Desk project updates",pri:3,pct:70,ago:2,status:"doing"}]},
+   {id:"svc1",name:"Service Desk project updates",pct:70,ago:2,status:"doing"}]},
  {id:"vgd",icon:"📁",name:"Vanguard",mp:4,subs:[
-   {id:"vg1",name:"Stakeholders identification",pri:3,pct:100,ago:11,status:"done"},
-   {id:"vg2",name:"Team Building notifications",pri:3,pct:60,ago:4,status:"doing"},
-   {id:"vg3",name:"Survey Set up for Esbjerg",pri:1,pct:30,ago:9,status:"doing"},
-   {id:"vg4",name:"Prompting Copilot Tutorial — video",pri:3,pct:100,ago:17,status:"done"},
-   {id:"vg5",name:"Excel in Copilot — video",pri:3,pct:75,ago:3,status:"doing"},
-   {id:"vg6",name:"SAP data in Copilot — video",pri:3,pct:20,ago:16,status:"doing"},
-   {id:"vg7",name:"Agents — video",pri:3,pct:0,ago:30,status:"todo"},
-   {id:"vg8",name:"Frameworks — video",pri:3,pct:0,ago:30,status:"todo"},
-   {id:"vg9",name:"Esbjerg Meeting plans → Travel Plan",pri:3,pct:40,ago:5,status:"doing"},
-   {id:"tc1",name:"Start up the IT Teams Channel for users about AI specially",pri:3,pct:15,ago:21,status:"doing"}]},
+   {id:"vg1",name:"Stakeholders identification",pct:100,ago:11,status:"done"},
+   {id:"vg2",name:"Team Building notifications",pct:60,ago:4,status:"doing"},
+   {id:"vg3",name:"Survey Set up for Esbjerg",pct:30,ago:9,status:"doing"},
+   {id:"vg4",name:"Prompting Copilot Tutorial — video",pct:100,ago:17,status:"done"},
+   {id:"vg5",name:"Excel in Copilot — video",pct:75,ago:3,status:"doing"},
+   {id:"vg6",name:"SAP data in Copilot — video",pct:20,ago:16,status:"doing"},
+   {id:"vg7",name:"Agents — video",pct:0,ago:30,status:"todo"},
+   {id:"vg8",name:"Frameworks — video",pct:0,ago:30,status:"todo"},
+   {id:"vg9",name:"Esbjerg Meeting plans → Travel Plan",pct:40,ago:5,status:"doing"},
+   {id:"tc1",name:"Start up the IT Teams Channel for users about AI specially",pct:15,ago:21,status:"doing"}]},
  {id:"llm",icon:"🤖",name:"Local LLM Sunscape",mp:4,subs:[
-   {id:"ll7",name:"Present the DSP Playbook solution as use case",pri:3,pct:5,ago:19,status:"doing",est:6,tag:"Planning"},
-   {id:"ll1",name:"Sandbox architecture design",pri:3,pct:55,ago:1,status:"doing"},
-   {id:"ll2",name:"Compliance assessment → rules from Leon",pri:3,pct:25,ago:12,status:"blocked"},
-   {id:"ll3",name:"Security assessment",pri:3,pct:10,ago:8,status:"doing"},
-   {id:"ll4",name:"Cost estimation",pri:3,pct:0,ago:30,status:"todo"},
-   {id:"ll5",name:"Risk assessment",pri:3,pct:0,ago:30,status:"todo"},
-   {id:"ll6",name:"Recommendation document",pri:3,pct:0,ago:30,status:"todo"},
-   {id:"ll8",name:"Fine Tuning",pri:3,pct:0,ago:0,status:"todo"}]},
+   {id:"ll7",name:"Present the DSP Playbook solution as use case",pct:5,ago:19,status:"doing",tag:"Planning"},
+   {id:"ll1",name:"Sandbox architecture design",pct:55,ago:1,status:"doing"},
+   {id:"ll2",name:"Compliance assessment → rules from Leon",pct:25,ago:12,status:"blocked"},
+   {id:"ll3",name:"Security assessment",pct:10,ago:8,status:"doing"},
+   {id:"ll4",name:"Cost estimation",pct:0,ago:30,status:"todo"},
+   {id:"ll5",name:"Risk assessment",pct:0,ago:30,status:"todo"},
+   {id:"ll6",name:"Recommendation document",pct:0,ago:30,status:"todo"},
+   {id:"ll8",name:"Fine Tuning",pct:0,ago:0,status:"todo"}]},
  {id:"sap",icon:"📊",name:"SAP",mp:1,subs:[
-   {id:"sp1",name:"Discovery: define scope, stakeholders, and data sources for SAP Datasphere & Analytics",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"sp2",name:"Backlog seeding workshop: capture initial epics and acceptance criteria",pri:2,pct:0,ago:0,status:"todo"},
-   {id:"sp3",name:"SAP Migration Issues",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"sp4",name:"SAP Datasphere Mastering",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"sp5",name:"Follow the Learning portal sessions",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"sp6",name:"SAP Analytical Cloud Mastering",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"sp7",name:"Becoming a monster in customizing the models and metadata",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"en1",name:"SAP Datasphere and SAP Analytics",pri:1,pct:45,ago:4,status:"doing"},
-   {id:"en3",name:"Power BI re-structuring after the SAP Cloud goes live",pri:3,pct:10,ago:6,status:"doing"}]},
+   {id:"sp1",name:"Discovery: define scope, stakeholders, and data sources for SAP Datasphere & Analytics",pct:0,ago:0,status:"todo"},
+   {id:"sp2",name:"Backlog seeding workshop: capture initial epics and acceptance criteria",pct:0,ago:0,status:"todo"},
+   {id:"sp3",name:"SAP Migration Issues",pct:0,ago:0,status:"todo"},
+   {id:"sp4",name:"SAP Datasphere Mastering",pct:0,ago:0,status:"todo"},
+   {id:"sp5",name:"Follow the Learning portal sessions",pct:0,ago:0,status:"todo"},
+   {id:"sp6",name:"SAP Analytical Cloud Mastering",pct:0,ago:0,status:"todo"},
+   {id:"sp7",name:"Becoming a monster in customizing the models and metadata",pct:0,ago:0,status:"todo"},
+   {id:"en1",name:"SAP Datasphere and SAP Analytics",pct:45,ago:4,status:"doing"},
+   {id:"en3",name:"Power BI re-structuring after the SAP Cloud goes live",pct:10,ago:6,status:"doing"}]},
  {id:"ofm",icon:"📁",name:"OFM",mp:2,subs:[
-   {id:"of1",name:"Solve the problem of Refresh in RV_STRM_GAS_DER_STRM",pri:2,pct:0,ago:0,status:"todo"},
-   {id:"of2",name:"Live Data extraction",pri:3,pct:0,ago:0,status:"todo"}]},
+   {id:"of1",name:"Solve the problem of Refresh in RV_STRM_GAS_DER_STRM",pct:0,ago:0,status:"todo"},
+   {id:"of2",name:"Live Data extraction",pct:0,ago:0,status:"todo"}]},
  {id:"grs",icon:"☁️",name:"Partnership",mp:3,subs:[
-   {id:"gs1",name:"Rune",pri:3,pct:50,ago:7,status:"doing"},
-   {id:"gs2",name:"On SAC (Maintanance)",pri:3,pct:35,ago:3,status:"doing"},
-   {id:"gs3",name:"On PowerPlatform",pri:3,pct:20,ago:15,status:"doing"},
-   {id:"gs4",name:"On SAC (finance)",pri:3,pct:15,ago:10,status:"doing"}]},
+   {id:"gs1",name:"Rune",pct:50,ago:7,status:"doing"},
+   {id:"gs2",name:"On SAC (Maintanance)",pct:35,ago:3,status:"doing"},
+   {id:"gs3",name:"On PowerPlatform",pct:20,ago:15,status:"doing"},
+   {id:"gs4",name:"On SAC (finance)",pct:15,ago:10,status:"doing"}]},
  {id:"alc",icon:"📁",name:"Alchemy",mp:3,subs:[
-   {id:"al5",name:"terraform set up and bronze db reshuffle",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"al1",name:"ADF Update on Landing Zone",pri:3,pct:80,ago:2,status:"doing"},
-   {id:"al3",name:"Terraform and Databricks IaC approach",pri:3,pct:35,ago:9,status:"doing"},
-   {id:"al4",name:"Automate the update landing to Bronze",pri:3,pct:25,ago:14,status:"doing"},
-   {id:"al2",name:"Bronze Database on Databricks",pri:3,pct:60,ago:5,status:"doing"}]},
+   {id:"al5",name:"terraform set up and bronze db reshuffle",pct:0,ago:0,status:"todo"},
+   {id:"al1",name:"ADF Update on Landing Zone",pct:80,ago:2,status:"doing"},
+   {id:"al3",name:"Terraform and Databricks IaC approach",pct:35,ago:9,status:"doing"},
+   {id:"al4",name:"Automate the update landing to Bronze",pct:25,ago:14,status:"doing"},
+   {id:"al2",name:"Bronze Database on Databricks",pct:60,ago:5,status:"doing"}]},
  {id:"aut",icon:"📁",name:"Automation Debt",mp:2,subs:[
-   {id:"au1",name:"azure cybersecurity",pri:3,pct:40,ago:6,status:"doing"},
-   {id:"au4",name:"sap datasphere requests via DSP CLI",pri:2,pct:0,ago:0,status:"todo"},
-   {id:"au2",name:"Databricks",pri:3,pct:30,ago:11,status:"doing"},
-   {id:"au3",name:"Datasphere CLI ( as POC)",pri:3,pct:20,ago:18,status:"doing"},
-   {id:"au5",name:"ADF best practices",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"svc2",name:"copilot ai agent projects",pri:1,pct:45,ago:6,status:"doing"},
-   {id:"au7",name:"power platform solutions",pri:1,pct:0,ago:0,status:"todo"}]},
+   {id:"au1",name:"azure cybersecurity",pct:40,ago:6,status:"doing"},
+   {id:"au4",name:"sap datasphere requests via DSP CLI",pct:0,ago:0,status:"todo"},
+   {id:"au2",name:"Databricks",pct:30,ago:11,status:"doing"},
+   {id:"au3",name:"Datasphere CLI ( as POC)",pct:20,ago:18,status:"doing"},
+   {id:"au5",name:"ADF best practices",pct:0,ago:0,status:"todo"},
+   {id:"svc2",name:"copilot ai agent projects",pct:45,ago:6,status:"doing"},
+   {id:"au7",name:"power platform solutions",pct:0,ago:0,status:"todo"}]},
  {id:"ppm",icon:"⚡",name:"Power Platform management",mp:2,subs:[
-   {id:"pp1",name:"Relocate Power Apps and Power Automate Flows in Solution Box",pri:3,pct:45,ago:8,status:"doing"}]},
+   {id:"pp1",name:"Relocate Power Apps and Power Automate Flows in Solution Box",pct:45,ago:8,status:"doing"}]},
  {id:"anb",icon:"🤖",name:"ai native bootcamp",mp:1,subs:[
-   {id:"an1",name:"ML concepts and practices",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"en2",name:"AI Bootcamp tier 2: LLMs",pri:2,pct:30,ago:13,status:"doing"}]},
+   {id:"an1",name:"ML concepts and practices",pct:0,ago:0,status:"todo"},
+   {id:"en2",name:"AI Bootcamp tier 2: LLMs",pct:30,ago:13,status:"doing"}]},
  {id:"apd",icon:"💻",name:"Applications development",mp:5,subs:[
-   {id:"ap1",name:"ETF Adviser",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"ap2",name:"Life-Brain",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"ap3",name:"Mind Anchor",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"ap4",name:"Verbatim",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"ap5",name:"Tysk-DK",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"ap6",name:"Property Evaluation",pri:3,pct:0,ago:0,status:"todo"}]},
+   {id:"ap1",name:"ETF Adviser",pct:0,ago:0,status:"todo"},
+   {id:"ap2",name:"Life-Brain",pct:0,ago:0,status:"todo"},
+   {id:"ap3",name:"Mind Anchor",pct:0,ago:0,status:"todo"},
+   {id:"ap4",name:"Verbatim",pct:0,ago:0,status:"todo"},
+   {id:"ap5",name:"Tysk-DK",pct:0,ago:0,status:"todo"},
+   {id:"ap6",name:"Property Evaluation",pct:0,ago:0,status:"todo"}]},
  {id:"oys",icon:"📣",name:"OYS_Version3",mp:1,subs:[
-   {id:"oy1",name:"OYS Tracker",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"oy2",name:"UDEMY AIGP Course",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"oy3",name:"Other courses NIST, DORA, ISO …?",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"oy4",name:"Get the certificate",pri:3,pct:0,ago:0,status:"todo"}]},
+   {id:"oy1",name:"OYS Tracker",pct:0,ago:0,status:"todo"},
+   {id:"oy2",name:"UDEMY AIGP Course",pct:0,ago:0,status:"todo"},
+   {id:"oy3",name:"Other courses NIST, DORA, ISO …?",pct:0,ago:0,status:"todo"},
+   {id:"oy4",name:"Get the certificate",pct:0,ago:0,status:"todo"}]},
  {id:"tcs",icon:"☁️",name:"The Compromised Stack",mp:2,subs:[
-   {id:"tc9",name:"Obsidian + Claude set up",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"tc8",name:"Start chapter 0",pri:1,pct:0,ago:0,status:"todo"}]},
+   {id:"tc9",name:"Obsidian + Claude set up",pct:0,ago:0,status:"todo"},
+   {id:"tc8",name:"Start chapter 0",pct:0,ago:0,status:"todo"}]},
  {id:"shr",icon:"👥",name:"Shredding and Mastering",mp:3,subs:[
-   {id:"sh1",name:"Daily training Shredding",pri:1,pct:0,ago:0,status:"todo"},
-   {id:"sh2",name:"Airbike",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"sh3",name:"Running",pri:3,pct:0,ago:0,status:"todo"},
-   {id:"sh4",name:"Workout",pri:3,pct:0,ago:0,status:"todo"}]},
+   {id:"sh1",name:"Daily training Shredding",pct:0,ago:0,status:"todo"},
+   {id:"sh2",name:"Airbike",pct:0,ago:0,status:"todo"},
+   {id:"sh3",name:"Running",pct:0,ago:0,status:"todo"},
+   {id:"sh4",name:"Workout",pct:0,ago:0,status:"todo"}]},
  {id:"bks",icon:"📚",name:"Books To Read",mp:1,subs:[
-   {id:"bk1",name:"The order of Time",pri:2,pct:0,ago:0,status:"todo"},
-   {id:"bk2",name:"When Breath Becomes Air",pri:2,pct:0,ago:0,status:"todo"},
-   {id:"bk3",name:"Reality is not what it seems",pri:1,pct:0,ago:0,status:"todo"}]}
+   {id:"bk1",name:"The order of Time",pct:0,ago:0,status:"todo"},
+   {id:"bk2",name:"When Breath Becomes Air",pct:0,ago:0,status:"todo"},
+   {id:"bk3",name:"Reality is not what it seems",pct:0,ago:0,status:"todo"}]}
 ];
 
 var KEY="oys-min-deliveries-v1";
@@ -561,19 +555,19 @@ function sync(){
       var s=state.subs[ss.id];
       if(!s){
         if(killed(ss.id)) return;
-        state.subs[ss.id]={id:ss.id,name:ss.name,pri:ss.pri||3,pct:ss.pct||0,
-          status:ss.status||"todo",est:ss.est||0,spent:ss.spent||0,due:ss.due||"",
-          tag:ss.tag||"",upd:agoDate(ss.ago||0),gid:sg.id};
+        state.subs[ss.id]={id:ss.id,name:ss.name,pct:ss.pct||0,
+          status:ss.status||"todo",tag:ss.tag||"",upd:agoDate(ss.ago||0),gid:sg.id};
         g.subs.push(ss.id);
       } else {
         if(!ue[ss.id+"|name"]) s.name=ss.name;
         if(!ue[ss.id+"|group"] && s.gid!==sg.id){ detach(ss.id); g.subs.push(ss.id); s.gid=sg.id; }
-        if(!s.est && ss.est) s.est=ss.est;
         if(!s.tag && ss.tag) s.tag=ss.tag;
-        if(!s.due && ss.due) s.due=ss.due;
-        if(!s.pri) s.pri=ss.pri||3;
       }
     });
+  });
+  Object.keys(state.subs).forEach(function(id){
+    var sx=state.subs[id];
+    delete sx.pri; delete sx.est; delete sx.spent; delete sx.due;
   });
   RETIRED.forEach(function(id){
     if(state.subs[id]){ detach(id); delete state.subs[id]; state.killed.push(id); return; }
@@ -601,21 +595,19 @@ function groupDone(g){ var n=0; g.subs.forEach(function(id){ if(state.subs[id]&&
 function statusOf(s){
   if(s.status==="done"||s.pct>=100) return {k:"done",label:"Done"};
   if(s.status==="blocked") return {k:"block",label:"Blocked"};
-  if(s.due && s.due<todayStr()) return {k:"late",label:"Overdue"};
   var a=ageOf(s.upd);
   if(s.pct>0 && a>=14) return {k:"risk",label:"Stalled "+a+"d"};
   if(s.status==="doing"||s.pct>0) return {k:"run",label:"Doing"};
   return {k:"idle",label:"Todo"};
 }
 function alerts(){
-  var out=[], rank={crit:0,serious:1,warn:2}, t=todayStr();
+  var out=[], rank={crit:0,serious:1,warn:2};
   state.groups.forEach(function(g){
     var gp=groupPct(g);
     g.subs.forEach(function(id){
       var s=state.subs[id]; if(!s||s.pct>=100||s.status==="done") return;
       var a=ageOf(s.upd);
       if(s.status==="blocked") out.push({sev:"crit",kind:"Blocked",t:s.name,w:g.name+" · held at "+s.pct+"% for "+a+" days"});
-      else if(s.due && s.due<t) out.push({sev:"crit",kind:"Overdue",t:s.name,w:g.name+" · was due "+s.due});
       else if(s.pct>0 && a>=14) out.push({sev:"warn",kind:"Stalled",t:s.name,w:g.name+" · no movement in "+a+" days"});
       else if(s.pct===0 && gp>=45) out.push({sev:"serious",kind:"Not started",t:s.name,w:g.name+" is already at "+gp+"%"});
     });
@@ -706,14 +698,11 @@ function renderSubs(){
 
   $("#sub-bars").innerHTML=g.subs.map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), a=ageOf(s.upd), late=s.due&&s.due<todayStr();
+    var st=statusOf(s), a=ageOf(s.upd);
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
-      '<span class="ptag">P'+s.pri+'</span>'+
       '<span class="rname">'+esc(s.name)+'</span>'+
       (s.tag?'<span class="pill"><i style="background:var(--muted)"></i>'+esc(s.tag)+'</span>':"")+
-      (s.est||s.spent?'<span class="rhrs">'+s.spent+"/"+s.est+'h</span>':"")+
-      (s.due?'<span class="rdue'+(late?" late":"")+'">'+esc(s.due)+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -724,20 +713,15 @@ function renderSubs(){
 
   $("#sub-table").innerHTML=tbl(g.subs.map(function(id){
     var s=state.subs[id]; if(!s) return ["","",""];
-    return ["P"+s.pri+"  "+esc(s.name), statusOf(s).label+(s.due?" · due "+s.due:""), s.pct+"%"]; }),
+    return [esc(s.name), statusOf(s).label, s.pct+"%"]; }),
     ["Subtask","Status","Complete"]);
 }
 function subEditor(s){
   return '<div class="editor" data-ed-for="'+s.id+'">'+
     '<label class="wide">Name<input class="f" data-ed="name" value="'+esc(s.name)+'"></label>'+
-    '<label>Priority<select class="f" data-ed="pri">'+[1,2,3].map(function(n){
-      return '<option value="'+n+'"'+(s.pri===n?" selected":"")+">P"+n+"</option>"; }).join("")+'</select></label>'+
     '<label>Status<select class="f" data-ed="status">'+STATUSES.map(function(o){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
-    '<label>Hours spent<input class="f" type="number" min="0" step="0.5" data-ed="spent" value="'+s.spent+'"></label>'+
-    '<label>Hours estimate<input class="f" type="number" min="0" step="0.5" data-ed="est" value="'+s.est+'"></label>'+
-    '<label>Due<input class="f" type="date" data-ed="due" value="'+esc(s.due)+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
     '<label>Last moved<input class="f" type="date" data-ed="upd" value="'+esc(s.upd)+'"></label>'+
     '<div class="acts"><button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
@@ -757,7 +741,7 @@ function renderKpis(){
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
   var al=alerts();
   $("#kpi-alert").textContent=al.length;
-  $("#kpi-alert-sub").textContent=al.length?"blocked, overdue, stalled or untouched":"nothing needs chasing";
+  $("#kpi-alert-sub").textContent=al.length?"blocked, stalled or untouched":"nothing needs chasing";
   var planned=state.oftad.length+state.plan.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";
@@ -778,7 +762,7 @@ function drawSpark(){
 }
 function renderAlerts(){
   var al=alerts(), box=$("#alerts");
-  if(!al.length){ box.innerHTML='<p class="calm">Nothing blocked, nothing overdue, nothing stalled.</p>'; return; }
+  if(!al.length){ box.innerHTML='<p class="calm">Nothing blocked and nothing stalled.</p>'; return; }
   box.innerHTML=al.slice(0,12).map(function(a){
     return '<div class="alert"><span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
       '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+a.kind+"</span></div>"; }).join("");
@@ -865,13 +849,9 @@ document.addEventListener("change",function(e){
     var s=state.subs[ed.dataset.edFor]; if(!s) return;
     var k=f.dataset.ed, v=f.value;
     if(k==="name"){ if(!v.trim()) { renderSubs(); return; } s.name=v.trim(); mark(s.id,"name"); }
-    else if(k==="pri") s.pri=+v;
     else if(k==="status"){ s.status=v; if(v==="done") s.pct=100; else if(s.pct>=100) s.pct=95; s.upd=todayStr(); }
     else if(k==="pct"){ s.pct=clamp(Math.round(+v/5)*5,0,100); s.upd=todayStr();
       s.status = s.pct>=100?"done":(s.pct>0&&s.status==="todo"?"doing":s.status); }
-    else if(k==="spent") s.spent=Math.max(0,+v||0);
-    else if(k==="est") s.est=Math.max(0,+v||0);
-    else if(k==="due") s.due=v;
     else if(k==="tag") s.tag=v.trim();
     else if(k==="upd") s.upd=v||todayStr();
     touchHist(); save(); renderAll(); return;
@@ -896,10 +876,9 @@ $("#ns-add").addEventListener("click",function(){
   var g=gById(state.sel); if(!g){ return; }
   var n=$("#ns-name").value.trim(); if(!n){ $("#ns-name").focus(); return; }
   var id=uid("s");
-  state.subs[id]={id:id,name:n,pri:+$("#ns-pri").value||3,pct:0,status:"todo",
-    est:Math.max(0,+$("#ns-est").value||0),spent:0,due:$("#ns-due").value||"",tag:"",upd:todayStr(),gid:g.id};
+  state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id};
   g.subs.push(id);
-  $("#ns-name").value=""; $("#ns-est").value=""; $("#ns-due").value="";
+  $("#ns-name").value="";
   touchHist(); save(); renderAll();
 });
 [["#ng-name","#ng-add"],["#ns-name","#ns-add"]].forEach(function(p){
