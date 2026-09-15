@@ -185,6 +185,7 @@ body.dragging .cursor-ring{opacity:0}
   color:var(--muted); border-radius:6px; display:grid; place-items:center;
   transition:color .25s var(--ease), background .25s var(--ease)}
 .pen:hover,.pen[aria-expanded="true"]{color:var(--ink); background:var(--inset)}
+.rhead .pen{margin-left:auto}
 .track{position:relative; height:22px; margin-top:9px; display:block}
 .track::before{content:""; position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
   height:8px; border-radius:999px; background:var(--inset)}
@@ -741,7 +742,9 @@ function weekNo(d){ var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDa
   return Math.ceil(((t-Date.UTC(t.getUTCFullYear(),0,1))/864e5+1)/7); }
 function tick(){
   var d=new Date();
-  $("#dateline").textContent=d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  $("#dateline").textContent=d.toLocaleDateString(undefined, window.innerWidth<520
+    ? {weekday:"short",day:"numeric",month:"short",year:"numeric"}
+    : {weekday:"long",day:"numeric",month:"long",year:"numeric"});
   $("#clock").textContent=pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());
   $("#wk").textContent="WEEK "+weekNo(d);
   if(state.day!==todayStr()) location.reload();
@@ -880,7 +883,7 @@ function renderDocks(){
   var covered={}; state.oftad.forEach(function(c){ covered[cardGid(c)]=1; });
   $("#oftad").innerHTML = state.oftad.length
     ? state.oftad.map(function(c,i){ return chipHTML(c,i,"oftad"); }).join("")
-    : '<p class="hint"><b>One subtask per main task. No more.</b>Drag a bar from the right-hand chart in here. A second card from the same main task replaces the first.</p>';
+    : '<p class="hint"><b>One subtask per main task. No more.</b>Drag a bar in from the subtask list. A second from the same main task replaces it.</p>';
   $("#plan").innerHTML = state.plan.length
     ? state.plan.map(function(c,i){ return chipHTML(c,i,"plan"); }).join("")
     : '<p class="hint"><b>Everything else you might get to</b>No limit here. Drag from either chart.</p>';
