@@ -3557,6 +3557,9 @@ function buildFolio(){
    Sign in and the board stops being one browser's secret. It is kept as one
    JSON document per person, and the database only ever lets a person reach
    their own row. Signed out, nothing changes: the board still lives here.  */
+/* Signing in is off. One word here brings it back, and everything below
+   it is left standing so that switch is all it takes.                   */
+var ACCOUNT_ON=false;
 var SB_URL="https://phicqgnzqnuwugzbgxxw.supabase.co";
 var SB_KEY="sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
 var AUTH_KEY=KEY+".account";
@@ -3623,7 +3626,7 @@ function pushBoard(){
 }
 /* every save nudges this; the write itself waits until you stop typing */
 function syncSoon(){
-  if(!acct||!acct.uid) return;
+  if(!ACCOUNT_ON||!acct||!acct.uid) return;
   clearTimeout(pushT);
   pushT=setTimeout(function(){ pushBoard().catch(function(e){ acctMsg("Not saved to your account: "+e.message); }); },1500);
 }
@@ -3728,6 +3731,12 @@ function catchRedirect(){
 }
 
 (function(){
+  if(!ACCOUNT_ON){
+    var b=$("#btn-account"), p=$("#account");
+    if(b) b.hidden=true;
+    if(p) p.remove();
+    return;
+  }
   acct=acctLoad();
   var came=catchRedirect();
   /* Google signs you in by sending the browser away and back. That cannot
