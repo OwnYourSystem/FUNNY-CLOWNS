@@ -147,34 +147,40 @@ body.flat #canvas{transform:none!important}
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
 #canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"]{grid-column:1/-1}
-#botdock{position:fixed; z-index:120; width:390px; display:flex; flex-direction:column;
-  background:color-mix(in srgb, var(--panel) 88%, transparent);
+#bot-orb{position:fixed; z-index:130; width:66px; height:66px; border-radius:50%;
+  display:grid; place-items:center; cursor:grab; touch-action:none; color:#fff;
+  background:var(--accent); border:none; padding:0;
+  box-shadow:0 16px 38px -10px rgba(255,59,48,.6), 0 0 0 1px rgba(255,255,255,.12) inset;
+  transition:transform .3s var(--ease), box-shadow .3s var(--ease)}
+#bot-orb svg{width:28px; height:28px}
+#bot-orb:hover{transform:scale(1.05)}
+#bot-orb:active{cursor:grabbing; transform:scale(.96)}
+#bot-orb.listening{animation:orb 1.3s ease-in-out infinite}
+#bot-orb.busy{opacity:.75}
+#bot-orb.muted{background:var(--raised); color:var(--ink);
+  border:1px solid rgba(255,59,48,.55);
+  box-shadow:0 16px 38px -14px rgba(0,0,0,.7)}
+@keyframes orb{0%,100%{box-shadow:0 16px 38px -10px rgba(255,59,48,.6),0 0 0 0 rgba(255,59,48,.55)}
+  50%{box-shadow:0 16px 38px -10px rgba(255,59,48,.6),0 0 0 18px rgba(255,59,48,0)}}
+@media (prefers-reduced-motion:reduce){ #bot-orb.listening{animation:none} }
+#botsheet{position:fixed; z-index:129; width:380px; display:flex; flex-direction:column;
+  background:color-mix(in srgb, var(--panel) 92%, transparent);
   -webkit-backdrop-filter:blur(26px) saturate(1.3); backdrop-filter:blur(26px) saturate(1.3);
-  border:1px solid var(--rule); border-radius:20px; padding:0 16px 16px;
-  box-shadow:0 30px 70px -22px rgba(0,0,0,.72); max-height:76vh}
-#botdock.collapsed{display:none}
-.bot-head{display:flex; align-items:center; gap:10px; padding:14px 0 12px; cursor:move;
-  touch-action:none; border-bottom:1px solid var(--hair)}
+  border:1px solid var(--rule); border-radius:20px; padding:0 16px 14px;
+  box-shadow:0 30px 70px -22px rgba(0,0,0,.75)}
+.sheet-head{display:flex; align-items:center; gap:10px; padding:14px 0 12px;
+  border-bottom:1px solid var(--hair)}
 .bot-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:var(--glow); flex:none}
 .bot-name{font-size:14px; font-weight:500; letter-spacing:-.01em; flex:1}
 .bot-tools{display:flex; gap:6px; flex:none}
 .bot-tools .mini{padding:5px 9px}
-#bot-min{font-size:15px; line-height:1; padding:4px 10px}
-#bot-launch{position:fixed; z-index:120; right:22px; bottom:22px; width:54px; height:54px;
-  border-radius:50%; border:1px solid var(--rule); background:var(--panel); color:var(--ink);
-  display:grid; place-items:center; cursor:pointer; box-shadow:0 18px 40px -14px rgba(0,0,0,.7);
-  transition:transform .3s var(--ease), border-color .3s var(--ease)}
-#bot-launch:hover{transform:translateY(-2px); border-color:var(--accent)}
-.bot-size{position:absolute; right:2px; bottom:2px; width:20px; height:20px; cursor:nwse-resize;
-  touch-action:none}
-.bot-size::after{content:""; position:absolute; right:5px; bottom:5px; width:8px; height:8px;
-  border-right:2px solid var(--muted); border-bottom:2px solid var(--muted)}
-.bot-mic{width:38px; flex:none; color:var(--muted); display:grid; place-items:center; padding:7px 0}
-.bot-mic.on{color:#fff; background:var(--accent); border-color:var(--accent)}
-.bot-mic.on{animation:mic 1.1s ease-in-out infinite}
-@keyframes mic{0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,.5)}50%{box-shadow:0 0 0 7px rgba(255,59,48,0)}}
-@media (prefers-reduced-motion:reduce){ .bot-mic.on{animation:none} }
-.bot-log{margin-top:14px; flex:1 1 auto; min-height:120px; max-height:none; overflow-y:auto; display:flex; flex-direction:column;
+.bot-note{margin:10px 0 0; font-size:12px; color:var(--muted); line-height:1.5}
+@media (max-width:820px){
+  #botsheet{left:10px!important; right:10px; width:auto; top:auto!important;
+    bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+  #bot-orb{width:62px; height:62px}
+}
+.bot-log{margin-top:12px; flex:1 1 auto; min-height:0; max-height:46vh; overflow-y:auto; display:flex; flex-direction:column;
   gap:10px; padding-right:4px; cursor:auto}
 .bot-msg{max-width:74ch; font-size:13.5px; line-height:1.55; padding:10px 13px; border-radius:14px;
   white-space:pre-wrap; overflow-wrap:anywhere}
@@ -185,7 +191,7 @@ body.flat #canvas{transform:none!important}
   color:var(--accent-ink)}
 .bot-did{align-self:flex-start; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--muted); padding-left:4px}
-.bot-empty{color:var(--muted); font-size:13px; padding:6px 2px}
+.bot-empty{color:var(--muted); font-size:13px; padding:6px 2px; line-height:1.55}
 .bot-chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
 .bot-chip{font:inherit; font-size:12px; color:var(--ink-2); background:transparent;
   border:1px solid var(--hair); border-radius:999px; padding:7px 13px; cursor:pointer;
@@ -565,29 +571,28 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 
   </div>
 
-  <div id="botdock" hidden>
-    <div class="bot-head" id="bot-head">
+  <button id="bot-orb" hidden aria-label="Talk to the board">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+  </button>
+  <div id="botsheet" hidden>
+    <div class="sheet-head">
       <span class="bot-dot"></span>
       <span class="bot-name">Board tutor</span>
       <span class="bot-tools">
         <button class="mini" id="bot-speak" aria-pressed="false" title="Read replies aloud">Speak</button>
         <button class="mini" id="bot-clear" title="Start over">Clear</button>
-        <button class="mini" id="bot-min" title="Collapse">&minus;</button>
+        <button class="mini" id="bot-min" title="Close">Close</button>
       </span>
     </div>
     <div class="bot-log" id="bot-log"></div>
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
-      <button class="mini bot-mic" id="bot-mic" title="Speak to it" aria-label="Speak to it"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
-      <input class="f" id="bot-input" autocomplete="off" placeholder="Ask, or tap the dot and talk" aria-label="Ask the board tutor">
+      <input class="f" id="bot-input" autocomplete="off" placeholder="Add a task, move one on, ask what is stuck" aria-label="Talk to the board">
       <button class="btn" id="bot-send">Send</button>
       <button class="btn" id="bot-stop" hidden>Stop</button>
     </div>
-    <span class="bot-size" id="bot-size" aria-hidden="true"></span>
+    <p class="bot-note" id="bot-note" hidden></p>
   </div>
-  <button id="bot-launch" hidden aria-label="Open the board tutor">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>
-  </button>
 
   <footer>
     <details class="drawer">
@@ -2128,12 +2133,652 @@ function botRender(){
   var log=$("#bot-log"); log.innerHTML="";
   if(!botTurns.length){
     var e=document.createElement("p"); e.className="bot-empty";
+    e.textContent="Add a task, move one on, mark something done, or ask what is stuck.";
+    log.appendChild(e); return;
+  }
+  botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
+  log.scrollTop=log.scrollHeight;
+  sheetPlace();
+}
+var BOT_ERR={
+  not_granted:"You declined, so the assistant cannot run on this page. Reload to be asked again.",
+  rate_limited:"Too many questions at once. Wait a moment and ask again.",
+  prompt_too_large:"That conversation grew too long. Clear it and start again.",
+  cancelled:"",
+  empty_completion:"Nothing came back. Ask again.",
+  invalid_request:"The assistant refused that request."
+};
+async function botAsk(text){
+  if(botBusy||!botSample) return;
+  botBusy=true;
+  $("#bot-send").disabled=true; $("#bot-stop").hidden=false; $("#bot-input").value="";
+  micUI(false);
+  if(ORB) ORB.classList.add("busy");
+  botTurns.push({role:"user",content:text});
+  if(botTurns.length>14) botTurns=botTurns.slice(-14);
+  botRender();
+  var bub=botBubble("bot","Thinking…");
+  botCtl=new AbortController();
+  try{
+    var res=await botSample(
+      [{role:"user",content:BOT_RULES+botSnapshot()}].concat(botTurns),
+      { signal:botCtl.signal,
+        tools:botTools(),
+        onText:function(u){ bub.textContent=u.text; $("#bot-log").scrollTop=$("#bot-log").scrollHeight; } }
+    );
+    botTurns.push({role:"assistant",content:res.text});
+    botRender();
+    speakOut(res.text);
+  }catch(e){
+    var msg=BOT_ERR[e&&e.code]||("Something went wrong"+(e&&e.code?" ("+e.code+")":"")+".");
+    if(e&&e.text){ botTurns.push({role:"assistant",content:e.text}); botRender(); }
+    else botRender();
+    if(msg) botBubble("err",msg);
+  }finally{
+    botBusy=false; botCtl=null;
+    if(ORB) ORB.classList.remove("busy");
+    $("#bot-send").disabled=false; $("#bot-stop").hidden=true;
+  }
+}
+
+/* ---------------- voice ---------------- */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+var canSpeak=("speechSynthesis" in window), rec=null, hearing=false, handsFree=false, spokeLast=false;
+var VOICE_ERR={
+  "not-allowed":"The microphone is blocked here. Inside this frame the browser may refuse it — the typed box still works.",
+  "service-not-allowed":"This browser will not run speech recognition in an embedded page. Type instead.",
+  "audio-capture":"No microphone found.",
+  "network":"Speech recognition could not reach its service.",
+  "no-speech":""
+};
+function micUI(on){
+  hearing=on;
+  if(ORB) ORB.classList.toggle("listening",!!on);
+}
+var ORB_MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
+var ORB_CHAT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>';
+function paintOrb(){
+  if(!ORB) return;
+  var off=!!(state.micBlocked||!SR);
+  ORB.classList.toggle("muted",off);
+  ORB.innerHTML=off?ORB_CHAT:ORB_MIC;
+  ORB.setAttribute("aria-label",(state.micBlocked||!SR)?"Open the board tutor":"Talk to the board");
+}
+function stopHearing(){
+  handsFree=false;
+  try{ if(rec) rec.stop(); }catch(e){}
+  micUI(false);
+}
+function listen(){
+  if(!SR||hearing||botBusy) return;
+  try{
+    rec=new SR();
+    rec.lang=navigator.language||"en-US";
+    rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
+    rec.onresult=function(e){
+      var txt="";
+      for(var i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript;
+      $("#bot-input").value=txt;
+      if(e.results[e.results.length-1].isFinal){
+        var said=txt.trim();
+        micUI(false);
+        try{ rec.stop(); }catch(err){}
+        if(said){ spokeLast=true; botAsk(said); }
+      }
+    };
+    rec.onerror=function(e){
+      micUI(false); handsFree=false;
+      var code=e&&e.error;
+      if(code==="not-allowed"||code==="service-not-allowed"){
+        state.micBlocked=true; save(); paintOrb();
+        $("#bot-input").focus();
+        note("The microphone is off limits inside this frame. Use your keyboard\u2019s dictation key, beside the space bar \u2014 it types straight into the box, and I will not ask again.");
+        return;
+      }
+      if(code==="no-speech") return;
+      note("The microphone stopped ("+(code||"unknown")+"). The box below still works.");
+    };
+    rec.onend=function(){ micUI(false); };
+    micUI(true);
+    rec.start();
+  }catch(err){ micUI(false); botBubble("err","This browser cannot listen. Type instead."); }
+}
+function speakOut(text){
+  if(!state.speak||!canSpeak||!text) return;
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g," ").slice(0,700));
+    u.lang=navigator.language||"en-US"; u.rate=1.03; u.pitch=1;
+    u.onend=function(){ if(handsFree&&spokeLast) setTimeout(listen,250); };
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------------- the orb, and the sheet it opens ----------------
+   Voice in: the artifact runs in a cross-origin frame, and a browser refuses
+   the microphone to one unless the parent frame grants it, which a page
+   cannot do for itself. So the first refusal is remembered, the orb stops
+   pretending, and it hands over to the keyboard's own dictation key, which
+   does work here. Voice out is unaffected.                                  */
+var ORB=$("#bot-orb"), SHEET=$("#botsheet");
+function orbSize(){ return ORB.offsetWidth||66; }
+function orbClamp(){
+  var w=orbSize(), m=10;
+  var x=Math.min(Math.max(m,parseFloat(ORB.style.left)||0), window.innerWidth-w-m);
+  var y=Math.min(Math.max(m,parseFloat(ORB.style.top)||0), window.innerHeight-w-m);
+  ORB.style.left=x+"px"; ORB.style.top=y+"px";
+  state.orbPos={x:x,y:y}; 
+}
+function orbPlace(){
+  var P=state.orbPos, w=orbSize(), m=18;
+  if(!P) P={x:window.innerWidth-w-m, y:window.innerHeight-w-m-6};
+  ORB.style.left=P.x+"px"; ORB.style.top=P.y+"px";
+  orbClamp(); sheetPlace();
+}
+/* the sheet hangs off whichever side of the orb has room, and never leaves the screen */
+function sheetPlace(){
+  if(SHEET.hidden) return;
+  if(window.innerWidth<=820){ SHEET.style.left=SHEET.style.top=""; return; }
+  var w=SHEET.offsetWidth||380, ox=parseFloat(ORB.style.left)||0, oy=parseFloat(ORB.style.top)||0;
+  SHEET.style.maxHeight=(window.innerHeight-24)+"px";
+  var h=SHEET.offsetHeight;
+  var x=(ox+orbSize()/2 > window.innerWidth/2) ? ox-w-14 : ox+orbSize()+14;
+  x=Math.min(Math.max(10,x), window.innerWidth-w-10);
+  var y=Math.min(Math.max(10, oy+orbSize()-h), window.innerHeight-h-10);
+  SHEET.style.left=x+"px"; SHEET.style.top=y+"px";
+  SHEET.style.maxHeight=(window.innerHeight-y-14)+"px";
+}
+function botOpen(on){
+  state.botOpen=!!on; save();
+  SHEET.hidden=!on;
+  if(on){ botRender(); sheetPlace(); }
+}
+/* drag the orb anywhere; a tap that did not move opens and starts talking */
+(function(){
+  var d=null;
+  ORB.addEventListener("pointerdown",function(e){
+    if(e.button!==undefined&&e.button>0) return;
+    e.preventDefault(); e.stopPropagation();
+    d={pid:e.pointerId,x0:e.clientX,y0:e.clientY,
+       ox:parseFloat(ORB.style.left)||0, oy:parseFloat(ORB.style.top)||0, moved:false};
+    try{ ORB.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  ORB.addEventListener("pointermove",function(e){
+    if(!d||e.pointerId!==d.pid) return;
+    var dx=e.clientX-d.x0, dy=e.clientY-d.y0;
+    if(!d.moved && dx*dx+dy*dy<36) return;
+    d.moved=true; e.preventDefault();
+    ORB.style.left=(d.ox+dx)+"px"; ORB.style.top=(d.oy+dy)+"px";
+    sheetPlace();
+  });
+  function up(e){
+    if(!d||e.pointerId!==d.pid) return;
+    var moved=d.moved; d=null; orbClamp(); sheetPlace(); save();
+    if(!moved) orbTap();
+  }
+  ORB.addEventListener("pointerup",up);
+  ORB.addEventListener("pointercancel",function(){ d=null; });
+  addEventListener("resize",function(){ orbClamp(); sheetPlace(); });
+})();
+function note(t){
+  var n=$("#bot-note");
+  n.textContent=t||""; n.hidden=!t;
+  sheetPlace();
+}
+function orbTap(){
+  if(SHEET.hidden) botOpen(true);
+  if(hearing){ stopHearing(); return; }
+  if(state.micBlocked||!SR){
+    $("#bot-input").focus();
+    note(SR ? "The microphone is off limits inside this frame, so use your keyboard’s dictation key — the one beside the space bar. It types straight into the box."
+            : "This browser has no speech recognition. Use your keyboard’s dictation key, beside the space bar.");
+    return;
+  }
+  note("");
+  handsFree=!!state.speak;
+  listen();
+}
+$("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
+$("#bot-speak").addEventListener("click",function(e){
+  e.stopPropagation();
+  state.speak=!state.speak; save();
+  this.setAttribute("aria-pressed",state.speak?"true":"false");
+  if(!state.speak){ try{ speechSynthesis.cancel(); }catch(err){} handsFree=false; }
+});
+
+(function(){
+  if(!window.claude||typeof claude.use!=="function") return;
+  try{
+    claude.use("db").then(function(db){
+      if(!db) return;
+      boardDb=db; mirrorToday();
+    }).catch(function(){});
+  }catch(e){}
+})();
+function cardLine(c){ return {task:cardFrom(c), name:cardName(c), percent:cardPct(c)}; }
+function mirrorToday(){
+  if(!boardDb) return;
+  clearTimeout(syncT);
+  syncT=setTimeout(function(){
+    try{
+      boardDb.doc("board/today").set({
+        day: state.day,
+        updatedAt: new Date().toISOString(),
+        overall: overall(),
+        focus: state.oftad.map(cardLine),
+        plan: state.plan.map(cardLine),
+        done: state.done.map(cardLine),
+        attention: alerts().slice(0,6).map(function(a){ return a.kind+" — "+a.t+" ("+a.w+")"; }),
+        recurringDue: allSubs().filter(function(x){ return x.rep && periodKey(x.rep) && x.pct<100 && x.status!=="done"; })
+          .map(function(x){ return {name:x.name, every:repLabel(x.rep), streak:x.streak||0}; }),
+        recentDays: state.dayLog.slice(0,7)
+      }).catch(function(){});
+    }catch(e){}
+  },900);
+}
+
+/* ---------------- the valley ----------------
+   A drone view down a river running between two ridges. Every subtask
+   is one light on the water: it enters at the horizon and drifts toward
+   you, faster the further along the work is. Red while in flight, white
+   once finished, dim and slow when stalled or blocked.               */
+var RIV=$("#river"), rctx=RIV?RIV.getContext("2d"):null;
+var flow=[], riverRAF=null, W=0, H=0, DPR=1, tNow=0;
+var cam={tx:0,ty:0,x:0,y:0,hold:0};
+var ink={};
+
+function readInk(){
+  var cs=getComputedStyle(document.body);
+  function v(n,f){ var c=cs.getPropertyValue(n).trim(); return c||f; }
+  ink={ accent:v("--accent","#FF3B30"), fg:v("--ink","#ECECEF"),
+        muted:v("--muted","#61616C"), ground:v("--ground","#08080A"),
+        panel:v("--panel","#0F0F12") };
+}
+function sizeRiver(){
+  if(!RIV) return;
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=window.innerWidth; H=window.innerHeight;
+  RIV.width=Math.round(W*DPR); RIV.height=Math.round(H*DPR);
+  rctx.setTransform(DPR,0,0,DPR,0,0);
+}
+/* one light per subtask, lane and phase fixed per id so it stays itself */
+function buildFlow(){
+  var subs=allSubs();
+  var seen={};
+  flow=flow.filter(function(f){ return state.subs[f.id]; });
+  flow.forEach(function(f){ seen[f.id]=f; });
+  flow=subs.map(function(sb,i){
+    var f=seen[sb.id]||{id:sb.id, t:(i*0.137)%1, lane:0};
+    var h=0; for(var k=0;k<sb.id.length;k++) h=(h*31+sb.id.charCodeAt(k))%1000;
+    f.lane=((h/1000)*1.7)-0.85;
+    var st=statusOf(sb);
+    f.state=st.k;
+    f.speed = st.k==="done" ? 0.00062
+            : st.k==="block" ? 0.00006
+            : st.k==="risk"  ? 0.00009
+            : 0.00013 + (sb.pct/100)*0.00052;
+    f.pct=sb.pct;
+    return f;
+  });
+}
+function riverFrame(ts){
+  if(!rctx){ riverRAF=null; return; }
+  var dt=Math.min(64, ts-tNow||16); tNow=ts;
+  driftCam(ts);
+  var ck=cam.hold?0.24:0.055;          /* settles decisively when a hand reaches in */
+  cam.x+=(cam.tx-cam.x)*ck; cam.y+=(cam.ty-cam.y)*ck;
+  var cx=W*0.5 + cam.x*W*0.16;
+  var hz=H*(0.30 + cam.y*0.10);
+  rctx.clearRect(0,0,W,H);
+
+  /* two ridges falling away to the vanishing point */
+  function ridge(dir,depth,shade){
+    var px=cx + dir*cam.x*W*0.05*depth;
+    rctx.beginPath();
+    rctx.moveTo(px, hz);
+    var steps=9, prev=hz;
+    for(var i=1;i<=steps;i++){
+      var f=i/steps;
+      var x=px + dir*(f*W*0.78*depth);
+      var jag=Math.sin(i*2.7+depth*5.1)*0.5+Math.cos(i*1.9+depth*3.3)*0.5;
+      var y=hz - (f*H*0.30*depth) - jag*H*0.045*depth;
+      rctx.lineTo(x,(prev=y));
+    }
+    rctx.lineTo(px + dir*W*0.9, -H); rctx.lineTo(px, -H); rctx.closePath();
+    rctx.fillStyle=shade; rctx.fill();
+  }
+  rctx.save();
+  rctx.globalAlpha=.5; ridge(-1,1,ink.panel); ridge(1,0.92,ink.panel);
+  rctx.globalAlpha=.32; ridge(-1,0.62,ink.ground); ridge(1,0.7,ink.ground);
+  rctx.restore();
+
+  /* the water: a band widening out of the horizon toward you */
+  function halfWidth(t){ return W*(0.012 + Math.pow(t,1.7)*0.46); }
+  function yAt(t){ return hz + (H-hz)*Math.pow(t,1.55); }
+  var g=rctx.createLinearGradient(0,hz,0,H);
+  g.addColorStop(0,"rgba(255,255,255,0)");
+  g.addColorStop(1,"rgba(255,255,255,0.035)");
+  rctx.beginPath();
+  rctx.moveTo(cx-halfWidth(0),yAt(0));
+  for(var t=0;t<=1.001;t+=0.05) rctx.lineTo(cx-halfWidth(t),yAt(t));
+  for(var t2=1;t2>=-0.001;t2-=0.05) rctx.lineTo(cx+halfWidth(t2),yAt(t2));
+  rctx.closePath(); rctx.fillStyle=g; rctx.fill();
+
+  /* a soft glow at the source */
+  var gl=rctx.createRadialGradient(cx,hz,0,cx,hz,W*0.3);
+  gl.addColorStop(0,"rgba(255,59,48,0.15)"); gl.addColorStop(1,"rgba(255,59,48,0)");
+  rctx.fillStyle=gl; rctx.fillRect(0,hz-W*0.3,W,W*0.6);
+
+  /* the lights */
+  for(var i=0;i<flow.length;i++){
+    var f=flow[i];
+    f.t+=f.speed*dt;
+    if(f.t>1.08) f.t-=1.12;
+    if(f.t<0) continue;
+    var tt=f.t, y=yAt(tt), hw=halfWidth(tt);
+    var drift=Math.sin(tt*5.2+f.lane*6.1)*0.14;
+    var x=cx + (f.lane+drift)*hw;
+    var r=0.7+Math.pow(tt,1.8)*5.4;
+    var a=Math.min(1,tt*5)*(1-Math.pow(Math.max(0,tt-0.86)/0.22,2));
+    var col = f.state==="done" ? ink.fg : (f.state==="idle" ? ink.muted : ink.accent);
+    rctx.globalAlpha=Math.max(0,a)*(f.state==="idle"?0.34:0.72);
+    rctx.beginPath(); rctx.arc(x,y,r,0,6.284); rctx.fillStyle=col; rctx.fill();
+    if(f.state!=="idle" && tt>0.45){
+      rctx.globalAlpha=Math.max(0,a)*0.18;
+      rctx.beginPath(); rctx.ellipse(x,y,r*1.1,r*3.4,0,0,6.284); rctx.fill();
+    }
+  }
+  rctx.globalAlpha=1;
+  riverRAF=requestAnimationFrame(riverFrame);
+}
+
+/* ---------------- drone camera ---------------- */
+/* Only a real device tilt banks the board. A pointer must never move it:
+   the board would shift out from under whatever you were reaching for, and
+   panels far from the perspective origin shifted far enough to miss. */
+var tiltSource="";
+function applyCam(){
+  if(!CANVAS) return;
+  if(tiltSource!=="device"||cam.hold){ CANVAS.style.transform=""; return; }
+  CANVAS.style.transform="perspective(1600px) rotateX("+(-cam.y*4.2).toFixed(3)+
+    "deg) rotateY("+(cam.x*5.4).toFixed(3)+"deg)";
+}
+function camLoop(){
+  applyCam();
+  if(motionOn) requestAnimationFrame(camLoop);
+}
+/* reaching in settles the camera level, so every hit test stays honest */
+function holdCam(on){
+  cam.hold=on?1:0;
+  document.body.classList.toggle("cam-hold",!!on);
+  if(on){ cam.tx=0; cam.ty=0; }
+}
+var holdT=null;
+document.addEventListener("pointerdown",function(){ clearTimeout(holdT); holdCam(true); },true);
+document.addEventListener("pointerup",function(){
+  clearTimeout(holdT); holdT=setTimeout(function(){ holdCam(false); },450);
+},true);
+document.addEventListener("pointercancel",function(){
+  clearTimeout(holdT); holdT=setTimeout(function(){ holdCam(false); },450);
+},true);
+
+var motionOn=false, tiltBound=false;
+function onTilt(e){
+  if(e.gamma==null&&e.beta==null) return;
+  tiltSource="device";
+  if(cam.hold) return;
+  cam.tx=Math.max(-1,Math.min(1,(e.gamma||0)/34));
+  cam.ty=Math.max(-1,Math.min(1,((e.beta||0)-48)/40));
+}
+/* with no device to tilt, the valley drifts on its own so the scene still
+   breathes, but the board itself stays put */
+function driftCam(ts){
+  if(tiltSource==="device") return;
+  cam.tx=Math.sin(ts/9000)*0.55;
+  cam.ty=Math.cos(ts/13000)*0.35;
+}
+function startMotion(){
+  motionOn=true; document.body.classList.remove("flat");
+  readInk(); sizeRiver(); buildFlow();
+  if(!riverRAF) riverRAF=requestAnimationFrame(riverFrame);
+  requestAnimationFrame(camLoop);
+  if(!tiltBound){
+    tiltBound=true;
+    window.addEventListener("deviceorientation",onTilt);
+  }
+  state.motion=true; save(); paintMotionBtn();
+}
+function stopMotion(){
+  motionOn=false; document.body.classList.add("flat");
+  if(riverRAF){ cancelAnimationFrame(riverRAF); riverRAF=null; }
+  if(rctx) rctx.clearRect(0,0,W,H);
+  cam.tx=cam.ty=cam.x=cam.y=0; applyCam();
+  state.motion=false; save(); paintMotionBtn();
+}
+function paintMotionBtn(){
+  var b=$("#btn-motion");
+  b.setAttribute("aria-pressed",motionOn?"true":"false");
+  b.lastChild.textContent=motionOn?"Flight on":"Flight off";
+}
+$("#btn-motion").addEventListener("click",function(){
+  if(motionOn){ stopMotion(); return; }
+  var D=window.DeviceOrientationEvent;
+  if(D&&typeof D.requestPermission==="function"){
+    D.requestPermission().then(function(r){ startMotion(); }).catch(function(){ startMotion(); });
+  } else startMotion();
+});
+addEventListener("resize",function(){ sizeRiver(); });
+addEventListener("visibilitychange",function(){
+  if(document.hidden){ if(riverRAF){ cancelAnimationFrame(riverRAF); riverRAF=null; } }
+  else if(motionOn&&!riverRAF) riverRAF=requestAnimationFrame(riverFrame);
+});
+if(window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener
+  && window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",readInk);
+document.body.classList.add("flat");
+sizeRiver(); readInk();
+/* on unless turned off, or unless the viewer asked for less motion */
+if(state.motion!==false && !REDUCE) startMotion(); else paintMotionBtn();
+
+/* ---------------- board assistant ----------------
+   Runs on the viewer's own Claude through the sample capability. Every
+   change it makes goes through the same state the buttons use, so there
+   is nothing it can do that you could not do by hand, and nothing it
+   can reach beyond this board.                                        */
+var botSample=null, botTurns=[], botCtl=null, botBusy=false;
+
+function botFindSub(q){
+  q=String(q||"").trim().toLowerCase();
+  if(!q) throw new Error("Name a subtask.");
+  var all=allSubs();
+  var hit=all.filter(function(x){ return x.name.toLowerCase()===q; });
+  if(hit.length!==1) hit=all.filter(function(x){ return x.name.toLowerCase().indexOf(q)>=0; });
+  if(hit.length===1) return hit[0];
+  if(hit.length>1) throw new Error("Several subtasks match \"" + q + "\": " +
+    hit.slice(0,6).map(function(x){ return x.name; }).join(" | ") + ". Ask again with more of the name.");
+  throw new Error("No subtask matches \"" + q + "\".");
+}
+function botFindGroup(q){
+  q=String(q||"").trim().toLowerCase();
+  if(!q) throw new Error("Name a main task.");
+  var hit=state.groups.filter(function(g){ return g.name.toLowerCase()===q; });
+  if(hit.length!==1) hit=state.groups.filter(function(g){ return g.name.toLowerCase().indexOf(q)>=0; });
+  if(hit.length===1) return hit[0];
+  if(hit.length>1) throw new Error("Several main tasks match \"" + q + "\": " +
+    hit.map(function(g){ return g.name; }).join(" | "));
+  throw new Error("No main task matches \"" + q + "\".");
+}
+function botSnapshot(){
+  var out=["BOARD, "+state.day+", overall "+overall().toFixed(1)+"% complete."];
+  state.groups.forEach(function(g){
+    out.push("");
+    out.push("MAIN TASK: "+g.name+"  ("+groupPct(g)+"%, "+groupDone(g)+" of "+g.subs.length+" done)");
+    g.subs.forEach(function(id){
+      var sb=state.subs[id]; if(!sb) return;
+      out.push("  - "+sb.name+" | "+sb.pct+"% | "+statusOf(sb).label+
+        (sb.rep?" | repeats "+repLabel(sb.rep)+(sb.streak?", streak "+sb.streak:"")+
+          (periodKey(sb.rep)?", due now":", not due today"):"")+
+        (sb.tag?" | tag "+sb.tag:"")+" | last moved "+sb.upd);
+    });
+  });
+  function dock(n,a){ return n+": "+(a.length?a.map(function(c){ return cardName(c); }).join("; "):"empty"); }
+  out.push("");
+  out.push(dock("ONE TASK A DAY (max one subtask per main task)",state.oftad));
+  out.push(dock("TODAY'S PLAN",state.plan));
+  out.push(dock("DONE TODAY",state.done));
+  var al=alerts();
+  out.push("NEEDS A LOOK: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
+  return out.join("\n");
+}
+var BOT_RULES=
+"You are the tutor built into this Minimum Deliveries board: patient, concrete, and on the person's side. "+
+"You speak only about this board: "+
+"its main tasks, subtasks, progress, status, the three docks (One Task A Day, Today's Plan, Done Today), "+
+"and what to work on next. If asked about anything else, say in one line that you only handle this board, "+
+"and stop.\n\n"+
+"When the person asks for a change, MAKE it with the tools instead of describing how to do it by hand. "+
+"You can do everything the buttons can: set progress and status, add, rename, remove and move subtasks, "+
+"add main tasks, set how often a subtask repeats, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
+"is ambiguous the tool will tell you, so ask which one.\n\n"+
+"Teach rather than lecture. Ask one question at a time, never a list of them. Keep every answer under "+
+"50 words unless you are listing tasks. No preamble, no restating the question. After a change, say what "+
+"changed in one short line, then offer the single next step. When a streak is running, say so.\n\n"+
+"Here is the board right now:\n";
+
+function botTools(){
+  function done(msg){ touchHist(); save(); renderAll(); return msg; }
+  return [
+  {name:"board_state",description:"The whole board again, fresh: every main task, its subtasks with percent and status, the three docks and the watchlist. Use it after making changes, or when unsure of a name.",
+   execute:function(){ return botSnapshot(); }},
+  {name:"set_progress",description:"Set one subtask's percent complete, 0 to 100. Returns the new value. 100 marks it done; below 100 moves a finished task back to doing.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},percent:{type:"number"}},required:["subtask","percent"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), v=clamp(Math.round(Number(a.percent)/5)*5,0,100);
+     sb.pct=v; sb.upd=todayStr();
+     if(v>=100) sb.status="done"; else if(sb.status==="done") sb.status="doing";
+     else if(v>0&&sb.status==="todo") sb.status="doing";
+     return done(sb.name+" is now "+v+"%.");
+   }},
+  {name:"set_status",description:"Set one subtask's status: todo, doing, blocked or done. Returns the new status.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},status:{type:"string",enum:["todo","doing","blocked","done"]}},required:["subtask","status"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), v=String(a.status||"").toLowerCase();
+     if(["todo","doing","blocked","done"].indexOf(v)<0) throw new Error("Status must be todo, doing, blocked or done.");
+     sb.status=v; sb.upd=todayStr();
+     if(v==="done") sb.pct=100; else if(sb.pct>=100) sb.pct=95;
+     return done(sb.name+" is "+v+".");
+   }},
+  {name:"add_subtask",description:"Add a new subtask under a main task. Returns confirmation.",
+   inputSchema:{type:"object",properties:{main_task:{type:"string"},name:{type:"string"}},required:["main_task","name"]},
+   execute:function(a){
+     var g=botFindGroup(a.main_task), nm=String(a.name||"").trim();
+     if(!nm) throw new Error("The subtask needs a name.");
+     var id=uid("s");
+     state.subs[id]={id:id,name:nm,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id};
+     g.subs.push(id); state.sel=g.id;
+     return done("Added \"" + nm + "\" under " + g.name + ".");
+   }},
+  {name:"rename_subtask",description:"Rename one subtask. Returns confirmation.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},new_name:{type:"string"}},required:["subtask","new_name"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), nm=String(a.new_name||"").trim();
+     if(!nm) throw new Error("Give the new name.");
+     var was=sb.name; sb.name=nm; mark(sb.id,"name");
+     return done("\"" + was + "\" is now \"" + nm + "\".");
+   }},
+  {name:"remove_subtask",description:"Delete one subtask from the board for good. Returns confirmation.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), nm=sb.name;
+     detach(sb.id); delete state.subs[sb.id]; state.killed.push(sb.id);
+     return done("Removed \"" + nm + "\".");
+   }},
+  {name:"move_subtask",description:"Move one subtask under a different main task. Returns confirmation.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},to_main_task:{type:"string"}},required:["subtask","to_main_task"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), g=botFindGroup(a.to_main_task);
+     if(sb.gid===g.id) return sb.name+" is already under "+g.name+".";
+     detach(sb.id); g.subs.push(sb.id); sb.gid=g.id; mark(sb.id,"group");
+     return done("Moved \"" + sb.name + "\" to " + g.name + ".");
+   }},
+  {name:"add_main_task",description:"Add a new main task to the board. Returns confirmation.",
+   inputSchema:{type:"object",properties:{name:{type:"string"}},required:["name"]},
+   execute:function(a){
+     var nm=String(a.name||"").trim();
+     if(!nm) throw new Error("The main task needs a name.");
+     var g={id:uid("g"),name:nm,subs:[]};
+     state.groups.push(g); state.sel=g.id;
+     return done("Added main task \"" + nm + "\".");
+   }},
+  {name:"focus_today",description:"Put one subtask into One Task A Day. Only one subtask per main task is allowed there, so this replaces any card already held by that main task.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), gid=sb.gid, out=null;
+     state.oftad=state.oftad.filter(function(c){
+       if(cardGid(c)===gid && c.id!==sb.id){ out=cardName(c); return false; } return true; });
+     if(!state.oftad.some(function(c){ return c.id===sb.id; })) state.oftad.push({k:"sub",id:sb.id,done:false});
+     return done(sb.name+" is the one task for today"+(out?", swapping out \""+out+"\"":"")+".");
+   }},
+  {name:"plan_today",description:"Put one subtask into Today's Plan, the unlimited queue. Returns confirmation.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask);
+     if(state.plan.some(function(c){ return c.id===sb.id; })) return sb.name+" is already in the plan.";
+     state.plan.push({k:"sub",id:sb.id,done:false});
+     return done("Queued "+sb.name+" for today.");
+   }},
+  {name:"mark_done_today",description:"Move one subtask into Done Today. This records it for today only and does not change its percent complete.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask);
+     ["oftad","plan"].forEach(function(z){ state[z]=state[z].filter(function(c){ return c.id!==sb.id; }); });
+     if(!state.done.some(function(c){ return c.id===sb.id; })) state.done.push({k:"sub",id:sb.id,done:true});
+     return done("Logged "+sb.name+" as done today.");
+   }},
+  {name:"clear_dock",description:"Empty one dock: focus (One Task A Day), plan (Today's Plan) or done (Done Today).",
+   inputSchema:{type:"object",properties:{dock:{type:"string",enum:["focus","plan","done"]}},required:["dock"]},
+   execute:function(a){
+     var d=String(a.dock||"").toLowerCase(), z=d==="focus"?"oftad":d;
+     if(["oftad","plan","done"].indexOf(z)<0) throw new Error("Dock must be focus, plan or done.");
+     var n=state[z].length; state[z]=[];
+     return done("Cleared "+n+" card"+(n===1?"":"s")+".");
+   }},
+  {name:"set_recurrence",description:"Make a subtask repeat, or stop it repeating. Values: none, daily, weekdays, weekly, biweekly, monthly. A repeating subtask resets to 0% at the start of each period and keeps a streak of periods finished in a row.",
+   inputSchema:{type:"object",properties:{subtask:{type:"string"},every:{type:"string",enum:["none","daily","weekdays","weekly","biweekly","monthly"]}},required:["subtask","every"]},
+   execute:function(a){
+     var sb=botFindSub(a.subtask), v=String(a.every||"").toLowerCase();
+     if(v==="none"||v==="once") v="";
+     if(v && ["daily","weekdays","weekly","biweekly","monthly"].indexOf(v)<0)
+       throw new Error("Repeat must be none, daily, weekdays, weekly, biweekly or monthly.");
+     sb.rep=v; sb.period=v?periodKey(v):""; sb.streak=sb.streak||0;
+     if(v){ sb.pct=0; sb.status="todo"; sb.upd=todayStr(); }
+     return done(sb.name+(v?" now repeats "+repLabel(v).toLowerCase()+".":" no longer repeats."));
+   }},
+  {name:"open_main_task",description:"Open one main task so its subtasks show in the subtask chart. Returns confirmation.",
+   inputSchema:{type:"object",properties:{main_task:{type:"string"}},required:["main_task"]},
+   execute:function(a){
+     var g=botFindGroup(a.main_task);
+     state.sel=g.id; openEd=""; openGroupEd=false;
+     return done("Opened "+g.name+".");
+   }}
+  ];
+}
+
+function botBubble(cls,text){
+  var log=$("#bot-log"), d=document.createElement("div");
+  d.className="bot-msg "+cls; d.textContent=text;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+  return d;
+}
+function botRender(){
+  var log=$("#bot-log"); log.innerHTML="";
+  if(!botTurns.length){
+    var e=document.createElement("p"); e.className="bot-empty";
     e.textContent="Ask it to move something along, pick your task for the day, or tell you what is stuck.";
     log.appendChild(e); return;
   }
   botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
   log.scrollTop=log.scrollHeight;
-  botClamp();
+  sheetPlace();
 }
 var BOT_ERR={
   not_granted:"You declined, so the assistant cannot run on this page. Reload to be asked again.",
@@ -2174,177 +2819,16 @@ async function botAsk(text){
   }
 }
 
-/* ---------------- how the tutor opens ---------------- */
-function botGreeting(){
-  var a=allSubs(), fin=0;
-  a.forEach(function(x){ if(x.pct>=100||x.status==="done") fin++; });
-  var al=alerts(), h=new Date().getHours();
-  var hi = h<5?"Late one." : h<12?"Good morning." : h<18?"Good afternoon." : "Good evening.";
-  var due=a.filter(function(x){ return x.rep&&periodKey(x.rep)&&x.pct<100&&x.status!=="done"; });
-  var worst=null;
-  al.forEach(function(x){ if(!worst&&(x.kind==="Blocked"||x.kind==="Overdue")) worst=x; });
-  var L=[hi+" Here is where the board stands."];
-  L.push("");
-  L.push(overall().toFixed(1)+"% overall, "+fin+" of "+a.length+" subtasks finished across "+state.groups.length+" main tasks.");
-  if(worst) L.push(worst.kind.toLowerCase()==="blocked" ? ("The one that is properly stuck is “"+worst.t+"” — "+worst.w+".")
-                                                        : ("“"+worst.t+"” is overdue."));
-  else if(al.length) L.push(al.length+" things want a look, nothing blocked.");
-  else L.push("Nothing blocked, nothing stalled.");
-  if(due.length) L.push(due.length+" repeating task"+(due.length>1?"s are":" is")+" due today: "+
-    due.slice(0,3).map(function(x){ return x.name; }).join(", ")+".");
-  L.push("");
-  L.push("I can change anything here as we talk — progress, status, what repeats, what you do today.");
-  L.push(state.oftad.length? "Shall we look at what is blocked, or at the task you picked for today?"
-                           : "Shall we pick your one task for today, or start with what is stuck?");
-  return L.join("\n");
-}
-
-/* ---------------- voice ---------------- */
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var canSpeak=("speechSynthesis" in window), rec=null, hearing=false, handsFree=false, spokeLast=false;
-var VOICE_ERR={
-  "not-allowed":"The microphone is blocked here. Inside this frame the browser may refuse it — the typed box still works.",
-  "service-not-allowed":"This browser will not run speech recognition in an embedded page. Type instead.",
-  "audio-capture":"No microphone found.",
-  "network":"Speech recognition could not reach its service.",
-  "no-speech":""
-};
-function micUI(on){
-  hearing=on;
-  var m=$("#bot-mic"); if(m) m.classList.toggle("on",!!on);
-}
-function stopHearing(){
-  handsFree=false;
-  try{ if(rec) rec.stop(); }catch(e){}
-  micUI(false);
-}
-function listen(){
-  if(!SR||hearing||botBusy) return;
-  try{
-    rec=new SR();
-    rec.lang=navigator.language||"en-US";
-    rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
-    rec.onresult=function(e){
-      var txt="";
-      for(var i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript;
-      $("#bot-input").value=txt;
-      if(e.results[e.results.length-1].isFinal){
-        var said=txt.trim();
-        micUI(false);
-        try{ rec.stop(); }catch(err){}
-        if(said){ spokeLast=true; botAsk(said); }
-      }
-    };
-    rec.onerror=function(e){
-      micUI(false);
-      var msg=VOICE_ERR[e&&e.error];
-      if(msg===undefined) msg="The microphone stopped ("+(e&&e.error||"unknown")+").";
-      if(msg) botBubble("err",msg);
-      handsFree=false;
-    };
-    rec.onend=function(){ micUI(false); };
-    micUI(true);
-    rec.start();
-  }catch(err){ micUI(false); botBubble("err","This browser cannot listen. Type instead."); }
-}
-function speakOut(text){
-  if(!state.speak||!canSpeak||!text) return;
-  try{
-    speechSynthesis.cancel();
-    var u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g," ").slice(0,700));
-    u.lang=navigator.language||"en-US"; u.rate=1.03; u.pitch=1;
-    u.onend=function(){ if(handsFree&&spokeLast) setTimeout(listen,250); };
-    speechSynthesis.speak(u);
-  }catch(e){}
-}
-
-/* ---------------- the window floats where you put it ---------------- */
-/* The transcript grows, so the window has to be kept on screen: let it use the
-   room below wherever it sits, and move it up before it would run off. */
-function botClamp(){
-  var d=$("#botdock"); if(!d||d.hidden||window.innerWidth<900) return;
-  d.style.maxHeight=(window.innerHeight-16)+"px";
-  var w=d.offsetWidth, h=d.offsetHeight;
-  var x=Math.min(Math.max(8,parseFloat(d.style.left)||0),Math.max(8,window.innerWidth-w-8));
-  var y=Math.min(Math.max(8,parseFloat(d.style.top)||0),Math.max(8,window.innerHeight-h-8));
-  d.style.left=x+"px"; d.style.top=y+"px";
-  d.style.maxHeight=(window.innerHeight-y-10)+"px";
-  state.botPos={x:x,y:y};
-}
-function botPlace(){
-  var d=$("#botdock"); if(!d) return;
-  if(window.innerWidth<900){ d.style.left=d.style.top=""; return; }
-  var P=state.botPos;
-  if(!P){ P={x:Math.max(8,window.innerWidth-410), y:Math.max(8,window.innerHeight-560)}; }
-  d.style.left=P.x+"px"; d.style.top=P.y+"px";
-  if(state.botSize){ d.style.width=state.botSize.w+"px"; d.style.height=state.botSize.h+"px"; }
-  botClamp();
-}
-(function(){
-  var d=$("#botdock"), head=$("#bot-head"), grip=$("#bot-size"), drag=null;
-  function down(e,mode){
-    if(window.innerWidth<900) return;
-    if(e.target.closest("button,input")) return;
-    e.preventDefault(); e.stopPropagation();
-    drag={mode:mode,pid:e.pointerId,x0:e.clientX,y0:e.clientY,
-          ox:parseFloat(d.style.left)||d.getBoundingClientRect().left,
-          oy:parseFloat(d.style.top)||d.getBoundingClientRect().top,
-          w0:d.offsetWidth,h0:d.offsetHeight};
-    try{ (mode==="size"?grip:head).setPointerCapture(e.pointerId); }catch(err){}
-  }
-  head.addEventListener("pointerdown",function(e){ down(e,"move"); });
-  grip.addEventListener("pointerdown",function(e){ down(e,"size"); });
-  document.addEventListener("pointermove",function(e){
-    if(!drag||e.pointerId!==drag.pid) return;
-    e.preventDefault();
-    var dx=e.clientX-drag.x0, dy=e.clientY-drag.y0;
-    if(drag.mode==="move"){ d.style.left=(drag.ox+dx)+"px"; d.style.top=(drag.oy+dy)+"px"; }
-    else{
-      d.style.width=Math.max(300,Math.min(drag.w0+dx,window.innerWidth-40))+"px";
-      d.style.height=Math.max(260,Math.min(drag.h0+dy,window.innerHeight-40))+"px";
-      state.botSize={w:d.offsetWidth,h:d.offsetHeight};
-    }
-  },true);
-  function up(e){
-    if(!drag||e.pointerId!==drag.pid) return;
-    drag=null; botClamp(); save();
-  }
-  document.addEventListener("pointerup",up,true);
-  document.addEventListener("pointercancel",up,true);
-  addEventListener("resize",botClamp);
-})();
-function botOpen(on){
-  state.botOpen=!!on; save();
-  $("#botdock").hidden=!on || !botSample;
-  $("#bot-launch").hidden=on || !botSample;
-  if(on){ botPlace(); botRender(); }
-}
-$("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
-$("#bot-launch").addEventListener("click",function(e){ e.stopPropagation(); botOpen(true); });
-$("#bot-mic").addEventListener("click",function(e){
-  e.stopPropagation();
-  if(!SR){ botBubble("err","This browser cannot listen. Chrome and Safari can; Firefox cannot."); return; }
-  if(hearing){ stopHearing(); return; }
-  handsFree=!!state.speak;       /* with Speak on, it keeps the conversation going */
-  listen();
-});
-$("#bot-speak").addEventListener("click",function(e){
-  e.stopPropagation();
-  state.speak=!state.speak; save();
-  this.setAttribute("aria-pressed",state.speak?"true":"false");
-  if(!state.speak){ try{ speechSynthesis.cancel(); }catch(err){} handsFree=false; }
-});
-
 (function(){
   if(!window.claude||typeof claude.use!=="function") return;
   try{
     claude.use("sample").then(function(fn){
       if(!fn) return;
       botSample=fn;
-      if(!botTurns.length) botTurns.push({role:"assistant",content:botGreeting()});
+      ORB.hidden=false;
+      paintOrb(); orbPlace();
       $("#bot-speak").setAttribute("aria-pressed",state.speak?"true":"false");
-      if(!SR) $("#bot-mic").title="This browser cannot listen";
-      botOpen(state.botOpen!==false);
+      botOpen(!!state.botOpen);
       var chips=[["What needs a look?","What needs a look right now?"],
                  ["Pick today's task","Pick one task for today from the main task that is furthest behind, and put it in One Task A Day."],
                  ["What did I do today?","What have I logged as done today?"],
@@ -2357,8 +2841,8 @@ $("#bot-speak").addEventListener("click",function(e){
         box.appendChild(b);
       });
 
-    }).catch(function(){});
-  }catch(e){}
+    }).catch(function(e){ try{ console.warn("board tutor failed to start:",e&&e.message||e); }catch(_){} });
+  }catch(e){ try{ console.warn("board tutor failed to start:",e&&e.message||e); }catch(_){} }
 })();
 $("#bot-send").addEventListener("click",function(e){
   e.stopPropagation();
