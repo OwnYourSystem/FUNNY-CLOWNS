@@ -119,10 +119,6 @@ body:not(.on-board) #river{opacity:.18}
 /* Glide: the page is held still and moved by one transform that chases the
    scroll, so it settles a beat behind your hand and leans into the travel.
    The spacer is what the browser scrolls; the host only follows it.      */
-body.glide #scroll{position:fixed; top:0; left:0; right:0; z-index:1;
-  will-change:transform; backface-visibility:hidden; transform-origin:50% 0}
-#scroll-spacer{display:none}
-body.glide #scroll-spacer{display:block}
 /* The camera is one transform on the board itself. Per-panel translateZ inside
    a perspective context made hit testing drift from what was painted — the
    further a panel sat from the perspective origin, the further a click landed
@@ -493,26 +489,12 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .addrow .f,.addrow .f.s{flex:1 1 100%}
 }
 
-/* ===============================================================
-   PAGES  —  the board is one of four. A rail switches between
-   them and the hash keeps the choice across a reload.
-   =============================================================== */
-.rail{display:flex; gap:6px; margin:18px 0 26px; padding:5px;
-  border:1px solid var(--hair); border-radius:999px; background:var(--panel);
-  width:max-content; max-width:100%; overflow-x:auto; scrollbar-width:none}
-.rail::-webkit-scrollbar{display:none}
-.rail button{appearance:none; border:0; background:transparent; color:var(--ink-2);
-  font:inherit; font-size:.92rem; letter-spacing:.01em; padding:9px 17px; border-radius:999px;
-  cursor:pointer; white-space:nowrap; transition:color .25s var(--ease), background .25s var(--ease)}
-.rail button:hover{color:var(--ink)}
-.rail button[aria-current="page"]{background:var(--raised); color:var(--ink);
-  box-shadow:inset 0 0 0 1px var(--hair)}
-.view{display:none}
-.view.is-on{display:block; animation:viewIn .5s var(--ease) both}
-@keyframes viewIn{from{opacity:0; transform:translate3d(0,14px,0)} to{opacity:1; transform:none}}
-@media (prefers-reduced-motion: reduce){ .view.is-on{animation:none} }
-
-/* ---- 2. parallax: each layer answers the scroll at its own rate ---- */
+/* ---------------- depth, and the shell that holds the board ----------------
+   The rail and the three placeholder pages behind it are gone, and the glide
+   that carried them with them. What is left is the half of the effect that
+   belonged on a board you drag things on.                                 */
+#scroll{max-width:1200px; margin-inline:auto; padding-inline:20px; padding-block:34px 60px;
+  display:flex; flex-direction:column; gap:22px}
 #canvas>[data-panel]{transform:translate3d(0,calc(var(--par,0px) + var(--lag,0px)),0)}
 .par-sky{position:fixed; inset:-20% -10% auto -10%; height:120%; z-index:0; pointer-events:none;
   opacity:.9; transform:translate3d(0,var(--par,0px),0)}
@@ -520,31 +502,13 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 .par-sky i:nth-child(1){left:6%;  top:12%; width:38vw; height:38vw; background:var(--accent-wash)}
 .par-sky i:nth-child(2){right:4%; top:38%; width:30vw; height:30vw; background:rgba(120,140,255,.10)}
 .par-sky i:nth-child(3){left:32%; top:68%; width:44vw; height:44vw; background:rgba(255,255,255,.045)}
-.par-depth{font-size:.78rem; color:var(--muted); letter-spacing:.14em; text-transform:uppercase}
 
-/* ---- 3. scrollytelling ---- */
-.story{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:44px; align-items:start}
-.story-steps{display:flex; flex-direction:column; gap:28vh; padding:20vh 0 30vh}
-.step{opacity:.28; transform:translate3d(0,10px,0); transition:opacity .5s var(--ease), transform .5s var(--ease)}
-.step.on{opacity:1; transform:none}
-.step h3{margin:0 0 10px; font-size:1.45rem; letter-spacing:-.015em; font-weight:600}
-.step .num{font-family:var(--mono); font-size:.8rem; color:var(--accent-ink); letter-spacing:.16em}
-.step p{margin:10px 0 0; color:var(--ink-2); line-height:1.65; max-width:46ch}
-.story-stage{position:sticky; top:12vh; height:76vh; border:1px solid var(--hair); border-radius:20px;
-  background:color-mix(in srgb, var(--panel) 82%, transparent); overflow:hidden; display:grid;
-  place-items:center; backdrop-filter:blur(8px)}
-.stage-svg{width:100%; height:100%}
-.stage-cap{position:absolute; left:20px; right:20px; bottom:18px; font-family:var(--mono);
-  font-size:.78rem; color:var(--muted); letter-spacing:.06em}
-.src-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; margin-top:20px}
-.src{border:1px solid var(--hair); border-radius:14px; padding:15px 16px; background:var(--raised);
-  transition:border-color .3s var(--ease), transform .3s var(--ease)}
-.src:hover{border-color:var(--rule); transform:translateY(-2px)}
-.src b{display:block; font-weight:600; font-size:1rem}
-.src span{display:block; margin-top:5px; font-size:.84rem; color:var(--ink-2)}
-.src em{display:inline-block; margin-top:10px; font-style:normal; font-family:var(--mono);
-  font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
-.src em.live{color:var(--accent-ink)}
+
+.hint{font-family:var(--mono); font-size:.74rem; color:var(--muted); letter-spacing:.08em}
+.holder{margin-bottom:30px}
+.holder h2{margin:0 0 4px; font-size:1.6rem; letter-spacing:-.02em; font-weight:600}
+.holder p{margin:0; color:var(--ink-2); max-width:62ch; line-height:1.6}
+
 @media (max-width:820px){
   /* master and detail together: the main tasks swipe sideways, the
      subtasks of the picked one stay below, both in one screen.        */
@@ -571,59 +535,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .mains .bars>.calm{flex:1 1 auto}
   .subs .p-head .p-title{position:sticky; top:0}
 }
-@media (max-width:900px){
-  .story{grid-template-columns:1fr; gap:0}
-  /* the steps slide under the picture, so the picture must be solid */
-  .story-stage{position:sticky; top:6px; height:36vh; order:-1; z-index:3;
-    background:var(--ground); backdrop-filter:none}
-  .story-steps{gap:20vh; padding:8vh 0 24vh}
-}
 
-/* ---- 4. infinite feed ---- */
-.feed-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px}
-.feed{display:flex; flex-direction:column; gap:12px}
-.item{display:grid; grid-template-columns:76px minmax(0,1fr); gap:16px; padding:16px 18px;
-  border:1px solid var(--hair); border-radius:16px; background:color-mix(in srgb, var(--panel) 80%, transparent);
-  animation:itemIn .45s var(--ease) both}
-@keyframes itemIn{from{opacity:0; transform:translate3d(0,12px,0)} to{opacity:1; transform:none}}
-.item .kind{font-family:var(--mono); font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--muted); padding-top:3px}
-.item.news .kind{color:var(--accent-ink)}
-.item h4{margin:0; font-size:1.02rem; font-weight:600; line-height:1.4; letter-spacing:-.01em}
-.item p{margin:7px 0 0; color:var(--ink-2); font-size:.9rem; line-height:1.6}
-.item .meta{margin-top:9px; font-family:var(--mono); font-size:.74rem; color:var(--muted)}
-.sentinel{height:80px; display:grid; place-items:center}
-.skel{display:flex; gap:7px}
-.skel i{width:7px; height:7px; border-radius:50%; background:var(--rule); animation:bounce 1s infinite}
-.skel i:nth-child(2){animation-delay:.14s} .skel i:nth-child(3){animation-delay:.28s}
-@keyframes bounce{0%,80%,100%{transform:translateY(0); opacity:.4} 40%{transform:translateY(-6px); opacity:1}}
-
-/* ---- 5. horizontal portfolio ---- */
-.folio-head{display:flex; flex-wrap:wrap; gap:26px; align-items:flex-end; margin-bottom:24px}
-.folio-big{font-size:clamp(2.4rem,6vw,3.6rem); letter-spacing:-.03em; line-height:1; font-weight:600}
-.folio-sub{color:var(--ink-2); font-size:.95rem}
-.hscroll{display:flex; gap:16px; overflow-x:auto; padding:6px 4px 22px;
-  scroll-snap-type:x mandatory; overscroll-behavior-x:contain; scrollbar-width:thin}
-.hscroll::-webkit-scrollbar{height:8px}
-.hscroll::-webkit-scrollbar-thumb{background:var(--rule); border-radius:8px}
-.pos{flex:0 0 268px; scroll-snap-align:start; border:1px solid var(--hair); border-radius:18px;
-  padding:18px; background:color-mix(in srgb, var(--panel) 84%, transparent);
-  transition:transform .35s var(--ease), border-color .35s var(--ease)}
-.pos:hover{transform:translateY(-4px); border-color:var(--rule)}
-.pos .tkr{font-family:var(--mono); font-size:1.22rem; letter-spacing:.04em}
-.pos .nm{font-size:.82rem; color:var(--muted); margin-top:3px; height:2.4em; line-height:1.2em; overflow:hidden}
-.pos .val{font-size:1.5rem; letter-spacing:-.02em; margin-top:14px}
-.pos .chg{font-family:var(--mono); font-size:.82rem; margin-top:4px}
-.chg.up{color:var(--win)} .chg.dn{color:var(--accent-ink)}
-.pos svg{width:100%; height:44px; margin-top:12px; display:block}
-.pos .rows{margin-top:12px; border-top:1px solid var(--hair); padding-top:10px;
-  display:grid; grid-template-columns:auto auto; gap:4px 10px; font-size:.8rem; color:var(--ink-2)}
-.pos .rows b{font-weight:500; color:var(--ink); font-family:var(--mono); text-align:right}
-.weights{display:flex; height:12px; border-radius:999px; overflow:hidden; margin:6px 0 26px;
-  border:1px solid var(--hair)}
-.weights i{display:block; height:100%; transition:flex-grow .6s var(--ease)}
-.hint{font-family:var(--mono); font-size:.74rem; color:var(--muted); letter-spacing:.08em}
-.hint.live{color:var(--win)}
 /* the account sheet */
 #account{position:fixed; inset:0; z-index:140; display:grid; place-items:center;
   background:rgba(0,0,0,.55); backdrop-filter:blur(6px); padding:18px}
@@ -671,14 +583,10 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
       <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
-      <button class="btn" id="btn-glide" aria-pressed="false"><span class="dot"></span>Glide off</button>
       <button class="btn" id="btn-account">Sign in</button>
     </div>
   </header>
 
-  <nav class="rail" id="rail" aria-label="Pages"></nav>
-
-  <section class="view is-on" id="v-board" aria-label="Delivery board">
   <div id="canvas">
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
@@ -792,101 +700,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   </section>
 
   </div>
-  </section>
-
-  <section class="view" id="v-story" aria-label="Incoming work, a story">
-    <div class="holder">
-      <h2>Where the work comes from</h2>
-      <p>This page is a placeholder. It shows how a delivery travels from a request in another system to a subtask on your board. Scroll, and the picture follows the text. The connectors below are stubs. None of them is live yet.</p>
-    </div>
-    <div class="story">
-      <div class="story-steps" id="story-steps">
-        <div class="step" data-step="0">
-          <div class="num">STEP 01</div>
-          <h3>A request arrives</h3>
-          <p>Someone writes a ticket in the service desk. It has a title, an owner and a due date. Nothing on your board knows about it yet.</p>
-        </div>
-        <div class="step" data-step="1">
-          <div class="num">STEP 02</div>
-          <h3>The connector reads it</h3>
-          <p>A scheduled job asks each system for what changed since the last run. It asks for little and it asks often.</p>
-        </div>
-        <div class="step" data-step="2">
-          <div class="num">STEP 03</div>
-          <h3>The record is made plain</h3>
-          <p>Each system speaks its own language. The connector puts every record into one shape: a name, a percent, a status and a date.</p>
-        </div>
-        <div class="step" data-step="3">
-          <div class="num">STEP 04</div>
-          <h3>It finds its main task</h3>
-          <p>The board matches the record to a main task by its project key. A record with no match waits in a tray until you say where it goes.</p>
-        </div>
-        <div class="step" data-step="4">
-          <div class="num">STEP 05</div>
-          <h3>It becomes a subtask</h3>
-          <p>The subtask appears under the right main task. Your own edits are never overwritten. The board only fills what you left empty.</p>
-        </div>
-        <div class="step" data-step="5">
-          <div class="num">STEP 06</div>
-          <h3>You decide the day</h3>
-          <p>At 05:00 the board tells you what is waiting. You drag one card into One Task A Day. Everything else can wait.</p>
-        </div>
-      </div>
-      <div class="story-stage">
-        <svg class="stage-svg" id="stage" viewBox="0 0 400 520" aria-hidden="true"></svg>
-        <div class="stage-cap" id="stage-cap">STEP 01 / 06</div>
-      </div>
-    </div>
-    <div class="holder" style="margin-top:40px">
-      <h2>Sources</h2>
-      <p>Each card is one connector. When one is built, its state changes to live and its records appear on the board.</p>
-    </div>
-    <div class="src-grid" id="src-grid"></div>
-    <div class="stub">
-      <h3>How a connector plugs in</h3>
-      <p>Each source gives back the same four fields: name, percent, status and date. One function per source does the reading. The board never learns what a ticket, an email or a sprint is. It only learns those four fields.</p>
-    </div>
-  </section>
-
-  <section class="view" id="v-feed" aria-label="News, mail and calendar">
-    <div class="holder">
-      <h2>Today, from everywhere</h2>
-      <p>News, mail and calendar in one stream. It loads more as you reach the bottom. The news is real, read through this app&rsquo;s own server so no key sits in the page. Mail and calendar are still placeholders.</p>
-    </div>
-    <p class="hint" id="feed-note"></p>
-    <div class="feed-filters" id="feed-filters"></div>
-    <div class="feed" id="feed"></div>
-    <div class="sentinel" id="sentinel"><div class="skel"><i></i><i></i><i></i></div></div>
-  </section>
-
-  <section class="view" id="v-folio" aria-label="Portfolio">
-    <div class="holder">
-      <h2>Portfolio</h2>
-      <p>A placeholder. One million US dollars across S&amp;P 500 names, with cash for the remainder. Every price, move and chart below is invented for the layout. Scroll the row sideways, or drag it.</p>
-    </div>
-    <div class="folio-head">
-      <div>
-        <div class="par-depth">Market value</div>
-        <div class="folio-big" id="folio-total">$0</div>
-      </div>
-      <div>
-        <div class="par-depth">Today</div>
-        <div class="folio-big" id="folio-day" style="font-size:1.8rem">$0</div>
-      </div>
-      <div>
-        <div class="par-depth">Positions</div>
-        <div class="folio-big" id="folio-n" style="font-size:1.8rem">0</div>
-      </div>
-      <div class="folio-sub" id="folio-cash"></div>
-    </div>
-    <div class="weights" id="weights"></div>
-    <div class="hscroll" id="folio" tabindex="0" aria-label="Positions, scroll sideways"></div>
-    <p class="hint">Drag the row, or use the arrow keys.</p>
-    <div class="stub">
-      <h3>What replaces this</h3>
-      <p>One call gives back a list of holdings. One more gives the last price for each. The cards, the weights and the totals are all drawn from those two answers.</p>
-    </div>
-  </section>
 
   <div id="account" hidden>
     <div class="card">
@@ -944,7 +757,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   </footer>
 
 </div><!-- #scroll -->
-<div id="scroll-spacer" aria-hidden="true"></div>
 
   <button id="bot-orb" hidden aria-label="Talk to the board">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
@@ -3467,55 +3279,16 @@ function ease(el,to,dec,suffix){
 })();
 
 
-/* ===============================================================
-   PAGES  —  a rail, a hash, and four views. The board keeps its
-   own machinery; the other three are placeholders with their own
-   scroll behaviour.
-   =============================================================== */
-var VIEWS=["board","story","feed","folio"];
-var VIEW_NAME={board:"Board",story:"Incoming",feed:"Today",folio:"Portfolio"};
-var curView="board", storyBuilt=false, feedBuilt=false, folioBuilt=false;
-var storySteps=[], storyPaint=null;
+/* ---------------- depth on scroll ----------------
+   Every panel answers the same scroll at its own rate, by position and by
+   speed. The deep ones move most, the day's cards least, so the board
+   reads as depth rather than as one flat sheet.
 
-(function buildRail(){
-  var rail=$("#rail");
-  VIEWS.forEach(function(v){
-    var b=document.createElement("button");
-    b.type="button"; b.textContent=VIEW_NAME[v]; b.dataset.view=v;
-    b.addEventListener("click",function(){ location.hash="#/"+v; });
-    rail.appendChild(b);
-  });
-})();
-
-function showView(v){
-  if(VIEWS.indexOf(v)<0) v="board";
-  curView=v;
-  VIEWS.forEach(function(x){
-    var el=$("#v-"+x); if(el) el.classList.toggle("is-on",x===v);
-  });
-  Array.prototype.forEach.call($("#rail").children,function(b){
-    if(b.dataset.view===v) b.setAttribute("aria-current","page");
-    else b.removeAttribute("aria-current");
-  });
-  if(v==="story"&&!storyBuilt){ buildStory(); storyBuilt=true; }
-  if(v==="feed"&&!feedBuilt){ buildFeed(); feedBuilt=true; }
-  if(v==="folio"&&!folioBuilt){ buildFolio(); folioBuilt=true; }
-  /* the board measures itself, so it has to measure again once it is visible */
-  if(v==="board"){
-    try{ if(typeof fitCanvas==="function") fitCanvas(); }catch(e){}
-    try{ renderAll(); }catch(e){}
-  }
-  parallax();
-  scrollTo(0,0);
-  if(typeof glideSuit==="function") glideSuit();
-  document.body.classList.toggle("on-board",v==="board");
-  if(v==="story") setTimeout(storyStep,0);
-}
-function readHash(){
-  var m=String(location.hash||"").match(/^#\/([a-z]+)/);
-  showView(m?m[1]:"board");
-}
-
+   The three placeholder pages that used to sit behind a rail are gone, and
+   the glide that carried them with them. Half built is not a feature, and a
+   page that arrives after your hand has no place on a board you drag things
+   on. What is left is the half that belonged here.                       */
+var curView="board";
 /* ---------------- 2. parallax ----------------
    Every layer answers the same scroll at its own rate. The sky moves
    most, the wide panels next, the day's cards least, so the page reads
@@ -3541,334 +3314,44 @@ function parallax(at){
     p.style.setProperty("--par",d.toFixed(1)+"px");
   });
 }
-addEventListener("scroll",function(){
-  if(parRAF) return;
-  parRAF=requestAnimationFrame(function(){ parRAF=null; parallax(); storyStep(); });
-},{passive:true});
 parallax();
 
-/* ---------------- 3. scrollytelling ---------------- */
-var SOURCES=[
-  {n:"Service desk",  s:"Tickets raised against you, with their owner and due date.",  live:false},
-  {n:"SAP Datasphere",s:"Model and task state from the migration backlog.",            live:false},
-  {n:"Outlook",       s:"Mail you flagged, and meetings that carry an action.",        live:false},
-  {n:"Azure DevOps",  s:"Work items and pull requests in the sprint.",                 live:false},
-  {n:"Databricks",    s:"Job runs that failed, and the pipelines they belong to.",     live:false},
-  {n:"Power Platform",s:"Flows that stopped, and the solution that holds them.",       live:false}
-];
-/* One function per source. Each gives back the same four fields.
-   Nothing here calls out yet: this page is the placeholder for that work. */
-function fetchFrom(source){
-  return Promise.resolve({source:source, fetchedAt:new Date().toISOString(), records:[]});
-}
-var STAGE_STEPS=6;
-function stageSvg(on){
-  var box=function(y,label,mine){
-    /* mine: 1 the step you are reading, 0 already passed, -1 still ahead */
-    var lit=mine>=0, word=mine>0?"ACTIVE":(mine===0?"DONE":"WAITING");
-    return '<g opacity="'+(mine>0?1:(mine===0?.6:.22))+'">'+
-      '<rect x="70" y="'+y+'" width="260" height="62" rx="14" fill="none" stroke="'+(lit?"var(--accent)":"var(--rule)")+'"/>'+
-      '<text x="200" y="'+(y+30)+'" text-anchor="middle" font-size="15" fill="var(--ink)" font-family="var(--font)">'+label+'</text>'+
-      '<text x="200" y="'+(y+48)+'" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">'+
-        word+'</text></g>';
-  };
-  var arrow=function(y,lit){
-    return '<path d="M200 '+y+' L200 '+(y+34)+'" stroke="'+(lit?"var(--accent)":"var(--rule)")+
-      '" stroke-width="1.5" opacity="'+(lit?1:.25)+'"/>'+
-      '<path d="M194 '+(y+27)+' L200 '+(y+35)+' L206 '+(y+27)+'" fill="none" stroke="'+
-      (lit?"var(--accent)":"var(--rule)")+'" stroke-width="1.5" opacity="'+(lit?1:.25)+'"/>';
-  };
-  var s='';
-  var at=function(i){ return on===i?1:(on>i?0:-1); };
-  s+=box(24,"Service desk ticket",at(0));
-  s+=arrow(86,on>=1);
-  s+=box(120,"Connector reads it",at(1));
-  s+=arrow(182,on>=2);
-  s+=box(216,"One shape: name, %, status, date",at(2));
-  s+=arrow(278,on>=3);
-  s+=box(312,"Matched to a main task",at(3));
-  if(on>=4){
-    s+='<g><rect x="70" y="396" width="260" height="34" rx="10" fill="var(--raised)" stroke="var(--hair)"/>'+
-       '<rect x="82" y="408" width="'+(on>=5?200:120)+'" height="10" rx="5" fill="var(--accent)"/>'+
-       '<text x="200" y="448" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--mono)">NEW SUBTASK</text></g>';
-  }
-  if(on>=5){
-    s+='<g><rect x="70" y="462" width="260" height="42" rx="12" fill="none" stroke="var(--accent)"/>'+
-       '<text x="200" y="488" text-anchor="middle" font-size="14" fill="var(--ink)" font-family="var(--font)">One Task A Day</text></g>';
-  }
-  return s;
-}
-function buildStory(){
-  var grid=$("#src-grid");
-  grid.innerHTML=SOURCES.map(function(x){
-    return '<div class="src"><b>'+x.n+'</b><span>'+x.s+'</span><em class="'+(x.live?"live":"")+'">'+
-      (x.live?"live":"not connected")+'</em></div>';
-  }).join("");
-  var stage=$("#stage"), cap=$("#stage-cap"), at=-1;
-  storyPaint=function(i){
-    if(i===at) return;
-    at=i; stage.innerHTML=stageSvg(i);
-    cap.textContent="STEP "+String(Math.max(i,0)+1).padStart(2,"0")+" / 0"+STAGE_STEPS;
-  };
-  storySteps=Array.prototype.slice.call(document.querySelectorAll("#story-steps .step"));
-  storyPaint(0);
-  storyStep();
-}
-/* One step is always the live one: the one nearest the reading line. An
-   observer left dead bands between the steps, where nothing was lit.    */
-function storyStep(){
-  if(curView!=="story"||!storySteps.length) return;
-  var mid=window.innerHeight*.42, best=0, bd=1e9;
-  storySteps.forEach(function(el,i){
-    var r=el.getBoundingClientRect(), c=r.top+r.height/2, d=Math.abs(c-mid);
-    if(d<bd){ bd=d; best=i; }
-  });
-  storySteps.forEach(function(el,i){ el.classList.toggle("on",i===best); });
-  if(storyPaint) storyPaint(best);
-}
 
-/* ---------------- 4. infinite feed ---------------- */
-var NEWS=[
- ["Europe agrees a single rule for grid batteries","Ministers set one standard for how storage connects to the grid. Suppliers have 2 years to comply."],
- ["Shipping fuel costs fall for a third month","Lower bunker prices ease pressure on North Sea routes. Analysts expect the trend to hold to the spring."],
- ["Denmark opens a second carbon store under the North Sea","The site takes 1.5 million tonnes a year. First injection is planned for the autumn."],
- ["Chip makers hold back on new plants","Three of the largest have delayed capacity decisions. Demand for training hardware is still growing."],
- ["A new undersea cable links Esbjerg and Aberdeen","It carries 1.4 GW. Both grids gain a route that does not cross land."],
- ["Regulator asks banks to prove their model risk","Every model that touches pricing must now carry a named owner."],
- ["Wind output sets a record for a single day","Turbines covered 84% of demand for 6 hours. The surplus went to storage and to export."],
- ["Rail freight returns to the Jutland corridor","Two operators restart services. The route had been closed for 14 months."],
- ["Cloud prices rise for long term commitments","Discounts for 3 year terms narrow. Buyers are moving back to shorter deals."],
- ["Steel plants test hydrogen at full scale","One furnace runs for 30 days without coal. The result decides the next investment."],
- ["A shortage of transformers slows connections","Lead times reach 3 years. Grid operators are pooling orders to get ahead."],
- ["Port of Esbjerg expands its heavy lift quay","The work adds 400 metres. It is meant for the next turbine generation."]
-];
-var MAIL=[
- ["Rune: SAC maintenance window","Can we move the window to Sunday 02:00? The finance models refresh at 06:00."],
- ["Leon: compliance rules, second draft","The section on local models is rewritten. I need your comment by Thursday."],
- ["Service desk: 3 tickets waiting on you","Two are about Power BI access. One is the refresh on the gas stream view."],
- ["Datasphere: your CLI token expires","The token expires in 6 days. Create a new one before the nightly job runs."],
- ["Team: video review for the Copilot tutorial","The Excel chapter is cut. The SAP chapter still needs a voice over."],
- ["Vendor: quarterly cost review","Your Databricks spend is up 12%. Most of it is one job that runs hourly."],
- ["HR: pick your course for the year","The list closes at the end of the month. AIGP is still on it."],
- ["Sunscape: sandbox is ready","The GPU node is up. Ask before running anything over 8 hours."]
-];
-var CAL=[
- ["Stand up, delivery team","09:00 to 09:15. Every weekday.","15 min"],
- ["Vanguard: survey walkthrough for Esbjerg","11:00. Room 2.14. Bring the question list.","45 min"],
- ["SAP migration: backlog seeding","13:30. Online. Epics and acceptance criteria.","90 min"],
- ["1:1 with Rune","15:00. Partnership work and the SAC handover.","30 min"],
- ["Security review: local LLM","10:00 tomorrow. Leon joins for the first half.","60 min"],
- ["Travel: Esbjerg, return same day","Train at 06:12. Back at 19:40.","All day"],
- ["Shredding session","18:30. Airbike, then the workout block.","60 min"],
- ["Sprint review","14:00 Friday. Demo the landing zone update.","45 min"]
-];
-var feedN=0, feedFilter="all", feedIO=null, feedBusy=0;
-/* the real wire, read through this app's own /api/news so no key is ever
-   in the page. Where there is no server, as inside an artifact frame, the
-   written stand-ins below take over and the page says so.                */
-var TOPIC_ORDER=["world","geo","finance","energy","denmark"];
-var TOPIC_NAME={world:"World",geo:"Geopolitics",finance:"Finance",energy:"Energy",denmark:"Denmark"};
-var wire=[], wireAt=0, wireTopic=0, wireBusy=false, wireLive=null;
-
-function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
-function since(iso){
-  if(!iso) return "";
-  var m=Math.round((Date.now()-new Date(iso).getTime())/60000);
-  if(m<1) return "just now";
-  if(m<60) return m+" min ago";
-  var h=Math.round(m/60);
-  return h<48 ? h+" h ago" : Math.round(h/24)+" days ago";
-}
-function pullWire(){
-  if(wireBusy || wireTopic>=TOPIC_ORDER.length) return Promise.resolve(false);
-  wireBusy=true;
-  var t=TOPIC_ORDER[wireTopic++];
-  return fetch("/api/news?topic="+t+"&n=60",{headers:{accept:"application/json"}})
-    .then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
-    .then(function(d){
-      var got=(d.items||[]).map(function(x){ x.topic=t; return x; });
-      wire=wire.concat(got);
-      wireLive=got.length>0;
-      wireBusy=false;
-      return got.length>0;
-    })
-    .catch(function(){ wireLive=false; wireBusy=false; return false; });
-}
-function nextNews(i){
-  if(wire.length && wireAt<wire.length){
-    var a=wire[wireAt++];
-    if(wireAt>wire.length-8) pullWire().then(function(ok){ if(ok&&curView==="feed") feedPage(); });
-    return {k:"news",kind:TOPIC_NAME[a.topic]||"News",t:a.title,
-      b:a.source?("Filed by "+a.source+(a.country?", "+a.country:"")):"",
-      m:(since(a.at)||"today")+(a.source?" · "+a.source:""), href:a.url};
-  }
-  var n=NEWS[i%NEWS.length];
-  return {k:"news",kind:"News",t:n[0],b:n[1],m:"Written stand-in, no server here"};
-}
-function feedItem(i){
-  var kinds=["news","news","mail","news","cal","mail","news","cal"];
-  var k=kinds[i%kinds.length];
-  var ago=i*37+9;
-  var when=ago<60?(ago+" min ago"):(Math.floor(ago/60)+" h ago");
-  if(k==="news") return nextNews(i);
-  if(k==="mail"){
-    var m=MAIL[i%MAIL.length];
-    return {k:"mail",kind:"Mail",t:m[0],b:m[1],m:"Placeholder inbox · "+when};
-  }
-  var c=CAL[i%CAL.length];
-  return {k:"cal",kind:"Calendar",t:c[0],b:c[1],m:"Placeholder · "+c[2]+" · "+when};
-}
-function feedPage(){
-  var box=$("#feed"), frag=document.createDocumentFragment(), added=0, guard=0;
-  while(added<10 && guard<80){
-    var it=feedItem(feedN++); guard++;
-    if(feedFilter!=="all" && it.k!==feedFilter) continue;
-    var d=document.createElement("article");
-    d.className="item "+it.k;
-    d.style.animationDelay=(added*40)+"ms";
-    var head=it.href
-      ? '<h4><a href="'+esc(it.href)+'" target="_blank" rel="noopener noreferrer">'+esc(it.t)+'</a></h4>'
-      : '<h4>'+esc(it.t)+'</h4>';
-    d.innerHTML='<div class="kind">'+esc(it.kind)+'</div><div>'+head+
-      (it.b?'<p>'+esc(it.b)+'</p>':"")+'<div class="meta">'+esc(it.m)+'</div></div>';
-    frag.appendChild(d); added++;
-  }
-  box.appendChild(frag);
-}
-function feedNote(){
-  var n=$("#feed-note"); if(!n) return;
-  if(wireLive===true){ n.textContent="News is live. Mail and calendar are still placeholders."; n.className="hint live"; }
-  else if(wireLive===false){ n.textContent="No news server here, so the stories below are written stand-ins. The app at its own address reads the real wire."; n.className="hint"; }
-  else { n.textContent="Reading the wire…"; n.className="hint"; }
-}
-function buildFeed(){
-  var f=$("#feed-filters");
-  [["all","Everything"],["news","News"],["mail","Mail"],["cal","Calendar"]].forEach(function(p){
-    var b=document.createElement("button");
-    b.type="button"; b.className="btn"; b.textContent=p[1];
-    b.setAttribute("aria-pressed",p[0]==="all"?"true":"false");
-    b.addEventListener("click",function(){
-      feedFilter=p[0]; feedN=0; wireAt=0; $("#feed").innerHTML="";
-      Array.prototype.forEach.call(f.children,function(x){
-        x.setAttribute("aria-pressed",x===b?"true":"false"); });
-      feedPage(); feedPage();
-    });
-    f.appendChild(b);
-  });
-  feedNote();
-  pullWire().then(function(){
-    feedNote();
-    feedN=0; wireAt=0; $("#feed").innerHTML="";
-    feedPage(); feedPage();
-  });
-  if(!("IntersectionObserver" in window)) return;
-  feedIO=new IntersectionObserver(function(es){
-    /* the guard belongs here, where the observer can fire in a burst, and
-       not on the calls the page makes for itself                          */
-    es.forEach(function(e){
-      if(!e.isIntersecting || curView!=="feed") return;
-      var t=Date.now(); if(t-feedBusy<250) return;
-      feedBusy=t; feedPage();
-    });
-  },{rootMargin:"600px 0px"});
-  feedIO.observe($("#sentinel"));
-}
-
-/* ---------------- 5. horizontal portfolio ----------------
-   Invented prices, invented moves. One million dollars, and the
-   remainder held as cash so the total is exact.                  */
-var BOOK=[
- ["NVDA","NVIDIA",182.40,.115, 1.24],["MSFT","Microsoft",512.75,.105,-0.38],
- ["AAPL","Apple",244.10,.095, 0.62],["AMZN","Amazon",231.55,.085, 1.91],
- ["META","Meta Platforms",702.30,.075,-1.15],["GOOGL","Alphabet",198.85,.075, 0.44],
- ["AVGO","Broadcom",341.20,.065, 2.07],["BRK.B","Berkshire Hathaway",498.60,.060, 0.11],
- ["LLY","Eli Lilly",812.45,.055,-0.74],["JPM","JPMorgan Chase",268.90,.055, 0.35],
- ["XOM","Exxon Mobil",118.25,.050,-0.22],["V","Visa",341.70,.050, 0.58],
- ["UNH","UnitedHealth",336.15,.045,-1.83],["COST","Costco",918.40,.040, 0.27]
-];
-var USD=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0});
-var USD2=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2});
-function walk(seed,n){
-  var a=0,out=[],v=0;
-  for(var i=0;i<seed.length;i++) a=(a*31+seed.charCodeAt(i))>>>0;
-  for(var j=0;j<n;j++){
-    a=(a*1103515245+12345)>>>0;
-    v+=((a>>>16)%1000)/1000-.48;
-    out.push(v);
-  }
-  return out;
-}
-function spark(seed,up){
-  var pts=walk(seed,26), lo=Math.min.apply(null,pts), hi=Math.max.apply(null,pts), r=(hi-lo)||1;
-  var d=pts.map(function(p,i){
-    return (i?"L":"M")+(i*(236/25)).toFixed(1)+" "+(40-((p-lo)/r)*34).toFixed(1);
-  }).join(" ");
-  return '<svg viewBox="0 0 236 44" preserveAspectRatio="none" aria-hidden="true">'+
-    '<path d="'+d+'" fill="none" stroke="'+(up?"var(--win)":"var(--accent-ink)")+'" stroke-width="1.6"/></svg>';
-}
-function buildFolio(){
-  var cash=1000000, rows=[], total=0, day=0;
-  BOOK.forEach(function(b){
-    var sh=Math.floor((1000000*b[3])/b[2]);
-    var val=sh*b[2];
-    cash-=val; total+=val;
-    day+=val*b[4]/100;
-    rows.push({t:b[0],n:b[1],px:b[2],sh:sh,val:val,chg:b[4]});
-  });
-  total+=cash;
-  $("#folio-total").textContent=USD.format(total);
-  var dayEl=$("#folio-day");
-  dayEl.textContent=(day>=0?"+":"−")+USD.format(Math.abs(day)).replace("$","$");
-  dayEl.style.color=day>=0?"var(--win)":"var(--accent-ink)";
-  $("#folio-n").textContent=rows.length;
-  $("#folio-cash").textContent="Cash "+USD.format(cash)+", "+(cash/total*100).toFixed(1)+"% of the book.";
-
-  $("#weights").innerHTML=rows.map(function(r,i){
-    var a=.25+(i/rows.length)*.75;
-    return '<i style="flex:'+(r.val/total)+' 0 0; background:color-mix(in srgb, var(--accent) '+
-      Math.round(a*100)+'%, var(--rule))" title="'+r.t+'"></i>';
-  }).join("")+'<i style="flex:'+(cash/total)+' 0 0; background:var(--rule)" title="Cash"></i>';
-
-  $("#folio").innerHTML=rows.map(function(r){
-    var up=r.chg>=0;
-    return '<article class="pos">'+
-      '<div class="tkr">'+r.t+'</div><div class="nm">'+esc(r.n)+'</div>'+
-      '<div class="val">'+USD.format(r.val)+'</div>'+
-      '<div class="chg '+(up?"up":"dn")+'">'+(up?"▲":"▼")+" "+Math.abs(r.chg).toFixed(2)+"% today · "+
-        (up?"+":"−")+USD.format(Math.abs(r.val*r.chg/100))+'</div>'+
-      spark(r.t,up)+
-      '<div class="rows"><span>Shares</span><b>'+r.sh.toLocaleString("en-US")+'</b>'+
-      '<span>Last</span><b>'+USD2.format(r.px)+'</b>'+
-      '<span>Weight</span><b>'+(r.val/total*100).toFixed(1)+'%</b></div>'+
-      '</article>';
-  }).join("")+
-    '<article class="pos"><div class="tkr">CASH</div><div class="nm">Settled, not invested</div>'+
-    '<div class="val">'+USD.format(cash)+'</div>'+
-    '<div class="chg">No move today</div>'+
-    '<div class="rows"><span>Weight</span><b>'+(cash/total*100).toFixed(1)+'%</b></div></article>';
-
-  /* drag the row the way you would drag a photo */
-  var el=$("#folio"), d=null;
-  el.addEventListener("pointerdown",function(e){
-    if(e.pointerType==="mouse"&&e.button>0) return;
-    d={x:e.clientX,left:el.scrollLeft,id:e.pointerId,moved:false};
-  });
-  el.addEventListener("pointermove",function(e){
-    if(!d||e.pointerId!==d.id) return;
-    var dx=e.clientX-d.x;
-    if(!d.moved&&Math.abs(dx)<5) return;
-    d.moved=true; el.scrollLeft=d.left-dx;
-  });
-  function up(e){ if(d&&e.pointerId===d.id) d=null; }
-  el.addEventListener("pointerup",up);
-  el.addEventListener("pointercancel",up);
-  el.addEventListener("keydown",function(e){
-    if(e.key==="ArrowRight"){ el.scrollLeft+=284; e.preventDefault(); }
-    if(e.key==="ArrowLeft"){ el.scrollLeft-=284; e.preventDefault(); }
+/* the panels lean by moving, never by shearing: a skew shifts a panel further
+   the further across it you are, and a 28 pixel handle then sits away from
+   where it is drawn                                                       */
+var DRIFT=0, driftRAF=null, driftLast=0, driftHold=0, driftIdle=0;
+function setLag(v){
+  var host=$("#canvas"); if(!host) return;
+  Array.prototype.forEach.call(host.children,function(p){
+    var k=DEPTH[p.getAttribute("data-panel")];
+    if(k===undefined) return;
+    var t=v*k*2.2;
+    if(t>18) t=18; if(t<-18) t=-18;
+    p.style.setProperty("--lag",t.toFixed(2)+"px");
   });
 }
-
-
+function driftFrame(){
+  var y=window.pageYOffset||document.documentElement.scrollTop||0;
+  DRIFT = DRIFT*0.82 + (y-driftLast)*0.18; driftLast=y;
+  setLag(driftHold ? 0 : DRIFT);
+  parallax(y);
+  driftIdle = Math.abs(DRIFT)<0.03 ? driftIdle+1 : 0;
+  if(driftIdle>30 && !driftHold){ driftRAF=null; setLag(0); return; }
+  driftRAF=requestAnimationFrame(driftFrame);
+}
+function wake(){ driftIdle=0; if(!driftRAF) driftRAF=requestAnimationFrame(driftFrame); }
+/* anything being dragged gets the board back at once, with no lag to fight */
+var GRAB="[data-grip],[data-card],[data-scrub],.presize,.presize-c,.pmove,#bot-orb,.track";
+addEventListener("pointerdown",function(e){
+  if(e.target.closest && e.target.closest(GRAB)){ driftHold++; setLag(0); wake(); }
+},true);
+function letGo(){ if(driftHold){ driftHold=0; wake(); } }
+addEventListener("pointerup",letGo,true);
+addEventListener("pointercancel",letGo,true);
+addEventListener("scroll",wake,{passive:true});
+addEventListener("resize",wake);
+wake();
 
 /* ---------------- account, and the board that follows you ----------------
    Sign in and the board stops being one browser's secret. It is kept as one
@@ -4138,137 +3621,6 @@ function catchRedirect(){
 
 
 
-/* ---------------- glide ----------------
-   Lusion's trick is one idea: the page is not drawn where the scrollbar is,
-   it is drawn where the scrollbar is going. The content is held still by the
-   window and moved by a single transform that chases the real scroll, so it
-   arrives a beat late and leans into the travel. The spacer behind it is what
-   the browser actually scrolls, so the scrollbar, the wheel, the keyboard and
-   Find on page all keep working.
-
-   It costs precision, and the board is a tool you drag things on. A page that
-   arrives half a second after your hand fights the hand. So the board keeps
-   the browser's own scrolling and takes the other half of the effect: its
-   panels lean with the speed of the scroll and settle when it stops. The
-   three showcase pages, which you only read, take the full glide.
-
-   Both are off on a touch screen, where the browser beats anything a page can
-   fake, and off for anyone who asked for less motion.                      */
-var GLIDE=$("#scroll"), SPACER=$("#scroll-spacer");
-var glideOn=false, gy=0, gv=0, gHold=0, gRAF=null, gRO=null, gLast=0, gIdle=0;
-
-function glideAble(){
-  if(REDUCE||!GLIDE||!SPACER) return false;
-  if(state.glide===false) return false;
-  if(window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return false;
-  return window.innerWidth>820;
-}
-function glideFull(){ return glideAble() && curView!=="board"; }
-function scrollY(){ return window.pageYOffset||document.documentElement.scrollTop||0; }
-
-function glideMeasure(){
-  if(!glideOn) return;
-  var h=Math.ceil(GLIDE.scrollHeight);
-  if(SPACER.style.height!==h+"px") SPACER.style.height=h+"px";
-}
-function glideSnap(){
-  gy=scrollY(); gv=0; gLast=gy;
-  if(glideOn) GLIDE.style.transform="translate3d(0,"+(-gy).toFixed(2)+"px,0)";
-  setLag(0);
-}
-/* The board leans by moving, never by shearing. A skew shifts a panel further
-   the further across it you are, and a 28 pixel drag handle then sits away
-   from where it is drawn. A translate keeps every box square to the screen,
-   so what you press is what you hit.                                      */
-function setLag(v){
-  var host=$("#canvas"); if(!host) return;
-  Array.prototype.forEach.call(host.children,function(p){
-    var k=DEPTH[p.getAttribute("data-panel")];
-    if(k===undefined) return;
-    var d=v*k*2.2;
-    if(d>18) d=18; if(d<-18) d=-18;
-    p.style.setProperty("--lag",d.toFixed(2)+"px");
-  });
-}
-function frame(){
-  var y=scrollY();
-  if(glideOn){
-    var was=gy;
-    gy += (y-gy) * (gHold ? 1 : 0.11);
-    if(Math.abs(y-gy)<0.4){ gy=y; gv=gv*0.6; }
-    gv = gv*0.80 + (gy-was)*0.20;
-    var lean=Math.max(-2.4,Math.min(2.4,gv*0.10));
-    GLIDE.style.transform="translate3d(0,"+(-gy).toFixed(2)+"px,0) skewY("+lean.toFixed(3)+"deg)";
-    parallax(gy);
-    gIdle = Math.abs(y-gy)<0.5 && Math.abs(gv)<0.05 ? gIdle+1 : 0;
-  } else {
-    /* the board: the browser scrolls, the panels answer the speed of it */
-    gv = gv*0.82 + (y-gLast)*0.18; gLast=y;
-    var ln = gHold ? 0 : gv;
-    setLag(ln);
-    parallax(y);
-    gIdle = Math.abs(gv)<0.03 ? gIdle+1 : 0;
-  }
-  storyStep();
-  if(gIdle>30 && !gHold){ gRAF=null; if(!glideOn) setLag(0); return; }
-  gRAF=requestAnimationFrame(frame);
-}
-function wake(){ gIdle=0; if(!gRAF) gRAF=requestAnimationFrame(frame); }
-
-function glideStart(){
-  if(glideOn||!glideFull()) return;
-  glideOn=true;
-  setLag(0);
-  document.body.classList.add("glide");
-  glideMeasure(); glideSnap();
-  if(window.ResizeObserver && !gRO){
-    gRO=new ResizeObserver(function(){ glideMeasure(); });
-    gRO.observe(GLIDE);
-  }
-  wake(); paintGlide();
-}
-function glideStop(){
-  if(!glideOn) return;
-  glideOn=false;
-  if(gRO){ gRO.disconnect(); gRO=null; }
-  document.body.classList.remove("glide");
-  GLIDE.style.transform="";
-  SPACER.style.height="";
-  parallax(); paintGlide();
-}
-function glideSuit(){
-  if(glideFull()) glideStart(); else glideStop();
-  glideSnap(); wake();
-}
-function paintGlide(){
-  var b=$("#btn-glide"); if(!b) return;
-  var can=glideAble();
-  b.hidden=(REDUCE || (window.matchMedia&&window.matchMedia("(pointer: coarse)").matches) || window.innerWidth<=820);
-  b.setAttribute("aria-pressed",can?"true":"false");
-  b.lastChild.nodeValue=can?"Glide on":"Glide off";
-}
-/* anything being dragged gets the page back at once, with no lag to fight */
-var GRAB="[data-grip],[data-card],[data-scrub],.presize,.presize-c,.pmove,#bot-orb,.hscroll,.track";
-addEventListener("pointerdown",function(e){
-  /* the lag goes the instant you touch something, not a frame later */
-  if(e.target.closest && e.target.closest(GRAB)){ gHold++; setLag(0); wake(); }
-},true);
-function letGo(){ if(gHold){ gHold=0; wake(); } }
-addEventListener("pointerup",letGo,true);
-addEventListener("pointercancel",letGo,true);
-addEventListener("scroll",wake,{passive:true});
-addEventListener("resize",function(){ glideSuit(); glideMeasure(); });
-$("#btn-glide").addEventListener("click",function(){
-  state.glide = (state.glide===false);
-  save();
-  if(!state.glide){ glideStop(); setLag(0); }
-  glideSuit(); paintGlide();
-});
-glideSuit();
-
-/* everything the views need is defined by now, so open the one in the hash */
-addEventListener("hashchange",readHash);
-readHash();
 
 })();
 </script>
