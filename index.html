@@ -194,10 +194,28 @@ body.flat #canvas{transform:none!important}
 .bot-tools{display:flex; gap:6px; flex:none}
 .bot-tools .mini{padding:5px 9px}
 .bot-note{margin:10px 0 0; font-size:12px; color:var(--muted); line-height:1.5}
+/* Talking does not need the whole thread on screen. This strip carries the
+   last exchange near the orb, and opens the full sheet if you press it.  */
+#bottoast{position:fixed; z-index:128; max-width:min(420px,calc(100vw - 32px));
+  background:color-mix(in srgb, var(--panel) 94%, transparent);
+  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+  border:1px solid var(--rule); border-radius:16px; padding:11px 14px; cursor:pointer;
+  box-shadow:0 22px 50px -18px rgba(0,0,0,.7);
+  font-size:13.5px; line-height:1.5; color:var(--ink);
+  opacity:0; transform:translate3d(0,8px,0); pointer-events:none;
+  transition:opacity .3s var(--ease), transform .3s var(--ease)}
+#bottoast.up{opacity:1; transform:none; pointer-events:auto}
+#bottoast .said{display:block; color:var(--muted); font-size:11.5px; font-family:var(--mono);
+  letter-spacing:.04em; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#bottoast .more{display:block; margin-top:7px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--accent-ink)}
 @media (max-width:820px){
   #botsheet{left:10px!important; right:10px; width:auto; top:auto!important;
-    bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+    bottom:calc(92px + env(safe-area-inset-bottom,0px))!important;
+    max-height:min(62vh,520px)}
+  #botsheet .bot-log{max-height:34vh}
   #bot-orb{width:62px; height:62px}
+  #bottoast{left:10px!important; right:10px; max-width:none}
 }
 .bot-log{margin-top:12px; flex:1 1 auto; min-height:0; max-height:46vh; overflow-y:auto; display:flex; flex-direction:column;
   gap:10px; padding-right:4px; cursor:auto}
@@ -908,6 +926,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <button id="bot-orb" hidden aria-label="Talk to the board">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
   </button>
+  <div id="bottoast" hidden></div>
   <div id="botsheet" hidden>
     <div class="sheet-head">
       <span class="bot-dot"></span>
@@ -915,7 +934,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <span class="bot-tools">
         <button class="mini" id="bot-speak" aria-pressed="false" title="Read replies aloud">Speak</button>
         <button class="mini" id="bot-clear" title="Start over">Clear</button>
-        <button class="mini" id="bot-min" title="Close">Close</button>
+        <button class="mini" id="bot-min" title="Put the conversation away">Minimise</button>
       </span>
     </div>
     <div class="bot-log" id="bot-log"></div>
@@ -2156,6 +2175,7 @@ function listen(){
       var code=e&&e.error;
       if(code==="not-allowed"||code==="service-not-allowed"){
         state.srBlocked=true; save(); paintOrb();
+        botOpen(true);   /* typing is the way out now, so show the box */
         $("#bot-input").focus();
         note("The microphone opened, but this browser refuses to transcribe inside an embedded page ("+code+"). "+dictateHint());
         return;
@@ -2217,20 +2237,57 @@ function sheetPlace(){
   SHEET.style.left=x+"px"; SHEET.style.top=y+"px";
   SHEET.style.maxHeight=(window.innerHeight-y-14)+"px";
 }
+var TOAST=$("#bottoast"), toastT=null;
+function toastPlace(){
+  if(TOAST.hidden) return;
+  var w=TOAST.offsetWidth||320, h=TOAST.offsetHeight||60, m=12;
+  var ox=parseFloat(ORB.style.left)||0, oy=parseFloat(ORB.style.top)||0, os=orbSize();
+  if(window.innerWidth<=820){
+    TOAST.style.top=Math.max(m, oy-h-m)+"px";
+    return;
+  }
+  var x=(ox+os/2 > window.innerWidth/2) ? ox-w-m : ox+os+m;
+  x=Math.min(Math.max(m,x), window.innerWidth-w-m);
+  var y=Math.min(Math.max(m, oy+os/2-h/2), window.innerHeight-h-m);
+  TOAST.style.left=x+"px"; TOAST.style.top=y+"px";
+}
+/* said: what it heard. reply: what it did. Empty said for a plain message. */
+function toast(said,reply){
+  if(!TOAST) return;
+  if(!SHEET.hidden) return;          /* the sheet is open, it says it there */
+  clearTimeout(toastT);
+  TOAST.innerHTML=(said?'<span class="said">'+esc(said)+'</span>':"")+
+    esc(reply)+'<span class="more">Press for the whole conversation</span>';
+  TOAST.hidden=false;
+  toastPlace();
+  requestAnimationFrame(function(){ TOAST.classList.add("up"); });
+  toastT=setTimeout(hideToast, 4000+Math.min(String(reply).length*45,9000));
+}
+function hideToast(){
+  if(!TOAST||TOAST.hidden) return;
+  clearTimeout(toastT);
+  TOAST.classList.remove("up");
+  setTimeout(function(){ if(!TOAST.classList.contains("up")) TOAST.hidden=true; },320);
+}
 function botOpen(on){
   state.botOpen=!!on; save();
   SHEET.hidden=!on;
-  if(on){ botRender(); sheetPlace(); }
+  if(on){ hideToast(); botRender(); sheetPlace(); }
 }
 /* drag the orb anywhere; a tap that did not move opens and starts talking */
 (function(){
-  var d=null;
+  var d=null, holdOpen=null;
   ORB.addEventListener("pointerdown",function(e){
     if(e.button!==undefined&&e.button>0) return;
     e.preventDefault(); e.stopPropagation();
-    d={pid:e.pointerId,x0:e.clientX,y0:e.clientY,
+    d={pid:e.pointerId,x0:e.clientX,y0:e.clientY,t0:Date.now(),
        ox:parseFloat(ORB.style.left)||0, oy:parseFloat(ORB.style.top)||0, moved:false};
     try{ ORB.setPointerCapture(e.pointerId); }catch(err){}
+    /* press to talk, hold to read */
+    clearTimeout(holdOpen);
+    holdOpen=setTimeout(function(){
+      if(d&&!d.moved){ d.moved=true; stopHearing(); botOpen(true); }
+    },450);
   });
   ORB.addEventListener("pointermove",function(e){
     if(!d||e.pointerId!==d.pid) return;
@@ -2242,48 +2299,56 @@ function botOpen(on){
   });
   function up(e){
     if(!d||e.pointerId!==d.pid) return;
-    var moved=d.moved; d=null; orbClamp(); sheetPlace(); save();
-    if(!moved) orbTap();
+    var moved=d.moved, held=Date.now()-d.t0; d=null;
+    clearTimeout(holdOpen);
+    orbClamp(); sheetPlace(); toastPlace(); save();
+    if(moved) return;
+    if(held>=450) return;        /* the hold already opened the conversation */
+    orbTap();
   }
   ORB.addEventListener("pointerup",up);
-  ORB.addEventListener("pointercancel",function(){ d=null; });
-  addEventListener("resize",function(){ orbClamp(); sheetPlace(); });
+  ORB.addEventListener("pointercancel",function(){ d=null; clearTimeout(holdOpen); });
+  addEventListener("resize",function(){ orbClamp(); sheetPlace(); toastPlace(); });
+  TOAST.addEventListener("click",function(){ hideToast(); botOpen(true); });
 })();
 function note(t){
   var n=$("#bot-note");
   n.textContent=t||""; n.hidden=!t;
   sheetPlace();
 }
+/* Pressing the orb talks, and nothing else. It used to throw the whole
+   conversation over the board first, which on a phone is the board gone.
+   Where the microphone cannot be had, that is when the sheet opens, since
+   then there is typing to do.                                           */
 function orbTap(){
-  if(SHEET.hidden) botOpen(true);
   if(hearing){ stopHearing(); return; }
-  if(!SR){
+  function toTyping(msg){
+    botOpen(true);
     $("#bot-input").focus();
-    note("This browser has no speech recognition. "+dictateHint());
-    return;
+    note(msg);
   }
-  if(state.srBlocked){
-    $("#bot-input").focus();
-    note("This browser will not run speech recognition inside an embedded page. "+dictateHint());
-    return;
-  }
-  note("Opening the microphone…"); micUI(true);
+  if(!SR) return toTyping("This browser has no speech recognition. "+dictateHint());
+  if(state.srBlocked)
+    return toTyping("This browser will not run speech recognition inside an embedded page. "+dictateHint());
+
+  if(SHEET.hidden) toast("","Opening the microphone\u2026");
+  else note("Opening the microphone\u2026");
+  micUI(true);
   askMic().then(function(r){
     micUI(false);
     if(!r.ok){
       micDiag(r);
       state.micBlocked=true; save(); paintOrb();
-      $("#bot-input").focus();
-      note(micExplain(r));
-      return;
+      hideToast();
+      return toTyping(micExplain(r));
     }
     state.micBlocked=false; save(); paintOrb();
-    note("");
+    note(""); hideToast();
     handsFree=!!state.speak;
     listen();
   },function(e){
     micUI(false);
-    note("The microphone did not open ("+((e&&e.name)||"unknown")+").");
+    toast("","The microphone did not open ("+((e&&e.name)||"unknown")+").");
   });
 }
 $("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
@@ -3052,9 +3117,10 @@ async function botAsk(text){
     botTurns.push({role:"assistant",content:reply});
     if(botTurns.length>14) botTurns=botTurns.slice(-14);
     botRender();
+    toast(said,reply);
     speakOut(reply);
     if(handsFree&&(!state.speak||!canSpeak)) setTimeout(listen,400);
-    else if(!hearing) try{ $("#bot-input").focus(); }catch(e){}
+    else if(!hearing&&!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
     return;
   }
   botBusy=true;
@@ -3092,7 +3158,7 @@ async function botAsk(text){
   ORB.hidden=false;
   paintOrb(); orbPlace();
   $("#bot-speak").setAttribute("aria-pressed",state.speak?"true":"false");
-  botOpen(!!state.botOpen);
+  botOpen(false);   /* it opens when you ask for it, never on its own */
   var chips=[["What is left today?","what is left today"],
              ["What needs a look?","what needs a look"],
              ["What did I do today?","what did i do today"],
