@@ -1,0 +1,4 @@
+# The board carries real task names. It is reachable by anyone with the
+# link, but it has no business in a search index.
+User-agent: *
+Disallow: /
