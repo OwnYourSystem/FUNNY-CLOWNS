@@ -1035,6 +1035,9 @@ function boot(){
   if(!s || s.v!==2 || !s.groups) { s=blankState(); }
   if(!s.ue) s.ue={}; if(!s.killed) s.killed=[]; if(!s.oftad) s.oftad=[];
   if(!s.plan) s.plan=[]; if(!s.done) s.done=[]; if(!s.dayLog) s.dayLog=[];
+  /* the tutor answers aloud unless it has been turned off, because a
+     conversation that only listens is not a conversation                */
+  if(s.speak===undefined) s.speak=true;
   state=s; sync();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
@@ -2082,7 +2085,12 @@ function speakOut(text){
     speechSynthesis.cancel();
     var u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g," ").slice(0,700));
     u.lang=navigator.language||"en-US"; u.rate=1.03; u.pitch=1;
-    u.onend=function(){ if(handsFree&&spokeLast) setTimeout(listen,250); };
+    /* Some browsers never fire onend, which would end the conversation in
+       silence. A timer sized to the answer picks the turn back up.       */
+    var again=function(){ if(handsFree&&spokeLast&&!hearing&&!botBusy) listen(); };
+    var guard=setTimeout(again, 1800+Math.min(String(text).length*70, 12000));
+    u.onend=function(){ clearTimeout(guard); setTimeout(again,250); };
+    u.onerror=function(){ clearTimeout(guard); setTimeout(again,250); };
     speechSynthesis.speak(u);
   }catch(e){}
 }
