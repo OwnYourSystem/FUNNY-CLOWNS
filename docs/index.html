@@ -499,6 +499,32 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 .src em{display:inline-block; margin-top:10px; font-style:normal; font-family:var(--mono);
   font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
 .src em.live{color:var(--accent-ink)}
+@media (max-width:820px){
+  /* master and detail together: the main tasks swipe sideways, the
+     subtasks of the picked one stay below, both in one screen.        */
+  .mains .bars{display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; gap:10px;
+    padding-bottom:8px; scroll-snap-type:x mandatory; overscroll-behavior-x:contain;
+    scrollbar-width:none}
+  .mains .bars::-webkit-scrollbar{display:none}
+  .mains .bars>.row{flex:0 0 72%; min-width:0; scroll-snap-align:start; margin:0;
+    border:1px solid var(--hair); border-radius:14px; padding:12px 13px;
+    background:var(--raised); transition:border-color .3s var(--ease)}
+  .mains .bars>.row.sel{border-color:var(--accent); background:var(--accent-wash)}
+  .mains .bars>.row .rname{white-space:normal; line-height:1.25}
+  .mains .axis{display:none}
+  .mains .p-note{display:none}
+  .mains .addrow{margin-top:10px}
+  /* the subtasks come first; the box that adds one goes to the bottom */
+  .subs{display:flex; flex-direction:column}
+  .subs .p-head{order:0}
+  .subs #group-editor{order:1}
+  .subs #sub-bars{order:2}
+  .subs .axis{order:3}
+  .subs #sub-table{order:4}
+  .subs #add-sub-row{order:5; margin-top:14px}
+  .mains .bars>.calm{flex:1 1 auto}
+  .subs .p-head .p-title{position:sticky; top:0}
+}
 @media (max-width:900px){
   .story{grid-template-columns:1fr; gap:0}
   /* the steps slide under the picture, so the picture must be solid */
@@ -652,7 +678,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <section class="panel oftad-panel" data-panel="oftad">
     <div class="p-head">
       <div>
-        <div class="p-title">One Fucking Task A Day</div>
+        <div class="p-title">One Task A Day</div>
         <div class="p-note">One subtask per main task, no more. Drag one in by its handle from the chart above. A second from the same main task swaps the first one out.</div>
       </div>
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
@@ -1189,6 +1215,13 @@ function renderMain(){
     ["Main task","Subtasks done","Complete"]);
 }
 
+/* the strip scrolls the picked card into view; on a wide screen it does nothing */
+function showPicked(){
+  if(window.innerWidth>820) return;
+  var el=$("#main-bars").querySelector(".row.sel");
+  if(!el||!el.scrollIntoView) return;
+  try{ el.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }catch(e){}
+}
 function renderSubs(){
   var g=gById(state.sel);
   if(!g){ $("#sub-bars").innerHTML=""; $("#sub-title").textContent="nothing selected"; return; }
@@ -1355,7 +1388,11 @@ function mark(id,field){ state.ue[id+"|"+field]=1; }
 $("#main-bars").addEventListener("click",function(e){
   if(e.target.closest("[data-grip]")) return;
   var r=e.target.closest("[data-group]"); if(!r) return;
-  if(state.sel!==r.dataset.group){ state.sel=r.dataset.group; openEd=""; openGroupEd=false; save(); renderMain(); renderSubs(); flashIn($("#sub-bars")); }
+  if(state.sel!==r.dataset.group){
+    state.sel=r.dataset.group; openEd=""; openGroupEd=false; save();
+    renderMain(); renderSubs(); flashIn($("#sub-bars"));
+    showPicked();
+  }
 });
 $("#edit-group").addEventListener("click",function(){ openGroupEd=!openGroupEd; renderSubs(); });
 
@@ -3051,7 +3088,7 @@ function stageSvg(on){
   }
   if(on>=5){
     s+='<g><rect x="70" y="462" width="260" height="42" rx="12" fill="none" stroke="var(--accent)"/>'+
-       '<text x="200" y="488" text-anchor="middle" font-size="14" fill="var(--ink)" font-family="var(--font)">One Fucking Task A Day</text></g>';
+       '<text x="200" y="488" text-anchor="middle" font-size="14" fill="var(--ink)" font-family="var(--font)">One Task A Day</text></g>';
   }
   return s;
 }
