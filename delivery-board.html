@@ -646,6 +646,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
         <div class="p-tools"><button class="mini" id="tv-main" aria-pressed="false">Table</button></div>
       </div>
       <div class="bars" id="main-bars"></div>
+      <div id="main-editor"></div>
       <div class="axis" id="axis-main"></div>
       <div id="main-table" hidden></div>
       <div class="addrow" id="add-main-row">
@@ -1211,9 +1212,19 @@ function renderMain(){
       '<div class="rhead"><button class="grip" data-grip="task:'+g.id+'" aria-label="Drag '+esc(g.name)+'">'+GRIP+'</button>'+
       '<span class="rname">'+esc(g.name)+'</span>'+
       '<span class="rmeta">'+groupDone(g)+"/"+g.subs.length+'</span>'+
-      '<span class="rval">'+p+'%</span></div>'+
+      '<span class="rval">'+p+'%</span>'+
+      '<button class="pen" data-gedit="'+g.id+'" aria-expanded="'+(sel&&openGroupEd)+
+        '" aria-label="Edit '+esc(g.name)+'">'+PEN+'</button></div>'+
       '<div class="track">'+GRID+'<div class="fill'+(p>=100?" done":"")+'" style="width:'+p+'%"></div></div></div>';
   }).join("")||'<p class="calm">No main tasks yet. Add one below.</p>';
+  var gsel=gById(state.sel);
+  $("#main-editor").innerHTML = (openGroupEd && gsel) ?
+    '<div class="editor">'+
+      '<label class="wide">Main task name<input class="f" data-ged="name" value="'+esc(gsel.name)+'"></label>'+
+      '<div class="acts"><button class="btn danger" data-gdel="'+gsel.id+'">Remove this main task and its '+
+        gsel.subs.length+' subtasks</button>'+
+      '<span style="font-size:12px;color:var(--muted)">The name saves when you leave the box.</span></div>'+
+    '</div>' : "";
   $("#main-table").innerHTML=tbl(state.groups.map(function(g){
     return [esc(g.name), groupDone(g)+" / "+g.subs.length, groupPct(g)+"%"]; }),
     ["Main task","Subtasks done","Complete"]);
@@ -1231,11 +1242,8 @@ function renderSubs(){
   if(!g){ $("#sub-bars").innerHTML=""; $("#sub-title").textContent="nothing selected"; return; }
   $("#sub-title").textContent=g.name;
   $("#sub-note").textContent="Drag across a bar to set its progress, or drag it away by the handle. "+groupDone(g)+" of "+g.subs.length+" done, "+groupPct(g)+"% overall.";
-  $("#group-editor").innerHTML = openGroupEd ?
-    '<div class="editor">'+
-      '<label class="wide">Name<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
-      '<div class="acts"><button class="btn danger" data-gdel="'+g.id+'">Remove this main task and its '+g.subs.length+' subtasks</button></div>'+
-    '</div>' : "";
+  /* the editor itself lives with the main tasks, where it belongs */
+  $("#group-editor").innerHTML="";
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
   $("#sub-bars").innerHTML=g.subs.map(function(id){
@@ -1391,6 +1399,16 @@ $("#revnote").textContent="Drag any panel by its header to move it anywhere, and
 function mark(id,field){ state.ue[id+"|"+field]=1; }
 $("#main-bars").addEventListener("click",function(e){
   if(e.target.closest("[data-grip]")) return;
+  var pen=e.target.closest("[data-gedit]");
+  if(pen){
+    e.stopPropagation();
+    var gid=pen.dataset.gedit;
+    openGroupEd = (state.sel===gid) ? !openGroupEd : true;
+    state.sel=gid; openEd=""; save(); renderAll(); showPicked();
+    var box=$("#main-editor").querySelector("input");
+    if(box) box.focus();
+    return;
+  }
   var r=e.target.closest("[data-group]"); if(!r) return;
   if(state.sel!==r.dataset.group){
     state.sel=r.dataset.group; openEd=""; openGroupEd=false; save();
