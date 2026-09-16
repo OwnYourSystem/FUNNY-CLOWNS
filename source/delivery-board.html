@@ -420,6 +420,17 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 .oftad-panel>*{position:relative}
 .oftad-panel>.presize,.oftad-panel>.presize-c{position:absolute}
 #oftad-flash{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--accent-ink)}
+/* The board knows which thing is worth doing. This is it saying so. */
+#oftad-pick{margin-top:16px; border:1px solid color-mix(in srgb, var(--run) 45%, transparent);
+  border-radius:16px; padding:17px 18px 16px; background:color-mix(in srgb, var(--run) 7%, var(--raised))}
+.pick-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--run)}
+.pick-n{font-size:clamp(19px,2.4vw,24px); font-weight:500; letter-spacing:-.02em; margin:7px 0 6px;
+  line-height:1.25; overflow-wrap:anywhere}
+.pick-w{font-size:13.5px; color:var(--ink-2); line-height:1.6; max-width:62ch}
+#oftad-pick .row-btns{margin-top:14px}
+#oftad-pick .btn.take{color:var(--ink); border-color:color-mix(in srgb, var(--run) 60%, transparent)}
+#oftad-pick .btn.take:hover{background:color-mix(in srgb, var(--run) 14%, transparent)}
 .drop{margin-top:16px; border:1px dashed var(--rule); border-radius:16px; padding:16px; min-height:128px;
   display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start; background:var(--inset);
   transition:border-color .3s var(--ease), background .3s var(--ease)}
@@ -674,7 +685,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div class="k-label">Overall</div>
       <div class="k-val" id="kpi-overall">0%</div>
       <svg class="spark" id="spark" viewBox="0 0 260 44" role="img" aria-label="Overall completion, last 14 days"></svg>
-      <div class="k-sub"><span class="delta up" id="kpi-delta"></span> vs 7 days ago</div>
+      <div class="k-sub"><span class="delta up" id="kpi-delta"></span> <span id="kpi-delta-sub"></span></div>
     </div>
     <div class="kpi">
       <div class="k-label">Subtasks finished</div>
@@ -737,10 +748,11 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     <div class="p-head">
       <div>
         <div class="p-title">One Task A Day</div>
-        <div class="p-note">One subtask per main task, no more. Drag one in by its handle from the chart above. A second from the same main task swaps the first one out.</div>
+        <div class="p-note">The board picks one and says why. Take it, or drag your own in by its handle. One subtask per main task, no more.</div>
       </div>
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
+    <div id="oftad-pick" hidden></div>
     <div class="drop" id="oftad"></div>
     <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
   </section>
@@ -920,6 +932,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
           <button class="btn" id="io-save">Save as file</button>
           <input type="file" id="io-file" accept="application/json">
         </div>
+        <div class="row-btns" id="snap-row"></div>
         <div class="row-btns">
           <button class="btn danger" id="io-reset">Reset to the shipped list</button>
           <span id="io-msg"></span>
@@ -1160,6 +1173,7 @@ function save(){
   state.savedAt=Date.now();
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
   if(typeof syncSoon==="function") syncSoon();
+  if(typeof pushBoard==="function") pushBoard();
 }
 
 function gById(id){ for(var i=0;i<state.groups.length;i++) if(state.groups[i].id===id) return state.groups[i]; return null; }
@@ -1208,13 +1222,12 @@ function sync(){
   save();
   return true;
 }
+/* This used to draw 14 days of a rising line that never happened, and a
+   delta against it. A board that invents its own history is worth less
+   than one with none: the number you would act on is fiction. It now
+   starts at today and records one point a day, for real.               */
 function seedHist(){
-  var o=overall(), wob=[0,.4,-.3,.6,.1,.7,-.2,.8,.3,.5,-.1,.6,.4,0];
-  state.hist=[];
-  for(var i=13;i>=0;i--){
-    var d=new Date(); d.setDate(d.getDate()-i);
-    state.hist.push({d:dstr(d), v: i===0?o:Math.max(0,Math.round((o-i*0.7+wob[13-i])*10)/10)});
-  }
+  state.hist=[{d:todayStr(), v:overall(), first:1}];
 }
 
 /* ---------------- derived ---------------- */
@@ -1252,6 +1265,29 @@ function alerts(){
   return out;
 }
 
+/* A copy of the whole board, once a day, for the last 7 days. It does not
+   survive this browser being wiped, but it does survive a bad afternoon. */
+var SNAP_KEY=KEY+".snaps";
+function readSnaps(){
+  try{ return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]"); }catch(e){ return []; }
+}
+function keepSnapshot(day){
+  try{
+    var all=readSnaps().filter(function(x){ return x.d!==day; });
+    all.unshift({d:day, at:Date.now(), data:JSON.parse(JSON.stringify(state))});
+    while(all.length>7) all.pop();
+    localStorage.setItem(SNAP_KEY, JSON.stringify(all));
+  }catch(e){ /* a full quota is not worth losing the board over */ }
+}
+function restoreSnapshot(day){
+  var hit=readSnaps().filter(function(x){ return x.d===day; })[0];
+  if(!hit) return false;
+  keepSnapshot("before-restore-"+todayStr());
+  state=hit.data;
+  boot2();
+  return true;
+}
+
 /* ---------------- rollover ---------------- */
 var rollNote="";
 (function(){
@@ -1268,8 +1304,83 @@ var rollNote="";
   state.done=[];
   rollNote = carried ? carried+" carried over from "+state.day : "";
   state.day=t; state.notified="";
+  keepSnapshot(state.day);
   touchHist(); save();
 })();
+/* One task, chosen, with the reason. Every input for this was already on
+   the board: how far behind a main task is, what has not moved, what
+   repeats today, what is already half done. It used to compute all of it
+   for the watchlist and then ask you to decide anyway.                  */
+function pickToday(){
+  var today=todayStr();
+  var skip=(state.skip&&state.skip.d===today)?state.skip.ids:[];
+  var taken={};
+  state.oftad.concat(state.done).forEach(function(c){ taken[c.id]=1; });
+  var best=null;
+  state.groups.forEach(function(g){
+    if(!g.subs.length) return;
+    var gp=groupPct(g), moving=0;
+    g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) moving++; });
+    g.subs.forEach(function(id){
+      var s=state.subs[id];
+      if(!s||s.pct>=100||s.status==="done") return;
+      if(s.status==="blocked") return;            /* you cannot work a blocked thing */
+      if(taken[s.id]||skip.indexOf(s.id)>=0) return;
+      var a=ageOf(s.upd), sc=0, why="";
+      if(s.rep && periodKey(s.rep)){
+        sc+=55;
+        why="It repeats "+repLabel(s.rep).toLowerCase()+" and today is not done"+
+          (s.streak?", and you are "+s.streak+" in a row":"")+".";
+      }
+      if(s.pct>0&&s.pct<100) sc+=22;              /* finishing beats starting */
+      sc += (100-gp)*0.30;                        /* the main task furthest behind */
+      sc += Math.min(a,30)*0.8;                   /* the thing nobody has touched */
+      if(moving===1&&s.pct>0) sc+=18;             /* the only thing moving in there */
+      if(!why){
+        if(a>=14&&s.pct>0)
+          why=g.name+" has not moved in "+a+" days, and this is the part already started.";
+        else if(moving===1&&s.pct>0)
+          why="It is the only thing moving in "+g.name+", at "+s.pct+"%.";
+        else if(gp<=20)
+          why=g.name+" is the furthest behind at "+gp+"%, and this is its next step.";
+        else if(s.pct>0)
+          why="It sits at "+s.pct+"% in "+g.name+". Finishing beats starting something new.";
+        else
+          why="Nothing in "+g.name+" has started, and this is the first step.";
+      }
+      if(!best||sc>best.sc) best={sc:sc,s:s,g:g,why:why};
+    });
+  });
+  return best;
+}
+function renderPick(){
+  var box=$("#oftad-pick"); if(!box) return;
+  if(state.oftad.length){ box.hidden=true; box.innerHTML=""; return; }
+  var p=pickToday();
+  if(!p){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML=
+    '<div class="pick-k">Today</div>'+
+    '<div class="pick-n">'+esc(p.s.name)+'</div>'+
+    '<div class="pick-w">'+esc(p.why)+'</div>'+
+    '<div class="row-btns">'+
+      '<button class="btn take" data-pick-take="'+p.s.id+'">Take it</button>'+
+      '<button class="btn" data-pick-skip="'+p.s.id+'">Something else</button>'+
+    '</div>';
+}
+function takePick(id){
+  var s=state.subs[id]; if(!s) return;
+  var gid=s.gid;
+  state.oftad=state.oftad.filter(function(c){ return cardGid(c)!==gid; });
+  state.oftad.push({k:"sub",id:s.id,done:false});
+  touchHist(); save(); renderAll();
+}
+function skipPick(id){
+  var t=todayStr();
+  if(!state.skip||state.skip.d!==t) state.skip={d:t,ids:[]};
+  if(state.skip.ids.indexOf(id)<0) state.skip.ids.push(id);
+  save(); renderAll();
+}
 function touchHist(){
   var t=todayStr(), o=overall(), last=state.hist[state.hist.length-1];
   if(last&&last.d===t) last.v=o; else { state.hist.push({d:t,v:o}); if(state.hist.length>90) state.hist.shift(); }
@@ -1397,8 +1508,18 @@ function renderKpis(){
   var planned=state.oftad.length+state.plan.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";
-  var h=state.hist, prev=h.length>7?h[h.length-8].v:h[0].v, d=Math.round((o-prev)*10)/10;
-  var de=$("#kpi-delta"); de.textContent=(d>=0?"+":"")+d.toFixed(1)+" pts"; de.className="delta"+(d>=0?" up":"");
+  /* no delta until there is something real to compare against */
+  var h=state.hist, de=$("#kpi-delta"), sub=$("#kpi-delta-sub");
+  if(h.length<3){
+    de.textContent="Recording since "+h[0].d;
+    de.className="delta";
+    if(sub) sub.textContent="";
+  } else {
+    var back=Math.min(8,h.length), prev=h[h.length-back].v, d=Math.round((o-prev)*10)/10;
+    de.textContent=(d>=0?"+":"")+d.toFixed(1)+" pts";
+    de.className="delta"+(d>=0?" up":"");
+    if(sub) sub.textContent="vs "+(back-1)+" days ago";
+  }
   drawSpark();
 }
 function drawSpark(){
@@ -1436,6 +1557,18 @@ function chipHTML(c,i,zone){
 function prune(){
   ["oftad","plan","done"].forEach(function(z){ state[z]=state[z].filter(cardValid); });
 }
+function renderSnaps(){
+  var row=$("#snap-row"); if(!row) return;
+  var all=readSnaps();
+  if(!all.length){
+    row.innerHTML='<span style="font-size:12px;color:var(--muted)">'+
+      'No earlier days kept yet. The board keeps one copy a day, for 7 days, from tomorrow.</span>';
+    return;
+  }
+  row.innerHTML='<span style="font-size:12px;color:var(--muted)">Go back to the board as it was on</span>'+
+    all.map(function(x){
+      return '<button class="btn" data-snap="'+esc(x.d)+'">'+esc(x.d)+'</button>'; }).join("");
+}
 function renderDocks(){
   prune();
   $("#plan-date").textContent=new Date().toLocaleDateString(undefined,{day:"numeric",month:"short"});
@@ -1449,6 +1582,7 @@ function renderDocks(){
   $("#done").innerHTML = state.done.length
     ? state.done.map(function(c,i){ return chipHTML(c,i,"done"); }).join("")
     : '<p class="hint"><b>Drag a card here when it is finished</b>Only for today. Tomorrow the list is empty again.</p>';
+  renderPick();
   $("#oftad-count").textContent=state.oftad.length+" of "+state.groups.length+" main tasks covered";
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
   $("#plan-count").textContent=state.plan.length?state.plan.length+" queued":"Nothing queued";
@@ -1485,7 +1619,7 @@ function armGate(key,btn,label){
 function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t); m._t=setTimeout(function(){ m.textContent=""; },6000); } }
 
 function renderAll(){
-  renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks();
+  renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); renderSnaps();
   /* content can change a panel's height, so re-separate before measuring */
   if(typeof resolveOverlaps==="function") resolveOverlaps(null);
   if(typeof fitCanvas==="function") fitCanvas();
@@ -1517,6 +1651,18 @@ $("#main-bars").addEventListener("click",function(e){
 $("#edit-group").addEventListener("click",function(){ openGroupEd=!openGroupEd; renderSubs(); });
 
 document.addEventListener("click",function(e){
+  var sn=e.target.closest("[data-snap]");
+  if(sn){
+    if(!armGate("snap:"+sn.dataset.snap, sn, "Replace today with "+sn.dataset.snap+"?")) return;
+    ioMsg(restoreSnapshot(sn.dataset.snap)
+      ? "The board is back as it was on "+sn.dataset.snap+". Today's copy is kept as well."
+      : "That day is no longer kept.");
+    return;
+  }
+  var tk=e.target.closest("[data-pick-take]");
+  if(tk){ takePick(tk.dataset.pickTake); return; }
+  var sk=e.target.closest("[data-pick-skip]");
+  if(sk){ skipPick(sk.dataset.pickSkip); return; }
   var o=e.target.closest("[data-ed-open]");
   if(o){ openEd = openEd===o.dataset.edOpen ? "" : o.dataset.edOpen; renderSubs(); return; }
   var d=e.target.closest("[data-del]");
@@ -2373,7 +2519,9 @@ $("#bot-speak").addEventListener("click",function(e){
   try{
     claude.use("db").then(function(db){
       if(!db) return;
-      boardDb=db; mirrorToday();
+      boardDb=db;
+      joinBoard();
+      mirrorToday();
     }).catch(function(){});
   }catch(e){}
 })();
@@ -2389,6 +2537,47 @@ function micDiag(r){
     }).catch(function(){});
   }catch(e){}
 }
+/* ---------------- the board follows you ----------------
+   Opened from the claude.ai link, the whole board is kept in this
+   artifact's own store, which is yours and reaches every device you open
+   it on. No account, no password: claude.ai already knows who you are.
+   Opened from the saved file or the app's own address there is no store,
+   so the board stays in that browser and nothing here runs.           */
+var boardPushT=null, boardJoined=false;
+function pushBoard(){
+  if(!boardDb) return;
+  clearTimeout(boardPushT);
+  boardPushT=setTimeout(function(){
+    try{
+      boardDb.doc("board/state").set({
+        savedAt: state.savedAt||Date.now(),
+        day: state.day,
+        rev: SEED_REV,
+        data: state
+      }).catch(function(){});
+    }catch(e){}
+  },1200);
+}
+function joinBoard(){
+  if(!boardDb||boardJoined) return;
+  boardJoined=true;
+  try{
+    boardDb.doc("board/state").get().then(function(row){
+      if(!row||!row.data||!row.data.groups){ pushBoard(); return; }
+      var mine=state.savedAt||0, theirs=row.savedAt||0;
+      /* 3 seconds of slack, so a clock that is a little out does not win */
+      if(theirs>mine+3000){
+        try{ localStorage.setItem(KEY+".before-sync", JSON.stringify(state)); }catch(e){}
+        state=row.data;
+        boot2();
+        ioMsg("This board came from another device, saved "+
+          new Date(theirs).toLocaleString()+". The copy that was here is kept.");
+      } else {
+        pushBoard();
+      }
+    }).catch(function(){});
+  }catch(e){}
+}
 function mirrorToday(){
   if(!boardDb) return;
   clearTimeout(syncT);
@@ -2399,6 +2588,11 @@ function mirrorToday(){
         updatedAt: new Date().toISOString(),
         overall: overall(),
         focus: state.oftad.map(cardLine),
+        suggested: (function(){
+          if(state.oftad.length) return null;
+          var p=pickToday();
+          return p ? {name:p.s.name, task:p.g.name, percent:p.s.pct, why:p.why} : null;
+        })(),
         plan: state.plan.map(cardLine),
         done: state.done.map(cardLine),
         attention: alerts().slice(0,6).map(function(a){ return a.kind+" — "+a.t+" ("+a.w+")"; }),
@@ -2961,6 +3155,24 @@ var BRAIN=[
      if(!g) throw new Error("There is no main task to put it under yet.");
      var nm=asTyped(m[1]), out=toolRun("add_subtask",{main_task:g.name,name:nm});
      LASTSUB=nm; return out;
+   }],
+  /* let the board choose */
+  [/^(?:what should i do(?: today| now)?|pick (?:my |one |a )?task|choose(?: for me| one)?|decide(?: for me)?|give me one|one task)$/,
+   function(){
+     if(state.oftad.length)
+       return "Today is already set: "+state.oftad.map(function(c){ return cardName(c); }).join(", ")+".";
+     var p=pickToday();
+     if(!p) return "Nothing left to pick. Everything is done, blocked or already taken.";
+     takePick(p.s.id);
+     return p.s.name+". "+p.why;
+   }],
+  [/^(?:not that|something else|another one|skip it|no, ?something else)$/,
+   function(){
+     var p=pickToday();
+     if(!p) return "There is nothing else to offer.";
+     skipPick(p.s.id);
+     var n=pickToday();
+     return n ? (n.s.name+". "+n.why) : "That was the last one I had.";
    }],
   [/^(?:focus on|today is|my task today is|one task a day is|the one task is) (.+)$/,
    function(m){ return toolRun("focus_today",{subtask:fuzSub(m[1]).name}); }],
@@ -3705,7 +3917,7 @@ function pullBoard(){
     return sbFetch("/rest/v1/boards?select=data,updated_at&user_id=eq."+encodeURIComponent(acct.uid));
   }).then(function(rows){ return (rows&&rows[0])||null; });
 }
-function pushBoard(){
+function acctPush(){
   if(!acct||!acct.uid) return Promise.resolve(null);
   return withToken(function(){
     return sbFetch("/rest/v1/boards?on_conflict=user_id",{
@@ -3719,7 +3931,7 @@ function pushBoard(){
 function syncSoon(){
   if(!ACCOUNT_ON||!acct||!acct.uid) return;
   clearTimeout(pushT);
-  pushT=setTimeout(function(){ pushBoard().catch(function(e){ acctMsg("Not saved to your account: "+e.message); }); },1500);
+  pushT=setTimeout(function(){ acctPush().catch(function(e){ acctMsg("Not saved to your account: "+e.message); }); },1500);
 }
 
 /* ---- joining the two copies ---- */
@@ -3747,10 +3959,10 @@ function firstSync(){
   if(!acct||!acct.uid) return Promise.resolve();
   acctMsg("Checking your account…");
   return pullBoard().then(function(row){
-    if(!row){ return pushBoard().then(function(){ acctMsg("This board is now saved to your account."); }); }
+    if(!row){ return acctPush().then(function(){ acctMsg("This board is now saved to your account."); }); }
     var mine=state.savedAt||0, theirs=new Date(row.updated_at).getTime()||0;
     if(theirs>mine+2000) adoptRemote(row);
-    else return pushBoard().then(function(){ acctMsg("Your account has this board."); });
+    else return acctPush().then(function(){ acctMsg("Your account has this board."); });
   }).catch(function(e){ acctMsg("Your account did not answer: "+e.message); });
 }
 
@@ -3847,7 +4059,7 @@ function catchRedirect(){
   $("#acct-signout").addEventListener("click",signOut);
   $("#acct-sync").addEventListener("click",function(){
     acctMsg("Saving…");
-    pushBoard().then(function(){ acctMsg("Saved to your account."); })
+    acctPush().then(function(){ acctMsg("Saved to your account."); })
       .catch(function(e){ acctMsg(e.message); });
   });
   $("#acct-restore").addEventListener("click",function(){
