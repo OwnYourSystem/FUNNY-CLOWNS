@@ -672,7 +672,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
       <button class="btn" id="btn-glide" aria-pressed="false"><span class="dot"></span>Glide off</button>
-      <button class="btn" id="btn-account" hidden>Sign in</button>
+      <button class="btn" id="btn-account">Sign in</button>
     </div>
   </header>
 
@@ -891,7 +891,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <div id="account" hidden>
     <div class="card">
       <h3>Your account</h3>
-      <p class="lede">Sign in and this board follows you: phone, tablet and desktop hold the same one. Signed out it stays in this browser, as it does now.</p>
+      <p class="lede" id="acct-where"></p>
 
       <div id="acct-in">
         <button class="btn" id="acct-google">Continue with Google</button>
@@ -939,7 +939,8 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
         </div>
       </div>
     </details>
-    <p style="margin:0" id="revnote"></p>
+    <p style="margin:0" id="where-note"></p>
+  <p style="margin:0" id="revnote"></p>
   </footer>
 
 </div><!-- #scroll -->
@@ -1169,11 +1170,23 @@ function migrate1(old){
   s.seedRev=0;
   return s;
 }
+/* Where the board is kept, decided in one place so the two stores can
+   never both think they are in charge.
+     account  signed in. The account holds it, on every device.
+     artifact no account, but the claude.ai store is there. It holds it.
+     local    neither. This browser holds it, and only this browser.    */
+function syncMode(){
+  if(ACCOUNT_ON && typeof acct!=="undefined" && acct && acct.uid) return "account";
+  if(typeof boardDb!=="undefined" && boardDb) return "artifact";
+  return "local";
+}
 function save(){
   state.savedAt=Date.now();
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
-  if(typeof syncSoon==="function") syncSoon();
-  if(typeof pushBoard==="function") pushBoard();
+  var m=syncMode();
+  if(m==="account" && typeof syncSoon==="function") syncSoon();
+  else if(m==="artifact" && typeof pushBoard==="function") pushBoard();
+  if(typeof paintWhere==="function") paintWhere();
 }
 
 function gById(id){ for(var i=0;i<state.groups.length;i++) if(state.groups[i].id===id) return state.groups[i]; return null; }
@@ -2522,6 +2535,8 @@ $("#bot-speak").addEventListener("click",function(e){
       boardDb=db;
       joinBoard();
       mirrorToday();
+      /* the store arrives after the first paint, so say so once it has */
+      if(typeof paintWhere==="function") paintWhere();
     }).catch(function(){});
   }catch(e){}
 })();
@@ -2560,6 +2575,7 @@ function pushBoard(){
 }
 function joinBoard(){
   if(!boardDb||boardJoined) return;
+  if(syncMode()==="account") return;   /* the account is in charge, not this */
   boardJoined=true;
   try{
     boardDb.doc("board/state").get().then(function(row){
@@ -3858,16 +3874,37 @@ function buildFolio(){
    Sign in and the board stops being one browser's secret. It is kept as one
    JSON document per person, and the database only ever lets a person reach
    their own row. Signed out, nothing changes: the board still lives here.  */
-/* Signing in is off, and the project it spoke to has been deleted. The code
-   below is kept because the shape of it is the work; the address and the key
-   are dead. Turning this back on means a new project first, then these two
-   lines, then the flag. Switching the flag alone reaches nothing.        */
-var ACCOUNT_ON=false;
-var SB_URL="";   /* set to the new project's URL before turning this on */
-var SB_KEY="";   /* its publishable key, never a service key */
+/* An account is the only thing that keeps a year of this. Nothing is behind
+   it: the board works signed out exactly as it does now, and signing in is
+   an upgrade rather than a door.                                        */
+var ACCOUNT_ON=true;
+var SB_URL="https://phicqgnzqnuwugzbgxxw.supabase.co";
+var SB_KEY="sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
 var AUTH_KEY=KEY+".account";
 var acct=null, pushT=null, lastPush=0;
 
+/* An artifact runs in a frame that is allowed less than a normal page. It
+   is refused the microphone outright. Whether it may reach the account is
+   a separate question, and guessing at it is how you ship something that
+   fails only for the person using it. So the page asks, once, and says.  */
+var netOk=null;
+function netProbe(){
+  if(netOk!==null) return Promise.resolve(netOk);
+  return fetch(SB_URL+"/auth/v1/settings",{headers:{apikey:SB_KEY}})
+    .then(function(r){ netOk=r.ok; return netOk; })
+    .catch(function(){ netOk=false; return false; })
+    .then(function(v){
+      paintWhere();
+      /* leave the answer where it can be read back later */
+      try{
+        if(typeof boardDb!=="undefined" && boardDb)
+          boardDb.doc("board/probe").set({at:new Date().toISOString(), reach:v,
+            framed:(function(){ try{ return window.top!==window.self; }catch(e){ return true; } })(),
+            ua:navigator.userAgent}).catch(function(){});
+      }catch(e){}
+      return v;
+    });
+}
 function acctLoad(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||"null"); }catch(e){ return null; } }
 function acctSave(a){
   acct=a;
@@ -3968,6 +4005,22 @@ function firstSync(){
 
 /* ---- the panel ---- */
 function acctMsg(t){ var n=$("#acct-msg"); if(n){ n.textContent=t||""; n.hidden=!t; } }
+function whereText(){
+  var m=syncMode();
+  if(m==="account") return "Kept in your account. Every device you sign in on holds this board.";
+  if(m==="artifact") return "Kept in this claude.ai board, which follows you between devices. Sign in to keep it in your own account instead.";
+  if(netOk===false) return "Kept in this browser only. This page cannot reach the account service, so signing in will not work here.";
+  return "Kept in this browser only. Sign in and it follows you between devices.";
+}
+function paintWhere(){
+  var n=$("#acct-where"); if(n) n.textContent=whereText();
+  var f=$("#where-note"); if(f) f.textContent=whereText();
+  var g=$("#acct-in");
+  if(g && netOk===false){
+    var b=$("#acct-signin"), u=$("#acct-signup"), go=$("#acct-google");
+    [b,u,go].forEach(function(x){ if(x) x.disabled=true; });
+  }
+}
 function paintAccount(){
   var btn=$("#btn-account"); if(!btn) return;
   btn.textContent = acct&&acct.email ? acct.email.split("@")[0] : "Sign in";
@@ -3985,7 +4038,11 @@ function paintAccount(){
 function acctOpen(on){
   var p=$("#account"); if(!p) return;
   p.hidden=!on;
-  if(on){ paintAccount(); var f=$("#acct-email"); if(f&&!acct) f.focus(); }
+  if(on){
+    netProbe();
+    paintAccount(); paintWhere();
+    var f=$("#acct-email"); if(f&&!acct) f.focus();
+  }
 }
 function signIn(mode){
   var em=$("#acct-email").value.trim(), pw=$("#acct-pass").value;
@@ -4001,6 +4058,7 @@ function signIn(mode){
       }
       acctSave(shapeSession(d));
       $("#acct-pass").value="";
+      paintWhere();
       return firstSync();
     })
     .catch(function(e){ acctMsg(e.message); });
@@ -4041,6 +4099,10 @@ function catchRedirect(){
     return;
   }
   acct=acctLoad();
+  paintWhere();
+  /* the probe costs a request and logs a failure when there is no network,
+     so it waits until you are actually asking about the account */
+  if(acct&&acct.uid) netProbe();
   var came=catchRedirect();
   /* Google signs you in by sending the browser away and back. That cannot
      work inside a frame, so in one the button says so instead of failing. */
