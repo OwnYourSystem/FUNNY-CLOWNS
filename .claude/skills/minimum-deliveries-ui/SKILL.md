@@ -1,6 +1,6 @@
 ---
 name: minimum-deliveries-ui
-description: Build a page in the Minimum Deliveries interface — a dark-first, single-file dashboard with movable panels, drag-and-drop docks, a press-and-talk voice tutor, depth on scroll and a glide scroll on reading pages. Use when asked to build, extend or restyle anything in this house style, when a request names "the board", "the deliveries interface", "OYS style" or points at delivery-board.html, and when adding a new page to this app so it matches the ones already there.
+description: Build a page in the Minimum Deliveries interface — a dark-first, single-file dashboard with movable panels, drag-and-drop docks, a press-and-talk voice tutor and depth on scroll. Use when asked to build, extend or restyle anything in this house style, when a request names "the board", "the deliveries interface", "OYS style" or points at delivery-board.html,
 ---
 
 # The Minimum Deliveries interface
@@ -90,12 +90,10 @@ grabbed). Deeper panels move more.
 the further across it you are, so a 28px drag handle ends up 18px from
 where it is drawn. A translate keeps every box square to the screen.
 
-**Glide on reading pages only.** The content is held by the window
-(`position: fixed`) and moved by one transform chasing `scrollY` at 0.11
-per frame, with a spacer carrying the document height so the scrollbar, the
-wheel, the keyboard and Find on page all still work. Never on a page with
-drag and drop: a page that arrives half a second after the hand fights the
-hand. Off on touch, off for reduced motion, and a switch in the header.
+**No glide.** An earlier version held the content by the window and moved it
+by a transform chasing the scroll, Lusion style. It reads beautifully and it
+broke dragging outright: a page that arrives half a second after the hand
+fights the hand. It was cut. Keep the lag, lose the lag on the scroll itself.
 
 ## Interaction
 
@@ -161,13 +159,12 @@ Two columns at 1200px max width, one column under 900px. Under 820px a long
 master list becomes a strip you swipe sideways so the detail stays on the
 same screen: master and detail together beats a 1600px scroll.
 
-## Building a new page
+## One page
 
-Add a `<section class="view" id="v-name">`, a button on the `.rail`, and a
-branch in the hash router. Build its contents lazily the first time the view
-opens. Reuse `.panel`, `.btn`, `.pill`, `.f`, `.editor`, `.row-btns` and the
-colour tokens. A page that needs its own look has usually not been thought
-through.
+There is one page. There was a rail with four, three of them placeholders, and
+they were cut: half built is not a feature, and a visitor could not tell what
+the app was for. If a new page is genuinely earned, it does not arrive behind
+a nav as a stub.
 
 ## What to verify before saying it works
 
