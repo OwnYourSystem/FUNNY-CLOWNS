@@ -578,6 +578,9 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   border:1px solid var(--hair)}
 .weights i{display:block; height:100%; transition:flex-grow .6s var(--ease)}
 .hint{font-family:var(--mono); font-size:.74rem; color:var(--muted); letter-spacing:.08em}
+.hint.live{color:#3FCF8E}
+.item h4 a{color:inherit; text-decoration:none; border-bottom:1px solid var(--hair)}
+.item h4 a:hover{border-bottom-color:var(--accent)}
 .holder{margin-bottom:30px}
 .holder h2{margin:0 0 4px; font-size:1.6rem; letter-spacing:-.02em; font-weight:600}
 .holder p{margin:0; color:var(--ink-2); max-width:62ch; line-height:1.6}
@@ -783,8 +786,9 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <section class="view" id="v-feed" aria-label="News, mail and calendar">
     <div class="holder">
       <h2>Today, from everywhere</h2>
-      <p>A placeholder feed. News, mail and calendar in one stream. It loads more as you reach the bottom. The content below is dummy content, written for the layout.</p>
+      <p>News, mail and calendar in one stream. It loads more as you reach the bottom. The news is real, read through this app&rsquo;s own server so no key sits in the page. Mail and calendar are still placeholders.</p>
     </div>
+    <p class="hint" id="feed-note"></p>
     <div class="feed-filters" id="feed-filters"></div>
     <div class="feed" id="feed"></div>
     <div class="sentinel" id="sentinel"><div class="skel"><i></i><i></i><i></i></div></div>
@@ -3288,27 +3292,63 @@ var CAL=[
  ["Shredding session","18:30. Airbike, then the workout block.","60 min"],
  ["Sprint review","14:00 Friday. Demo the landing zone update.","45 min"]
 ];
-var feedN=0, feedFilter="all", feedIO=null, feedBusy=false;
+var feedN=0, feedFilter="all", feedIO=null, feedBusy=0;
+/* the real wire, read through this app's own /api/news so no key is ever
+   in the page. Where there is no server, as inside an artifact frame, the
+   written stand-ins below take over and the page says so.                */
+var TOPIC_ORDER=["world","geo","finance","energy","denmark"];
+var TOPIC_NAME={world:"World",geo:"Geopolitics",finance:"Finance",energy:"Energy",denmark:"Denmark"};
+var wire=[], wireAt=0, wireTopic=0, wireBusy=false, wireLive=null;
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+function since(iso){
+  if(!iso) return "";
+  var m=Math.round((Date.now()-new Date(iso).getTime())/60000);
+  if(m<1) return "just now";
+  if(m<60) return m+" min ago";
+  var h=Math.round(m/60);
+  return h<48 ? h+" h ago" : Math.round(h/24)+" days ago";
+}
+function pullWire(){
+  if(wireBusy || wireTopic>=TOPIC_ORDER.length) return Promise.resolve(false);
+  wireBusy=true;
+  var t=TOPIC_ORDER[wireTopic++];
+  return fetch("/api/news?topic="+t+"&n=60",{headers:{accept:"application/json"}})
+    .then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
+    .then(function(d){
+      var got=(d.items||[]).map(function(x){ x.topic=t; return x; });
+      wire=wire.concat(got);
+      wireLive=got.length>0;
+      wireBusy=false;
+      return got.length>0;
+    })
+    .catch(function(){ wireLive=false; wireBusy=false; return false; });
+}
+function nextNews(i){
+  if(wire.length && wireAt<wire.length){
+    var a=wire[wireAt++];
+    if(wireAt>wire.length-8) pullWire().then(function(ok){ if(ok&&curView==="feed") feedPage(); });
+    return {k:"news",kind:TOPIC_NAME[a.topic]||"News",t:a.title,
+      b:a.source?("Filed by "+a.source+(a.country?", "+a.country:"")):"",
+      m:(since(a.at)||"today")+(a.source?" · "+a.source:""), href:a.url};
+  }
+  var n=NEWS[i%NEWS.length];
+  return {k:"news",kind:"News",t:n[0],b:n[1],m:"Written stand-in, no server here"};
+}
 function feedItem(i){
   var kinds=["news","news","mail","news","cal","mail","news","cal"];
   var k=kinds[i%kinds.length];
   var ago=i*37+9;
   var when=ago<60?(ago+" min ago"):(Math.floor(ago/60)+" h ago");
-  if(k==="news"){
-    var n=NEWS[i%NEWS.length];
-    return {k:"news",kind:"News",t:n[0],b:n[1],m:"Global wire · "+when};
-  }
+  if(k==="news") return nextNews(i);
   if(k==="mail"){
     var m=MAIL[i%MAIL.length];
-    return {k:"mail",kind:"Mail",t:m[0],b:m[1],m:"Inbox · "+when};
+    return {k:"mail",kind:"Mail",t:m[0],b:m[1],m:"Placeholder inbox · "+when};
   }
   var c=CAL[i%CAL.length];
-  return {k:"cal",kind:"Calendar",t:c[0],b:c[1],m:c[2]+" · "+when};
+  return {k:"cal",kind:"Calendar",t:c[0],b:c[1],m:"Placeholder · "+c[2]+" · "+when};
 }
-function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 function feedPage(){
-  if(feedBusy) return;
-  feedBusy=true;
   var box=$("#feed"), frag=document.createDocumentFragment(), added=0, guard=0;
   while(added<10 && guard<80){
     var it=feedItem(feedN++); guard++;
@@ -3316,12 +3356,20 @@ function feedPage(){
     var d=document.createElement("article");
     d.className="item "+it.k;
     d.style.animationDelay=(added*40)+"ms";
-    d.innerHTML='<div class="kind">'+it.kind+'</div><div><h4>'+esc(it.t)+'</h4><p>'+esc(it.b)+
-      '</p><div class="meta">'+esc(it.m)+'</div></div>';
+    var head=it.href
+      ? '<h4><a href="'+esc(it.href)+'" target="_blank" rel="noopener noreferrer">'+esc(it.t)+'</a></h4>'
+      : '<h4>'+esc(it.t)+'</h4>';
+    d.innerHTML='<div class="kind">'+esc(it.kind)+'</div><div>'+head+
+      (it.b?'<p>'+esc(it.b)+'</p>':"")+'<div class="meta">'+esc(it.m)+'</div></div>';
     frag.appendChild(d); added++;
   }
   box.appendChild(frag);
-  setTimeout(function(){ feedBusy=false; },220);
+}
+function feedNote(){
+  var n=$("#feed-note"); if(!n) return;
+  if(wireLive===true){ n.textContent="News is live. Mail and calendar are still placeholders."; n.className="hint live"; }
+  else if(wireLive===false){ n.textContent="No news server here, so the stories below are written stand-ins. The app at its own address reads the real wire."; n.className="hint"; }
+  else { n.textContent="Reading the wire…"; n.className="hint"; }
 }
 function buildFeed(){
   var f=$("#feed-filters");
@@ -3330,17 +3378,28 @@ function buildFeed(){
     b.type="button"; b.className="btn"; b.textContent=p[1];
     b.setAttribute("aria-pressed",p[0]==="all"?"true":"false");
     b.addEventListener("click",function(){
-      feedFilter=p[0]; feedN=0; $("#feed").innerHTML="";
+      feedFilter=p[0]; feedN=0; wireAt=0; $("#feed").innerHTML="";
       Array.prototype.forEach.call(f.children,function(x){
         x.setAttribute("aria-pressed",x===b?"true":"false"); });
       feedPage(); feedPage();
     });
     f.appendChild(b);
   });
-  feedPage(); feedPage();
+  feedNote();
+  pullWire().then(function(){
+    feedNote();
+    feedN=0; wireAt=0; $("#feed").innerHTML="";
+    feedPage(); feedPage();
+  });
   if(!("IntersectionObserver" in window)) return;
   feedIO=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting && curView==="feed") feedPage(); });
+    /* the guard belongs here, where the observer can fire in a burst, and
+       not on the calls the page makes for itself                          */
+    es.forEach(function(e){
+      if(!e.isIntersecting || curView!=="feed") return;
+      var t=Date.now(); if(t-feedBusy<250) return;
+      feedBusy=t; feedPage();
+    });
   },{rootMargin:"600px 0px"});
   feedIO.observe($("#sentinel"));
 }
