@@ -3557,11 +3557,13 @@ function buildFolio(){
    Sign in and the board stops being one browser's secret. It is kept as one
    JSON document per person, and the database only ever lets a person reach
    their own row. Signed out, nothing changes: the board still lives here.  */
-/* Signing in is off. One word here brings it back, and everything below
-   it is left standing so that switch is all it takes.                   */
+/* Signing in is off, and the project it spoke to has been deleted. The code
+   below is kept because the shape of it is the work; the address and the key
+   are dead. Turning this back on means a new project first, then these two
+   lines, then the flag. Switching the flag alone reaches nothing.        */
 var ACCOUNT_ON=false;
-var SB_URL="https://phicqgnzqnuwugzbgxxw.supabase.co";
-var SB_KEY="sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
+var SB_URL="";   /* set to the new project's URL before turning this on */
+var SB_KEY="";   /* its publishable key, never a service key */
 var AUTH_KEY=KEY+".account";
 var acct=null, pushT=null, lastPush=0;
 
