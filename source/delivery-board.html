@@ -2644,10 +2644,25 @@ var NUMWORD={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine
   sixty:60,seventy:70,eighty:80,ninety:90,hundred:100,half:50,quarter:25};
 var FILLER=/^(ok(ay)?|hey|hi|so|well|um+|uh+|please|now|just|can you|could you|would you|i want to|i'd like to|i would like to|let's|lets|board|tutor)\b[,\s]*/;
 
+/* What a microphone hears is not what you said. These are the slips this
+   board sees again and again, put right before anything reads the words. */
+var SLIPS=[
+  [/\b(add|create|make|new|start)\s+(a\s+)?(new\s+)?(test|text|tax|tosk|desk)\b/gi,"$1 $2$3task"],
+  [/\b(test|text|tax|tosk)\s+(called|named)\b/gi,"task $2"],
+  [/\bsub\s+task\b/gi,"subtask"],
+  [/\bmain\s+tusk\b/gi,"main task"],
+  [/\bto\s+do\b/gi,"todo"],
+  [/\bair\s+bike\b/gi,"airbike"],
+  [/\bpercentage?\b/gi,"percent"],
+  [/\bhundred\s+percent\b/gi,"100 percent"],
+  [/\bone\s+task\s+a\s+day\b/gi,"one task a day"]
+];
 function spoken(s){
   var d=String(s||"").replace(/’/g,"'");
   d=d.replace(/per\s*cent/gi,"percent").replace(/percentage/gi,"percent");
   d=d.replace(/[.!?]+\s*$/,"").replace(/\s+/g," ").trim();
+  SLIPS.forEach(function(r){ d=d.replace(r[0],r[1]); });
+  d=d.replace(/\s+/g," ");
   for(var k=0;k<3;k++) d=d.replace(new RegExp(FILLER.source,"i"),"");
   d=d.trim();
   return {q:d.toLowerCase(), d:d};
@@ -2759,6 +2774,32 @@ var BRAIN=[
   [/^(?:remove|delete|drop|scrap|get rid of) (?:the )?(?:sub ?task |task )?(.+)$/,
    function(m){ return toolRun("remove_subtask",{subtask:fuzSub(m[1]).name}); }],
   /* --- the docks -------------------------------------------------- */
+  /* "add a task called X", with no main task said: it goes under the one
+     that is open, and the answer says where it landed.                    */
+  /* a bare "task called X", with the verb lost or never said */
+  [/^(?:subtask|task|item)(?: called| named)? (.+)$/,
+   function(m){
+     var g=gById(state.sel)||state.groups[0];
+     if(!g) throw new Error("There is no main task to put it under yet.");
+     var nm=asTyped(m[1]), out=toolRun("add_subtask",{main_task:g.name,name:nm});
+     LASTSUB=nm;
+     return out+" Say \u201cmove it to\u201d and a main task if that is the wrong place.";
+   }],
+  [/^(?:add|create|make|new|start) (?:a |an )?(?:new )?(?:subtask|task|item|one)(?: called| named)? (.+)$/,
+   function(m){
+     var g=gById(state.sel)||state.groups[0];
+     if(!g) throw new Error("There is no main task to put it under yet.");
+     var nm=asTyped(m[1]), out=toolRun("add_subtask",{main_task:g.name,name:nm});
+     LASTSUB=nm;
+     return out+" Say \u201cmove it to\u201d and a main task if that is the wrong place.";
+   }],
+  [/^(?:i need to|i have to|i must|remind me to) (.+)$/,
+   function(m){
+     var g=gById(state.sel)||state.groups[0];
+     if(!g) throw new Error("There is no main task to put it under yet.");
+     var nm=asTyped(m[1]), out=toolRun("add_subtask",{main_task:g.name,name:nm});
+     LASTSUB=nm; return out;
+   }],
   [/^(?:focus on|today is|my task today is|one task a day is|the one task is) (.+)$/,
    function(m){ return toolRun("focus_today",{subtask:fuzSub(m[1]).name}); }],
   [/^(?:add|put|queue|plan) (.+?) (?:in|into|on|to) (?:the |today's |my )?plan$/,
@@ -2805,13 +2846,68 @@ var BRAIN=[
   [/^(?:how (?:far |much )?(?:is|along is|done is) )(.+)$/,
    function(m){ var sb=fuzSub(m[1]); return sb.name+" is "+sb.pct+"%, "+statusOf(sb).label.toLowerCase()+"."; }],
   [/^(?:help|what can you do|what can i say|commands)$/,
-   function(){ return "Say things like: Bronze database to 40 percent. Done with airbike. "+
-     "Add sandbox review to Alchemy. Focus on running. Move cost estimation to SAP. "+
-     "Repeat airbike daily. What is left today. What needs a look."; }]
+   function(){ return "Say: add a task called weekly review. Bronze database to 40 percent. "+
+     "Done with it. Focus on running. Move it to Alchemy. Repeat it daily. "+
+     "What is left today. What needs a look. A new task with no main task named goes under the one that is open."; }]
 ];
 
 /* one hook, so the command engine can be exercised without a microphone */
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }}; }catch(e){}
+/* When no pattern fits, read the sentence for what it is plainly asking.
+   Speech does not arrive in the shape a pattern expects, so this reads the
+   verb and takes whatever is left as the name.                            */
+var VERBS=/\b(please|kindly|now|the|a|an|my|to|for|on|in|into|at|it|that|this|and|of|up|down|set|put|mark|log|make|do|go|task|subtask|item|called|named|new)\b/g;
+function rest(s,drop){
+  return s.replace(drop," ").replace(VERBS," ").replace(/\s+/g," ").trim();
+}
+function guessIntent(s){
+  var pc=s.match(/(\d{1,3}|[a-z\-]+)\s*(?:%|percent)/);
+  if(pc){
+    var v=numOf(pc[1]);
+    if(!isNaN(v)){
+      var nm=rest(s,new RegExp(pc[0].replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"g"));
+      if(nm) return toolRun("set_progress",{subtask:fuzSub(nm).name,percent:v});
+    }
+  }
+  if(/\b(done|finished|complete|completed)\b/.test(s)){
+    var n1=rest(s,/\b(i'?m|i am|is|are|was|done|finished|complete|completed|with|today)\b/g);
+    var sb=fuzSub(n1||"it");
+    toolRun("set_status",{subtask:sb.name,status:"done"});
+    return toolRun("mark_done_today",{subtask:sb.name});
+  }
+  if(/\b(remove|delete|drop|scrap|bin)\b/.test(s)){
+    var n2=rest(s,/\b(remove|delete|drop|scrap|bin|get|rid)\b/g);
+    if(n2) return toolRun("remove_subtask",{subtask:fuzSub(n2).name});
+  }
+  if(/\b(stuck|blocked|blocking)\b/.test(s)){
+    var n3=rest(s,/\b(i'?m|i am|stuck|blocked|blocking|but|still)\b/g);
+    if(n3) return toolRun("set_status",{subtask:fuzSub(n3).name,status:"blocked"});
+  }
+  if(/\b(focus|today'?s? one|only thing)\b/.test(s)){
+    var n4=rest(s,/\b(focus|only|thing|today|today'?s|one)\b/g);
+    if(n4) return toolRun("focus_today",{subtask:fuzSub(n4).name});
+  }
+  if(/\b(plan|queue|line)\b/.test(s)){
+    var n5=rest(s,/\b(plan|queue|line|today|today'?s)\b/g);
+    if(n5) return toolRun("plan_today",{subtask:fuzSub(n5).name});
+  }
+  if(/\b(start|starting|begin|working|work)\b/.test(s)){
+    var n6=rest(s,/\b(i'?m|i am|start|starting|began|begin|beginning|working|work)\b/g);
+    if(n6) return toolRun("set_status",{subtask:fuzSub(n6).name,status:"doing"});
+  }
+  /* an add is the last read, because almost any sentence can name a new task */
+  if(/\b(add|create|new|make|start|need|want)\b/.test(s)){
+    var n7=rest(s,/\b(add|create|created|make|need|want|start|would|like|i'?d|i)\b/g);
+    if(n7){
+      var g=gById(state.sel)||state.groups[0];
+      if(!g) throw new Error("There is no main task to put it under yet.");
+      var nm2=asTyped(n7), out=toolRun("add_subtask",{main_task:g.name,name:nm2});
+      LASTSUB=nm2;
+      return out+" Say \u201cmove it to\u201d and a main task if that is the wrong place.";
+    }
+  }
+  return null;
+}
 function localBrain(said){
   SPOKE=spoken(said);
   var s=SPOKE.q;
@@ -2822,7 +2918,7 @@ function localBrain(said){
     var out=BRAIN[i][1](m);
     if(out!==null && out!==undefined) return out;
   }
-  return null;
+  return guessIntent(s);
 }
 
 function botBubble(cls,text){
@@ -2861,7 +2957,8 @@ async function botAsk(text){
   try{ reply=localBrain(said); }
   catch(err){ reply=(err&&err.message)||"I could not do that."; }
   if(reply===null && !botSample)
-    reply="I did not catch a command in that. Say \"help\" to hear the ones I know.";
+    reply="I heard \u201c"+said+"\u201d, and found no command in it. "+
+      "Try: add a task called "+said.split(/\s+/).slice(-2).join(" ")+". Or say help.";
   if(reply!==null){
     botTurns.push({role:"user",content:said});
     botTurns.push({role:"assistant",content:reply});
