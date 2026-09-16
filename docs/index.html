@@ -578,6 +578,25 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   border:1px solid var(--hair)}
 .weights i{display:block; height:100%; transition:flex-grow .6s var(--ease)}
 .hint{font-family:var(--mono); font-size:.74rem; color:var(--muted); letter-spacing:.08em}
+.hint.live{color:#3FCF8E}
+/* the account sheet */
+#account{position:fixed; inset:0; z-index:140; display:grid; place-items:center;
+  background:rgba(0,0,0,.55); backdrop-filter:blur(6px); padding:18px}
+#account .card{width:min(420px,100%); background:var(--panel); border:1px solid var(--rule);
+  border-radius:20px; padding:22px; box-shadow:0 30px 70px -20px rgba(0,0,0,.8)}
+#account h3{margin:0 0 4px; font-size:1.25rem; letter-spacing:-.015em; font-weight:600}
+#account .lede{margin:0 0 18px; color:var(--ink-2); font-size:.9rem; line-height:1.55}
+#account label{display:block; margin-bottom:10px; font-size:.82rem; color:var(--ink-2)}
+#account input{width:100%; margin-top:5px}
+#account .row-btns{display:flex; gap:9px; flex-wrap:wrap; margin-top:14px}
+#account .sep{display:flex; align-items:center; gap:12px; margin:18px 0;
+  font-family:var(--mono); font-size:.7rem; color:var(--muted); letter-spacing:.14em}
+#account .sep::before,#account .sep::after{content:""; flex:1; height:1px; background:var(--hair)}
+#acct-google{width:100%; display:flex; align-items:center; justify-content:center; gap:10px}
+#acct-msg{margin:14px 0 0; font-size:.84rem; line-height:1.55; color:var(--accent-ink)}
+#acct-who{font-family:var(--mono); font-size:.9rem; word-break:break-all}
+.item h4 a{color:inherit; text-decoration:none; border-bottom:1px solid var(--hair)}
+.item h4 a:hover{border-bottom-color:var(--accent)}
 .holder{margin-bottom:30px}
 .holder h2{margin:0 0 4px; font-size:1.6rem; letter-spacing:-.02em; font-weight:600}
 .holder p{margin:0; color:var(--ink-2); max-width:62ch; line-height:1.6}
@@ -606,6 +625,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
       <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
+      <button class="btn" id="btn-account">Sign in</button>
     </div>
   </header>
 
@@ -783,8 +803,9 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <section class="view" id="v-feed" aria-label="News, mail and calendar">
     <div class="holder">
       <h2>Today, from everywhere</h2>
-      <p>A placeholder feed. News, mail and calendar in one stream. It loads more as you reach the bottom. The content below is dummy content, written for the layout.</p>
+      <p>News, mail and calendar in one stream. It loads more as you reach the bottom. The news is real, read through this app&rsquo;s own server so no key sits in the page. Mail and calendar are still placeholders.</p>
     </div>
+    <p class="hint" id="feed-note"></p>
     <div class="feed-filters" id="feed-filters"></div>
     <div class="feed" id="feed"></div>
     <div class="sentinel" id="sentinel"><div class="skel"><i></i><i></i><i></i></div></div>
@@ -818,6 +839,38 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <p>One call gives back a list of holdings. One more gives the last price for each. The cards, the weights and the totals are all drawn from those two answers.</p>
     </div>
   </section>
+
+  <div id="account" hidden>
+    <div class="card">
+      <h3>Your account</h3>
+      <p class="lede">Sign in and this board follows you: phone, tablet and desktop hold the same one. Signed out it stays in this browser, as it does now.</p>
+
+      <div id="acct-in">
+        <button class="btn" id="acct-google">Continue with Google</button>
+        <div class="sep">OR</div>
+        <label>Email<input class="f" id="acct-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label>Password<input class="f" id="acct-pass" type="password" autocomplete="current-password" placeholder="8 characters or more"></label>
+        <div class="row-btns">
+          <button class="btn" id="acct-signin">Sign in</button>
+          <button class="btn" id="acct-signup">Create account</button>
+        </div>
+      </div>
+
+      <div id="acct-out" hidden>
+        <p class="lede" style="margin-bottom:8px">Signed in as</p>
+        <div id="acct-who"></div>
+        <div class="row-btns">
+          <button class="btn" id="acct-sync">Save now</button>
+          <button class="btn" id="acct-restore" hidden>Restore this device&rsquo;s copy</button>
+          <button class="btn danger" id="acct-signout">Sign out</button>
+        </div>
+        <p class="hint" id="acct-last" style="margin-top:10px"></p>
+      </div>
+
+      <p id="acct-msg" hidden></p>
+      <div class="row-btns"><button class="btn" id="acct-close">Close</button></div>
+    </div>
+  </div>
 
   <button id="bot-orb" hidden aria-label="Talk to the board">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
@@ -1062,7 +1115,11 @@ function migrate1(old){
   s.seedRev=0;
   return s;
 }
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
+function save(){
+  state.savedAt=Date.now();
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+  if(typeof syncSoon==="function") syncSoon();
+}
 
 function gById(id){ for(var i=0;i<state.groups.length;i++) if(state.groups[i].id===id) return state.groups[i]; return null; }
 function detach(sid){
@@ -3288,27 +3345,63 @@ var CAL=[
  ["Shredding session","18:30. Airbike, then the workout block.","60 min"],
  ["Sprint review","14:00 Friday. Demo the landing zone update.","45 min"]
 ];
-var feedN=0, feedFilter="all", feedIO=null, feedBusy=false;
+var feedN=0, feedFilter="all", feedIO=null, feedBusy=0;
+/* the real wire, read through this app's own /api/news so no key is ever
+   in the page. Where there is no server, as inside an artifact frame, the
+   written stand-ins below take over and the page says so.                */
+var TOPIC_ORDER=["world","geo","finance","energy","denmark"];
+var TOPIC_NAME={world:"World",geo:"Geopolitics",finance:"Finance",energy:"Energy",denmark:"Denmark"};
+var wire=[], wireAt=0, wireTopic=0, wireBusy=false, wireLive=null;
+
+function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+function since(iso){
+  if(!iso) return "";
+  var m=Math.round((Date.now()-new Date(iso).getTime())/60000);
+  if(m<1) return "just now";
+  if(m<60) return m+" min ago";
+  var h=Math.round(m/60);
+  return h<48 ? h+" h ago" : Math.round(h/24)+" days ago";
+}
+function pullWire(){
+  if(wireBusy || wireTopic>=TOPIC_ORDER.length) return Promise.resolve(false);
+  wireBusy=true;
+  var t=TOPIC_ORDER[wireTopic++];
+  return fetch("/api/news?topic="+t+"&n=60",{headers:{accept:"application/json"}})
+    .then(function(r){ if(!r.ok) throw new Error("http "+r.status); return r.json(); })
+    .then(function(d){
+      var got=(d.items||[]).map(function(x){ x.topic=t; return x; });
+      wire=wire.concat(got);
+      wireLive=got.length>0;
+      wireBusy=false;
+      return got.length>0;
+    })
+    .catch(function(){ wireLive=false; wireBusy=false; return false; });
+}
+function nextNews(i){
+  if(wire.length && wireAt<wire.length){
+    var a=wire[wireAt++];
+    if(wireAt>wire.length-8) pullWire().then(function(ok){ if(ok&&curView==="feed") feedPage(); });
+    return {k:"news",kind:TOPIC_NAME[a.topic]||"News",t:a.title,
+      b:a.source?("Filed by "+a.source+(a.country?", "+a.country:"")):"",
+      m:(since(a.at)||"today")+(a.source?" · "+a.source:""), href:a.url};
+  }
+  var n=NEWS[i%NEWS.length];
+  return {k:"news",kind:"News",t:n[0],b:n[1],m:"Written stand-in, no server here"};
+}
 function feedItem(i){
   var kinds=["news","news","mail","news","cal","mail","news","cal"];
   var k=kinds[i%kinds.length];
   var ago=i*37+9;
   var when=ago<60?(ago+" min ago"):(Math.floor(ago/60)+" h ago");
-  if(k==="news"){
-    var n=NEWS[i%NEWS.length];
-    return {k:"news",kind:"News",t:n[0],b:n[1],m:"Global wire · "+when};
-  }
+  if(k==="news") return nextNews(i);
   if(k==="mail"){
     var m=MAIL[i%MAIL.length];
-    return {k:"mail",kind:"Mail",t:m[0],b:m[1],m:"Inbox · "+when};
+    return {k:"mail",kind:"Mail",t:m[0],b:m[1],m:"Placeholder inbox · "+when};
   }
   var c=CAL[i%CAL.length];
-  return {k:"cal",kind:"Calendar",t:c[0],b:c[1],m:c[2]+" · "+when};
+  return {k:"cal",kind:"Calendar",t:c[0],b:c[1],m:"Placeholder · "+c[2]+" · "+when};
 }
-function esc(s){ return String(s).replace(/[&<>]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 function feedPage(){
-  if(feedBusy) return;
-  feedBusy=true;
   var box=$("#feed"), frag=document.createDocumentFragment(), added=0, guard=0;
   while(added<10 && guard<80){
     var it=feedItem(feedN++); guard++;
@@ -3316,12 +3409,20 @@ function feedPage(){
     var d=document.createElement("article");
     d.className="item "+it.k;
     d.style.animationDelay=(added*40)+"ms";
-    d.innerHTML='<div class="kind">'+it.kind+'</div><div><h4>'+esc(it.t)+'</h4><p>'+esc(it.b)+
-      '</p><div class="meta">'+esc(it.m)+'</div></div>';
+    var head=it.href
+      ? '<h4><a href="'+esc(it.href)+'" target="_blank" rel="noopener noreferrer">'+esc(it.t)+'</a></h4>'
+      : '<h4>'+esc(it.t)+'</h4>';
+    d.innerHTML='<div class="kind">'+esc(it.kind)+'</div><div>'+head+
+      (it.b?'<p>'+esc(it.b)+'</p>':"")+'<div class="meta">'+esc(it.m)+'</div></div>';
     frag.appendChild(d); added++;
   }
   box.appendChild(frag);
-  setTimeout(function(){ feedBusy=false; },220);
+}
+function feedNote(){
+  var n=$("#feed-note"); if(!n) return;
+  if(wireLive===true){ n.textContent="News is live. Mail and calendar are still placeholders."; n.className="hint live"; }
+  else if(wireLive===false){ n.textContent="No news server here, so the stories below are written stand-ins. The app at its own address reads the real wire."; n.className="hint"; }
+  else { n.textContent="Reading the wire…"; n.className="hint"; }
 }
 function buildFeed(){
   var f=$("#feed-filters");
@@ -3330,17 +3431,28 @@ function buildFeed(){
     b.type="button"; b.className="btn"; b.textContent=p[1];
     b.setAttribute("aria-pressed",p[0]==="all"?"true":"false");
     b.addEventListener("click",function(){
-      feedFilter=p[0]; feedN=0; $("#feed").innerHTML="";
+      feedFilter=p[0]; feedN=0; wireAt=0; $("#feed").innerHTML="";
       Array.prototype.forEach.call(f.children,function(x){
         x.setAttribute("aria-pressed",x===b?"true":"false"); });
       feedPage(); feedPage();
     });
     f.appendChild(b);
   });
-  feedPage(); feedPage();
+  feedNote();
+  pullWire().then(function(){
+    feedNote();
+    feedN=0; wireAt=0; $("#feed").innerHTML="";
+    feedPage(); feedPage();
+  });
   if(!("IntersectionObserver" in window)) return;
   feedIO=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting && curView==="feed") feedPage(); });
+    /* the guard belongs here, where the observer can fire in a burst, and
+       not on the calls the page makes for itself                          */
+    es.forEach(function(e){
+      if(!e.isIntersecting || curView!=="feed") return;
+      var t=Date.now(); if(t-feedBusy<250) return;
+      feedBusy=t; feedPage();
+    });
   },{rootMargin:"600px 0px"});
   feedIO.observe($("#sentinel"));
 }
@@ -3439,6 +3551,216 @@ function buildFolio(){
   });
 }
 
+
+
+/* ---------------- account, and the board that follows you ----------------
+   Sign in and the board stops being one browser's secret. It is kept as one
+   JSON document per person, and the database only ever lets a person reach
+   their own row. Signed out, nothing changes: the board still lives here.  */
+var SB_URL="https://phicqgnzqnuwugzbgxxw.supabase.co";
+var SB_KEY="sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
+var AUTH_KEY=KEY+".account";
+var acct=null, pushT=null, lastPush=0;
+
+function acctLoad(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||"null"); }catch(e){ return null; } }
+function acctSave(a){
+  acct=a;
+  try{ a ? localStorage.setItem(AUTH_KEY,JSON.stringify(a)) : localStorage.removeItem(AUTH_KEY); }catch(e){}
+  paintAccount();
+}
+function sbFetch(path,opts){
+  opts=opts||{};
+  var h=opts.headers||{};
+  h.apikey=SB_KEY;
+  h["content-type"]="application/json";
+  h.authorization="Bearer "+((acct&&acct.access_token)||SB_KEY);
+  opts.headers=h;
+  return fetch(SB_URL+path,opts).then(function(r){
+    return r.text().then(function(t){
+      var body=null; try{ body=t?JSON.parse(t):null; }catch(e){ body=t; }
+      if(!r.ok){
+        var msg=(body&&(body.msg||body.error_description||body.message||body.error))||("http "+r.status);
+        var err=new Error(msg); err.status=r.status; throw err;
+      }
+      return body;
+    });
+  });
+}
+/* an access token lasts an hour; the refresh token brings back a new one */
+function acctRefresh(){
+  if(!acct||!acct.refresh_token) return Promise.reject(new Error("not signed in"));
+  return sbFetch("/auth/v1/token?grant_type=refresh_token",
+    {method:"POST",body:JSON.stringify({refresh_token:acct.refresh_token})})
+    .then(function(d){ acctSave(shapeSession(d)); return acct; });
+}
+function shapeSession(d){
+  return {access_token:d.access_token, refresh_token:d.refresh_token,
+    at:Date.now(), email:(d.user&&d.user.email)||(acct&&acct.email)||"",
+    uid:(d.user&&d.user.id)||(acct&&acct.uid)||""};
+}
+function withToken(run){
+  return run().catch(function(e){
+    if(e.status!==401 && e.status!==403) throw e;
+    return acctRefresh().then(run);
+  });
+}
+
+/* ---- the two calls that move a board ---- */
+function pullBoard(){
+  return withToken(function(){
+    return sbFetch("/rest/v1/boards?select=data,updated_at&user_id=eq."+encodeURIComponent(acct.uid));
+  }).then(function(rows){ return (rows&&rows[0])||null; });
+}
+function pushBoard(){
+  if(!acct||!acct.uid) return Promise.resolve(null);
+  return withToken(function(){
+    return sbFetch("/rest/v1/boards?on_conflict=user_id",{
+      method:"POST",
+      headers:{prefer:"resolution=merge-duplicates,return=representation"},
+      body:JSON.stringify([{user_id:acct.uid,data:state}])
+    });
+  }).then(function(r){ lastPush=Date.now(); paintAccount(); return r; });
+}
+/* every save nudges this; the write itself waits until you stop typing */
+function syncSoon(){
+  if(!acct||!acct.uid) return;
+  clearTimeout(pushT);
+  pushT=setTimeout(function(){ pushBoard().catch(function(e){ acctMsg("Not saved to your account: "+e.message); }); },1500);
+}
+
+/* ---- joining the two copies ---- */
+function adoptRemote(row){
+  var keep=JSON.stringify(state);
+  try{ localStorage.setItem(KEY+".before-sync",keep); }catch(e){}
+  state=row.data;
+  boot2();
+  acctMsg("Board loaded from your account. The copy that was on this device is kept; press Restore to bring it back.");
+}
+/* a board that arrives from elsewhere gets the same filling in that a board
+   read from this browser gets, or the first draw finds a hole              */
+function boot2(){
+  if(!state.ue) state.ue={}; if(!state.killed) state.killed=[];
+  if(!state.oftad) state.oftad=[]; if(!state.plan) state.plan=[];
+  if(!state.done) state.done=[]; if(!state.dayLog) state.dayLog=[];
+  if(!state.hist) state.hist=[]; if(!state.log) state.log=[];
+  if(!state.groups) state.groups=[]; if(!state.subs) state.subs={};
+  if(!state.sel||!gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
+  sync();
+  if(!state.hist.length) seedHist();
+  rollRecurring(); save(); renderAll();
+}
+function firstSync(){
+  if(!acct||!acct.uid) return Promise.resolve();
+  acctMsg("Checking your account…");
+  return pullBoard().then(function(row){
+    if(!row){ return pushBoard().then(function(){ acctMsg("This board is now saved to your account."); }); }
+    var mine=state.savedAt||0, theirs=new Date(row.updated_at).getTime()||0;
+    if(theirs>mine+2000) adoptRemote(row);
+    else return pushBoard().then(function(){ acctMsg("Your account has this board."); });
+  }).catch(function(e){ acctMsg("Your account did not answer: "+e.message); });
+}
+
+/* ---- the panel ---- */
+function acctMsg(t){ var n=$("#acct-msg"); if(n){ n.textContent=t||""; n.hidden=!t; } }
+function paintAccount(){
+  var btn=$("#btn-account"); if(!btn) return;
+  btn.textContent = acct&&acct.email ? acct.email.split("@")[0] : "Sign in";
+  btn.setAttribute("aria-label", acct ? "Your account, "+acct.email : "Sign in");
+  var inn=$("#acct-in"), out=$("#acct-out");
+  if(inn) inn.hidden=!!acct;
+  if(out) out.hidden=!acct;
+  var who=$("#acct-who");
+  if(who&&acct) who.textContent=acct.email||"signed in";
+  var last=$("#acct-last");
+  if(last) last.textContent=lastPush?("Saved "+new Date(lastPush).toLocaleTimeString()):"";
+  var back=$("#acct-restore");
+  if(back) back.hidden=!localStorage.getItem(KEY+".before-sync");
+}
+function acctOpen(on){
+  var p=$("#account"); if(!p) return;
+  p.hidden=!on;
+  if(on){ paintAccount(); var f=$("#acct-email"); if(f&&!acct) f.focus(); }
+}
+function signIn(mode){
+  var em=$("#acct-email").value.trim(), pw=$("#acct-pass").value;
+  if(!em||!pw){ acctMsg("Both boxes, please."); return; }
+  if(pw.length<8){ acctMsg("The password needs 8 characters or more."); return; }
+  acctMsg(mode==="up"?"Creating your account…":"Signing you in…");
+  var path=mode==="up" ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+  sbFetch(path,{method:"POST",body:JSON.stringify({email:em,password:pw})})
+    .then(function(d){
+      if(!d||!d.access_token){
+        acctMsg("Account made. Open the mail we sent and press the link, then sign in.");
+        return;
+      }
+      acctSave(shapeSession(d));
+      $("#acct-pass").value="";
+      return firstSync();
+    })
+    .catch(function(e){ acctMsg(e.message); });
+}
+function signOut(){
+  var t=acct&&acct.access_token;
+  acctSave(null);
+  acctMsg("Signed out. The board stays on this device.");
+  if(t) fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,authorization:"Bearer "+t}}).catch(function(){});
+}
+function signInGoogle(){
+  var back=location.origin+location.pathname;
+  location.href=SB_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(back);
+}
+/* Google sends you back with the tokens in the address; take them and tidy up */
+function catchRedirect(){
+  var h=String(location.hash||"");
+  if(h.indexOf("access_token=")<0) return false;
+  var q={}; h.replace(/^#\/?/,"").split("&").forEach(function(p){
+    var i=p.indexOf("="); if(i>0) q[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1));
+  });
+  if(!q.access_token) return false;
+  acctSave({access_token:q.access_token,refresh_token:q.refresh_token||"",at:Date.now(),email:"",uid:""});
+  try{ history.replaceState(null,"",location.pathname+location.search+"#/board"); }catch(e){ location.hash="#/board"; }
+  sbFetch("/auth/v1/user").then(function(u){
+    acctSave({access_token:q.access_token,refresh_token:q.refresh_token||"",at:Date.now(),
+      email:(u&&u.email)||"",uid:(u&&u.id)||""});
+    return firstSync();
+  }).catch(function(e){ acctMsg("Signed in, but your account did not answer: "+e.message); });
+  return true;
+}
+
+(function(){
+  acct=acctLoad();
+  var came=catchRedirect();
+  /* Google signs you in by sending the browser away and back. That cannot
+     work inside a frame, so in one the button says so instead of failing. */
+  var framed=false; try{ framed=window.top!==window.self; }catch(e){ framed=true; }
+  if(framed){
+    var g=$("#acct-google");
+    g.disabled=true;
+    g.textContent="Google needs the app at its own address";
+    g.title="Open the board at its own web address to use Google";
+  }
+  $("#btn-account").addEventListener("click",function(){ acctOpen($("#account").hidden); });
+  $("#acct-close").addEventListener("click",function(){ acctOpen(false); });
+  $("#acct-google").addEventListener("click",signInGoogle);
+  $("#acct-signin").addEventListener("click",function(){ signIn("in"); });
+  $("#acct-signup").addEventListener("click",function(){ signIn("up"); });
+  $("#acct-signout").addEventListener("click",signOut);
+  $("#acct-sync").addEventListener("click",function(){
+    acctMsg("Saving…");
+    pushBoard().then(function(){ acctMsg("Saved to your account."); })
+      .catch(function(e){ acctMsg(e.message); });
+  });
+  $("#acct-restore").addEventListener("click",function(){
+    var raw=localStorage.getItem(KEY+".before-sync"); if(!raw) return;
+    try{ state=JSON.parse(raw); }catch(e){ return; }
+    localStorage.removeItem(KEY+".before-sync");
+    boot2(); syncSoon();
+    acctMsg("The copy from this device is back, and it is what your account now holds.");
+  });
+  $("#acct-pass").addEventListener("keydown",function(e){ if(e.key==="Enter") signIn("in"); });
+  paintAccount();
+  if(acct&&acct.uid&&!came) firstSync();
+})();
 
 /* everything the views need is defined by now, so open the one in the hash */
 addEventListener("hashchange",readHash);
