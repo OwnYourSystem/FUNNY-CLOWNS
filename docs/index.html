@@ -1734,6 +1734,14 @@ var ORB_CHAT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 /* The browser raises its permission dialog for getUserMedia. SpeechRecognition
    can be refused silently, with no dialog at all, so ask here first: if the
    frame does allow the microphone, this is what makes it say yes. */
+/* true, false, or "" when the browser will not say */
+function micPolicy(){
+  try{
+    var f=document.featurePolicy||document.permissionsPolicy;
+    if(f&&f.allowsFeature) return !!f.allowsFeature("microphone");
+  }catch(e){}
+  return "";
+}
 function askMic(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
     return Promise.resolve({ok:false,why:"nodevice"});
@@ -1741,7 +1749,7 @@ function askMic(){
     try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
     return {ok:true};
   },function(err){
-    var r={ok:false,why:(err&&err.name)||"unknown",perm:""};
+    var r={ok:false,why:(err&&err.name)||"unknown",perm:"",policy:micPolicy()};
     try{
       if(!navigator.permissions||!navigator.permissions.query) return r;
       return navigator.permissions.query({name:"microphone"}).then(function(st){
@@ -1751,15 +1759,18 @@ function askMic(){
   });
 }
 function micExplain(r){
-  var why=r.why, tail=" ("+why+(r.perm?", "+r.perm:"")+")";
+  var why=r.why, tail=" ("+why+(r.perm?", "+r.perm:"")+
+    (r.policy===false?", frame blocks it":(r.policy===true?", frame allows it":""))+")";
   if(why==="nodevice") return "This browser hands out no microphone here at all."+tail;
   if(why==="NotFoundError"||why==="DevicesNotFoundError") return "No microphone is connected to this device."+tail;
   if(why==="NotReadableError"||why==="TrackStartError") return "Another app is holding the microphone. Close it, then press me again."+tail;
   if(why==="AbortError") return "The microphone failed to start. Press me again."+tail;
   if(why==="NotAllowedError"||why==="SecurityError"||why==="PermissionDeniedError"){
+    if(r.policy===false)
+      return "The page that holds this board never passed the microphone through to it, so no dialog can appear here. This is the frame, not you, and no setting on this device changes it."+tail;
     if(r.perm==="denied")
-      return "You denied the microphone for this page. Tap the padlock beside the address, set Microphone to Allow, reload, then press me again."+tail;
-    return "The page that holds this board did not pass the microphone through to it, so no dialog can appear. Use your keyboard\u2019s dictation key, beside the space bar."+tail;
+      return "The microphone is set to Block for this page. Tap the padlock beside the address, set Microphone to Allow, reload, then press me again."+tail;
+    return "The browser refused the microphone without asking."+tail;
   }
   return "The microphone did not open."+tail;
 }
@@ -1907,6 +1918,7 @@ function orbTap(){
   askMic().then(function(r){
     micUI(false);
     if(!r.ok){
+      micDiag(r);
       state.micBlocked=true; save(); paintOrb();
       $("#bot-input").focus();
       note(micExplain(r));
@@ -1939,6 +1951,17 @@ $("#bot-speak").addEventListener("click",function(e){
   }catch(e){}
 })();
 function cardLine(c){ return {task:cardFrom(c), name:cardName(c), percent:cardPct(c)}; }
+/* the verdict on the microphone, left where it can be read back later */
+function micDiag(r){
+  if(!boardDb) return;
+  try{
+    boardDb.doc("board/micdiag").set({
+      at:new Date().toISOString(),
+      why:r.why||"", perm:r.perm||"", policy:(r.policy===""?"unknown":r.policy),
+      speech:!!SR, ua:navigator.userAgent, w:window.innerWidth
+    }).catch(function(){});
+  }catch(e){}
+}
 function mirrorToday(){
   if(!boardDb) return;
   clearTimeout(syncT);

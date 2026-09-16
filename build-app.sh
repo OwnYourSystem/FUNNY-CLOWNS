@@ -3,5 +3,5 @@
 # browser needs before it will install it to a home screen.
 set -e
 cd "$(dirname "$0")"
-cp delivery-board.html app/index.html
-echo "app/index.html refreshed from delivery-board.html"
+cp delivery-board.html docs/index.html
+echo "docs/index.html refreshed from delivery-board.html"
