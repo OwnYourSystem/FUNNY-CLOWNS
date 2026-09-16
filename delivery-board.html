@@ -2197,12 +2197,44 @@ function micUI(on){
 }
 var ORB_MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
 var ORB_CHAT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>';
+/* The browser raises its permission dialog for getUserMedia. SpeechRecognition
+   can be refused silently, with no dialog at all, so ask here first: if the
+   frame does allow the microphone, this is what makes it say yes. */
+function askMic(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
+    return Promise.resolve({ok:false,why:"nodevice"});
+  return navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    return {ok:true};
+  },function(err){
+    var r={ok:false,why:(err&&err.name)||"unknown",perm:""};
+    try{
+      if(!navigator.permissions||!navigator.permissions.query) return r;
+      return navigator.permissions.query({name:"microphone"}).then(function(st){
+        r.perm=st&&st.state; return r;
+      },function(){ return r; });
+    }catch(e2){ return r; }
+  });
+}
+function micExplain(r){
+  var why=r.why, tail=" ("+why+(r.perm?", "+r.perm:"")+")";
+  if(why==="nodevice") return "This browser hands out no microphone here at all."+tail;
+  if(why==="NotFoundError"||why==="DevicesNotFoundError") return "No microphone is connected to this device."+tail;
+  if(why==="NotReadableError"||why==="TrackStartError") return "Another app is holding the microphone. Close it, then press me again."+tail;
+  if(why==="AbortError") return "The microphone failed to start. Press me again."+tail;
+  if(why==="NotAllowedError"||why==="SecurityError"||why==="PermissionDeniedError"){
+    if(r.perm==="denied")
+      return "You denied the microphone for this page. Tap the padlock beside the address, set Microphone to Allow, reload, then press me again."+tail;
+    return "The page that holds this board did not pass the microphone through to it, so no dialog can appear. Use your keyboard\u2019s dictation key, beside the space bar."+tail;
+  }
+  return "The microphone did not open."+tail;
+}
 function paintOrb(){
   if(!ORB) return;
-  var off=!!(state.micBlocked||!SR);
+  var off=!!(state.micBlocked||state.srBlocked||!SR);
   ORB.classList.toggle("muted",off);
   ORB.innerHTML=off?ORB_CHAT:ORB_MIC;
-  ORB.setAttribute("aria-label",(state.micBlocked||!SR)?"Open the board tutor":"Talk to the board");
+  ORB.setAttribute("aria-label",off?"Open the board tutor":"Talk to the board");
 }
 function stopHearing(){
   handsFree=false;
@@ -2230,9 +2262,9 @@ function listen(){
       micUI(false); handsFree=false;
       var code=e&&e.error;
       if(code==="not-allowed"||code==="service-not-allowed"){
-        state.micBlocked=true; save(); paintOrb();
+        state.srBlocked=true; save(); paintOrb();
         $("#bot-input").focus();
-        note("The microphone is off limits inside this frame. Use your keyboard\u2019s dictation key, beside the space bar \u2014 it types straight into the box, and I will not ask again.");
+        note("The microphone opened, but this browser refuses to transcribe inside an embedded page ("+code+"). Use your keyboard\u2019s dictation key, beside the space bar \u2014 it types straight into the box.");
         return;
       }
       if(code==="no-speech") return;
@@ -2255,11 +2287,10 @@ function speakOut(text){
 }
 
 /* ---------------- the orb, and the sheet it opens ----------------
-   Voice in: the artifact runs in a cross-origin frame, and a browser refuses
-   the microphone to one unless the parent frame grants it, which a page
-   cannot do for itself. So the first refusal is remembered, the orb stops
-   pretending, and it hands over to the keyboard's own dictation key, which
-   does work here. Voice out is unaffected.                                  */
+   Press it and talk. It asks the browser for the microphone first, because
+   that is the call which raises the permission dialog, and only then starts
+   listening. If a refusal comes back it names the exact reason instead of
+   guessing, and falls back to the keyboard's dictation key.                 */
 var ORB=$("#bot-orb"), SHEET=$("#botsheet");
 function orbSize(){ return ORB.offsetWidth||66; }
 function orbClamp(){
@@ -2328,15 +2359,33 @@ function note(t){
 function orbTap(){
   if(SHEET.hidden) botOpen(true);
   if(hearing){ stopHearing(); return; }
-  if(state.micBlocked||!SR){
+  if(!SR){
     $("#bot-input").focus();
-    note(SR ? "The microphone is off limits inside this frame, so use your keyboard’s dictation key — the one beside the space bar. It types straight into the box."
-            : "This browser has no speech recognition. Use your keyboard’s dictation key, beside the space bar.");
+    note("This browser has no speech recognition. Use your keyboard’s dictation key, beside the space bar.");
     return;
   }
-  note("");
-  handsFree=!!state.speak;
-  listen();
+  if(state.srBlocked){
+    $("#bot-input").focus();
+    note("This browser will not run speech recognition inside an embedded page. Use your keyboard’s dictation key, beside the space bar — it types straight into the box.");
+    return;
+  }
+  note("Opening the microphone…"); micUI(true);
+  askMic().then(function(r){
+    micUI(false);
+    if(!r.ok){
+      state.micBlocked=true; save(); paintOrb();
+      $("#bot-input").focus();
+      note(micExplain(r));
+      return;
+    }
+    state.micBlocked=false; save(); paintOrb();
+    note("");
+    handsFree=!!state.speak;
+    listen();
+  },function(e){
+    micUI(false);
+    note("The microphone did not open ("+((e&&e.name)||"unknown")+").");
+  });
 }
 $("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
 $("#bot-speak").addEventListener("click",function(e){
