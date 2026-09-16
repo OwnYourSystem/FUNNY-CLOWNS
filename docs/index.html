@@ -2006,6 +2006,14 @@ function askMic(){
     }catch(e2){ return r; }
   });
 }
+/* a phone keyboard has a mic key. A computer keyboard does not, so do not
+   send anyone looking for one that is not there. */
+function dictateHint(){
+  var touch=(navigator.maxTouchPoints||0)>0;
+  return touch
+    ? "Type here, or use the mic key on your keyboard, beside the space bar."
+    : "Type here instead. Voice needs the board at its own address, not inside this frame.";
+}
 function micExplain(r){
   var why=r.why, tail=" ("+why+(r.perm?", "+r.perm:"")+
     (r.policy===false?", frame blocks it":(r.policy===true?", frame allows it":""))+")";
@@ -2015,7 +2023,7 @@ function micExplain(r){
   if(why==="AbortError") return "The microphone failed to start. Press me again."+tail;
   if(why==="NotAllowedError"||why==="SecurityError"||why==="PermissionDeniedError"){
     if(r.policy===false)
-      return "This page cannot reach the microphone. Use the mic key on your keyboard, beside the space bar. It types straight into the box."+tail;
+      return "This page cannot reach the microphone. "+dictateHint()+tail;
     if(r.perm==="denied")
       return "The microphone is set to Block for this page. Tap the padlock beside the address, set Microphone to Allow, reload, then press me again."+tail;
     return "The browser refused the microphone without asking."+tail;
@@ -2057,7 +2065,7 @@ function listen(){
       if(code==="not-allowed"||code==="service-not-allowed"){
         state.srBlocked=true; save(); paintOrb();
         $("#bot-input").focus();
-        note("The microphone opened, but this browser refuses to transcribe inside an embedded page ("+code+"). Use your keyboard\u2019s dictation key, beside the space bar \u2014 it types straight into the box.");
+        note("The microphone opened, but this browser refuses to transcribe inside an embedded page ("+code+"). "+dictateHint());
         return;
       }
       if(code==="no-speech") return;
@@ -2083,7 +2091,7 @@ function speakOut(text){
    Press it and talk. It asks the browser for the microphone first, because
    that is the call which raises the permission dialog, and only then starts
    listening. If a refusal comes back it names the exact reason instead of
-   guessing, and falls back to the keyboard's dictation key.                 */
+   guessing, and says what can be done instead on that device.              */
 var ORB=$("#bot-orb"), SHEET=$("#botsheet");
 function orbSize(){ return ORB.offsetWidth||66; }
 function orbClamp(){
@@ -2154,12 +2162,12 @@ function orbTap(){
   if(hearing){ stopHearing(); return; }
   if(!SR){
     $("#bot-input").focus();
-    note("This browser has no speech recognition. Use your keyboard’s dictation key, beside the space bar.");
+    note("This browser has no speech recognition. "+dictateHint());
     return;
   }
   if(state.srBlocked){
     $("#bot-input").focus();
-    note("This browser will not run speech recognition inside an embedded page. Use your keyboard’s dictation key, beside the space bar — it types straight into the box.");
+    note("This browser will not run speech recognition inside an embedded page. "+dictateHint());
     return;
   }
   note("Opening the microphone…"); micUI(true);
