@@ -298,6 +298,17 @@ keeps its place.
 
 ## The voice tutor
 
+**Its mark names the thing, not the input.** The orb wore a dictation
+microphone, which said "voice input" when the thing is the board's tutor. It
+is a speech bubble with the board's own rising bars inside it, the same three
+bars the Board tab uses, so the family reads as one system. The sheet header
+carries it too.
+
+**One mark for every state.** Whether the microphone is available is said by
+the orb's fill, solid when it can hear and outlined when it cannot, and by
+its label. A second glyph would be a second thing to learn for something the
+colour already says.
+
 One orb, `position:fixed`, draggable, 66px (62 on a phone). **Press it and
 it listens. That is all it does.** It never throws a panel over the board.
 
