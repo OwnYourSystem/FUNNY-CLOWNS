@@ -3,13 +3,16 @@
    XML, not JSON. This runs on the same origin, fetches the feed, and hands
    back the few fields the banner shows. Nothing about the board is sent.
    Everything is public; nothing is stored.                                */
+/* Google's topic sections are loose: the TECHNOLOGY one came back carrying
+   an interiors magazine and a health service journal. A search query is
+   what the section pretends to be, so every feed is one.               */
 const FEEDS = {
-  tech:     "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY",
-  finance:  "https://news.google.com/rss/headlines/section/topic/BUSINESS",
-  football: "https://news.google.com/rss/search?q=football+when:1d",
+  tech:     "https://news.google.com/rss/search?q=(technology+OR+software+OR+semiconductor+OR+cloud+OR+%22artificial+intelligence%22)+when:2d",
+  finance:  "https://news.google.com/rss/search?q=(markets+OR+inflation+OR+%22central+bank%22+OR+earnings+OR+stocks)+when:2d",
+  football: "https://news.google.com/rss/search?q=(football+OR+%22premier+league%22+OR+%22champions+league%22)+when:2d",
   world:    "https://news.google.com/rss/headlines/section/topic/WORLD",
-  science:  "https://news.google.com/rss/headlines/section/topic/SCIENCE",
-  denmark:  "https://news.google.com/rss?gl=DK&hl=en-DK&ceid=DK:en"
+  science:  "https://news.google.com/rss/search?q=(research+OR+study+OR+physics+OR+climate+OR+biology)+when:2d",
+  denmark:  "https://news.google.com/rss/search?q=Denmark+when:2d&gl=DK&ceid=DK:en"
 };
 const LANG = "hl=en-GB&gl=GB&ceid=GB:en";
 
@@ -44,8 +47,11 @@ export default async function handler(req, res) {
       const xml = await r.text();
       /* one <item> at a time, so a title never pairs with another's source */
       return pick(xml, "item").slice(0, per).map(block => {
-        const t = clean(pick(block, "title")[0] || "");
+        let t = clean(pick(block, "title")[0] || "");
         const src = clean(pick(block, "source")[0] || "");
+        /* Google appends " - Publisher" to every headline, and the source
+           field already carries it. One of the two is enough. */
+        if (src && t.endsWith(" - " + src)) t = t.slice(0, -(src.length + 3));
         return t ? { k: key, t, s: src } : null;
       }).filter(Boolean);
     } catch (e) { return []; }
