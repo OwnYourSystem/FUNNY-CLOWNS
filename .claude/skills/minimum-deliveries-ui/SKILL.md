@@ -104,6 +104,44 @@ go. Three rules keep it from turning to mush.
 3. **The red stays flat.** The one thing allowed to shout is not moulded into
    the background: the alarm badge and the assistant orb keep a solid fill.
 
+## The planner decides, it does not rank
+
+The board answers one question: what do I do now. One task, named, with the
+reason, at the top of the page. Not a shortlist. A ranking is a decision
+handed back to the person who opened the board to avoid making one.
+
+**One scorer.** `verdict()` is the only thing that ranks. The dock, the
+assistant and the card all call it. Two scorers means the board argues with
+itself in front of the person using it.
+
+**The hour is a veto, not a weight.** A profile (`state.me`: working days,
+hours, commute, when you train, when your day ends) plus a context on each
+goal (`g.where`: anywhere, at a screen, at work, at home, training, out and
+about) decides what is *possible* in the next hour. `feasible(g, ctx)`
+returns a no with the reason in plain words, and nothing vetoed can reach
+the top however loudly it is shouting. At one o'clock on a Monday an hour on
+an airbike is not a suggestion, it is noise.
+
+**The same hour promotes.** A goal that fits the window you are in beats one
+that merely could be done: training when the training window is open, work
+things while you are at work.
+
+**Say what lost, and when it opens again.** "Shredding and Mastering is
+louder, and it waits: you are out until about 16:30." A refusal you can
+argue with is worth more than a suggestion you cannot act on.
+
+**One line overrides.** What the person typed as mattering most is an
+override, `sc*1.5 + 70`, not a nudge, and it is matched on whole words
+against the goal, its tags and the candidate subtask. It still cannot beat a
+veto. A flat bonus lost to anything already at 45%, which is the board
+arguing with a decision already made.
+
+**Ask in an interview, not a form.** Eight questions, one screen each, Back
+works, nothing is written until the last answer. Eight fields on one screen
+is a form, and a form is what nobody fills in. Everything is editable
+afterwards on the Planner page, in place, with the held-back list under it
+so the person can see exactly what their answers cost them.
+
 ## The banner under the date
 
 What needs a look runs across the top on a loop rather than waiting to be
