@@ -1006,6 +1006,12 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 /* the account sheet */
 #account{position:fixed; inset:0; z-index:140; display:grid; place-items:center;
   background:rgba(0,0,0,.55); backdrop-filter:blur(6px); padding:18px}
+#acct-choose{display:flex; flex-direction:column; gap:9px; margin:14px 0 4px;
+  padding:14px; border:1px solid color-mix(in srgb,var(--run) 45%, transparent);
+  border-radius:14px; background:color-mix(in srgb,var(--run) 7%, transparent)}
+#acct-choose[hidden]{display:none}
+.wide-btn{width:100%; justify-content:flex-start; text-align:left; font-size:13px}
+.wide-btn:hover{border-color:color-mix(in srgb,var(--run) 60%, transparent)}
 #account .card{width:min(420px,100%); background:var(--panel); border:1px solid var(--rule);
   border-radius:20px; padding:22px; box-shadow:0 30px 70px -20px rgba(0,0,0,.8)}
 #account h3{margin:0 0 4px; font-size:1.25rem; letter-spacing:-.015em; font-weight:600}
@@ -1285,6 +1291,12 @@ try{var _t=localStorage.getItem("oys-theme");
           <button class="btn danger" id="acct-signout">Sign out</button>
         </div>
         <p class="hint" id="acct-last" style="margin-top:10px"></p>
+      </div>
+
+      <div id="acct-choose" hidden>
+        <p class="lede" style="margin-bottom:10px">Both of these have work in them. Which one is the real board?</p>
+        <button class="btn wide-btn" data-choose="mine"><span id="choose-mine"></span></button>
+        <button class="btn wide-btn" data-choose="theirs"><span id="choose-theirs"></span></button>
       </div>
 
       <p id="acct-msg" hidden></p>
@@ -4767,6 +4779,61 @@ function boot2(){
 
    Whenever the account's copy is taken, the copy that was on this device is
    kept and Restore brings it back, so a wrong guess is never final.     */
+/* How much of a board is this person's own work, rather than the starter
+   set every board begins with. Timestamps cannot tell those apart, and the
+   difference is the whole question when two copies meet: a device carrying
+   real work must never be flattened by an account holding a fresh one.  */
+function substance(st){
+  if(!st) return 0;
+  var n=0;
+  n += Object.keys(st.ue||{}).length * 6;        /* renamed or retyped by hand */
+  n += (st.killed||[]).length * 4;               /* threw something away */
+  n += (st.archive||[]).length * 6;
+  n += (st.backlog||[]).length * 3;
+  n += (st.log||[]).length;                      /* things actually finished */
+  n += (st.dayLog||[]).length * 2;
+  n += (st.oftad||[]).length + (st.plan||[]).length + (st.done||[]).length;
+  if(st.me && st.me.done) n += 10;               /* sat through the interview */
+  var seeded={}, seedPct={};
+  SEED.forEach(function(g){
+    seeded[g.id]=1;
+    g.subs.forEach(function(x){ seedPct[x.id]=x.pct||0; });
+  });
+  (st.groups||[]).forEach(function(g){ if(!seeded[g.id]) n+=6; });   /* their own goal */
+  Object.keys(st.subs||{}).forEach(function(k){
+    var x=st.subs[k]; if(!x) return;
+    if(seedPct[k]===undefined) n+=2;                                  /* their own step */
+    else if((x.pct||0)!==seedPct[k]) n+=1;                            /* progress they moved */
+  });
+  return n;
+}
+function boardSummary(st){
+  var g=(st.groups||[]).length, done=0;
+  Object.keys(st.subs||{}).forEach(function(k){
+    var x=st.subs[k]; if(x&&(x.pct>=100||x.status==="done")) done++;
+  });
+  return g+" goals, "+done+" finished, "+substance(st)+" marks of your own";
+}
+/* Both copies carry real work and this device has never pushed. There is no
+   honest way to pick, so it does not: it shows both and waits.          */
+var pendingRemote=null;
+function offerChoice(row){
+  pendingRemote=row;
+  var box=$("#acct-choose");
+  if(!box){ adoptRemote(row); return; }
+  box.hidden=false;
+  $("#choose-mine").textContent="This device: "+boardSummary(state);
+  $("#choose-theirs").textContent="Your account: "+boardSummary(row.data||{});
+  acctMsg("Two boards, both with work in them. Nothing is changed until you pick.");
+}
+function takeChoice(which){
+  var box=$("#acct-choose"); if(box) box.hidden=true;
+  if(which==="theirs" && pendingRemote) adoptRemote(pendingRemote);
+  else {
+    acctPush().then(function(){ acctMsg("Kept this device\u2019s board, and your account now holds it."); });
+  }
+  pendingRemote=null;
+}
 function firstSync(){
   if(!acct||!acct.uid) return Promise.resolve();
   acctMsg("Checking your account…");
@@ -4774,8 +4841,17 @@ function firstSync(){
     if(!row){ return acctPush().then(function(){ acctMsg("This board is now saved to your account."); }); }
     var theirs=new Date(row.updated_at).getTime()||0;
     var lastPushed=state.syncedAt||0;
-    if(!lastPushed || theirs>lastPushed+1000){ adoptRemote(row); return; }
-    return acctPush().then(function(){ acctMsg("Your account has this board."); });
+    if(lastPushed){
+      /* this device has pushed before, so the clock is meaningful */
+      if(theirs>lastPushed+1000){ adoptRemote(row); return; }
+      return acctPush().then(function(){ acctMsg("Your account has this board."); });
+    }
+    /* first time on this device: the clock says nothing, so weigh the work */
+    var mine=substance(state), yours=substance(row.data||{});
+    if(mine>0 && yours===0)
+      return acctPush().then(function(){ acctMsg("Your account was empty, so it now holds this board."); });
+    if(mine>0 && yours>0){ offerChoice(row); return; }
+    adoptRemote(row);
   }).catch(function(e){ acctMsg("Your account did not answer: "+e.message); });
 }
 
@@ -4906,6 +4982,9 @@ function catchRedirect(){
     localStorage.removeItem(KEY+".before-sync");
     boot2(); syncSoon();
     acctMsg("The copy from this device is back, and it is what your account now holds.");
+  });
+  $("#acct-choose").addEventListener("click",function(e){
+    var b=e.target.closest("[data-choose]"); if(b) takeChoice(b.dataset.choose);
   });
   $("#acct-pass").addEventListener("keydown",function(e){ if(e.key==="Enter") signIn("in"); });
   paintAccount();
