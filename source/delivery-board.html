@@ -417,12 +417,56 @@ body.dragging .cursor-ring{opacity:0}
 .editor label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:10.5px;
   letter-spacing:.16em; text-transform:uppercase; color:var(--muted); min-width:0}
 .editor .wide{grid-column:1/-1}
+/* inline under its own goal: tight to the row above, clear of the next one */
+.bars>.editor{margin:4px 0 14px}
 .editor .acts{grid-column:1/-1; display:flex; gap:12px; flex-wrap:wrap; align-items:center}
 .f{font:inherit; font-family:var(--font); font-size:14px; color:var(--ink); background:var(--inset);
   border:1px solid transparent; border-radius:10px; padding:9px 12px; min-width:0; width:100%;
   text-transform:none; letter-spacing:-.005em;
   transition:border-color .25s var(--ease), background .25s var(--ease)}
 .f::placeholder{color:var(--muted)}
+/* A menu is drawn by the browser, not by the page, and it builds it from the
+   control's own colours. The field's background was a translucent white, so
+   the browser resolved it to white and drew a white list with grey text over
+   a black board. Every control that opens something gets an opaque
+   background and explicit option colours instead.                        */
+select.f, input[type="date"].f, input[type="datetime-local"].f, input[type="time"].f{
+  background-color:var(--raised); color:var(--ink); border-color:var(--hair)}
+select.f:hover, input[type="date"].f:hover{border-color:var(--rule)}
+select.f option{background:var(--raised); color:var(--ink); padding:6px}
+select.f option:checked{background:var(--accent); color:#fff}
+/* the page's own menu, so no operating system gets a vote on the colours */
+.xsel{position:relative; width:100%; min-width:0}
+.xsel select.f{position:absolute; inset:0; opacity:0; pointer-events:none; width:100%}
+.xsel-btn{font:inherit; font-family:var(--font); font-size:14px; color:var(--ink);
+  background:var(--raised); border:1px solid var(--hair); border-radius:10px;
+  padding:9px 10px 9px 12px; width:100%; cursor:pointer; text-align:left;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  transition:border-color .25s var(--ease)}
+.xsel-btn:hover{border-color:var(--rule)}
+.xsel-btn[aria-expanded="true"]{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.xsel-btn svg{width:15px; height:15px; flex:none; color:var(--muted)}
+.xsel-btn span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.xsel-menu{position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:150;
+  background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:5px;
+  box-shadow:0 22px 50px -18px rgba(0,0,0,.75); max-height:240px; overflow-y:auto}
+.xsel-menu.up{top:auto; bottom:calc(100% + 6px)}
+.xsel-opt{display:block; width:100%; font:inherit; font-family:var(--font); font-size:14px;
+  text-align:left; color:var(--ink-2); background:transparent; border:0; border-radius:8px;
+  padding:9px 11px; cursor:pointer}
+.xsel-opt:hover,.xsel-opt:focus-visible{background:var(--inset); color:var(--ink); outline:none}
+.xsel-opt.on{background:var(--accent); color:#fff}
+input[type="date"].f::-webkit-calendar-picker-indicator{opacity:.75; cursor:pointer}
+input[type="date"].f::-webkit-calendar-picker-indicator:hover{opacity:1}
+input[type="search"].seek-in::-webkit-search-cancel-button{opacity:.6; cursor:pointer}
+input[type="search"].seek-in::-webkit-search-cancel-button:hover{opacity:1}
+/* the scrollbars the board draws for itself */
+*{scrollbar-color:var(--rule) transparent}
+::-webkit-scrollbar{width:10px; height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--rule); border-radius:10px;
+  border:2px solid transparent; background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--muted); background-clip:padding-box}
 .f:focus{outline:none; border-color:rgba(255,59,48,.5); background:transparent}
 .addrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; align-items:center;
   border-top:1px solid var(--hair); padding-top:16px}
@@ -1549,13 +1593,20 @@ function renderFilter(){
     tf.map(function(t){ return '<button class="tag on" data-tagpick="'+esc(t)+'">'+esc(t)+' \u00d7</button>'; }).join("")+
     '<button class="btn" id="fb-clear">Clear</button>';
 }
+/* Wide screens stack the goals, so the editor drops in straight under the one
+   it belongs to. Below 820px the goals become a sideways strip of cards and
+   nothing can sit between two of them, so there the editor keeps its own slot
+   under the strip. stripMode tells the two apart.                           */
+function stripMode(){ return window.innerWidth<=820; }
 function renderMain(){
   renderFilter();
-  var shown=goalsShown();
-  $("#main-bars").innerHTML=shown.map(goalRow).join("")||
+  var shown=goalsShown(), strip=stripMode();
+  $("#main-bars").innerHTML=shown.map(function(g){
+      return goalRow(g)+((!strip && openGroupEd && g.id===state.sel) ? goalEditor(g) : "");
+    }).join("")||
     '<p class="calm">'+(state.groups.length?"Nothing matches.":"No goals yet. Add one below.")+'</p>';
   var gsel=gById(state.sel);
-  $("#main-editor").innerHTML = (openGroupEd && gsel) ? goalEditor(gsel) : "";
+  $("#main-editor").innerHTML = (strip && openGroupEd && gsel) ? goalEditor(gsel) : "";
   $("#main-table").innerHTML=tbl(shown.map(function(g){
     return [esc(g.name), groupDone(g)+" / "+g.subs.length, groupPct(g)+"%"]; }),
     ["Goal","Subtasks done","Complete"]);
@@ -1764,6 +1815,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); renderSnaps();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
+  if(typeof enhanceSelects==="function") enhanceSelects();
   /* content can change a panel's height, so re-separate before measuring */
   if(typeof resolveOverlaps==="function") resolveOverlaps(null);
   if(typeof fitCanvas==="function") fitCanvas();
@@ -1788,6 +1840,92 @@ function bindSeek(){
   });
 }
 
+
+/* ---------------- menus the page draws itself ----------------
+   A native select hands its list to the operating system, which builds it
+   from the control's own colours and its own idea of the theme. On a dark
+   board that came back white with grey text, and there is no stylesheet
+   that reliably fixes it: the popup is not in the page.
+
+   So the page draws it. The real <select> stays where it is and keeps the
+   value, so every handler that listens for a change is untouched; what you
+   see and press is a list of buttons in the board's own colours.       */
+function enhanceSelects(root){
+  var list=(root||document).querySelectorAll("select.f:not([data-xsel])");
+  Array.prototype.forEach.call(list,function(sel){
+    sel.setAttribute("data-xsel","1");
+    var wrap=document.createElement("div");
+    wrap.className="xsel";
+    sel.parentNode.insertBefore(wrap,sel);
+    wrap.appendChild(sel);
+
+    var btn=document.createElement("button");
+    btn.type="button"; btn.className="xsel-btn";
+    btn.setAttribute("aria-haspopup","listbox");
+    btn.setAttribute("aria-expanded","false");
+    if(sel.getAttribute("aria-label")) btn.setAttribute("aria-label",sel.getAttribute("aria-label"));
+
+    var menu=document.createElement("div");
+    menu.className="xsel-menu"; menu.setAttribute("role","listbox"); menu.hidden=true;
+
+    function label(){
+      var o=sel.options[sel.selectedIndex];
+      return o?o.textContent:"";
+    }
+    function paint(){
+      btn.innerHTML='<span>'+esc(label())+'</span>'+
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>';
+      menu.innerHTML="";
+      Array.prototype.forEach.call(sel.options,function(o,i){
+        var it=document.createElement("button");
+        it.type="button"; it.className="xsel-opt"+(i===sel.selectedIndex?" on":"");
+        it.setAttribute("role","option");
+        it.setAttribute("aria-selected",i===sel.selectedIndex?"true":"false");
+        it.textContent=o.textContent;
+        it.addEventListener("click",function(e){
+          e.stopPropagation();
+          sel.selectedIndex=i;
+          sel.dispatchEvent(new Event("change",{bubbles:true}));
+          close();
+        });
+        menu.appendChild(it);
+      });
+    }
+    function open(){
+      closeAllSelects();
+      paint();
+      menu.hidden=false; btn.setAttribute("aria-expanded","true");
+      /* a list that would run off the bottom opens upward instead */
+      var r=btn.getBoundingClientRect();
+      menu.classList.toggle("up", r.bottom+Math.min(menu.scrollHeight,240)+12>window.innerHeight);
+      var on=menu.querySelector(".xsel-opt.on"); if(on) on.focus();
+    }
+    function close(){ menu.hidden=true; btn.setAttribute("aria-expanded","false"); paint(); }
+    wrap._close=close;
+
+    btn.addEventListener("click",function(e){
+      e.stopPropagation();
+      if(menu.hidden) open(); else close();
+    });
+    menu.addEventListener("keydown",function(e){
+      var items=Array.prototype.slice.call(menu.children);
+      var i=items.indexOf(document.activeElement);
+      if(e.key==="ArrowDown"){ e.preventDefault(); (items[i+1]||items[0]).focus(); }
+      else if(e.key==="ArrowUp"){ e.preventDefault(); (items[i-1]||items[items.length-1]).focus(); }
+      else if(e.key==="Escape"){ e.preventDefault(); close(); btn.focus(); }
+    });
+    sel.addEventListener("change",paint);
+    wrap.appendChild(btn); wrap.appendChild(menu);
+    paint();
+  });
+}
+function closeAllSelects(){
+  Array.prototype.forEach.call(document.querySelectorAll(".xsel"),function(w){
+    if(w._close) w._close();
+  });
+}
+addEventListener("click",function(){ closeAllSelects(); });
+
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
 $("#main-bars").addEventListener("click",function(e){
@@ -1798,7 +1936,7 @@ $("#main-bars").addEventListener("click",function(e){
     var gid=pen.dataset.gedit;
     openGroupEd = (state.sel===gid) ? !openGroupEd : true;
     state.sel=gid; openEd=""; save(); renderAll(); showPicked();
-    var box=$("#main-editor").querySelector("input");
+    var box=$(".mains .editor input");
     if(box) box.focus();
     return;
   }
@@ -2424,7 +2562,11 @@ function endPanel(e){
 }
 document.addEventListener("pointerup",endPanel,true);
 document.addEventListener("pointercancel",endPanel,true);
-addEventListener("resize",function(){ applyLayout(); });
+var wasStrip=stripMode();
+addEventListener("resize",function(){
+  applyLayout();
+  if(stripMode()!==wasStrip){ wasStrip=stripMode(); renderMain(); }
+});
 applyLayout();
 
 /* ---------------- daily mirror ----------------
