@@ -113,6 +113,39 @@ quietly keep the desktop's outlined look.
 red border, a red wash, and a red bar poking out of the rounded corner.
 Pressed in is the whole signal here.
 
+## Two devices, one board
+
+The board lives in localStorage, which is one browser on one machine. What
+carries it between them is an account: one row per user in a `boards` table,
+the whole state as JSON, pushed on a 1.5s debounce after every save.
+
+**Which copy wins is the whole problem.** Never compare the account against
+"when this browser last saved". That stamp moves on almost every
+interaction, so a device that has just booted always looks newer, and
+signing in on a phone pushes its empty starter board over the real one. It
+looks like a save and it is a deletion.
+
+Compare against **when this device last wrote to the account**:
+
+```
+no row in the account        this board is the first, push it
+this device never pushed     the account's copy is the real one, take it
+account moved since my push  somebody else changed it, take it
+otherwise                    mine is the newest, push it
+```
+
+Take the stamp from the server's own `updated_at`, not `Date.now()`, so two
+devices compare the same numbers however far their clocks have drifted.
+
+**Taking the account's copy always keeps a way back.** The copy that was on
+the device goes to a `before-sync` key and a Restore button brings it back.
+A rule that guesses must never guess finally.
+
+**The table is the only thing between one account and another,** because the
+publishable key is in the page source. Row-level security on every verb,
+checking `auth.uid() = user_id`, and prove it with two users rather than
+trusting that the policies exist.
+
 ## The planner decides, it does not rank
 
 The board answers one question: what do I do now. One task, named, with the
