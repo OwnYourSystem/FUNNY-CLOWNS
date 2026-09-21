@@ -46,6 +46,13 @@ markup or script; reach for a token.
 
 Light theme: `--accent #E42418`, `--run #C75A00`, `--win #127D51`.
 
+**Three theme states, not two.** System, Light, Dark, in that order, on one
+button in the masthead. System removes `data-theme` and lets the media query
+decide. The choice lives in its own key, `oys-theme`, not in the board state,
+so a snippet at the very top of the body can read it before anything paints
+and a board import cannot wipe it. Changing it also rewrites the bare
+`<meta name="theme-color">` and re-runs whatever samples the tokens.
+
 **Red means something wants you.** Blocked, stalled, overdue, destructive.
 Progress is orange. Done is green. A board where everything is red says
 nothing at all.
@@ -73,6 +80,46 @@ Panels are `color-mix(in srgb, var(--panel) 82%, transparent)` with
 `backdrop-filter: blur(22px) saturate(1.3)` and a `--hair` border. Dividers
 are hairlines, never boxes. Nothing has a drop shadow unless it is lifted
 off the page: a dragged card, a floating sheet, the orb.
+
+## The phone shell is moulded, not drawn
+
+Below 820px the board changes its lighting, never its values. Everything is
+the one colour, `--nm-bg`, and what separates a thing from the page is light:
+
+```
+--nm-out     -6px -6px 14px var(--nm-hi), 6px 6px 14px var(--nm-lo)
+--nm-in      inset, the same two shadows the other way round
+--nm-bg      #17171D dark, #E7E7E2 light
+```
+
+Raised: panels, cards, the bottom bar, a button at rest. Sunken: anything you
+type into, a progress groove, a button that is on. Borders and translucency
+go. Three rules keep it from turning to mush.
+
+1. **One flat ground.** A moulded surface needs a single colour to be moulded
+   out of, so the decorative canvas behind the board drops to `opacity:.12`
+   and the grain layer to nothing.
+2. **Type keeps its contrast.** A soft surface is no excuse for soft text.
+   `--ink`, `--ink-2` and the five progress bands do not change.
+3. **The red stays flat.** The one thing allowed to shout is not moulded into
+   the background: the alarm badge and the assistant orb keep a solid fill.
+
+## The banner under the date
+
+What needs a look runs across the top on a loop rather than waiting to be
+scrolled to. Badge on the left holding still, items moving right to left,
+the same alarms in the same order the panel puts them.
+
+- The strip is printed **twice** inside the runner and the animation slides
+  it `-50%`. That is the only way the loop has no seam.
+- Speed is fixed in pixels a second (80), and the duration is computed from
+  the measured lap: `run.scrollWidth / 2 / 80`. A long list and a short one
+  move at the same pace, not in the same time.
+- It pauses on `:hover` and on a `.held` class, because a phone has no hover.
+- Each item is a button carrying `data-goto-goal` and `data-goto-sub`, so
+  pressing it lands on the work.
+- The banner carries only what decides whether to press it: how late, how far
+  along. The full reason stays in the panel.
 
 ## Motion
 
