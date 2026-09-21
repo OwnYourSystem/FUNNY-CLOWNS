@@ -1,6 +1,6 @@
 /* The board is one file, so the cache is one file plus its icons. It opens
    offline from the home screen, and picks up a new build in the background. */
-var CACHE = "board-v3";
+var CACHE = "board-v4";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest",
              "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
