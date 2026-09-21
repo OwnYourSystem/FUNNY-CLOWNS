@@ -142,6 +142,25 @@ is a form, and a form is what nobody fills in. Everything is editable
 afterwards on the Planner page, in place, with the held-back list under it
 so the person can see exactly what their answers cost them.
 
+## The verdict is a badge, not a panel
+
+One sentence gets one line: an icon, the words DO THIS NOW, the task, where
+it can be done, an arrow. Pressing the task lands on the work; pressing the
+arrow opens the Planner and the whole reasoning. Made a panel, the one thing
+the board exists for reads as another section to be got through.
+
+The icon is the person's own picture, chosen from their camera roll or
+their files. It is squared off and redrawn at 128px before it is stored,
+because a photo off a phone is three megabytes and this shares localStorage
+with the board.
+
+## The layout is not yours to maintain
+
+Panels are a grid and stay one. Dragging and resizing them was removed
+along with the Tidy up button that existed to undo the mess they made. The
+grid already reflows at every width; a layout a person has to repair is a
+chore dressed as a feature.
+
 ## The banner under the date
 
 What needs a look runs across the top on a loop rather than waiting to be
@@ -158,6 +177,33 @@ the same alarms in the same order the panel puts them.
   pressing it lands on the work.
 - The banner carries only what decides whether to press it: how late, how far
   along. The full reason stays in the panel.
+- **It reports on the board, so it lives on the board.** Hidden on every
+  other page, where it would be reporting on something you are not looking at.
+- **It can carry the news too**, chosen in the interview and off by default.
+  A browser cannot read an RSS feed from this origin, so a small same-origin
+  function fetches it and returns titles; the service worker must skip
+  `/api/`, because its cache lookup ignores query strings and would serve
+  one set of topics for another. News items are spans, not buttons: the
+  board's own items are the ones worth pressing.
+
+## One notification a day, carrying the decision
+
+The morning brief fires at a time the person sets, once, with the task, why
+it and not the next one, and what is held back until later. An afternoon one
+says what is still open.
+
+State the limit rather than implying otherwise: this fires while the board
+is running, tab or home screen. Nothing here wakes a phone with the app
+fully closed, because that needs a push server holding a key per device and
+this board keeps everything in the person's own browser.
+
+## Declaration order
+
+`boot()` migrates the saved board against the vocabulary lists (`WHERES`,
+`FEEDS`, `SHARP`, `DAYS_SHORT`). A `var` assigned below `var state=boot()`
+is `undefined` when the migration reads it, and the whole script dies there.
+Every list the migration touches is declared above that line. This has bitten
+twice.
 
 ## Motion
 
