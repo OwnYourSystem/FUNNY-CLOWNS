@@ -104,6 +104,15 @@ go. Three rules keep it from turning to mush.
 3. **The red stays flat.** The one thing allowed to shout is not moulded into
    the background: the alarm badge and the assistant orb keep a solid fill.
 
+**The moulded block goes last in the stylesheet.** It sits after the phone
+strip block, which is also `max-width:820px`. Placed before it, the strip's
+`border` and `border-radius` win at equal specificity and the goal cards
+quietly keep the desktop's outlined look.
+
+**One signal per state.** A picked card was saying so three times at once: a
+red border, a red wash, and a red bar poking out of the rounded corner.
+Pressed in is the whole signal here.
+
 ## The planner decides, it does not rank
 
 The board answers one question: what do I do now. One task, named, with the
@@ -220,6 +229,23 @@ grabbed). Deeper panels move more.
 **Lean by moving, never by shearing.** A `skewY` shifts an element further
 the further across it you are, so a 28px drag handle ends up 18px from
 where it is drawn. A translate keeps every box square to the screen.
+
+**Flight is a switch, so it must switch something.** The parallax and the
+lag used to run whether Flight was on or off, which made the button a lie.
+Both are gated on it now, and `stopMotion()` levels the board rather than
+leaving the last offsets in place.
+
+**A phone gets the ambience, not the depth.** Below 820px there is no
+per-panel drift and no device tilt: `#canvas>[data-panel]{transform:none}`,
+the sky layer is hidden, and `applyCam` refuses. Two reasons, both learned
+the hard way. A phone is held, and a held thing is never level, so banking
+the board to follow the hand means it never holds still under the thumb.
+And in one column, panels drifting at their own rates is not depth — it is
+a stack whose gaps open and close as you scroll.
+
+**Every panel in the grid needs a DEPTH entry.** One left out holds still
+between two that move, and the gap under it breathes. If a panel has no
+business moving, give it its neighbour's factor so the pair travels as one.
 
 **No glide.** An earlier version held the content by the window and moved it
 by a transform chasing the scroll, Lusion style. It reads beautifully and it
