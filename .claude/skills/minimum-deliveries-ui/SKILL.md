@@ -123,6 +123,19 @@ handed back to the person who opened the board to avoid making one.
 assistant and the card all call it. Two scorers means the board argues with
 itself in front of the person using it.
 
+**Two rankings, kept apart.** Goals are compared with goals, subtasks with
+their own siblings. `goalScore()` reads only goal-level facts: the deadline,
+the flag on the goal, how far behind it is, how long since anything in it
+moved, the window, the north star. `subScore()` reads only the step: its own
+priority, a repeat due today, how far along, how stale. A subtask marked
+high inside a quiet goal wins inside that goal and never drags the goal past
+one that is overdue. `verdict()` picks the goal, then the step, in that
+order, and `worstIn()` uses the same within-goal ranking so the alarm and
+the verdict never point at different steps of one goal.
+
+**A subtask's priority pill only shows when it is not the middle.** A board
+of defaults should stay quiet; a row with four badges reads as noise.
+
 **The hour is a veto, not a weight.** A profile (`state.me`: working days,
 hours, commute, when you train, when your day ends) plus a context on each
 goal (`g.where`: anywhere, at a screen, at work, at home, training, out and
@@ -170,6 +183,14 @@ along with the Tidy up button that existed to undo the mess they made. The
 grid already reflows at every width; a layout a person has to repair is a
 chore dressed as a feature.
 
+## One goal open, the rest stepped back
+
+Above 820px, `.bars:has(.row.sel) .row.pick:not(.sel)` drops to `opacity:.42`
+and `saturate(.55)`. The subtask panel beside the list belongs to one row,
+and the eye should not have to hunt for the accent bar to find which. They
+stay readable, stay one press away, and come back to full strength on hover
+or focus. Dragging clears the fade, so a row never dims under the hand.
+
 ## The banner under the date
 
 What needs a look runs across the top on a loop rather than waiting to be
@@ -206,13 +227,7 @@ is running, tab or home screen. Nothing here wakes a phone with the app
 fully closed, because that needs a push server holding a key per device and
 this board keeps everything in the person's own browser.
 
-## Declaration order
 
-`boot()` migrates the saved board against the vocabulary lists (`WHERES`,
-`FEEDS`, `SHARP`, `DAYS_SHORT`). A `var` assigned below `var state=boot()`
-is `undefined` when the migration reads it, and the whole script dies there.
-Every list the migration touches is declared above that line. This has bitten
-twice.
 
 ## Motion
 
@@ -242,6 +257,11 @@ the hard way. A phone is held, and a held thing is never level, so banking
 the board to follow the hand means it never holds still under the thumb.
 And in one column, panels drifting at their own rates is not depth — it is
 a stack whose gaps open and close as you scroll.
+
+**Anything read during boot is declared above `var state=boot()`.** This has
+now bitten three times: `DAYS_SHORT`, then `FEEDS`, then `SUB_W`. A `var`
+assigned below that line is `undefined` when `toGoals()` migrates against it,
+and the whole script dies there with the board blank.
 
 **Every panel in the grid needs a DEPTH entry.** One left out holds still
 between two that move, and the gap under it breathes. If a panel has no

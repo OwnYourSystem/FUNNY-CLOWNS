@@ -339,6 +339,9 @@ body.flat #canvas{transform:none!important}
   transition:color .3s var(--ease), border-color .3s var(--ease)}
 .mini:hover{color:var(--ink); border-color:var(--rule)}
 .mini[aria-pressed="true"]{color:var(--accent-ink); border-color:rgba(255,59,48,.45)}
+/* a subtask's priority is a quieter mark than a goal's: it only ranks the
+   row against its own siblings, so it should not read like a goal's flag */
+.pill.sub{font-size:9.5px; letter-spacing:.14em; padding:3px 8px; opacity:.9}
 
 /* rows */
 .bars{display:flex; flex-direction:column; margin-top:16px}
@@ -349,6 +352,23 @@ body.flat #canvas{transform:none!important}
   background:var(--accent); border-radius:2px; box-shadow:var(--glow)}
 .row.pick{cursor:pointer}
 .row.pick:hover{background:var(--raised)}
+/* One goal is open at a time and its subtasks fill the panel beside it. On a
+   wide screen the rest of the list stays where it is but steps back, so the
+   eye knows which row the panel belongs to without hunting for the accent
+   bar. They are still readable and still one press away, and pointing at
+   one brings it back to full strength.                                    */
+@media (min-width:821px){
+  .bars:has(.row.sel) .row.pick:not(.sel){opacity:.42; filter:saturate(.55)}
+  .bars:has(.row.sel) .row.pick:not(.sel):hover,
+  .bars:has(.row.sel) .row.pick:not(.sel):focus-within{opacity:1; filter:none}
+  .bars .row.pick{transition:opacity .28s var(--ease), filter .28s var(--ease),
+    background .3s var(--ease)}
+  /* dragging one out of the list must not leave it dimmed under the hand */
+  body.dragging .bars .row.pick:not(.sel){opacity:1; filter:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .bars .row.pick{transition:none}
+}
 .row.drop-on{background:var(--accent-wash); box-shadow:inset 0 0 0 1px rgba(255,59,48,.45)}
 .row.drop-before::before,.row.drop-after::after{content:""; position:absolute; left:8px; right:8px;
   height:1.5px; background:var(--accent); border-radius:2px; box-shadow:var(--glow); top:auto; bottom:auto; width:auto}
@@ -1484,6 +1504,12 @@ function uid(p){ return p+Math.random().toString(36).slice(2,8); }
 /* Everything below runs before the first boot, because boot migrates the
    saved board against these lists and a var assigned later is undefined
    when it gets there. */
+var PRIO_W={high:3, mid:2, low:1};
+/* A subtask's priority ranks it against its own siblings and nothing else.
+   Two goals are compared on the goal's deadline and the goal's priority; a
+   subtask marked high inside a quiet goal must never drag that goal past an
+   urgent one. So this weight is only ever read after a goal has won.    */
+var SUB_W={high:66, mid:44, low:22};
 /* which page is showing. Declared here because the first render reads it. */
 var curView="board";
 var WHERES=[
@@ -1540,7 +1566,6 @@ function blankState(){
    by and a weight against everything else. Boards written before this get
    the fields added and nothing taken away.                              */
 var PRIOS=[["high","High"],["mid","Middle"],["low","Low"]];
-var PRIO_W={high:3, mid:2, low:1};
 function toggleTag(t){
   var i=state.tagFilter.indexOf(t);
   if(i>=0) state.tagFilter.splice(i,1); else state.tagFilter.push(t);
@@ -1585,6 +1610,10 @@ function toGoals(){
     if(!Array.isArray(g.tags)) g.tags=[];
     if(g.tags.length>5) g.tags=g.tags.slice(0,5);
     if(!g.where) g.where=guessWhere(g.name);
+    g.subs.forEach(function(id){
+      var x=state.subs[id];
+      if(x && !SUB_W[x.prio]) x.prio="mid";
+    });
   });
 }
 /* how many days until it is wanted. Null when no date is set. */
@@ -1784,15 +1813,22 @@ function urgency(g){
   if(n<=30) return 6;
   return 3;
 }
+/* which step of this goal the alarm should land you on. A blocked one is
+   named first, because that is the thing stopping the goal; otherwise it is
+   the same within-goal ranking the planner uses, so the alarm and the
+   verdict never point at different steps of the same goal.             */
 function worstIn(g){
-  var best=null;
+  var stuck=null;
   g.subs.forEach(function(id){
     var x=state.subs[id];
     if(!x||x.pct>=100||x.status==="done") return;
-    var sc=(x.status==="blocked"?100:0)+ageOf(x.upd)+(x.pct>0?10:0);
-    if(!best||sc>best.sc) best={sc:sc,s:x};
+    if(x.status==="blocked"){
+      var sc=SUB_W[x.prio||"mid"]+ageOf(x.upd);
+      if(!stuck||sc>stuck.sc) stuck={sc:sc,s:x};
+    }
   });
-  return best&&best.s;
+  if(stuck) return stuck.s;
+  return bestSub(g,null,null);
 }
 function alerts(){
   var out=[];
@@ -1960,44 +1996,78 @@ function northHit(g,me,sub){
     return new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(s|es)?\\b").test(hay);
   });
 }
+/* ---------------- two rankings, kept apart ----------------
+   Goals are compared with goals and subtasks with their own siblings. A
+   subtask marked high inside a quiet goal must not drag that goal past one
+   that is overdue, so nothing below the goalScore line is ever read when
+   two goals are being weighed, and nothing above it when two subtasks are.
+                                                                        */
+function goalAge(g){
+  var best=null;
+  g.subs.forEach(function(id){
+    var x=state.subs[id]; if(!x) return;
+    var a=ageOf(x.upd); if(best===null||a<best) best=a;
+  });
+  return best===null?0:best;
+}
+/* cross-goal only: the deadline, the flag on the goal, how far behind it is
+   and how long since anything in it moved at all */
+function goalScore(g,c,me){
+  var u=urgency(g), w=PRIO_W[g.prio]||2;
+  var sc = u*w*0.55 + (100-groupPct(g))*0.30 + Math.min(goalAge(g),30)*0.8;
+  var started=false;
+  g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) started=true; });
+  if(started) sc+=12;                       /* finishing beats starting */
+  if(me.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
+  if(g.where==="body" && c.free) sc+=38;
+  if(g.where==="work" && c.atWork) sc+=30;
+  if(g.where==="home" && c.free && !c.wound) sc+=14;
+  return sc;
+}
+/* within-goal only: which step of this goal, now */
+function subScore(s,g,moving){
+  var sc = SUB_W[s.prio||"mid"] + Math.min(ageOf(s.upd),30)*0.8;
+  if(s.rep && periodKey(s.rep)) sc+=55;     /* a habit due today still wins */
+  if(s.pct>0&&s.pct<100) sc+=22;
+  if(moving===1&&s.pct>0) sc+=18;
+  return sc;
+}
+function subsOpen(g,taken,skip){
+  var out=[], moving=0;
+  g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) moving++; });
+  g.subs.forEach(function(id){
+    var s=state.subs[id];
+    if(!s||s.pct>=100||s.status==="done"||s.status==="blocked") return;
+    if(taken&&taken[s.id]) return;
+    if(skip&&skip.indexOf(s.id)>=0) return;
+    out.push({s:s, sc:subScore(s,g,moving)});
+  });
+  out.sort(function(a,b){ return b.sc-a.sc; });
+  return out;
+}
+function bestSub(g,taken,skip){ var o=subsOpen(g,taken,skip); return o.length?o[0].s:null; }
 function verdict(){
-  var c=nowCtx(), taken={}, skip=(state.skip&&state.skip.d===todayStr())?state.skip.ids:[];
+  var c=nowCtx(), me=state.me||freshMe();
+  var taken={}, skip=(state.skip&&state.skip.d===todayStr())?state.skip.ids:[];
   state.oftad.forEach(function(x){ taken[x.id]=1; });
   var best=null, blocked=[], soft=null;
   state.groups.forEach(function(g){
     if(!g.subs.length||groupPct(g)>=100) return;
-    var f=feasible(g,c), gp=groupPct(g), moving=0;
-    g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) moving++; });
-    g.subs.forEach(function(id){
-      var s2=state.subs[id];
-      if(!s2||s2.pct>=100||s2.status==="done"||s2.status==="blocked") return;
-      if(taken[s2.id]||skip.indexOf(s2.id)>=0) return;
-      var u=urgency(g), w=PRIO_W[g.prio]||2, a=ageOf(s2.upd);
-      var sc = u*w*0.55 + (100-gp)*0.30 + Math.min(a,30)*0.8;
-      if(s2.rep && periodKey(s2.rep)) sc+=55;
-      if(s2.pct>0&&s2.pct<100) sc+=22;
-      if(moving===1&&s2.pct>0) sc+=18;
-      /* the hour you are in is worth as much as a week of deadline */
-      if(!f.ok){
-        if(!blocked.length||sc>blocked[0].sc) blocked.unshift({sc:sc,g:g,s:s2,why:f.why});
-        return;
-      }
-      if(f.soft) sc*=0.55;
-      var me2=state.me||freshMe();
-      /* the hour does not only forbid, it promotes: a thing that fits the
-         window you are in beats a thing that merely could be done         */
-      if(me2.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
-      if(g.where==="body" && !f.soft && c.free) sc+=38;
-      if(g.where==="work" && c.atWork) sc+=30;
-      if(g.where==="home" && c.free && !c.wound) sc+=14;
-      /* The one line the person typed as what matters most is an override,
-         not a nudge. A flat bonus lost to anything already at 45%, which is
-         the board arguing with a decision that was already made. It still
-         cannot beat a veto: what is impossible this hour stays impossible. */
-      if(northHit(g,me2,s2)) sc=sc*1.5+70;
-      if(!best||sc>best.sc){ if(best) soft=best; best={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why}; }
-      else if(!soft||sc>soft.sc) soft={sc:sc,g:g,s:s2};
-    });
+    var s2=bestSub(g,taken,skip);
+    if(!s2) return;                          /* nothing left in it to do */
+    var f=feasible(g,c), sc=goalScore(g,c,me);
+    if(!f.ok){
+      if(!blocked.length||sc>blocked[0].sc) blocked.unshift({sc:sc,g:g,s:s2,why:f.why});
+      return;
+    }
+    if(f.soft) sc*=0.55;
+    /* The one line the person typed as what matters most is an override,
+       not a nudge. A flat bonus lost to anything already at 45%, which is
+       the board arguing with a decision that was already made. It still
+       cannot beat a veto: what is impossible this hour stays impossible. */
+    if(northHit(g,me,s2)) sc=sc*1.5+70;
+    if(!best||sc>best.sc){ if(best) soft=best; best={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why}; }
+    else if(!soft||sc>soft.sc) soft={sc:sc,g:g,s:s2};
   });
   if(!best) return {c:c, none:true, blocked:blocked};
   return {c:c, g:best.g, s:best.s, soft:best.soft, sw:best.sw, next:soft,
@@ -2276,6 +2346,8 @@ function renderSubs(){
       (s.rep?'<span class="pill rep">'+esc(repLabel(s.rep))+'</span>':"")+
       (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
+      ((s.prio&&s.prio!=="mid")?'<span class="pill pr-'+s.prio+' sub"><i></i>'+
+        s.prio.toUpperCase()+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -2294,6 +2366,8 @@ function subEditor(s){
     '<label class="wide">Name<input class="f" data-ed="name" value="'+esc(s.name)+'"></label>'+
     '<label>Status<select class="f" data-ed="status">'+STATUSES.map(function(o){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
+    '<label>Priority, inside this goal<select class="f" data-ed="prio">'+PRIOS.map(function(o){
+      return '<option value="'+o[0]+'"'+((s.prio||"mid")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Repeats<select class="f" data-ed="rep">'+REPEATS.map(function(o){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
@@ -2795,6 +2869,7 @@ document.addEventListener("change",function(e){
       if(v){ s.pct=0; s.status="todo"; s.upd=todayStr(); }
     }
     else if(k==="tag") s.tag=v.trim();
+    else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
     else if(k==="upd") s.upd=v||todayStr();
     touchHist(); save(); renderAll(); return;
   }
@@ -2826,7 +2901,7 @@ $("#ns-add").addEventListener("click",function(){
   var id=uid("s");
   var rp=$("#ns-rep").value||"";
   state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id,
-                  rep:rp,period:rp?periodKey(rp):"",streak:0,best:0};
+                  rep:rp,period:rp?periodKey(rp):"",streak:0,best:0,prio:"mid"};
   g.subs.push(id);
   $("#ns-name").value="";
   touchHist(); save(); renderAll();
