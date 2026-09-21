@@ -318,41 +318,12 @@ body.flat #canvas{transform:none!important}
   .bot-size{display:none}
 }
 .bot-ask .f{flex:1 1 auto; width:auto}
-#canvas.free{display:block}
-#canvas.free>[data-panel]{position:absolute; margin:0}
 [data-panel]{position:relative}
-.pmove{flex:none; width:24px; height:24px; margin:-2px 2px 0 -4px; border:0; padding:0; border-radius:8px;
-  background:transparent; color:var(--muted); cursor:grab; display:grid; place-items:center;
-  opacity:.32; touch-action:none; transition:opacity .25s var(--ease), color .25s var(--ease),
-  background .25s var(--ease)}
-.pmove.corner{position:absolute; left:10px; top:10px; margin:0}
-[data-panel]:hover .pmove,.pmove:focus-visible{opacity:1}
-.pmove:hover{color:var(--ink); background:var(--inset)}
-.pmove:active{cursor:grabbing}
-.presize,.presize-c{position:absolute; touch-action:none; z-index:3}
-.presize{right:0; top:18px; bottom:30px; width:12px; cursor:ew-resize; border-radius:6px}
-.presize:hover{background:var(--accent-wash); box-shadow:inset -2px 0 0 var(--accent)}
-.presize-c{right:0; bottom:0; width:24px; height:24px; cursor:nwse-resize; border-radius:0 0 18px 0}
-.presize-c::after{content:""; position:absolute; right:7px; bottom:7px; width:9px; height:9px;
-  border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); border-radius:0 0 3px 0;
-  transition:border-color .25s var(--ease)}
-[data-panel]:hover .presize-c::after{border-color:var(--ink-2)}
-.presize-c:hover::after{border-color:var(--accent)}
-@media (max-width:900px){ .presize,.presize-c{display:none} }
-/* the whole panel is a handle; its working parts are not */
 @media (min-width:901px){
-  [data-panel]{cursor:move}
-  [data-panel] .row,[data-panel] .chip,[data-panel] .track,[data-panel] .editor,
-  [data-panel] table,[data-panel] input,[data-panel] select,[data-panel] textarea,
-  [data-panel] button:not(.pmove),[data-panel] .drop{cursor:auto}
   [data-panel] .row.pick{cursor:pointer}
   [data-panel] .track.scrub{cursor:ew-resize}
-  [data-panel] button:not(.pmove){cursor:pointer}
   [data-panel] [data-grip],[data-panel] .chip{cursor:grab}
 }
-#canvas.free>[data-panel]{transition:box-shadow .3s var(--ease)}
-#canvas.free>[data-panel].lifted{box-shadow:0 28px 60px -18px rgba(0,0,0,.75); border-color:var(--rule)}
-body.panning,body.panning *{cursor:move!important; user-select:none; -webkit-user-select:none}
 .panel{background:color-mix(in srgb, var(--panel) 82%, transparent);
   -webkit-backdrop-filter:blur(22px) saturate(1.3); backdrop-filter:blur(22px) saturate(1.3);
   border:1px solid var(--hair); border-radius:20px; padding:20px 22px 18px; min-width:0}
@@ -583,7 +554,6 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 .oftad-panel::before{content:""; position:absolute; inset:-40% 40% 40% -10%; pointer-events:none;
   background:radial-gradient(circle at 25% 30%, rgba(255,59,48,.16), transparent 62%)}
 .oftad-panel>*{position:relative}
-.oftad-panel>.presize,.oftad-panel>.presize-c{position:absolute}
 #oftad-flash{font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:var(--accent-ink)}
 /* The board knows which thing is worth doing. This is it saying so. */
 #oftad-pick{margin-top:16px; border:1px solid color-mix(in srgb, var(--run) 45%, transparent);
@@ -600,7 +570,6 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
    It is the first thing on the board and the largest sentence on it, because
    it is the only one that answers the question people actually open a board
    with. Orange, not red: it is work under way, not an alarm.            */
-.nowpanel{padding:0; border:0; background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none}
 .nowc{border:1px solid color-mix(in srgb,var(--run) 42%, transparent); border-radius:20px;
   padding:22px 24px 20px; background:color-mix(in srgb,var(--run) 7%, var(--panel));
   display:flex; flex-direction:column; gap:7px}
@@ -625,6 +594,62 @@ button.now-n:hover{color:var(--run)}
 .now-acts{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
 .now-acts .btn.take{color:var(--ink); border-color:color-mix(in srgb,var(--run) 60%, transparent)}
 .now-acts .btn.take:hover{background:color-mix(in srgb,var(--run) 14%, transparent)}
+
+/* ---------------- the badge on the board ----------------
+   The verdict used to open the board as a full panel, which made the one
+   sentence the board exists for look like another section to be read. It is
+   a badge now: an icon, the word, the task, on one line. Pressing the task
+   lands on the work, pressing the icon opens the Planner and the reasoning.
+
+   The icon is the person's own picture. A planner that decides your day
+   should not look like everyone else's, and one chosen from a phone's
+   camera roll is the cheapest way to make that true.                    */
+.nowbadge{grid-column:1/-1; display:flex; align-items:center; gap:14px;
+  border:1px solid color-mix(in srgb,var(--run) 42%, transparent); border-radius:999px;
+  background:color-mix(in srgb,var(--run) 7%, var(--panel)); padding:9px 16px 9px 10px;
+  min-width:0; overflow:hidden}
+.nowbadge[hidden]{display:none}
+.nowbadge.soft,.nowbadge.calm-card,.nowbadge.ask{border-color:var(--hair); background:var(--panel)}
+.nb-ico{flex:none; width:38px; height:38px; border-radius:50%; border:0; padding:0; cursor:pointer;
+  display:grid; place-items:center; overflow:hidden;
+  background:color-mix(in srgb,var(--run) 18%, transparent); color:var(--run);
+  transition:transform .25s var(--ease)}
+.nowbadge.soft .nb-ico,.nowbadge.calm-card .nb-ico,.nowbadge.ask .nb-ico{
+  background:var(--inset); color:var(--ink-2)}
+.nb-ico:hover{transform:scale(1.06)}
+.nb-ico img{width:100%; height:100%; object-fit:cover; display:block}
+.nb-ico svg{width:19px; height:19px}
+.nb-k{flex:none; font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--run)}
+.nowbadge.soft .nb-k,.nowbadge.calm-card .nb-k,.nowbadge.ask .nb-k{color:var(--muted)}
+.nb-n{flex:1 1 auto; min-width:0; font:inherit; font-size:16px; color:var(--ink); text-align:left;
+  background:transparent; border:0; padding:0; cursor:pointer; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; transition:color .2s var(--ease)}
+.nb-n:hover{color:var(--run)}
+.nb-where{flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); border:1px solid var(--hair);
+  border-radius:999px; padding:3px 9px; white-space:nowrap}
+.nb-go{flex:none; width:30px; height:30px; border:0; border-radius:50%; background:transparent;
+  color:var(--muted); cursor:pointer; display:grid; place-items:center;
+  transition:color .2s var(--ease), background .2s var(--ease)}
+.nb-go:hover{color:var(--ink); background:var(--inset)}
+.nb-go svg{width:15px; height:15px}
+@media (max-width:640px){
+  .nowbadge{gap:10px; padding:8px 11px 8px 8px}
+  .nb-where{display:none}
+  .nb-n{font-size:15px}
+  .nb-ico{width:34px; height:34px}
+}
+.iconrow{display:flex; align-items:center; gap:14px; margin-top:16px; flex-wrap:wrap}
+.iconrow .prev{width:52px; height:52px; border-radius:50%; overflow:hidden; flex:none;
+  background:var(--inset); display:grid; place-items:center; color:var(--ink-2)}
+.iconrow .prev img{width:100%; height:100%; object-fit:cover; display:block}
+.iconrow .prev svg{width:24px; height:24px}
+.iconrow p{margin:0; flex:1 1 210px; font-size:12.5px; color:var(--muted); line-height:1.5}
+/* the news in the banner is read, not pressed */
+.tick-item.news{cursor:default}
+.tick-item.news .tk{color:var(--ink-2)}
+.tick-item.news b{font-weight:450}
 
 /* ---------------- the planner page ---------------- */
 .plgrid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px}
@@ -690,6 +715,15 @@ button.now-n:hover{color:var(--run)}
 .ivpick button:hover{border-color:var(--rule); color:var(--ink)}
 .ivpick button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-wash);
   color:var(--ink)}
+.ivpick.multi{flex-direction:row; flex-wrap:wrap}
+.ivpick.multi button{flex:1 1 120px; text-align:center; border-radius:999px; padding:11px 14px}
+.feedrow{display:flex; gap:6px; flex-wrap:wrap}
+.feedrow button{font:inherit; font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  width:auto; padding:0 12px; height:34px; border-radius:999px; border:1px solid var(--hair);
+  background:transparent; color:var(--muted); cursor:pointer; text-transform:uppercase;
+  transition:all .2s var(--ease)}
+.feedrow button[aria-pressed="true"]{border-color:var(--accent); color:var(--ink);
+  background:var(--accent-wash)}
 .iv-acts{display:flex; gap:10px; justify-content:flex-end; margin-top:22px}
 .iv-acts .btn.take{color:var(--ink); border-color:rgba(255,59,48,.5)}
 .iv-acts .btn.take:hover{background:var(--accent-wash)}
@@ -873,8 +907,15 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     -webkit-backdrop-filter:none; backdrop-filter:none}
   .rail button[aria-current="page"]{box-shadow:none; color:var(--accent)}
 
-  /* the banner keeps its flat red badge: the alarm is not moulded in */
+  /* the banner and the verdict keep their flat fills: the two things
+     allowed to shout are not moulded into the background */
   .tick{border:0; box-shadow:var(--nm-out); background:var(--nm-bg); border-radius:16px}
+  .nowbadge{box-shadow:var(--nm-out)}
+  .nowbadge.soft,.nowbadge.calm-card,.nowbadge.ask{border:0; background:var(--nm-bg)}
+  .feedrow button,.dayrow button{background:var(--nm-bg); border:0; box-shadow:var(--nm-out-sm)}
+  .feedrow button[aria-pressed="true"],.dayrow button[aria-pressed="true"]{
+    box-shadow:var(--nm-in-sm); background:var(--nm-bg); color:var(--accent-ink)}
+  .iconrow .prev{background:var(--nm-bg); box-shadow:var(--nm-in-sm)}
 
   /* the assistant */
   #bot-orb{box-shadow:var(--nm-out)}
@@ -984,7 +1025,6 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="controls">
       <button class="btn" id="btn-theme" aria-label="Colour theme"><span id="theme-ico"></span><span id="theme-label">System</span></button>
       <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
-      <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
       <button class="btn" id="btn-account">Sign in</button>
     </div>
@@ -1004,9 +1044,7 @@ try{var _t=localStorage.getItem("oys-theme");
   <section class="view is-on" id="v-board" aria-label="Board">
 
   <div id="canvas">
-  <section class="panel nowpanel" data-panel="now" aria-label="What to do now">
-    <div class="nowc" id="now-card"></div>
-  </section>
+  <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
       <div class="k-label">Overall</div>
@@ -1153,6 +1191,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <button class="btn" id="pl-interview">Interview me again</button>
     </div>
     <div class="nowc" id="now-card-2"></div>
+    <input type="file" id="pl-icon-file" accept="image/*" hidden>
 
     <div class="plgrid">
       <section class="panel flat" aria-label="Your week">
@@ -1433,6 +1472,54 @@ function clamp(n,a,b){ return n<a?a:(n>b?b:n); }
 function uid(p){ return p+Math.random().toString(36).slice(2,8); }
 
 /* ---------------- state ---------------- */
+/* Everything below runs before the first boot, because boot migrates the
+   saved board against these lists and a var assigned later is undefined
+   when it gets there. */
+/* which page is showing. Declared here because the first render reads it. */
+var curView="board";
+var WHERES=[
+  ["any",  "Anywhere",        "nothing stops it"],
+  ["desk", "At a screen",     "a laptop and quiet"],
+  ["work", "At work",         "only on the clock, in the office"],
+  ["home", "At home",         "only off the clock"],
+  ["body", "Training",        "a gym, a bike, a road, and energy"],
+  ["out",  "Out and about",   "shops, offices, other people's hours"]
+];
+function whereLabel(w){
+  for(var i=0;i<WHERES.length;i++) if(WHERES[i][0]===w) return WHERES[i][1];
+  return "Anywhere";
+}
+var DAYS_SHORT=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var SHARP=[["morning","Morning"],["afternoon","Afternoon"],["evening","Evening"]];
+/* The banner already runs. Once it is running, the cheapest thing it can
+   also carry is what is happening outside the board, so the same strip
+   does both. It is off until someone asks for it in the interview.     */
+var FEEDS=[["tech","Tech"],["finance","Finance"],["football","Football"],
+           ["world","World"],["science","Science"],["denmark","Denmark"]];
+function feedLabel(k){
+  for(var i=0;i<FEEDS.length;i++) if(FEEDS[i][0]===k) return FEEDS[i][1];
+  return "News";
+}
+var GYMWIN=[["morning","Before work"],["lunch","At lunch"],["evening","After work"],
+            ["weekend","Weekends only"],["none","Not at the moment"]];
+/* A first guess, so nobody has to label fifteen goals before the board is
+   useful. Every one of these is editable, and the interview shows them all
+   at the end and asks you to correct it. */
+function guessWhere(name){
+  var n=String(name||"").toLowerCase();
+  if(/shred|airbike|air bike|run|gym|workout|train|lift|cardio|swim|walk|yoga|stretch/.test(n)) return "body";
+  if(/shop|buy|bank|doctor|dentist|post|collect|pick up|errand|appointment|visit/.test(n)) return "out";
+  if(/sap|client|service desk|stakeholder|colleague|team|meeting|onboard|migration|datasphere|power platform|azure|databricks|adf/.test(n)) return "work";
+  if(/read|book|chapter|course|write|study|learn|app|code|build|design|tracker|certificate/.test(n)) return "desk";
+  return "any";
+}
+/* Three places used to build a goal by hand and they drifted apart: the
+   assistant's was missing prio, so the next render threw on prio.toUpperCase
+   and the whole board went blank behind a caught error. One maker now. */
+function newGoal(name){
+  var n=String(name||"").trim();
+  return {id:uid("g"), name:n, subs:[], due:"", prio:"mid", tags:[], where:guessWhere(n)};
+}
 var state=boot();
 
 function blankState(){
@@ -1466,43 +1553,10 @@ function allTags(){
    the six or seven facts that decide whether a thing is possible in the
    next hour. It is filled in by an interview, changed on the Planner page,
    and it never leaves this browser.                                     */
-var WHERES=[
-  ["any",  "Anywhere",        "nothing stops it"],
-  ["desk", "At a screen",     "a laptop and quiet"],
-  ["work", "At work",         "only on the clock, in the office"],
-  ["home", "At home",         "only off the clock"],
-  ["body", "Training",        "a gym, a bike, a road, and energy"],
-  ["out",  "Out and about",   "shops, offices, other people's hours"]
-];
-function whereLabel(w){
-  for(var i=0;i<WHERES.length;i++) if(WHERES[i][0]===w) return WHERES[i][1];
-  return "Anywhere";
-}
-var DAYS_SHORT=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-var SHARP=[["morning","Morning"],["afternoon","Afternoon"],["evening","Evening"]];
-var GYMWIN=[["morning","Before work"],["lunch","At lunch"],["evening","After work"],
-            ["weekend","Weekends only"],["none","Not at the moment"]];
-/* A first guess, so nobody has to label fifteen goals before the board is
-   useful. Every one of these is editable, and the interview shows them all
-   at the end and asks you to correct it. */
-function guessWhere(name){
-  var n=String(name||"").toLowerCase();
-  if(/shred|airbike|air bike|run|gym|workout|train|lift|cardio|swim|walk|yoga|stretch/.test(n)) return "body";
-  if(/shop|buy|bank|doctor|dentist|post|collect|pick up|errand|appointment|visit/.test(n)) return "out";
-  if(/sap|client|service desk|stakeholder|colleague|team|meeting|onboard|migration|datasphere|power platform|azure|databricks|adf/.test(n)) return "work";
-  if(/read|book|chapter|course|write|study|learn|app|code|build|design|tracker|certificate/.test(n)) return "desk";
-  return "any";
-}
-/* Three places used to build a goal by hand and they drifted apart: the
-   assistant's was missing prio, so the next render threw on prio.toUpperCase
-   and the whole board went blank behind a caught error. One maker now. */
-function newGoal(name){
-  var n=String(name||"").trim();
-  return {id:uid("g"), name:n, subs:[], due:"", prio:"mid", tags:[], where:guessWhere(n)};
-}
 function freshMe(){
   return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"], commute:30,
-          sharp:"morning", gym:"evening", wind:"22:30", north:"", never:""};
+          sharp:"morning", gym:"evening", wind:"22:30", north:"", never:"",
+          feeds:[], brief:"07:30", icon:""};
 }
 function toGoals(){
   if(!state.archive) state.archive=[];
@@ -1514,6 +1568,8 @@ function toGoals(){
   for(var k in d) if(me[k]===undefined) me[k]=d[k];
   if(!Array.isArray(me.days)) me.days=d.days;
   if(!Array.isArray(me.work)||me.work.length!==2) me.work=d.work;
+  if(!Array.isArray(me.feeds)) me.feeds=[];
+  me.feeds=me.feeds.filter(function(k){ return FEEDS.some(function(f){ return f[0]===k; }); });
   state.groups.concat(state.archive).forEach(function(g){
     if(g.due===undefined) g.due="";
     if(!g.prio) g.prio="mid";
@@ -1556,9 +1612,8 @@ function boot(){
   /* the tutor answers aloud unless it has been turned off, because a
      conversation that only listens is not a conversation                */
   if(s.speak===undefined) s.speak=true;
-  /* Always tidy. Panels move while you work, and every open starts from
-     the grid again rather than from wherever last week left them.    */
-  s.free=false; s.layout={};
+  /* the grid is the only layout now; anything a older build saved goes */
+  delete s.free; delete s.layout;
   /* sync adds any goal the seed grew since last time, and those arrive
      without the fields toGoals fills in, so it runs on both sides of it */
   state=s; toGoals(); sync(); toGoals();
@@ -1854,7 +1909,7 @@ var rollNote="";
   state.plan.forEach(function(c){ c.carried=true; });
   state.done=[];
   rollNote = carried ? carried+" carried over from "+state.day : "";
-  state.day=t; state.notified="";
+  state.day=t; state.notified=""; state.told=null;
   keepSnapshot(state.day);
   touchHist(); save();
 })();
@@ -1973,8 +2028,43 @@ function verdictNot(v){
     out.push("Next after it is "+v.next.s.name+", in "+v.next.g.name+". Not now.");
   return out;
 }
+var I_PLANNER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+var I_ARROW='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/></svg>';
+function plannerIcon(){
+  var u=(state.me&&state.me.icon)||"";
+  return u ? '<img src="'+esc(u)+'" alt="">' : I_PLANNER;
+}
+/* the one line, on one line */
+function renderBadge(){
+  var bar=$("#now-badge"); if(!bar) return;
+  var me=state.me||freshMe();
+  var ico='<button class="nb-ico" id="nb-ico" aria-label="Open the planner">'+plannerIcon()+'</button>';
+  if(!me.done){
+    bar.hidden=false; bar.className="nowbadge ask";
+    bar.innerHTML=ico+'<span class="nb-k">Planner</span>'+
+      '<button class="nb-n" id="now-interview">It has not met you yet. One minute, eight questions.</button>'+
+      '<button class="nb-go" data-goto-view="planner" aria-label="Open the planner">'+I_ARROW+'</button>';
+    return;
+  }
+  var v=verdict();
+  bar.hidden=false;
+  if(v.none){
+    bar.className="nowbadge calm-card";
+    bar.innerHTML=ico+'<span class="nb-k">Right now</span>'+
+      '<button class="nb-n" data-goto-view="planner">Nothing, and that is the answer.</button>'+
+      '<button class="nb-go" data-goto-view="planner" aria-label="Why">'+I_ARROW+'</button>';
+    return;
+  }
+  bar.className="nowbadge"+(v.soft?" soft":"");
+  bar.innerHTML=ico+'<span class="nb-k">Do this now</span>'+
+    '<button class="nb-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'" title="'+
+      esc(verdictWhy(v))+'">'+esc(v.s.name)+'</button>'+
+    '<span class="nb-where">'+esc(whereLabel(v.g.where))+'</span>'+
+    '<button class="nb-go" data-goto-view="planner" aria-label="Why this one">'+I_ARROW+'</button>';
+}
 function renderVerdict(){
-  var box=$("#now-card"); if(!box) return;
+  renderBadge();
+  var box=$("#now-card-2"); if(!box) return;
   var me=state.me||freshMe();
   if(!me.done){
     box.className="nowc ask";
@@ -2253,6 +2343,38 @@ function drawSpark(){
    twice and the animation slides it exactly half its width, which is why the
    loop has no seam. The speed is set from the measured width, so a long list
    and a short one move at the same pace rather than the same duration.   */
+/* ---------------- the world, in the same strip ----------------
+   A browser cannot read a news feed from this origin, and the feed is XML,
+   so a small function on the same server fetches it and hands back titles.
+   There is no server behind a local file or inside an artifact frame, so
+   the call simply fails there and the banner carries the board alone.
+
+   It is fetched once on load and every fifteen minutes after, and held in
+   this tab only. Nothing about the board is sent with the request.      */
+var NEWS=[], newsAt=0, newsBusy=false, newsOff=false;
+function newsItems(){ return NEWS; }
+function loadNews(force){
+  var me=state.me||freshMe(), want=(me.feeds||[]).slice(0,6);
+  if(!want.length){ if(NEWS.length){ NEWS=[]; renderTick(); } return; }
+  if(newsBusy||newsOff) return;
+  if(!force && Date.now()-newsAt < 900000) return;
+  if(location.protocol.indexOf("http")!==0) return;   /* no server, no news */
+  newsBusy=true;
+  fetch("/api/news?f="+encodeURIComponent(want.join(",")))
+    .then(function(r){
+      /* An artifact frame and a plain static host have no function behind
+         this path. One 404 is enough to know; stop asking. */
+      if(r.status===404){ newsOff=true; return {items:[]}; }
+      return r.ok ? r.json() : {items:[]};
+    })
+    .then(function(j){
+      NEWS=(j.items||[]).map(function(x){
+        return {news:true, kind:feedLabel(x.k), t:String(x.t||"").slice(0,140), w:String(x.s||"")};
+      });
+      newsAt=Date.now(); newsBusy=false; renderTick();
+    })
+    .catch(function(){ newsBusy=false; newsAt=Date.now()-840000; });   /* try again in a minute */
+}
 var TICK_SPEED=80; /* pixels a second */
 /* The panel carries the full reason. The banner carries only what tells you
    whether to press it: how late, how loud, how far along. The subtask it
@@ -2263,19 +2385,28 @@ function tickWhy(a){
   return (n!==null?dueLabel(g):"no deadline")+" \u00b7 "+groupPct(g)+"%";
 }
 function tickItem(a){
+  if(a.news)
+    return '<span class="tick-item news"><span class="tk">'+esc(a.kind)+'</span>'+
+      '<b>'+esc(a.t)+'</b>'+(a.w?'<span>'+esc(a.w)+'</span>':"")+
+      '<span class="tick-sep"></span></span>';
   return '<button class="tick-item'+(a.score>=150?" crit":"")+'" data-goto-goal="'+a.gid+
     '" data-goto-sub="'+esc(a.sid)+'"><span class="tk">'+esc(a.kind)+'</span>'+
     '<b>'+esc(a.t)+'</b><span>'+esc(tickWhy(a))+'</span><span class="tick-sep"></span></button>';
 }
 function renderTick(){
   var bar=$("#tick"), run=$("#tick-run"); if(!bar||!run) return;
+  /* It reports on the board, so it lives on the board. On Tags, Backlog,
+     Archive and the Planner it would be reporting on a page you are not
+     looking at.                                                          */
+  if(curView!=="board"){ bar.hidden=true; run.innerHTML=""; return; }
   var al=alerts();
-  if(!al.length){ bar.hidden=true; run.innerHTML=""; return; }
+  if(!al.length && !newsItems().length){ bar.hidden=true; run.innerHTML=""; return; }
   bar.hidden=false;
   var hot=screaming()>0;
   bar.classList.toggle("hot",hot);
-  $("#tick-tag").textContent = hot ? "Needs a look now" : "Needs a look";
-  var strip=al.slice(0,8).map(tickItem).join("");
+  $("#tick-tag").textContent = hot ? "Needs a look now"
+    : (alerts().length ? "Needs a look" : "Live");
+  var strip=al.slice(0,8).concat(newsItems()).slice(0,20).map(tickItem).join("");
   run.innerHTML=strip+strip;              /* twice, so -50% lands on the seam */
   /* the run is two copies, so one lap is half of what the browser measures */
   requestAnimationFrame(function(){
@@ -2379,8 +2510,6 @@ function renderAll(){
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
   /* content can change a panel's height, so re-separate before measuring */
-  if(typeof resolveOverlaps==="function") resolveOverlaps(null);
-  if(typeof fitCanvas==="function") fitCanvas();
 }
 renderAll();
 bindSeek();
@@ -2945,14 +3074,57 @@ function remindState(){
   var ok=("Notification" in window)&&Notification.permission==="granted";
   RB.setAttribute("aria-pressed",ok?"true":"false");
   RB.lastChild.textContent=ok?"Reminders on":"Reminders off";
-  if(ok&&!timer){ timer=setInterval(checkRemind,600000); checkRemind(); }
+  if(ok&&!timer){ timer=setInterval(checkRemind,60000); checkRemind(); }
+}
+/* ---------------- the morning brief ----------------
+   One notification a day, at the time you set, carrying the decision rather
+   than a list: the task, why it and not the next one, and what is held back
+   until later. A second one in the afternoon says what is still open.
+
+   The honest limit: this fires while the board is running, whether that is
+   a tab or the app on a home screen. Nothing here can wake a phone that has
+   the app fully closed, because that needs a push server holding a key for
+   every device, and this board keeps everything in your own browser. Opening
+   it in the morning is what triggers it, and it still fires if it was left
+   open overnight.                                                        */
+function briefText(){
+  var v=verdict();
+  if(v.none||!v.s) return {t:"Nothing this morning", b:"Everything that can be done in this hour is done, blocked or already picked up."};
+  var held=(v.blocked||[])[0];
+  return {
+    t: v.s.name,
+    b: verdictWhy(v) + (held ? "\n\nHeld back: " + held.g.name + ", " + held.why + "." : "")
+  };
+}
+function fire(title,body,tag){
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.ready && navigator.serviceWorker.controller){
+      navigator.serviceWorker.ready.then(function(reg){
+        reg.showNotification(title,{body:body,tag:tag,icon:"icon-192.png",badge:"icon-192.png"});
+      }).catch(function(){ new Notification(title,{body:body,tag:tag}); });
+      return;
+    }
+    new Notification(title,{body:body,tag:tag});
+  }catch(e){}
 }
 function checkRemind(){
   if(!("Notification" in window)||Notification.permission!=="granted") return;
-  var open=state.oftad.concat(state.plan), h=new Date().getHours(), key=todayStr()+"|pm";
-  if(h>=15&&open.length&&state.notified!==key){
-    state.notified=key; save();
-    try{ new Notification("One task a day",{body:open.length+" still open: "+open.slice(0,3).map(cardName).join(", "),tag:"oys-today"}); }catch(e){}
+  var me=state.me||freshMe(), now=new Date(), mins=now.getHours()*60+now.getMinutes();
+  var today=todayStr();
+  if(!state.told||state.told.d!==today) state.told={d:today, am:false, pm:false};
+
+  /* the morning one, any time from the set time onwards, once */
+  if(!state.told.am && me.done && mins>=hm(me.brief||"07:30")){
+    state.told.am=true; save();
+    var br=briefText();
+    fire("Today: "+br.t, br.b, "oys-brief");
+    return;
+  }
+  /* and the afternoon check on what was actually taken on */
+  var open=state.oftad.concat(state.plan);
+  if(!state.told.pm && now.getHours()>=15 && open.length){
+    state.told.pm=true; save();
+    fire("Still open", open.length+" still open: "+open.slice(0,3).map(cardName).join(", "), "oys-today");
   }
 }
 RB.addEventListener("click",function(){
@@ -2960,7 +3132,7 @@ RB.addEventListener("click",function(){
   if(Notification.permission==="granted"){
     clearInterval(timer); timer=null;
     RB.setAttribute("aria-pressed","false"); RB.lastChild.textContent="Reminders off";
-    state.notified=todayStr()+"|pm"; save(); return;
+    state.told={d:todayStr(), am:true, pm:true}; save(); return;
   }
   Notification.requestPermission().then(remindState);
 });
@@ -3002,198 +3174,19 @@ $("#io-reset").addEventListener("click",function(){
 });
 
 /* ---------------- movable panels ---------------- */
-var CANVAS=$("#canvas"), zTop=10;
-var MOVEICON='<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'+
- '<circle cx="4" cy="4" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="12" cy="4" r="1.4"/>'+
- '<circle cx="4" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12" cy="8" r="1.4"/>'+
- '<circle cx="4" cy="12" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/></svg>';
-function panels(){ return Array.prototype.slice.call(CANVAS.querySelectorAll("[data-panel]")); }
-function wide(){ return window.innerWidth>=900; }
-function isFree(){ return !!CANVAS && CANVAS.classList.contains("free"); }
-if(!state.layout) state.layout={};
-
-panels().forEach(function(el){
-  var head=el.querySelector(".p-head");
-  var grip=document.createElement("button");
-  grip.type="button"; grip.className="pmove"; grip.setAttribute("data-pmove","");
-  grip.setAttribute("aria-label","Move this panel"); grip.innerHTML=MOVEICON;
-  if(head){ head.setAttribute("data-pmove",""); head.insertBefore(grip,head.firstChild); }
-  else { grip.classList.add("corner"); el.appendChild(grip); }
-  var rz=document.createElement("span");
-  rz.className="presize"; rz.setAttribute("data-presize",""); rz.setAttribute("aria-hidden","true");
-  el.appendChild(rz);
-  var cz=document.createElement("span");
-  cz.className="presize-c"; cz.setAttribute("data-presize-c",""); cz.setAttribute("aria-hidden","true");
-  el.appendChild(cz);
-});
-
-function place(el,x,y,w,h){
-  var id=el.dataset.panel, prev=state.layout[id]||{};
-  if(h===undefined) h=prev.h;
-  el.style.left=x+"px"; el.style.top=y+"px"; el.style.width=w+"px";
-  if(h){ el.style.height=h+"px"; el.style.overflowY="auto"; }
-  else { el.style.height=""; el.style.overflowY=""; }
-  state.layout[id]={x:x,y:y,w:w,h:h||0};
-}
-var PGAP=28;   /* wide enough that the camera tilt can never fake a collision */
-function pRect(el){
-  var L=state.layout[el.dataset.panel]||{x:0,y:0,w:el.offsetWidth};
-  return {el:el, id:el.dataset.panel, x:L.x, y:L.y, w:L.w||el.offsetWidth, h:el.offsetHeight};
-}
-function hits(a,b){
-  return a.x < b.x+b.w-1 && b.x < a.x+a.w-1 && a.y < b.y+b.h-1 && b.y < a.y+a.h-1;
-}
-/* the panel under your hand holds its place; whatever it touches steps below it,
-   and the push cascades until nothing overlaps. */
-var lastMoved="";
-function resolveOverlaps(activeId){
-  if(!isFree()) return;
-  if(activeId===null||activeId===undefined) activeId=lastMoved;
-  var all=panels().map(pRect);
-  var active=null, rest=[];
-  all.forEach(function(r){ if(r.id===activeId) active=r; else rest.push(r); });
-  rest.sort(function(a,b){ return a.y-b.y || a.x-b.x; });
-  var order=(active?[active]:[]).concat(rest);
-  for(var pass=0; pass<8; pass++){
-    var moved=false;
-    for(var i=0;i<order.length;i++){
-      for(var j=i+1;j<order.length;j++){
-        if(hits(order[i],order[j])){
-          order[j].y=order[i].y+order[i].h+PGAP;
-          moved=true;
-        }
-      }
-    }
-    if(!moved) break;
-    order.sort(function(a,b){ return (a.id===activeId?-1:b.id===activeId?1:0) || a.y-b.y; });
-  }
-  order.forEach(function(r){ if(r.id!==activeId) place(r.el,r.x,Math.max(0,Math.round(r.y)),r.w); });
-}
-function fitCanvas(){
-  if(!CANVAS) return;
-  if(!isFree()){ CANVAS.style.height=""; return; }
-  var h=0;
-  panels().forEach(function(el){ h=Math.max(h,el.offsetTop+el.offsetHeight); });
-  CANVAS.style.height=(h+40)+"px";
-}
-/* freeze every panel exactly where it already sits, then let it float */
-function goFree(){
-  if(!CANVAS||isFree()) return;
-  var box=CANVAS.getBoundingClientRect();
-  var snap=panels().map(function(el){
-    var r=el.getBoundingClientRect();
-    return [el,Math.round(r.left-box.left),Math.round(r.top-box.top),Math.round(r.width)];
-  });
-  CANVAS.classList.add("free");
-  snap.forEach(function(a){ place(a[0],a[1],a[2],a[3]); });
-  state.free=true; $("#btn-layout").hidden=false; save(); fitCanvas();
-}
-function setFlow(){
-  if(!CANVAS) return;
-  CANVAS.classList.remove("free"); CANVAS.style.height="";
-  panels().forEach(function(el){
-    el.style.left=el.style.top=el.style.width=el.style.zIndex="";
-    el.style.height=""; el.style.overflowY="";
-  });
-}
-function applyLayout(){
-  if(!CANVAS) return;
-  if(!state.free||!wide()){ setFlow(); $("#btn-layout").hidden=!state.free; return; }
-  CANVAS.classList.add("free");
-  panels().forEach(function(el){
-    var L=state.layout[el.dataset.panel];
-    if(L) place(el,L.x,L.y,L.w,L.h);
-  });
-  $("#btn-layout").hidden=false;
-  resolveOverlaps(null);          /* a layout saved before this rule still lands clean */
-  fitCanvas();
-}
-$("#btn-layout").addEventListener("click",function(){
-  state.free=false; state.layout={}; save(); setFlow(); $("#btn-layout").hidden=true;
-});
-
-var pdrag=null;
-/* anything that does its own job with a pointer is never a drag handle */
-var NOGRAB=".row,.chip,.editor,table,input,select,textarea,a,label,"+
-           "button:not(.pmove),[data-grip],[data-card],[data-scrub],.track,summary,.bot-log";
-document.addEventListener("pointerdown",function(e){
-  if(e.button!==undefined&&e.button>0) return;
-  if(!wide()) return;
-  var cz=e.target.closest("[data-presize-c]");
-  var rz=cz?null:e.target.closest("[data-presize]");
-  var el;
-  if(cz||rz) el=(cz||rz).closest("[data-panel]");
-  else {
-    if(e.target.closest(NOGRAB)) return;
-    el=e.target.closest("[data-panel]");
-  }
-  if(!el) return;
-  e.preventDefault(); e.stopPropagation();
-  goFree();
-  pdrag={el:el,pid:e.pointerId,mode:cz?"corner":(rz?"size":"move"),
-         ox:el.offsetLeft, oy:el.offsetTop, w0:el.offsetWidth, h0:el.offsetHeight,
-         x0:e.clientX, y0:e.clientY, s0:window.scrollY, lx:e.clientX, ly:e.clientY};
-  el.style.zIndex=++zTop; el.classList.add("lifted");
-  document.body.classList.add("panning");
-  try{ (rz||h).setPointerCapture(e.pointerId); }catch(err){}
-  hideTip();
-},true);
-function panelStep(){
-  if(!pdrag) return;
-  var W=CANVAS.clientWidth;
-  var dx=pdrag.lx-pdrag.x0, dy=(pdrag.ly-pdrag.y0)+(window.scrollY-pdrag.s0);
-  var L=state.layout[pdrag.el.dataset.panel];
-  if(pdrag.mode==="size"||pdrag.mode==="corner"){
-    var w=Math.round((pdrag.w0+dx)/10)*10;
-    w=Math.max(280,Math.min(w,W-pdrag.ox));
-    pdrag.el.style.width=w+"px"; if(L) L.w=w;
-    if(pdrag.mode==="corner"){
-      var hh=Math.max(140,Math.round((pdrag.h0+dy)/10)*10);
-      pdrag.el.style.height=hh+"px"; pdrag.el.style.overflowY="auto"; if(L) L.h=hh;
-    }
-  } else {
-    var x=Math.round((pdrag.ox+dx)/10)*10, y=Math.round((pdrag.oy+dy)/10)*10;
-    x=Math.max(0,Math.min(x,Math.max(0,W-pdrag.el.offsetWidth)));
-    place(pdrag.el,x,Math.max(0,y),pdrag.el.offsetWidth);
-  }
-  resolveOverlaps(pdrag.el.dataset.panel);
-  fitCanvas();
-}
-/* a panel drag scrolls the page at the edges too, so a panel at the
-   bottom of a long board can be carried to the top */
-var panRAF=null;
-function panLoop(){
-  if(!pdrag){ panRAF=null; return; }
-  var y=pdrag.ly, H=window.innerHeight, Z=130, sp=0;
-  if(y<Z) sp=-(1-y/Z)*26;
-  else if(y>H-Z) sp=(1-(H-y)/Z)*26;
-  if(sp) window.scrollBy(0,sp);
-  panelStep();
-  panRAF=requestAnimationFrame(panLoop);
-}
-document.addEventListener("pointermove",function(e){
-  if(!pdrag||e.pointerId!==pdrag.pid) return;
-  e.preventDefault();
-  pdrag.lx=e.clientX; pdrag.ly=e.clientY;
-  panelStep();
-  if(!panRAF) panRAF=requestAnimationFrame(panLoop);
-},true);
-function endPanel(e){
-  if(!pdrag||e.pointerId!==pdrag.pid) return;
-  pdrag.el.classList.remove("lifted");
-  var id=pdrag.el.dataset.panel; lastMoved=id; pdrag=null;
-  if(panRAF){ cancelAnimationFrame(panRAF); panRAF=null; }
-  document.body.classList.remove("panning");
-  resolveOverlaps(id); save(); fitCanvas();
-}
-document.addEventListener("pointerup",endPanel,true);
-document.addEventListener("pointercancel",endPanel,true);
+/* ---------------- the board is a grid, and it stays one ----------------
+   Panels used to be draggable and resizable, which meant the board could be
+   left in a mess and every open needed a Tidy up button to undo it. The
+   grid already knows where everything goes and it reflows on its own at
+   every width, so the handles, the free mode and the button are gone. What
+   is left is the one thing they were hiding: the layout is not yours to
+   maintain.                                                              */
+var CANVAS=$("#canvas");
 var wasStrip=stripMode();
 addEventListener("resize",function(){
-  applyLayout();
   if(stripMode()!==wasStrip){ wasStrip=stripMode(); renderMain(); }
 });
-applyLayout();
+function wide(){ return window.innerWidth>=900; }
 
 /* ---------------- daily mirror ----------------
    The board lives in this browser. A scheduled reminder cannot read
@@ -4437,7 +4430,6 @@ function ease(el,to,dec,suffix){
    the glide that carried them with them. Half built is not a feature, and a
    page that arrives after your hand has no place on a board you drag things
    on. What is left is the half that belonged here.                       */
-var curView="board";
 /* ---------------- 2. parallax ----------------
    Every layer answers the same scroll at its own rate. The sky moves
    most, the wide panels next, the day's cards least, so the page reads
@@ -4491,7 +4483,7 @@ function driftFrame(){
 }
 function wake(){ driftIdle=0; if(!driftRAF) driftRAF=requestAnimationFrame(driftFrame); }
 /* anything being dragged gets the board back at once, with no lag to fight */
-var GRAB="[data-grip],[data-card],[data-scrub],.presize,.presize-c,.pmove,#bot-orb,.track";
+var GRAB="[data-grip],[data-card],[data-scrub],#bot-orb,.track";
 addEventListener("pointerdown",function(e){
   if(e.target.closest && e.target.closest(GRAB)){ driftHold++; setLag(0); wake(); }
 },true);
@@ -4782,7 +4774,6 @@ var I_BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 var I_ARCH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></svg>';
 var I_PLAN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 var PAGES=[["board","Board",I_BOARD],["planner","Planner",I_PLAN],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
-var curView="board";
 
 (function(){
   var rail=$("#rail");
@@ -4807,7 +4798,6 @@ function showView(v){
   document.body.classList.toggle("on-board",v==="board");
   renderAll();
   scrollTo(0,0);
-  if(v==="board"){ try{ fitCanvas(); }catch(e){} }
 }
 function readHash(){
   var m=String(location.hash||"").match(/^#\/([a-z]+)/);
@@ -4841,7 +4831,16 @@ function renderPlanner(){
     '<label class="wide">The one thing that matters most right now'+
       '<input class="f" data-me="north" value="'+esc(me.north||"")+'" placeholder="Ship the tracker before the audit"></label>'+
     '<label class="wide">Never schedule over'+
-      '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>';
+      '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>'+
+    '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
+    '<label class="wide">News in the banner<span class="dayrow feedrow" id="pl-feeds">'+
+      FEEDS.map(function(f){
+        return '<button type="button" data-feed="'+f[0]+'" aria-pressed="'+
+          ((me.feeds||[]).indexOf(f[0])>=0)+'">'+esc(f[1])+"</button>"; }).join("")+'</span></label>'+
+    '<div class="wide iconrow"><span class="prev">'+plannerIcon()+'</span>'+
+      '<p>The planner badge on the board wears this. Choose one from your phone or your computer.</p>'+
+      '<button class="btn" id="pl-icon-pick">Choose a picture</button>'+
+      (me.icon?'<button class="btn" id="pl-icon-clear">Back to the clock</button>':"")+'</div>';
 
   var wl=$("#pl-where");
   wl.innerHTML = state.groups.length ? state.groups.map(function(g){
@@ -4860,12 +4859,6 @@ function renderPlanner(){
   });
   held.innerHTML = rows.length ? rows.join("")
     : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
-  mirrorVerdict();
-}
-/* the page opens with the answer, not with the settings */
-function mirrorVerdict(){
-  var a=$("#now-card"), b2=$("#now-card-2");
-  if(a&&b2){ b2.innerHTML=a.innerHTML; b2.className=a.className; }
 }
 $("#pl-form").addEventListener("input",function(e){
   var k=e.target.dataset.me; if(!k) return;
@@ -4887,6 +4880,51 @@ $("#pl-form").addEventListener("click",function(e){
   b.setAttribute("aria-pressed", me.days.indexOf(i)>=0 ? "true":"false");
   renderVerdict(); renderPlanner2();
 });
+$("#pl-form").addEventListener("click",function(e){
+  var f=e.target.closest("[data-feed]"); if(!f) return;
+  var k=f.dataset.feed, me=state.me, at=(me.feeds||[]).indexOf(k);
+  if(at>=0) me.feeds.splice(at,1); else me.feeds.push(k);
+  me.done=true; save();
+  f.setAttribute("aria-pressed", me.feeds.indexOf(k)>=0 ? "true":"false");
+  loadNews(true);
+});
+/* The picture is squared off and shrunk to 128px before it is kept, because
+   a photo straight off a phone is three megabytes and this has to fit in
+   the same localStorage as the board.                                    */
+function readIcon(file,then){
+  if(!file || !/^image\//.test(file.type)) return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var n=128, c=document.createElement("canvas");
+      c.width=c.height=n;
+      var g=c.getContext("2d"), side=Math.min(img.width,img.height);
+      g.drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,n,n);
+      try{ then(c.toDataURL("image/jpeg",0.82)); }catch(err){ then(""); }
+    };
+    img.onerror=function(){ then(""); };
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+(function(){
+  var inp=$("#pl-icon-file"); if(!inp) return;
+  document.addEventListener("click",function(e){
+    if(e.target.closest("#pl-icon-pick")){ inp.value=""; inp.click(); return; }
+    if(e.target.closest("#pl-icon-clear")){
+      state.me.icon=""; save(); renderVerdict(); renderPlanner(); return;
+    }
+  });
+  inp.addEventListener("change",function(){
+    readIcon(inp.files&&inp.files[0],function(url){
+      if(!url) return;
+      state.me.icon=url; state.me.done=true;
+      try{ save(); }catch(err){ state.me.icon=""; }
+      renderVerdict(); renderPlanner();
+    });
+  });
+})();
 $("#pl-where").addEventListener("change",function(e){
   var id=e.target.dataset.where; if(!id) return;
   var g=gById(id); if(!g) return;
@@ -4903,7 +4941,6 @@ function renderPlanner2(){
   });
   held.innerHTML = rows.length ? rows.join("")
     : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
-  mirrorVerdict();
 }
 
 /* ---------------- the interview ----------------
@@ -4932,6 +4969,9 @@ var IVQ=[
   {k:"north", q:"What is the one thing that matters most right now?",
    n:"One line. It does not score anything on its own; it is what you are shown when the board argues with you.",
    kind:"text", ph:"Ship the tracker before the audit"},
+  {k:"feeds", q:"Should the banner carry the news as well?",
+   n:"The strip across the top already runs. Pick nothing and it carries only your own board. Pick a few and they ride along between your alarms.",
+   kind:"multi", opts:FEEDS},
   {k:"where", q:"Last one. Where does each goal belong?",
    n:"The planner guessed. Correct anything it got wrong, because this is the fact it leans on hardest.",
    kind:"where"}
@@ -4940,7 +4980,7 @@ function ivOpen(){
   var me=state.me||freshMe();
   IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), commute:me.commute,
               sharp:me.sharp, gym:me.gym, wind:me.wind, north:me.north||"",
-              where:{}}};
+              feeds:(me.feeds||[]).slice(), where:{}}};
   state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
   $("#interview").hidden=false;
   ivPaint();
@@ -4972,6 +5012,10 @@ function ivPaint(){
   else if(q.kind==="text")
     h='<label>In one line<input class="f" data-iv="north" value="'+esc(a.north)+'" placeholder="'+
       esc(q.ph||"")+'"></label>';
+  else if(q.kind==="multi")
+    h='<div class="ivpick multi">'+q.opts.map(function(o){
+      return '<button type="button" data-ivmulti="'+q.k+":"+o[0]+'" aria-pressed="'+
+        (a[q.k].indexOf(o[0])>=0)+'">'+esc(o[1])+"</button>"; }).join("")+"</div>";
   else if(q.kind==="pick")
     h='<div class="ivpick">'+q.opts.map(function(o){
       return '<button type="button" data-ivpick="'+q.k+":"+o[0]+'" aria-pressed="'+
@@ -4992,9 +5036,10 @@ function ivSave(){
   me.work=[a.work[0]||"08:00", a.work[1]||"16:30"];
   me.commute=Math.max(0,Math.min(240,+a.commute||0));
   me.sharp=a.sharp; me.gym=a.gym; me.wind=a.wind||"22:30"; me.north=a.north||"";
+  me.feeds=(a.feeds||[]).slice(0,6);
   me.done=true;
   state.groups.forEach(function(g){ if(a.where[g.id]) g.where=a.where[g.id]; });
-  save(); ivClose(); renderAll();
+  save(); ivClose(); renderAll(); loadNews(true);
   if(typeof toast==="function") toast("That is enough to go on. The board will tell you what to do now.");
 }
 (function(){
@@ -5007,6 +5052,12 @@ function ivSave(){
       d.setAttribute("aria-pressed", IV.a.days.indexOf(i)>=0?"true":"false"); return; }
     var pk=e.target.closest("[data-ivpick]");
     if(pk){ var parts=pk.dataset.ivpick.split(":"); IV.a[parts[0]]=parts[1]; ivPaint(); return; }
+    var mu=e.target.closest("[data-ivmulti]");
+    if(mu){
+      var q2=mu.dataset.ivmulti.split(":"), arr=IV.a[q2[0]], at2=arr.indexOf(q2[1]);
+      if(at2>=0) arr.splice(at2,1); else arr.push(q2[1]);
+      mu.setAttribute("aria-pressed", arr.indexOf(q2[1])>=0 ? "true":"false"); return;
+    }
   });
   iv.addEventListener("input",function(e){
     var k=e.target.dataset.iv;
@@ -5129,6 +5180,11 @@ readHash();
 bindSeek();
 setTimeout(nudge,1600);
 setInterval(nudge,1800000);
+
+/* the banner fills with the board at once and the world a moment later */
+loadNews();
+setInterval(function(){ loadNews(); }, 300000);
+addEventListener("visibilitychange",function(){ if(!document.hidden) loadNews(); });
 
 })();
 </script>
