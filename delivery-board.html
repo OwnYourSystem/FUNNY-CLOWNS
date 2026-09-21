@@ -4707,7 +4707,15 @@ function acctPush(){
       headers:{prefer:"resolution=merge-duplicates,return=representation"},
       body:JSON.stringify([{user_id:acct.uid,data:state}])
     });
-  }).then(function(r){ lastPush=Date.now(); paintAccount(); return r; });
+  }).then(function(r){
+    lastPush=Date.now();
+    /* the account's clock, not this device's, so two devices compare the
+       same numbers however far apart their own clocks have drifted */
+    var stamp=(r&&r[0]&&r[0].updated_at) ? new Date(r[0].updated_at).getTime() : lastPush;
+    state.syncedAt=stamp;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    paintAccount(); return r;
+  });
 }
 /* every save nudges this; the write itself waits until you stop typing */
 function syncSoon(){
@@ -4721,6 +4729,7 @@ function adoptRemote(row){
   var keep=JSON.stringify(state);
   try{ localStorage.setItem(KEY+".before-sync",keep); }catch(e){}
   state=row.data;
+  state.syncedAt=new Date(row.updated_at).getTime()||Date.now();
   boot2();
   acctMsg("Board loaded from your account. The copy that was on this device is kept; press Restore to bring it back.");
 }
@@ -4738,14 +4747,35 @@ function boot2(){
   if(!state.hist.length) seedHist();
   rollRecurring(); save(); renderAll();
 }
+/* Which copy wins, on a device that has just opened.
+
+   This used to compare the account's updated_at against state.savedAt, and
+   that was wrong in a way that destroyed boards. savedAt is when THIS
+   browser last wrote to its own localStorage, which happens on almost every
+   interaction, so a device that had just booted always looked newer than
+   the account. Signing in on a phone therefore pushed the phone's empty
+   starter board over the real one and called it a save.
+
+   What matters is not when this browser last wrote, but whether the account
+   has moved since this device last wrote to IT. That is syncedAt: the stamp
+   the account gave back on this device's last successful push.
+
+     no row in the account        this board is the first, push it
+     this device never pushed     the account's copy is the real one, take it
+     account moved since my push  somebody else changed it, take it
+     otherwise                    mine is the newest, push it
+
+   Whenever the account's copy is taken, the copy that was on this device is
+   kept and Restore brings it back, so a wrong guess is never final.     */
 function firstSync(){
   if(!acct||!acct.uid) return Promise.resolve();
   acctMsg("Checking your account…");
   return pullBoard().then(function(row){
     if(!row){ return acctPush().then(function(){ acctMsg("This board is now saved to your account."); }); }
-    var mine=state.savedAt||0, theirs=new Date(row.updated_at).getTime()||0;
-    if(theirs>mine+2000) adoptRemote(row);
-    else return acctPush().then(function(){ acctMsg("Your account has this board."); });
+    var theirs=new Date(row.updated_at).getTime()||0;
+    var lastPushed=state.syncedAt||0;
+    if(!lastPushed || theirs>lastPushed+1000){ adoptRemote(row); return; }
+    return acctPush().then(function(){ acctMsg("Your account has this board."); });
   }).catch(function(e){ acctMsg("Your account did not answer: "+e.message); });
 }
 
