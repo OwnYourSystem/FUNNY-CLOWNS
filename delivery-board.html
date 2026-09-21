@@ -70,6 +70,16 @@
      all. One hue walking from cold grey through orange into green.   */
   --b0:#4A4A55; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
   --grain:.05;
+  /* Neumorphism: one surface, lit from the top left. The phone shell carves
+     everything out of --nm-bg, so a raised thing throws a dark shadow down
+     and right and catches a highlight up and left, and a sunken thing does
+     the same inverted. It needs a mid tone to read, so the phone ground is
+     lifted off the near-black the desktop uses.                          */
+  --nm-bg:#17171D; --nm-hi:rgba(255,255,255,.055); --nm-lo:rgba(0,0,0,.72);
+  --nm-out:-6px -6px 14px var(--nm-hi), 6px 6px 14px var(--nm-lo);
+  --nm-out-sm:-3px -3px 8px var(--nm-hi), 3px 3px 8px var(--nm-lo);
+  --nm-in:inset -4px -4px 10px var(--nm-hi), inset 4px 4px 10px var(--nm-lo);
+  --nm-in-sm:inset -2px -2px 5px var(--nm-hi), inset 2px 2px 5px var(--nm-lo);
   --ease:cubic-bezier(.22,.61,.36,1);
   --font:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -86,6 +96,7 @@
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
     --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
     --grain:.03;
+    --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
   }
 }
 :root[data-theme="light"]{
@@ -99,6 +110,7 @@
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
   --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
   --grain:.03;
+  --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
 }
 
 *{box-sizing:border-box}
@@ -141,6 +153,60 @@ body.flat #canvas{transform:none!important}
 .clock{font-family:var(--mono); font-size:16px; color:var(--accent-ink); font-variant-numeric:tabular-nums;
   letter-spacing:.02em}
 .wk{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.18em}
+
+/* ---------------- the banner under the date ----------------
+   What needs a look does not wait to be scrolled to. It runs across the top
+   of the page on a loop, badge on the left holding still, the words moving
+   right to left. The run is one strip of items printed twice, so sliding it
+   exactly half its width and starting over is seamless. Resting a cursor on
+   it, or pressing hold, stops it where it is.                           */
+.tick{display:flex; align-items:stretch; margin-top:14px; height:46px;
+  border:1px solid var(--hair); border-radius:14px; background:var(--panel); overflow:hidden;
+  transition:border-color .3s var(--ease)}
+.tick[hidden]{display:none}
+.tick-badge{flex:none; display:flex; align-items:center; gap:9px; padding:0 17px;
+  background:var(--accent); color:#fff; font-family:var(--mono); font-size:11px;
+  letter-spacing:.2em; text-transform:uppercase; white-space:nowrap}
+.tick-dot{width:7px; height:7px; border-radius:50%; background:#fff}
+.tick.hot .tick-dot{animation:tickblink 1s steps(1,end) infinite}
+@keyframes tickblink{0%,49%{opacity:1} 50%,100%{opacity:.15}}
+.tick.hot{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.tick-win{flex:1 1 auto; min-width:0; overflow:hidden; display:flex; align-items:center;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 26px),transparent)}
+.tick-run{display:flex; align-items:center; white-space:nowrap; will-change:transform;
+  animation:tickrun var(--tick-t,44s) linear infinite}
+@keyframes tickrun{from{transform:translate3d(0,0,0)} to{transform:translate3d(-50%,0,0)}}
+.tick:hover .tick-run,.tick.held .tick-run{animation-play-state:paused}
+.tick-item{font:inherit; font-size:14px; color:var(--ink-2); background:transparent; border:0;
+  padding:0 20px; cursor:pointer; display:inline-flex; align-items:center; gap:10px;
+  white-space:nowrap; transition:color .2s var(--ease)}
+.tick-item:hover{color:var(--ink)}
+.tick-item b{font-weight:500; color:var(--ink)}
+.tick-item .tk{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted)}
+.tick-item.crit .tk{color:var(--accent-ink)}
+.tick-sep{width:5px; height:5px; border-radius:50%; background:var(--rule); flex:none}
+.tick-hold{flex:none; width:44px; border:0; border-left:1px solid var(--hair); background:transparent;
+  color:var(--ink-2); cursor:pointer; display:grid; place-items:center;
+  transition:color .25s var(--ease), background .25s var(--ease)}
+.tick-hold:hover{color:var(--ink); background:var(--inset)}
+.tick-hold svg{width:14px; height:14px}
+.tick-hold .go{display:none}
+.tick.held .tick-hold .go{display:block}
+.tick.held .tick-hold .stop{display:none}
+@media (prefers-reduced-motion:reduce){
+  .tick-run{animation:none}
+  .tick-win{overflow-x:auto; scrollbar-width:none}
+  .tick-win::-webkit-scrollbar{display:none}
+  .tick.hot .tick-dot{animation:none}
+}
+@media (max-width:640px){
+  .tick{height:42px; margin-top:12px}
+  .tick-badge{padding:0 11px; gap:7px; font-size:9.5px; letter-spacing:.07em}
+  .tick-item{font-size:13px; padding:0 15px}
+  .tick-hold{width:38px}
+}
 .controls{display:flex; gap:10px; flex-wrap:wrap}
 .btn{font:inherit; font-size:13.5px; font-weight:500; color:var(--ink-2); background:transparent;
   border:1px solid var(--hair); border-radius:999px; padding:9px 16px; cursor:pointer;
@@ -530,6 +596,103 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 #oftad-pick .row-btns{margin-top:14px}
 #oftad-pick .btn.take{color:var(--ink); border-color:color-mix(in srgb, var(--run) 60%, transparent)}
 #oftad-pick .btn.take:hover{background:color-mix(in srgb, var(--run) 14%, transparent)}
+/* ---------------- the verdict card ----------------
+   It is the first thing on the board and the largest sentence on it, because
+   it is the only one that answers the question people actually open a board
+   with. Orange, not red: it is work under way, not an alarm.            */
+.nowpanel{padding:0; border:0; background:transparent; -webkit-backdrop-filter:none; backdrop-filter:none}
+.nowc{border:1px solid color-mix(in srgb,var(--run) 42%, transparent); border-radius:20px;
+  padding:22px 24px 20px; background:color-mix(in srgb,var(--run) 7%, var(--panel));
+  display:flex; flex-direction:column; gap:7px}
+.nowc.soft{border-color:var(--hair); background:var(--panel)}
+.nowc.calm-card,.nowc.ask{border-color:var(--hair); background:var(--panel)}
+.now-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--run); display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.nowc.soft .now-k,.nowc.calm-card .now-k,.nowc.ask .now-k{color:var(--muted)}
+.now-where{font-size:10px; letter-spacing:.14em; color:var(--muted); border:1px solid var(--hair);
+  border-radius:999px; padding:3px 9px}
+.now-n{font:inherit; font-size:clamp(23px,2.9vw,34px); font-weight:400; line-height:1.14;
+  letter-spacing:-.035em; color:var(--ink); text-align:left; background:transparent; border:0;
+  padding:0; cursor:pointer; overflow-wrap:anywhere;
+  transition:color .25s var(--ease)}
+button.now-n:hover{color:var(--run)}
+.now-from{font-size:13px; color:var(--muted)}
+.now-w{font-size:14.5px; color:var(--ink-2); line-height:1.6; max-width:68ch}
+.now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
+.now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
+.now-not li::before{content:""; position:absolute; left:0; top:.6em; width:5px; height:5px;
+  border-radius:50%; background:var(--rule)}
+.now-acts{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+.now-acts .btn.take{color:var(--ink); border-color:color-mix(in srgb,var(--run) 60%, transparent)}
+.now-acts .btn.take:hover{background:color-mix(in srgb,var(--run) 14%, transparent)}
+
+/* ---------------- the planner page ---------------- */
+.plgrid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px}
+.panel.flat{transform:none!important}
+#v-planner .nowc{margin-bottom:0}
+.plform{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+.plform label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted); min-width:0}
+.plform .wide{grid-column:1/-1}
+.dayrow{display:flex; gap:6px; flex-wrap:wrap}
+.dayrow button{font:inherit; font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  width:40px; height:34px; border-radius:10px; border:1px solid var(--hair); background:transparent;
+  color:var(--muted); cursor:pointer; text-transform:uppercase;
+  transition:all .2s var(--ease)}
+.dayrow button[aria-pressed="true"]{border-color:var(--accent); color:var(--ink);
+  background:var(--accent-wash)}
+.wherelist{display:flex; flex-direction:column; gap:9px; margin-top:16px; max-height:420px;
+  overflow-y:auto; padding-right:4px}
+.whererow{display:flex; align-items:center; gap:12px}
+.whererow .wn{flex:1 1 auto; min-width:0; font-size:14px; overflow-wrap:anywhere}
+.whererow .xsel,.whererow select.f{flex:0 0 172px; width:172px}
+.heldrow{display:flex; align-items:baseline; gap:12px; padding:11px 0;
+  border-top:1px solid var(--hair); font-size:14px; flex-wrap:wrap}
+.heldrow:first-child{border-top:0}
+.heldrow .hn{color:var(--ink); font-weight:450}
+.heldrow .hw{color:var(--muted); font-size:13px}
+@media (max-width:820px){
+  .plgrid{grid-template-columns:1fr}
+  .plform{grid-template-columns:1fr}
+  .whererow{flex-wrap:wrap}
+  .whererow .xsel,.whererow select.f{flex:1 1 100%; width:100%}
+}
+
+/* ---------------- the interview ----------------
+   One question at a time, because eight fields on one screen is a form and a
+   form is what nobody fills in. Back works, leaving works, and nothing is
+   written until the last answer.                                        */
+#interview{position:fixed; inset:0; z-index:150; display:grid; place-items:center;
+  background:rgba(0,0,0,.6); backdrop-filter:blur(7px); padding:18px}
+#interview[hidden]{display:none}
+#interview .card{width:min(520px,100%); background:var(--panel); border:1px solid var(--rule);
+  border-radius:22px; padding:26px 26px 22px; box-shadow:0 40px 90px -30px rgba(0,0,0,.8);
+  max-height:88vh; overflow-y:auto}
+.iv-top{display:flex; align-items:center; justify-content:space-between; gap:14px}
+.iv-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted)}
+.iv-dots{display:flex; gap:5px; margin:16px 0 18px}
+.iv-dots i{flex:1 1 0; height:3px; border-radius:2px; background:var(--hair)}
+.iv-dots i.on{background:var(--accent)}
+#interview h3{margin:0 0 8px; font-size:clamp(19px,2.4vw,24px); font-weight:400; letter-spacing:-.025em;
+  line-height:1.25}
+#interview .lede{margin:0 0 18px; color:var(--ink-2); font-size:13.5px; line-height:1.6}
+#iv-body{display:flex; flex-direction:column; gap:12px}
+#iv-body .two{display:flex; gap:12px; flex-wrap:wrap}
+#iv-body .two label{flex:1 1 140px}
+#iv-body label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.ivpick{display:flex; flex-direction:column; gap:8px}
+.ivpick button{font:inherit; font-size:14.5px; text-align:left; color:var(--ink-2);
+  background:transparent; border:1px solid var(--hair); border-radius:12px; padding:13px 15px;
+  cursor:pointer; transition:all .2s var(--ease)}
+.ivpick button small{display:block; font-size:12.5px; color:var(--muted); margin-top:2px}
+.ivpick button:hover{border-color:var(--rule); color:var(--ink)}
+.ivpick button[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-wash);
+  color:var(--ink)}
+.iv-acts{display:flex; gap:10px; justify-content:flex-end; margin-top:22px}
+.iv-acts .btn.take{color:var(--ink); border-color:rgba(255,59,48,.5)}
+.iv-acts .btn.take:hover{background:var(--accent-wash)}
 .drop{margin-top:16px; border:1px dashed var(--rule); border-radius:16px; padding:16px; min-height:128px;
   display:flex; flex-wrap:wrap; gap:12px; align-content:flex-start; background:var(--inset);
   transition:border-color .3s var(--ease), background .3s var(--ease)}
@@ -646,6 +809,78 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .tag-grid{grid-template-columns:1fr 1fr}
 }
 
+/* ---------------- the phone shell, carved rather than drawn ----------------
+   On a desktop the board is ink on paper: hairlines, flat planes, a red that
+   does the pointing. A phone is held, so the phone shell is moulded instead.
+   Everything is the one colour, --nm-bg, and what separates a thing from the
+   page is light: a raised thing throws its shadow down and right and keeps a
+   highlight up and left, a sunken one does the same inverted. So the borders
+   go, the translucency goes, and nothing here changes a single value on the
+   board. It is the same board, lit differently.
+
+   Two rules keep it readable rather than mushy. Text and the progress bands
+   keep their full contrast, because a soft surface is no excuse for soft
+   type. And the red stays flat and saturated, because the one thing that is
+   allowed to shout should not look moulded into the background.         */
+@media (max-width:820px){
+  body{background:var(--nm-bg)}
+  .wrap{--panel:var(--nm-bg); --raised:var(--nm-bg); --ground:var(--nm-bg)}
+  /* A moulded surface needs one flat colour to be moulded out of. The river
+     behind the board mottles it, so on the phone it is turned right down: it
+     still answers the Flight switch, it just stops fighting the light.   */
+  #river{opacity:.12}
+  body:not(.on-board) #river{opacity:.06}
+  body::after{opacity:0}
+
+  /* raised: the panels, the cards, the bar along the bottom */
+  .kpis,.panel,.tcard,.gcard,.stub{
+    background:var(--nm-bg); border:0; box-shadow:var(--nm-out); border-radius:20px;
+    -webkit-backdrop-filter:none; backdrop-filter:none}
+  .kpi{border-left:0}
+  .kpi:nth-child(n+3){border-top:0}
+  .kpis{gap:1px}
+  .tcard:hover,.gcard:hover{transform:none}
+  .tcard[aria-pressed="true"]{box-shadow:var(--nm-in); background:var(--nm-bg)}
+
+  /* sunken: anything you type into or read a value out of */
+  .f,.seek,.xsel-btn,.editor,.bot-log{
+    background:var(--nm-bg); border:0; box-shadow:var(--nm-in-sm); border-radius:12px}
+  .editor{box-shadow:var(--nm-in); border-radius:18px}
+  .f:focus,.seek:focus-within{box-shadow:var(--nm-in-sm),0 0 0 1.5px var(--accent); background:var(--nm-bg)}
+  .track{background:var(--nm-bg); box-shadow:var(--nm-in-sm); border:0; overflow:hidden}
+  .xsel-menu{background:var(--nm-bg); border:0; box-shadow:var(--nm-out)}
+  .xsel-opt.on{background:var(--accent); color:#fff}
+
+  /* pressable: a button sits proud until it is on, then it sits in */
+  .btn,.mini,.chip,.tag{background:var(--nm-bg); border:0; box-shadow:var(--nm-out-sm);
+    border-radius:999px; transition:box-shadow .2s var(--ease), color .2s var(--ease)}
+  .chip{border-radius:16px}
+  .btn:hover,.mini:hover{background:var(--nm-bg); box-shadow:var(--nm-out-sm)}
+  .btn:active,.mini:active,.tag:active{box-shadow:var(--nm-in-sm)}
+  .btn[aria-pressed="true"],.mini[aria-pressed="true"],.tag.on{
+    box-shadow:var(--nm-in-sm); color:var(--accent-ink)}
+  .btn.armed,.armed{box-shadow:var(--nm-in-sm)!important}
+
+  /* the goal strip and its rows */
+  .mains .bars>.row{background:var(--nm-bg); border:0; box-shadow:var(--nm-out-sm); border-radius:18px}
+  .mains .bars>.row.sel{background:var(--nm-bg); box-shadow:var(--nm-in)}
+  .row.sel{background:transparent}
+  .subs .row.sel{box-shadow:var(--nm-in); border-radius:16px}
+  .grip{box-shadow:none; background:transparent}
+
+  /* the bottom bar is one raised slab, and the page it sits on matches */
+  .rail{background:var(--nm-bg); border-top:0; box-shadow:0 -6px 18px var(--nm-lo);
+    -webkit-backdrop-filter:none; backdrop-filter:none}
+  .rail button[aria-current="page"]{box-shadow:none; color:var(--accent)}
+
+  /* the banner keeps its flat red badge: the alarm is not moulded in */
+  .tick{border:0; box-shadow:var(--nm-out); background:var(--nm-bg); border-radius:16px}
+
+  /* the assistant */
+  #bot-orb{box-shadow:var(--nm-out)}
+  #bot-sheet{background:var(--nm-bg); border:0; box-shadow:var(--nm-out)}
+}
+
 /* ---------------- depth, and the shell that holds the board ----------------
    The rail and the three placeholder pages behind it are gone, and the glide
    that carried them with them. What is left is the half of the effect that
@@ -726,6 +961,13 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 </head>
 <body>
 <!--ARTIFACT-BODY-START-->
+<script>
+/* Read before anything paints, so a viewer who picked light never sees the
+   dark board flash past first. No choice stored means follow the system. */
+try{var _t=localStorage.getItem("oys-theme");
+  if(_t==="light"||_t==="dark") document.documentElement.setAttribute("data-theme",_t);
+}catch(e){}
+</script>
 <canvas id="river" aria-hidden="true"></canvas>
 <div class="wrap">
 <div id="scroll">
@@ -740,6 +982,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       </div>
     </div>
     <div class="controls">
+      <button class="btn" id="btn-theme" aria-label="Colour theme"><span id="theme-ico"></span><span id="theme-label">System</span></button>
       <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
       <button class="btn" id="btn-layout" hidden>Tidy up</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
@@ -747,11 +990,23 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     </div>
   </header>
 
+  <div class="tick" id="tick" hidden aria-label="What needs a look">
+    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Needs a look</span></div>
+    <div class="tick-win"><div class="tick-run" id="tick-run"></div></div>
+    <button class="tick-hold" id="tick-hold" aria-pressed="false" aria-label="Hold the banner">
+      <svg class="stop" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="3.4" height="10" rx="1"/><rect x="8.6" y="2" width="3.4" height="10" rx="1"/></svg>
+      <svg class="go" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.2 12 7l-9 4.8z"/></svg>
+    </button>
+  </div>
+
   <nav class="rail" id="rail" aria-label="Pages"></nav>
 
   <section class="view is-on" id="v-board" aria-label="Board">
 
   <div id="canvas">
+  <section class="panel nowpanel" data-panel="now" aria-label="What to do now">
+    <div class="nowc" id="now-card"></div>
+  </section>
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
       <div class="k-label">Overall</div>
@@ -891,6 +1146,49 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     </div>
     <div class="goal-list" id="archive-list"></div>
   </section>
+
+  <section class="view" id="v-planner" aria-label="Planner">
+    <div class="vhead">
+      <h2>Planner</h2>
+      <button class="btn" id="pl-interview">Interview me again</button>
+    </div>
+    <div class="nowc" id="now-card-2"></div>
+
+    <div class="plgrid">
+      <section class="panel flat" aria-label="Your week">
+        <div class="p-head"><div><div class="p-title">Your week</div>
+          <div class="p-note">What the planner is allowed to assume about an ordinary day.</div></div></div>
+        <div class="plform" id="pl-form"></div>
+      </section>
+
+      <section class="panel flat" aria-label="Where each goal belongs">
+        <div class="p-head"><div><div class="p-title">Where each goal belongs</div>
+          <div class="p-note">This is the fact that stops it telling you to train while you are at work.</div></div></div>
+        <div class="wherelist" id="pl-where"></div>
+      </section>
+    </div>
+
+    <section class="panel flat" aria-label="What it is holding back">
+      <div class="p-head"><div><div class="p-title">Held back until later</div>
+        <div class="p-note">Everything it refused in this hour, and when each one opens again.</div></div></div>
+      <div id="pl-held"></div>
+    </section>
+  </section>
+
+  <div id="interview" hidden>
+    <div class="card">
+      <div class="iv-top"><span class="iv-k" id="iv-step">1 of 8</span>
+        <button class="btn" id="iv-quit">Leave it</button></div>
+      <div class="iv-dots" id="iv-dots"></div>
+      <h3 id="iv-q">&nbsp;</h3>
+      <p class="lede" id="iv-note">&nbsp;</p>
+      <div id="iv-body"></div>
+      <div class="iv-acts">
+        <button class="btn" id="iv-back">Back</button>
+        <button class="btn take" id="iv-next">Next</button>
+      </div>
+    </div>
+  </div>
 
   <div id="account" hidden>
     <div class="card">
@@ -1158,15 +1456,70 @@ function allTags(){
   return Object.keys(seen).sort(function(a,b){ return seen[b]-seen[a]||a.localeCompare(b); })
     .map(function(t){ return {t:t,n:seen[t]}; });
 }
+/* ---------------- what the planner is allowed to know ----------------
+   A board that does not know where you are cannot tell you what to do. At
+   one o'clock on a Monday the loudest thing on the board might be an hour
+   on an airbike, and saying so is worse than saying nothing, because you
+   are at a desk in an office and you will learn to ignore it.
+
+   So the planner keeps a short profile. Not a calendar, not a life story:
+   the six or seven facts that decide whether a thing is possible in the
+   next hour. It is filled in by an interview, changed on the Planner page,
+   and it never leaves this browser.                                     */
+var WHERES=[
+  ["any",  "Anywhere",        "nothing stops it"],
+  ["desk", "At a screen",     "a laptop and quiet"],
+  ["work", "At work",         "only on the clock, in the office"],
+  ["home", "At home",         "only off the clock"],
+  ["body", "Training",        "a gym, a bike, a road, and energy"],
+  ["out",  "Out and about",   "shops, offices, other people's hours"]
+];
+function whereLabel(w){
+  for(var i=0;i<WHERES.length;i++) if(WHERES[i][0]===w) return WHERES[i][1];
+  return "Anywhere";
+}
+var DAYS_SHORT=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var SHARP=[["morning","Morning"],["afternoon","Afternoon"],["evening","Evening"]];
+var GYMWIN=[["morning","Before work"],["lunch","At lunch"],["evening","After work"],
+            ["weekend","Weekends only"],["none","Not at the moment"]];
+/* A first guess, so nobody has to label fifteen goals before the board is
+   useful. Every one of these is editable, and the interview shows them all
+   at the end and asks you to correct it. */
+function guessWhere(name){
+  var n=String(name||"").toLowerCase();
+  if(/shred|airbike|air bike|run|gym|workout|train|lift|cardio|swim|walk|yoga|stretch/.test(n)) return "body";
+  if(/shop|buy|bank|doctor|dentist|post|collect|pick up|errand|appointment|visit/.test(n)) return "out";
+  if(/sap|client|service desk|stakeholder|colleague|team|meeting|onboard|migration|datasphere|power platform|azure|databricks|adf/.test(n)) return "work";
+  if(/read|book|chapter|course|write|study|learn|app|code|build|design|tracker|certificate/.test(n)) return "desk";
+  return "any";
+}
+/* Three places used to build a goal by hand and they drifted apart: the
+   assistant's was missing prio, so the next render threw on prio.toUpperCase
+   and the whole board went blank behind a caught error. One maker now. */
+function newGoal(name){
+  var n=String(name||"").trim();
+  return {id:uid("g"), name:n, subs:[], due:"", prio:"mid", tags:[], where:guessWhere(n)};
+}
+function freshMe(){
+  return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"], commute:30,
+          sharp:"morning", gym:"evening", wind:"22:30", north:"", never:""};
+}
 function toGoals(){
   if(!state.archive) state.archive=[];
   if(!state.backlog) state.backlog=[];
   if(!state.tagFilter) state.tagFilter=[];
+  if(!state.me) state.me=freshMe();
+  var me=state.me, d=freshMe();
+  /* a profile saved by an older build is filled in, never replaced */
+  for(var k in d) if(me[k]===undefined) me[k]=d[k];
+  if(!Array.isArray(me.days)) me.days=d.days;
+  if(!Array.isArray(me.work)||me.work.length!==2) me.work=d.work;
   state.groups.concat(state.archive).forEach(function(g){
     if(g.due===undefined) g.due="";
     if(!g.prio) g.prio="mid";
     if(!Array.isArray(g.tags)) g.tags=[];
     if(g.tags.length>5) g.tags=g.tags.slice(0,5);
+    if(!g.where) g.where=guessWhere(g.name);
   });
 }
 /* how many days until it is wanted. Null when no date is set. */
@@ -1206,7 +1559,9 @@ function boot(){
   /* Always tidy. Panels move while you work, and every open starts from
      the grid again rather than from wherever last week left them.    */
   s.free=false; s.layout={};
-  state=s; toGoals(); sync();
+  /* sync adds any goal the seed grew since last time, and those arrive
+     without the fields toGoals fills in, so it runs on both sides of it */
+  state=s; toGoals(); sync(); toGoals();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
   rollRecurring();          /* bring every habit into today before the first draw */
@@ -1394,6 +1749,69 @@ function alerts(){
   out.sort(function(x,y){ return y.score-x.score; });
   return out;
 }
+/* ---------------- where you are, right now ----------------
+   Everything the planner refuses to suggest is refused here, from the clock
+   and the profile alone. No goal is consulted yet: this just works out what
+   kind of hour it is.                                                    */
+function hm(t){ var m=String(t||"").match(/^(\d{1,2}):(\d{2})/); return m?(+m[1]*60 + +m[2]):0; }
+function clockLabel(t){ return String(t||"").slice(0,5); }
+var DAYNAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+function nowCtx(at){
+  var d=at||new Date(), me=state.me||freshMe();
+  var dow=d.getDay(), now=d.getHours()*60+d.getMinutes();
+  var onDuty=me.days.indexOf(dow)>=0;
+  var a=hm(me.work[0]), b=hm(me.work[1]), c=+me.commute||0, w=hm(me.wind);
+  var lunch = onDuty && now>=a+3*60 && now<=a+5*60;
+  return {
+    d:d, dow:dow, now:now, day:DAYNAME[dow],
+    workday:onDuty,
+    /* out of the house from the moment you leave until you are back */
+    away: onDuty && now>=a-c && now<=b+c,
+    atWork: onDuty && now>=a && now<=b,
+    lunch: lunch,
+    beforeWork: onDuty && now<a-c,
+    afterWork: onDuty && now>b+c,
+    wound: now>=w || now<4*60,       /* past the end of the day, or the small hours */
+    free: !(onDuty && now>=a-c && now<=b+c),
+    home: clockLabel(me.work[1]),
+    leave: clockLabel(me.work[0]),
+    wind: clockLabel(me.wind),
+    slot: now<12*60 ? "morning" : (now<17*60 ? "afternoon" : "evening")
+  };
+}
+/* Can this goal be worked in the hour you are in? A no comes with the
+   reason in plain words, because a refusal you cannot argue with is worth
+   more than a suggestion you cannot act on.                             */
+function feasible(g,c){
+  var w=g.where||"any";
+  if(c.wound){
+    if(w==="body") return {ok:false, why:"it is past "+c.wind+", and training now costs you tomorrow"};
+    if(w==="out")  return {ok:false, why:"it is past "+c.wind+" and nothing is open"};
+    if(w==="work") return {ok:false, why:"it needs you at work, and it is past "+c.wind};
+    return {ok:true, soft:true, why:"it is past "+c.wind+", so this is a quiet one"};
+  }
+  if(c.away){
+    if(w==="body") return {ok:false, why:"you are out until about "+c.home};
+    if(w==="home") return {ok:false, why:"you are not home until about "+c.home};
+    if(w==="out")  return c.lunch ? {ok:true, soft:true, why:"it is your lunch window"}
+                                  : {ok:false, why:"it wants other people's opening hours, and you are on the clock"};
+    return {ok:true};
+  }
+  /* off the clock */
+  if(w==="work"){
+    var nx = c.workday && c.beforeWork ? "at "+c.leave+" today" : "the next working morning";
+    return {ok:false, why:"it needs you at work, and the next window is "+nx};
+  }
+  if(w==="body"){
+    var g2=(state.me||freshMe()).gym;
+    if(g2==="none") return {ok:false, why:"you said training is not on at the moment"};
+    if(g2==="weekend" && c.workday) return {ok:false, why:"you said training is weekends only"};
+    if(g2==="morning" && !c.beforeWork) return {ok:true, soft:true, why:"you train before work, so this is off its window"};
+    if(g2==="evening" && c.beforeWork)  return {ok:true, soft:true, why:"you train after work, so this is early"};
+    return {ok:true};
+  }
+  return {ok:true};
+}
 /* the siren: only the ones that genuinely cannot wait */
 function screaming(){ return alerts().filter(function(a){ return a.score>=150; }).length; }
 
@@ -1440,61 +1858,157 @@ var rollNote="";
   keepSnapshot(state.day);
   touchHist(); save();
 })();
-/* One task, chosen, with the reason. Every input for this was already on
-   the board: how far behind a main task is, what has not moved, what
-   repeats today, what is already half done. It used to compute all of it
-   for the watchlist and then ask you to decide anyway.                  */
+/* One scorer, one answer. This used to rank on its own, which meant the
+   dock, the assistant and the card at the top of the board could each name
+   a different task at the same moment. It now asks the planner and keeps
+   only its own shape.                                                   */
 function pickToday(){
-  var today=todayStr();
-  var skip=(state.skip&&state.skip.d===today)?state.skip.ids:[];
-  var taken={};
-  state.oftad.concat(state.done).forEach(function(c){ taken[c.id]=1; });
-  var best=null;
+  var v=verdict();
+  if(v.none||!v.s) return null;
+  return {sc:0, s:v.s, g:v.g, why:verdictWhy(v), v:v};
+}
+/* ---------------- the verdict ----------------
+   One thing. Not a shortlist, not a ranked table: the board has already
+   ranked everything and a ranking is another decision handed back to you.
+   So it names one subtask, says why it and not the next one, and says what
+   it threw out and when that becomes possible again.
+
+   The ranking is pickToday's, because that scoring is already the board's
+   idea of what matters. What the profile adds is the veto: anything that
+   cannot be done in the hour you are in never reaches the top, however
+   loudly it is shouting, and the thing it displaced is named.          */
+/* The one line someone typed as what matters most is not decoration. Any
+   goal whose name or tags carry a word from it is lifted above the rest.
+   Short and common words are dropped, or every goal would match.       */
+var NORTH_STOP={the:1,a:1,an:1,and:1,or:1,of:1,to:1,for:1,in:1,on:1,at:1,by:1,with:1,
+  before:1,after:1,my:1,me:1,it:1,is:1,get:1,do:1,all:1,new:1,more:1,this:1,that:1};
+function northWords(me){
+  return String((me&&me.north)||"").toLowerCase().split(/[^a-z0-9]+/)
+    .filter(function(w){ return w.length>3 && !NORTH_STOP[w]; });
+}
+function northHit(g,me,sub){
+  var ws=northWords(me); if(!ws.length) return false;
+  /* the line can name the goal or the step inside it, so both are read */
+  var hay=(g.name+" "+(g.tags||[]).join(" ")+" "+((sub&&sub.name)||"")).toLowerCase();
+  /* whole words only. A plain indexOf let "ship" in "Ship the tracker"
+     match "Partnership", which lifted the wrong goal to the top. */
+  return ws.some(function(w){
+    return new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(s|es)?\\b").test(hay);
+  });
+}
+function verdict(){
+  var c=nowCtx(), taken={}, skip=(state.skip&&state.skip.d===todayStr())?state.skip.ids:[];
+  state.oftad.forEach(function(x){ taken[x.id]=1; });
+  var best=null, blocked=[], soft=null;
   state.groups.forEach(function(g){
-    if(!g.subs.length) return;
-    var gp=groupPct(g), moving=0;
+    if(!g.subs.length||groupPct(g)>=100) return;
+    var f=feasible(g,c), gp=groupPct(g), moving=0;
     g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) moving++; });
     g.subs.forEach(function(id){
-      var s=state.subs[id];
-      if(!s||s.pct>=100||s.status==="done") return;
-      if(s.status==="blocked") return;            /* you cannot work a blocked thing */
-      if(taken[s.id]||skip.indexOf(s.id)>=0) return;
-      var a=ageOf(s.upd), sc=0, why="";
-      /* the goal's own weight and date carry most of it */
-      var u=urgency(g), w=PRIO_W[g.prio]||2, n=daysLeft(g);
-      sc += u*w*0.55;
-      if(s.rep && periodKey(s.rep)){
-        sc+=55;
-        why="It repeats "+repLabel(s.rep).toLowerCase()+" and today is not done"+
-          (s.streak?", and you are "+s.streak+" in a row":"")+".";
+      var s2=state.subs[id];
+      if(!s2||s2.pct>=100||s2.status==="done"||s2.status==="blocked") return;
+      if(taken[s2.id]||skip.indexOf(s2.id)>=0) return;
+      var u=urgency(g), w=PRIO_W[g.prio]||2, a=ageOf(s2.upd);
+      var sc = u*w*0.55 + (100-gp)*0.30 + Math.min(a,30)*0.8;
+      if(s2.rep && periodKey(s2.rep)) sc+=55;
+      if(s2.pct>0&&s2.pct<100) sc+=22;
+      if(moving===1&&s2.pct>0) sc+=18;
+      /* the hour you are in is worth as much as a week of deadline */
+      if(!f.ok){
+        if(!blocked.length||sc>blocked[0].sc) blocked.unshift({sc:sc,g:g,s:s2,why:f.why});
+        return;
       }
-      if(s.pct>0&&s.pct<100) sc+=22;              /* finishing beats starting */
-      sc += (100-gp)*0.30;                        /* the main task furthest behind */
-      sc += Math.min(a,30)*0.8;                   /* the thing nobody has touched */
-      if(moving===1&&s.pct>0) sc+=18;             /* the only thing moving in there */
-      if(!why){
-        if(n!==null&&n<0)
-          why=g.name+" is "+Math.abs(n)+" days past its deadline"+
-            (g.prio==="high"?" and you marked it high priority":"")+". This is its next step.";
-        else if(n!==null&&n<=7&&g.prio==="high")
-          why=g.name+" is high priority and "+dueLabel(g)+". This is its next step.";
-        else if(n!==null&&n<=3)
-          why=g.name+" is "+dueLabel(g)+", and this is what is left.";
-        else if(a>=14&&s.pct>0)
-          why=g.name+" has not moved in "+a+" days, and this is the part already started.";
-        else if(moving===1&&s.pct>0)
-          why="It is the only thing moving in "+g.name+", at "+s.pct+"%.";
-        else if(gp<=20)
-          why=g.name+" is the furthest behind at "+gp+"%, and this is its next step.";
-        else if(s.pct>0)
-          why="It sits at "+s.pct+"% in "+g.name+". Finishing beats starting something new.";
-        else
-          why="Nothing in "+g.name+" has started, and this is the first step.";
-      }
-      if(!best||sc>best.sc) best={sc:sc,s:s,g:g,why:why};
+      if(f.soft) sc*=0.55;
+      var me2=state.me||freshMe();
+      /* the hour does not only forbid, it promotes: a thing that fits the
+         window you are in beats a thing that merely could be done         */
+      if(me2.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
+      if(g.where==="body" && !f.soft && c.free) sc+=38;
+      if(g.where==="work" && c.atWork) sc+=30;
+      if(g.where==="home" && c.free && !c.wound) sc+=14;
+      /* The one line the person typed as what matters most is an override,
+         not a nudge. A flat bonus lost to anything already at 45%, which is
+         the board arguing with a decision that was already made. It still
+         cannot beat a veto: what is impossible this hour stays impossible. */
+      if(northHit(g,me2,s2)) sc=sc*1.5+70;
+      if(!best||sc>best.sc){ if(best) soft=best; best={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why}; }
+      else if(!soft||sc>soft.sc) soft={sc:sc,g:g,s:s2};
     });
   });
-  return best;
+  if(!best) return {c:c, none:true, blocked:blocked};
+  return {c:c, g:best.g, s:best.s, soft:best.soft, sw:best.sw, next:soft,
+          blocked:blocked.filter(function(b,i){ return i<2; })};
+}
+/* The sentence that has to earn the interruption. Concrete: the hour, the
+   day, the number of days, the percentage. No encouragement.           */
+function verdictWhy(v){
+  var g=v.g, s=v.s, c=v.c, n=daysLeft(g), a=ageOf(s.upd), out=[];
+  out.push("It is "+pad2(c.d.getHours())+":"+pad2(c.d.getMinutes())+" on a "+c.day+
+    (c.away ? " and you are out until about "+c.home
+            : c.wound ? " and your day is meant to be over"
+                      : " and your time is your own")+".");
+  if(s.rep && periodKey(s.rep))
+    out.push(repLabel(s.rep)+", and today is not done"+(s.streak?". You are "+s.streak+" in a row":"")+".");
+  else if(n!==null&&n<0)
+    out.push(g.name+" is "+Math.abs(n)+" days past its deadline at "+groupPct(g)+"%.");
+  else if(n!==null&&n<=7)
+    out.push(g.name+" is "+dueLabel(g)+" at "+groupPct(g)+"%"+
+      (g.prio==="high"?", and you called it high priority":"")+".");
+  else if(a>=14&&s.pct>0)
+    out.push("Nothing in "+g.name+" has moved in "+a+" days, and this part is already at "+s.pct+"%.");
+  else if(s.pct>0)
+    out.push("It sits at "+s.pct+"% in "+g.name+". Finishing beats starting.");
+  else
+    out.push(g.name+" is at "+groupPct(g)+"% and this is its first step.");
+  if(northHit(g,state.me,s)) out.push("It is also the thing you said matters most.");
+  if(v.soft&&v.sw) out.push("Mind that "+v.sw+". Keep it short.");
+  return out.join(" ");
+}
+function verdictNot(v){
+  var out=[];
+  (v.blocked||[]).forEach(function(b){
+    out.push(b.g.name+" is louder, and it waits: "+b.why+".");
+  });
+  if(!out.length && v.next && v.next.g && v.next.g.id!==v.g.id)
+    out.push("Next after it is "+v.next.s.name+", in "+v.next.g.name+". Not now.");
+  return out;
+}
+function renderVerdict(){
+  var box=$("#now-card"); if(!box) return;
+  var me=state.me||freshMe();
+  if(!me.done){
+    box.className="nowc ask";
+    box.innerHTML='<div class="now-k">The planner has not met you yet</div>'+
+      '<div class="now-n">Tell it when you work, when you train, and when your day ends.</div>'+
+      '<div class="now-w">Until it knows, it can only see what is loudest. It cannot see that an '+
+      'hour on an airbike is a bad answer at one o\u2019clock on a Monday. Eight questions, about a minute.</div>'+
+      '<div class="now-acts"><button class="btn take" id="now-interview">Start the interview</button>'+
+      '<button class="btn" data-goto-view="planner">Fill it in by hand</button></div>';
+    return;
+  }
+  var v=verdict();
+  if(v.none){
+    box.className="nowc calm-card";
+    var b0=(v.blocked||[])[0];
+    box.innerHTML='<div class="now-k">Right now</div>'+
+      '<div class="now-n">Nothing, and that is the answer.</div>'+
+      '<div class="now-w">'+esc(b0 ? "The only thing left is "+b0.g.name+", and "+b0.why+"."
+        : "Everything that can be done in this hour is either done, blocked or already picked up.")+'</div>';
+    return;
+  }
+  box.className="nowc"+(v.soft?" soft":"");
+  box.innerHTML=
+    '<div class="now-k">Do this now<span class="now-where">'+esc(whereLabel(v.g.where))+'</span></div>'+
+    '<button class="now-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'">'+esc(v.s.name)+'</button>'+
+    '<div class="now-from">in '+esc(v.g.name)+'</div>'+
+    '<div class="now-w">'+esc(verdictWhy(v))+'</div>'+
+    (verdictNot(v).length?'<ul class="now-not">'+verdictNot(v).map(function(t){
+      return "<li>"+esc(t)+"</li>"; }).join("")+"</ul>":"")+
+    '<div class="now-acts">'+
+      '<button class="btn take" data-pick-take="'+v.s.id+'">Take it</button>'+
+      '<button class="btn" data-pick-skip="'+v.s.id+'">Not this</button>'+
+      '<button class="btn" data-goto-view="planner">Why</button>'+
+    '</div>';
 }
 function renderPick(){
   var box=$("#oftad-pick"); if(!box) return;
@@ -1540,8 +2054,16 @@ function tick(){
     : {weekday:"long",day:"numeric",month:"long",year:"numeric"});
   $("#clock").textContent=pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());
   $("#wk").textContent="WEEK "+weekNo(d);
+  /* The verdict is an answer about this hour, so it is re-read when the
+     minute turns, not once at boot. A leave time passes and it changes. */
+  if(d.getMinutes()!==lastMin){
+    lastMin=d.getMinutes();
+    if(typeof renderVerdict==="function"){ renderVerdict();
+      if(curView==="planner"&&typeof renderPlanner2==="function") renderPlanner2(); }
+  }
   if(state.day!==todayStr()) location.reload();
 }
+var lastMin=-1;
 tick(); setInterval(tick,1000);
 
 /* ---------------- render ---------------- */
@@ -1617,6 +2139,8 @@ function goalEditor(g){
     '<label>Deadline<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
     '<label>Priority<select class="f" data-ged="prio">'+PRIOS.map(function(o){
       return '<option value="'+o[0]+'"'+(g.prio===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
+    '<label>Where<select class="f" data-ged="where">'+WHERES.map(function(o){
+      return '<option value="'+o[0]+'"'+((g.where||"any")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label class="wide">Tags, up to five, separated by commas'+
       '<input class="f" data-ged="tags" value="'+esc(g.tags.join(", "))+'" placeholder="sap, migration, q4"></label>'+
     '<div class="acts">'+
@@ -1723,6 +2247,42 @@ function drawSpark(){
     '<path d="'+line+'" fill="none" stroke="var(--run)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'+
     '<circle cx="'+X(h.length-1).toFixed(1)+'" cy="'+Y(h[h.length-1].v).toFixed(1)+'" r="2.6" fill="var(--run)"/>';
 }
+/* ---------------- the banner under the date ----------------
+   Same alarms as the panel, in the order the panel puts them, running across
+   the top so they are read without scrolling to them. The strip is printed
+   twice and the animation slides it exactly half its width, which is why the
+   loop has no seam. The speed is set from the measured width, so a long list
+   and a short one move at the same pace rather than the same duration.   */
+var TICK_SPEED=80; /* pixels a second */
+/* The panel carries the full reason. The banner carries only what tells you
+   whether to press it: how late, how loud, how far along. The subtask it
+   would land on is left out, because pressing it is how you find that.  */
+function tickWhy(a){
+  var g=gById(a.gid); if(!g) return a.w;
+  var n=daysLeft(g);
+  return (n!==null?dueLabel(g):"no deadline")+" \u00b7 "+groupPct(g)+"%";
+}
+function tickItem(a){
+  return '<button class="tick-item'+(a.score>=150?" crit":"")+'" data-goto-goal="'+a.gid+
+    '" data-goto-sub="'+esc(a.sid)+'"><span class="tk">'+esc(a.kind)+'</span>'+
+    '<b>'+esc(a.t)+'</b><span>'+esc(tickWhy(a))+'</span><span class="tick-sep"></span></button>';
+}
+function renderTick(){
+  var bar=$("#tick"), run=$("#tick-run"); if(!bar||!run) return;
+  var al=alerts();
+  if(!al.length){ bar.hidden=true; run.innerHTML=""; return; }
+  bar.hidden=false;
+  var hot=screaming()>0;
+  bar.classList.toggle("hot",hot);
+  $("#tick-tag").textContent = hot ? "Needs a look now" : "Needs a look";
+  var strip=al.slice(0,8).map(tickItem).join("");
+  run.innerHTML=strip+strip;              /* twice, so -50% lands on the seam */
+  /* the run is two copies, so one lap is half of what the browser measures */
+  requestAnimationFrame(function(){
+    var lap=run.scrollWidth/2;
+    if(lap>0) run.style.setProperty("--tick-t",(lap/TICK_SPEED).toFixed(1)+"s");
+  });
+}
 function renderAlerts(){
   var q=searchQ();
   var al=alerts().filter(function(a){ return hit(a.t+" "+a.w,q); });
@@ -1813,8 +2373,10 @@ function armGate(key,btn,label){
 function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t); m._t=setTimeout(function(){ m.textContent=""; },6000); } }
 
 function renderAll(){
-  renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); renderSnaps();
+  renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
+  renderVerdict();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
+  if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
   /* content can change a panel's height, so re-separate before measuring */
   if(typeof resolveOverlaps==="function") resolveOverlaps(null);
@@ -1826,6 +2388,69 @@ $("#revnote").textContent="Drag any panel by its header to move it anywhere, and
 
 /* One query for the whole board. Every box types into it, and every box
    shows it, so you never wonder which list is filtered.               */
+/* ---------------- the banner's hold, and the theme switch ----------------
+   The banner stops under a cursor on its own. A phone has no cursor, so the
+   button is what a thumb presses, and the choice sticks until it is pressed
+   again.                                                                 */
+(function(){
+  var b=$("#tick-hold"); if(!b) return;
+  b.addEventListener("click",function(e){
+    e.stopPropagation();
+    var on=$("#tick").classList.toggle("held");
+    b.setAttribute("aria-pressed",on?"true":"false");
+    b.setAttribute("aria-label",on?"Let the banner run":"Hold the banner");
+  });
+})();
+
+/* Three states, in the order they are wanted: follow the system, then the
+   two overrides. The choice lives in its own key, so the snippet at the top
+   of the page can read it before anything paints, and it survives a board
+   import that replaces everything else.                                  */
+var THEME_KEY="oys-theme";
+var SUN='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><circle cx="8" cy="8" r="3.1"/><path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.1 3.1l1.1 1.1M11.8 11.8l1.1 1.1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1"/></svg>';
+var MOON='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M13.2 9.6A5.8 5.8 0 0 1 6.4 2.8a5.8 5.8 0 1 0 6.8 6.8z"/></svg>';
+var AUTO='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><circle cx="8" cy="8" r="6"/><path d="M8 2v12" /><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/></svg>';
+var THEMES=[["system","System",AUTO],["light","Light",SUN],["dark","Dark",MOON]];
+function readTheme(){
+  try{ var t=localStorage.getItem(THEME_KEY); return (t==="light"||t==="dark")?t:"system"; }
+  catch(e){ return "system"; }
+}
+function paintTheme(){
+  var t=readTheme(), r=document.documentElement;
+  if(t==="system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme",t);
+  var row=THEMES.filter(function(x){ return x[0]===t; })[0]||THEMES[0];
+  var ico=$("#theme-ico"), lab=$("#theme-label");
+  if(ico) ico.innerHTML=row[2];
+  if(lab) lab.textContent=row[1];
+  var btn=$("#btn-theme");
+  if(btn) btn.setAttribute("title","Theme: "+row[1]+". Press to change.");
+  /* the bar at the top of a phone browser follows the board, not the system */
+  var dark = t==="dark" || (t==="system" && window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches);
+  var m=document.querySelector('meta[name="theme-color"]:not([media])');
+  if(!m){ m=document.createElement("meta"); m.name="theme-color"; document.head.appendChild(m); }
+  m.content = dark ? "#08080A" : "#EFEFEC";
+  /* the canvas behind the board samples the tokens, so it has to look again */
+  requestAnimationFrame(function(){ if(typeof readInk==="function") readInk(); });
+}
+(function(){
+  var btn=$("#btn-theme"); if(!btn) return;
+  btn.addEventListener("click",function(){
+    var i=0, t=readTheme();
+    THEMES.forEach(function(x,k){ if(x[0]===t) i=k; });
+    var next=THEMES[(i+1)%THEMES.length][0];
+    try{ next==="system" ? localStorage.removeItem(THEME_KEY)
+                         : localStorage.setItem(THEME_KEY,next); }catch(e){}
+    paintTheme();
+  });
+  paintTheme();
+  if(window.matchMedia){
+    var mq=window.matchMedia("(prefers-color-scheme: dark)");
+    if(mq.addEventListener) mq.addEventListener("change",function(){
+      if(readTheme()==="system") paintTheme(); });
+  }
+})();
+
 function bindSeek(){
   var boxes=document.querySelectorAll(".seek-in");
   Array.prototype.forEach.call(boxes,function(b){
@@ -1979,7 +2604,7 @@ document.addEventListener("click",function(e){
   var bg=e.target.closest("[data-bl-goal]");
   if(bg){
     var it=state.backlog.splice(+bg.dataset.blGoal,1)[0];
-    if(it){ var g={id:uid("g"),name:it.t,subs:[],due:"",prio:"mid",tags:[]};
+    if(it){ var g=newGoal(it.t);
       state.groups.push(g); state.sel=g.id; openGroupEd=true;
       save(); location.hash="#/board"; renderAll(); }
     return;
@@ -2041,6 +2666,7 @@ document.addEventListener("change",function(e){
     if(gk==="name"){ if(!f.value.trim()){ renderAll(); return; } g.name=f.value.trim(); mark(g.id,"name"); }
     else if(gk==="due"){ g.due=f.value||""; mark(g.id,"due"); }
     else if(gk==="prio"){ g.prio=f.value||"mid"; mark(g.id,"prio"); }
+    else if(gk==="where"){ g.where=f.value||"any"; mark(g.id,"where"); }
     else if(gk==="tags"){
       g.tags=f.value.split(",").map(function(t){ return t.trim().toLowerCase(); })
         .filter(function(t,i,a){ return t && a.indexOf(t)===i; }).slice(0,5);
@@ -2051,7 +2677,7 @@ document.addEventListener("change",function(e){
 });
 $("#ng-add").addEventListener("click",function(){
   var n=$("#ng-name").value.trim(); if(!n){ $("#ng-name").focus(); return; }
-  var g={id:uid("g"),name:n,subs:[]};
+  var g=newGoal(n);
   state.groups.push(g); state.sel=g.id;
   $("#ng-name").value="";
   save(); renderAll();
@@ -3283,7 +3909,7 @@ function botTools(){
    execute:function(a){
      var nm=String(a.name||"").trim();
      if(!nm) throw new Error("The main task needs a name.");
-     var g={id:uid("g"),name:nm,subs:[]};
+     var g=newGoal(nm);
      state.groups.push(g); state.sel=g.id;
      return done("Added main task \"" + nm + "\".");
    }},
@@ -4154,7 +4780,8 @@ var I_BOARD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 var I_TAGS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11V4h7l10 10-7 7L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
 var I_BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h9"/></svg>';
 var I_ARCH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></svg>';
-var PAGES=[["board","Board",I_BOARD],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
+var I_PLAN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+var PAGES=[["board","Board",I_BOARD],["planner","Planner",I_PLAN],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
 var curView="board";
 
 (function(){
@@ -4186,6 +4813,224 @@ function readHash(){
   var m=String(location.hash||"").match(/^#\/([a-z]+)/);
   showView(m?m[1]:"board");
 }
+
+/* ---------------- the planner page ----------------
+   The verdict again at the top, so the page opens with the answer rather
+   than the settings. Then the facts behind it, editable in place, and last
+   the list of everything it refused and when each one opens again. Nothing
+   here is hidden from the person it is about.                           */
+function renderPlanner(){
+  var me=state.me||freshMe(), form=$("#pl-form");
+  if(!form) return;
+  form.innerHTML=
+    '<label class="wide">Working days<span class="dayrow" id="pl-days">'+
+      DAYS_SHORT.map(function(n,i){
+        return '<button type="button" data-day="'+i+'" aria-pressed="'+(me.days.indexOf(i)>=0)+'">'+
+          n.slice(0,2)+"</button>"; }).join("")+'</span></label>'+
+    '<label>Starts<input class="f" type="time" data-me="w0" value="'+esc(me.work[0])+'"></label>'+
+    '<label>Ends<input class="f" type="time" data-me="w1" value="'+esc(me.work[1])+'"></label>'+
+    '<label>Each way, in minutes<input class="f" type="number" min="0" max="240" data-me="commute" value="'+
+      (+me.commute||0)+'"></label>'+
+    '<label>Your day ends at<input class="f" type="time" data-me="wind" value="'+esc(me.wind)+'"></label>'+
+    '<label>Sharpest<select class="f" data-me="sharp">'+SHARP.map(function(o){
+      return '<option value="'+o[0]+'"'+(me.sharp===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
+      '</select></label>'+
+    '<label>Training fits<select class="f" data-me="gym">'+GYMWIN.map(function(o){
+      return '<option value="'+o[0]+'"'+(me.gym===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
+      '</select></label>'+
+    '<label class="wide">The one thing that matters most right now'+
+      '<input class="f" data-me="north" value="'+esc(me.north||"")+'" placeholder="Ship the tracker before the audit"></label>'+
+    '<label class="wide">Never schedule over'+
+      '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>';
+
+  var wl=$("#pl-where");
+  wl.innerHTML = state.groups.length ? state.groups.map(function(g){
+    return '<div class="whererow"><span class="wn">'+esc(g.name)+'</span>'+
+      '<select class="f" data-where="'+g.id+'">'+WHERES.map(function(o){
+        return '<option value="'+o[0]+'"'+((g.where||"any")===o[0]?" selected":"")+">"+o[1]+"</option>";
+      }).join("")+'</select></div>';
+  }).join("") : '<p class="calm">No goals yet.</p>';
+
+  var held=$("#pl-held"), c=nowCtx(), rows=[];
+  state.groups.forEach(function(g){
+    if(groupPct(g)>=100) return;
+    var f=feasible(g,c);
+    if(!f.ok) rows.push('<div class="heldrow"><span class="hn">'+esc(g.name)+'</span>'+
+      '<span class="hw">'+esc(whereLabel(g.where))+" \u00b7 "+esc(f.why)+"</span></div>");
+  });
+  held.innerHTML = rows.length ? rows.join("")
+    : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
+  mirrorVerdict();
+}
+/* the page opens with the answer, not with the settings */
+function mirrorVerdict(){
+  var a=$("#now-card"), b2=$("#now-card-2");
+  if(a&&b2){ b2.innerHTML=a.innerHTML; b2.className=a.className; }
+}
+$("#pl-form").addEventListener("input",function(e){
+  var k=e.target.dataset.me; if(!k) return;
+  var me=state.me, v=e.target.value;
+  if(k==="w0") me.work[0]=v;
+  else if(k==="w1") me.work[1]=v;
+  else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
+  else me[k]=v;
+  me.done=true; save(); renderVerdict(); renderPlanner2();
+});
+$("#pl-form").addEventListener("change",function(e){
+  if(e.target.dataset.me) { save(); renderVerdict(); }
+});
+$("#pl-form").addEventListener("click",function(e){
+  var b=e.target.closest("[data-day]"); if(!b) return;
+  var i=+b.dataset.day, me=state.me, at=me.days.indexOf(i);
+  if(at>=0) me.days.splice(at,1); else me.days.push(i);
+  me.days.sort(); me.done=true; save();
+  b.setAttribute("aria-pressed", me.days.indexOf(i)>=0 ? "true":"false");
+  renderVerdict(); renderPlanner2();
+});
+$("#pl-where").addEventListener("change",function(e){
+  var id=e.target.dataset.where; if(!id) return;
+  var g=gById(id); if(!g) return;
+  g.where=e.target.value; save(); renderVerdict(); renderPlanner2();
+});
+/* redraw only what the edit changed, so a field does not lose focus */
+function renderPlanner2(){
+  var held=$("#pl-held"), c=nowCtx(), rows=[];
+  state.groups.forEach(function(g){
+    if(groupPct(g)>=100) return;
+    var f=feasible(g,c);
+    if(!f.ok) rows.push('<div class="heldrow"><span class="hn">'+esc(g.name)+'</span>'+
+      '<span class="hw">'+esc(whereLabel(g.where))+" \u00b7 "+esc(f.why)+"</span></div>");
+  });
+  held.innerHTML = rows.length ? rows.join("")
+    : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
+  mirrorVerdict();
+}
+
+/* ---------------- the interview ----------------
+   Eight questions, one screen each. Nothing is written to the board until
+   the last one is answered, so leaving halfway changes nothing.         */
+var IV=null;
+var IVQ=[
+  {k:"days", q:"Which days do you work?",
+   n:"Everything else follows from this. On the days you leave off, the planner stops holding anything back for the office.",
+   kind:"days"},
+  {k:"work", q:"What hours, on one of those days?",
+   n:"Roughly is fine. It is used to work out whether you are at a desk or free, not to time you.",
+   kind:"hours"},
+  {k:"commute", q:"How long is the journey, each way?",
+   n:"This is the difference between being home at five and being home at six. It decides whether an evening thing is really possible.",
+   kind:"num", ph:"30"},
+  {k:"sharp", q:"When is your head at its best?",
+   n:"The hardest thing on the board gets pushed into this window, and the easy ones get pushed out of it.",
+   kind:"pick", opts:SHARP},
+  {k:"gym", q:"When can you train?",
+   n:"This is the one that stops it telling you to get on an airbike at one o\u2019clock on a Monday.",
+   kind:"pick", opts:GYMWIN},
+  {k:"wind", q:"When does your day end?",
+   n:"After this, it will only offer you something quiet, and it will say so.",
+   kind:"time", ph:"22:30"},
+  {k:"north", q:"What is the one thing that matters most right now?",
+   n:"One line. It does not score anything on its own; it is what you are shown when the board argues with you.",
+   kind:"text", ph:"Ship the tracker before the audit"},
+  {k:"where", q:"Last one. Where does each goal belong?",
+   n:"The planner guessed. Correct anything it got wrong, because this is the fact it leans on hardest.",
+   kind:"where"}
+];
+function ivOpen(){
+  var me=state.me||freshMe();
+  IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), commute:me.commute,
+              sharp:me.sharp, gym:me.gym, wind:me.wind, north:me.north||"",
+              where:{}}};
+  state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
+  $("#interview").hidden=false;
+  ivPaint();
+}
+function ivClose(){ $("#interview").hidden=true; IV=null; }
+function ivPaint(){
+  if(!IV) return;
+  var q=IVQ[IV.i], a=IV.a;
+  $("#iv-step").textContent=(IV.i+1)+" of "+IVQ.length;
+  $("#iv-dots").innerHTML=IVQ.map(function(x,i){
+    return '<i class="'+(i<=IV.i?"on":"")+'"></i>'; }).join("");
+  $("#iv-q").textContent=q.q;
+  $("#iv-note").textContent=q.n;
+  $("#iv-back").disabled=IV.i===0;
+  $("#iv-next").textContent = IV.i===IVQ.length-1 ? "That is me" : "Next";
+  var b=$("#iv-body"), h="";
+  if(q.kind==="days")
+    h='<span class="dayrow" id="iv-days">'+DAYS_SHORT.map(function(n,i){
+      return '<button type="button" data-ivday="'+i+'" aria-pressed="'+(a.days.indexOf(i)>=0)+'">'+
+        n.slice(0,2)+"</button>"; }).join("")+"</span>";
+  else if(q.kind==="hours")
+    h='<div class="two"><label>Starts<input class="f" type="time" data-iv="w0" value="'+esc(a.work[0])+'"></label>'+
+      '<label>Ends<input class="f" type="time" data-iv="w1" value="'+esc(a.work[1])+'"></label></div>';
+  else if(q.kind==="num")
+    h='<label>Minutes<input class="f" type="number" min="0" max="240" data-iv="commute" value="'+
+      (+a.commute||0)+'" placeholder="'+esc(q.ph||"")+'"></label>';
+  else if(q.kind==="time")
+    h='<label>Time<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label>';
+  else if(q.kind==="text")
+    h='<label>In one line<input class="f" data-iv="north" value="'+esc(a.north)+'" placeholder="'+
+      esc(q.ph||"")+'"></label>';
+  else if(q.kind==="pick")
+    h='<div class="ivpick">'+q.opts.map(function(o){
+      return '<button type="button" data-ivpick="'+q.k+":"+o[0]+'" aria-pressed="'+
+        (a[q.k]===o[0])+'">'+esc(o[1])+"</button>"; }).join("")+"</div>";
+  else if(q.kind==="where")
+    h = state.groups.length ? '<div class="wherelist">'+state.groups.map(function(g){
+      return '<div class="whererow"><span class="wn">'+esc(g.name)+'</span>'+
+        '<select class="f" data-ivwhere="'+g.id+'">'+WHERES.map(function(o){
+          return '<option value="'+o[0]+'"'+(a.where[g.id]===o[0]?" selected":"")+">"+o[1]+"</option>";
+        }).join("")+"</select></div>"; }).join("")+"</div>"
+      : '<p class="calm">No goals yet. Add some and come back.</p>';
+  b.innerHTML=h;
+  if(typeof enhanceSelects==="function") enhanceSelects(b);
+}
+function ivSave(){
+  var a=IV.a, me=state.me;
+  me.days=a.days.slice().sort(); if(!me.days.length) me.days=[];
+  me.work=[a.work[0]||"08:00", a.work[1]||"16:30"];
+  me.commute=Math.max(0,Math.min(240,+a.commute||0));
+  me.sharp=a.sharp; me.gym=a.gym; me.wind=a.wind||"22:30"; me.north=a.north||"";
+  me.done=true;
+  state.groups.forEach(function(g){ if(a.where[g.id]) g.where=a.where[g.id]; });
+  save(); ivClose(); renderAll();
+  if(typeof toast==="function") toast("That is enough to go on. The board will tell you what to do now.");
+}
+(function(){
+  var iv=$("#interview"); if(!iv) return;
+  iv.addEventListener("click",function(e){
+    if(e.target===iv) return;                       /* the sheet stays put */
+    var d=e.target.closest("[data-ivday]");
+    if(d){ var i=+d.dataset.ivday, at=IV.a.days.indexOf(i);
+      if(at>=0) IV.a.days.splice(at,1); else IV.a.days.push(i);
+      d.setAttribute("aria-pressed", IV.a.days.indexOf(i)>=0?"true":"false"); return; }
+    var pk=e.target.closest("[data-ivpick]");
+    if(pk){ var parts=pk.dataset.ivpick.split(":"); IV.a[parts[0]]=parts[1]; ivPaint(); return; }
+  });
+  iv.addEventListener("input",function(e){
+    var k=e.target.dataset.iv;
+    if(k==="w0") IV.a.work[0]=e.target.value;
+    else if(k==="w1") IV.a.work[1]=e.target.value;
+    else if(k) IV.a[k]=e.target.value;
+  });
+  iv.addEventListener("change",function(e){
+    var id=e.target.dataset.ivwhere;
+    if(id) IV.a.where[id]=e.target.value;
+  });
+  $("#iv-back").addEventListener("click",function(){ if(IV.i>0){ IV.i--; ivPaint(); } });
+  $("#iv-next").addEventListener("click",function(){
+    if(IV.i<IVQ.length-1){ IV.i++; ivPaint(); } else ivSave();
+  });
+  $("#iv-quit").addEventListener("click",ivClose);
+  addEventListener("keydown",function(e){ if(e.key==="Escape"&&IV) ivClose(); });
+  $("#pl-interview").addEventListener("click",ivOpen);
+})();
+document.addEventListener("click",function(e){
+  if(e.target.closest("#now-interview")){ ivOpen(); return; }
+  var gv=e.target.closest("[data-goto-view]");
+  if(gv){ location.hash="#/"+gv.dataset.gotoView; }
+});
 
 /* ---------------- tags ---------------- */
 function renderTags(){
