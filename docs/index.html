@@ -66,6 +66,9 @@
      green, and red is kept for the things that actually want you.      */
   --run:#FF8A3D; --run-glow:0 0 20px -5px rgba(255,138,61,.6);
   --win:#3FCF8E; --win-glow:0 0 18px -6px rgba(63,207,142,.5);
+  /* Five bands, so a glance is enough: nothing, a quarter, half, most,
+     all. One hue walking from cold grey through orange into green.   */
+  --b0:#4A4A55; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
   --grain:.05;
   --ease:cubic-bezier(.22,.61,.36,1);
   --font:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -81,6 +84,7 @@
     --glow:0 0 18px -6px rgba(228,36,24,.5);
     --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
+    --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
     --grain:.03;
   }
 }
@@ -93,6 +97,7 @@
   --glow:0 0 18px -6px rgba(228,36,24,.5);
   --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
+  --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
   --grain:.03;
 }
 
@@ -219,6 +224,7 @@ body.flat #canvas{transform:none!important}
     max-height:min(62vh,520px)}
   #botsheet .bot-log{max-height:34vh}
   #bot-orb{width:62px; height:62px}
+  #botsheet{bottom:calc(158px + env(safe-area-inset-bottom,0px))!important}
   #bottoast{left:10px!important; right:10px; max-width:none}
 }
 .bot-log{margin-top:12px; flex:1 1 auto; min-height:0; max-height:46vh; overflow-y:auto; display:flex; flex-direction:column;
@@ -346,7 +352,14 @@ body.dragging .cursor-ring{opacity:0}
 .gl{position:absolute; top:50%; transform:translateY(-50%); height:8px; width:1px;
   background:var(--hair)}
 .fill{position:absolute; left:0; top:50%; transform:translateY(-50%); height:8px; border-radius:999px;
-  background:var(--run); box-shadow:var(--run-glow); min-width:0}
+  background:var(--run); box-shadow:none; min-width:0}
+.fill.b0{background:var(--b0)}
+.fill.b25{background:var(--b25)}
+.fill.b50{background:var(--b50)}
+.fill.b75{background:var(--b75)}
+.fill.b100{background:var(--b100); box-shadow:var(--win-glow)}
+.rval.b0{color:var(--muted)} .rval.b25{color:var(--b25)} .rval.b50{color:var(--b50)}
+.rval.b75{color:var(--b75)} .rval.b100{color:var(--b100)}
 .mains .fill{opacity:.42}
 .mains .row.sel .fill{opacity:1}
 .fill.done{background:var(--win); box-shadow:var(--win-glow)}
@@ -369,6 +382,34 @@ body.dragging .cursor-ring{opacity:0}
 .pill.s-block i{background:#fff}
 .pill.s-idle{color:var(--muted)}
 .pill.rep{color:var(--accent-ink); border-color:rgba(255,59,48,.35)}
+/* a goal carries its weight and its date on the row itself */
+.pill.pr-high{color:var(--accent-ink); border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.pill.pr-high i{background:var(--accent)}
+.pill.pr-mid{color:var(--ink-2)} .pill.pr-mid i{background:var(--b50)}
+.pill.pr-low{color:var(--muted)} .pill.pr-low i{background:var(--b0)}
+.pill.due{font-family:var(--mono); letter-spacing:.08em}
+.pill.due.soon{color:var(--b50); border-color:color-mix(in srgb,var(--b50) 45%,transparent)}
+.pill.due.late{color:#fff; background:var(--accent); border-color:transparent}
+#filterbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:14px;
+  padding-bottom:12px; border-bottom:1px solid var(--hair)}
+.fb-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--muted)}
+#fb-clear{padding:5px 12px; font-size:12px}
+.tagrow{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 2px}
+.tag{font:inherit; font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:lowercase;
+  color:var(--ink-2); background:var(--inset); border:1px solid transparent; border-radius:999px;
+  padding:3px 9px; cursor:pointer; transition:color .2s var(--ease), border-color .2s var(--ease)}
+.tag:hover{color:var(--ink); border-color:var(--rule)}
+.tag.on{color:#fff; background:var(--accent); border-color:transparent}
+/* the search box that sits in a panel head */
+.seek{position:relative; flex:0 0 auto}
+.seek input{font:inherit; font-size:13px; color:var(--ink); background:var(--inset);
+  border:1px solid transparent; border-radius:999px; padding:7px 13px 7px 30px; width:170px;
+  transition:border-color .25s var(--ease), width .25s var(--ease)}
+.seek input:focus{outline:none; border-color:color-mix(in srgb,var(--accent) 50%,transparent); width:220px}
+.seek svg{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:13px; height:13px;
+  color:var(--muted); pointer-events:none}
+@media (max-width:820px){ .seek input{width:100%} .seek{flex:1 1 100%} }
 
 /* editors + add rows */
 .editor{margin:12px 0 4px; padding:16px; background:var(--raised); border:1px solid var(--hair);
@@ -397,7 +438,25 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 
 /* attention */
 .alerts{display:grid; grid-template-columns:1fr 1fr; gap:0 28px; margin-top:14px}
-.alert{display:flex; gap:14px; align-items:stretch; padding:13px 0; border-bottom:1px solid var(--hair)}
+.alert{display:flex; gap:14px; align-items:stretch; padding:13px 8px 13px 0; border:0;
+  border-bottom:1px solid var(--hair); background:none; width:100%; text-align:left;
+  font:inherit; color:inherit; cursor:pointer; border-radius:8px;
+  transition:background .2s var(--ease)}
+.alert:hover{background:var(--inset)}
+/* An ambulance, not a bullet point. Red to blue and back, and only for the
+   ones whose deadline and priority are both against you.               */
+@keyframes siren{
+  0%,49%  {background:var(--accent); box-shadow:0 0 14px -2px var(--accent)}
+  50%,100%{background:#2E6BFF;       box-shadow:0 0 14px -2px #2E6BFF}
+}
+.alert.hot .sev{animation:siren .9s steps(1,end) infinite}
+.alert.hot .a-title{color:var(--ink); font-weight:500}
+[data-panel="alerts"].siren{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+[data-panel="alerts"].siren .p-title::after{content:""; display:inline-block; width:8px; height:8px;
+  border-radius:50%; margin-left:10px; vertical-align:middle; animation:siren .9s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){
+  .alert.hot .sev,[data-panel="alerts"].siren .p-title::after{animation:none; background:var(--accent)}
+}
 .sev{width:2px; flex:none; border-radius:2px}
 .sev.crit{background:var(--accent); box-shadow:var(--glow)}
 .sev.warn{background:linear-gradient(var(--accent),var(--accent)) 0 0/100% 50% no-repeat, var(--hair)}
@@ -489,6 +548,60 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .addrow .f,.addrow .f.s{flex:1 1 100%}
 }
 
+/* ---------------- the shell: a rail on a desktop, a tab bar on a phone ----
+   Same board, two shells. On a wide screen the pages sit in a pill row under
+   the date. On a phone they sit where a thumb is: a fixed bar along the
+   bottom, icon over label, the way a phone app does it.                   */
+.view{display:none}
+.view.is-on{display:block; animation:viewIn .4s var(--ease) both}
+@keyframes viewIn{from{opacity:0; transform:translate3d(0,10px,0)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ .view.is-on{animation:none} }
+.rail{display:flex; gap:6px; padding:5px; border:1px solid var(--hair); border-radius:999px;
+  background:var(--panel); width:max-content; max-width:100%; overflow-x:auto; scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail button{appearance:none; border:0; background:transparent; color:var(--ink-2); font:inherit;
+  font-size:.92rem; padding:9px 17px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  display:flex; align-items:center; gap:8px;
+  transition:color .25s var(--ease), background .25s var(--ease)}
+.rail button svg{width:16px; height:16px; flex:none}
+.rail button:hover{color:var(--ink)}
+.rail button[aria-current="page"]{background:var(--raised); color:var(--ink); box-shadow:inset 0 0 0 1px var(--hair)}
+.rail .bell{min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--accent);
+  color:#fff; font-family:var(--mono); font-size:10px; display:grid; place-items:center}
+.vhead{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  margin-bottom:18px}
+.vhead h2{margin:0; font-size:clamp(22px,3vw,30px); letter-spacing:-.03em; font-weight:400}
+.tag-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px}
+.tcard{border:1px solid var(--hair); border-radius:18px; padding:16px 17px; background:var(--panel);
+  cursor:pointer; text-align:left; font:inherit; color:inherit; width:100%;
+  transition:border-color .25s var(--ease), transform .25s var(--ease)}
+.tcard:hover{border-color:var(--rule); transform:translateY(-2px)}
+.tcard[aria-pressed="true"]{border-color:var(--accent); background:var(--accent-wash)}
+.tcard .tn{font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--ink-2)}
+.tcard .tbig{font-size:30px; letter-spacing:-.03em; margin:6px 0 2px}
+.tcard .tsub{font-size:12.5px; color:var(--muted)}
+.tcard .track{margin-top:10px}
+.goal-list{display:flex; flex-direction:column; gap:10px}
+.gcard{display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid var(--hair);
+  border-radius:16px; background:var(--panel)}
+.gcard .gname{flex:1 1 auto; min-width:0; font-size:14.5px; overflow-wrap:anywhere}
+.gcard .gmeta{font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap}
+@media (max-width:820px){
+  .rail{position:fixed; left:0; right:0; bottom:0; z-index:120; width:auto; max-width:none;
+    border:0; border-top:1px solid var(--hair); border-radius:0; padding:6px 4px;
+    padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
+    background:color-mix(in srgb, var(--ground) 92%, transparent);
+    -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px); overflow:visible}
+  .rail button{flex:1 1 0; flex-direction:column; gap:3px; padding:7px 2px; font-size:10.5px;
+    letter-spacing:.02em; border-radius:14px}
+  .rail button svg{width:21px; height:21px}
+  .rail button[aria-current="page"]{background:transparent; box-shadow:none; color:var(--accent)}
+  .rail .bell{position:absolute; transform:translate(12px,-6px)}
+  #scroll{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  .vhead h2{font-size:24px}
+  .tag-grid{grid-template-columns:1fr 1fr}
+}
+
 /* ---------------- depth, and the shell that holds the board ----------------
    The rail and the three placeholder pages behind it are gone, and the glide
    that carried them with them. What is left is the half of the effect that
@@ -522,6 +635,9 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .mains .bars>.row.sel{border-color:var(--accent); background:var(--accent-wash)}
   .mains .bars>.row .rname{white-space:normal; line-height:1.25}
   .mains .axis{display:none}
+  .p-head{flex-direction:column; align-items:stretch; gap:10px}
+  .p-tools{margin-left:0; display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .p-title{font-size:17px}
   .mains .p-note{display:none}
   .mains .addrow{margin-top:10px}
   /* the subtasks come first; the box that adds one goes to the bottom */
@@ -587,6 +703,10 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     </div>
   </header>
 
+  <nav class="rail" id="rail" aria-label="Pages"></nav>
+
+  <section class="view is-on" id="v-board" aria-label="Board">
+
   <div id="canvas">
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
@@ -601,7 +721,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div class="k-sub" id="kpi-done-sub">of 0</div>
     </div>
     <div class="kpi">
-      <div class="k-label">Needs a look</div>
+      <div class="k-label">Alarm</div>
       <div class="k-val" id="kpi-alert">0</div>
       <div class="k-sub" id="kpi-alert-sub">blocked or stalled</div>
     </div>
@@ -615,17 +735,17 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   <div class="panel mains" data-panel="mains">
       <div class="p-head">
         <div>
-          <div class="p-title">Main tasks &mdash; completion</div>
-          <div class="p-note">Tap a bar to open its subtasks. To move one, drag it by the handle on the left, or by its name. The page scrolls itself while you drag.</div>
-        </div>
-        <div class="p-tools"><button class="mini" id="tv-main" aria-pressed="false">Table</button></div>
+          <div class="p-title">Goals</div>
+          </div>
+        <div class="p-tools"><div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-main" class="seek-in" type="search" placeholder="Search goals and tags" aria-label="Search goals" autocomplete="off"></div><button class="mini" id="tv-main" aria-pressed="false">Table</button></div>
       </div>
+      <div id="filterbar" hidden></div>
       <div class="bars" id="main-bars"></div>
       <div id="main-editor"></div>
       <div class="axis" id="axis-main"></div>
       <div id="main-table" hidden></div>
       <div class="addrow" id="add-main-row">
-        <input class="f" id="ng-name" placeholder="New main task" aria-label="New main task name">
+        <input class="f" id="ng-name" placeholder="New goal" aria-label="New goal">
         <button class="btn" id="ng-add">Add</button>
       </div>
     </div>
@@ -634,7 +754,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div class="p-head">
         <div>
           <div class="p-title">Subtasks &mdash; <span id="sub-title">&nbsp;</span></div>
-          <div class="p-note" id="sub-note">Drag across a bar to set progress.</div>
         </div>
         <div class="p-tools">
           <button class="pen" id="edit-group" aria-expanded="false" aria-label="Edit this main task"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3z"/></svg></button>
@@ -656,7 +775,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     <div class="p-head">
       <div>
         <div class="p-title">One Task A Day</div>
-        <div class="p-note">The board picks one and says why. Take it, or drag your own in by its handle. One subtask per main task, no more.</div>
       </div>
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
@@ -669,7 +787,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div class="p-head">
         <div>
           <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
-          <div class="p-note">Everything else. Drag in from either chart, and drag a card into Done when you finish it.</div>
         </div>
         <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
       </div>
@@ -680,7 +797,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
       <div class="p-head">
         <div>
           <div class="p-title">Done today</div>
-          <div class="p-note">Done for today only. The list empties overnight and the same card can come back tomorrow.</div>
         </div>
         <div class="p-tools"><button class="mini" id="done-clear">Clear</button></div>
       </div>
@@ -693,13 +809,44 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
     <div class="p-head">
       <div>
         <div class="p-title">Needs a look</div>
-        <div class="p-note">Blocked work, anything stalled 14 days, and anything untouched in a main task already past halfway.</div>
       </div>
     </div>
     <div class="alerts" id="alerts"></div>
   </section>
 
   </div>
+
+  </section>
+
+  <section class="view" id="v-tags" aria-label="Tags">
+    <div class="vhead">
+      <h2>Tags</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-tags" class="seek-in" type="search" placeholder="Search tags and goals" aria-label="Search"></div>
+    </div>
+    <div class="tag-grid" id="tag-grid"></div>
+    <div class="vhead" style="margin-top:34px"><h2>Goals under the picked tags</h2></div>
+    <div class="goal-list" id="tag-goals"></div>
+  </section>
+
+  <section class="view" id="v-backlog" aria-label="Backlog">
+    <div class="vhead">
+      <h2>Backlog</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-back" class="seek-in" type="search" placeholder="Search the backlog" aria-label="Search"></div>
+    </div>
+    <div class="addrow" id="backlog-add">
+      <input class="f" id="bl-name" placeholder="Something for a free hour" aria-label="Backlog item">
+      <button class="btn" id="bl-add">Add</button>
+    </div>
+    <div class="goal-list" id="backlog-list"></div>
+  </section>
+
+  <section class="view" id="v-archive" aria-label="Archive">
+    <div class="vhead">
+      <h2>Archive</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-arch" class="seek-in" type="search" placeholder="Search finished goals" aria-label="Search"></div>
+    </div>
+    <div class="goal-list" id="archive-list"></div>
+  </section>
 
   <div id="account" hidden>
     <div class="card">
@@ -948,7 +1095,59 @@ var state=boot();
 
 function blankState(){
   return {v:2,seedRev:0,day:todayStr(),groups:[],subs:{},oftad:[],plan:[],done:[],
-          hist:[],dayLog:[],log:[],sel:"",notified:"",ue:{},killed:[],layout:{},free:false};
+          hist:[],dayLog:[],log:[],sel:"",notified:"",ue:{},killed:[],layout:{},free:false,
+          archive:[],tagFilter:[],backlog:[]};
+}
+/* A main task is a Goal. A goal is a thing with an end: a date it is wanted
+   by and a weight against everything else. Boards written before this get
+   the fields added and nothing taken away.                              */
+var PRIOS=[["high","High"],["mid","Middle"],["low","Low"]];
+var PRIO_W={high:3, mid:2, low:1};
+function toggleTag(t){
+  var i=state.tagFilter.indexOf(t);
+  if(i>=0) state.tagFilter.splice(i,1); else state.tagFilter.push(t);
+  save(); renderAll();
+}
+function allTags(){
+  var seen={};
+  state.groups.forEach(function(g){ g.tags.forEach(function(t){ seen[t]=(seen[t]||0)+1; }); });
+  return Object.keys(seen).sort(function(a,b){ return seen[b]-seen[a]||a.localeCompare(b); })
+    .map(function(t){ return {t:t,n:seen[t]}; });
+}
+function toGoals(){
+  if(!state.archive) state.archive=[];
+  if(!state.backlog) state.backlog=[];
+  if(!state.tagFilter) state.tagFilter=[];
+  state.groups.concat(state.archive).forEach(function(g){
+    if(g.due===undefined) g.due="";
+    if(!g.prio) g.prio="mid";
+    if(!Array.isArray(g.tags)) g.tags=[];
+    if(g.tags.length>5) g.tags=g.tags.slice(0,5);
+  });
+}
+/* how many days until it is wanted. Null when no date is set. */
+function daysLeft(g){
+  if(!g||!g.due) return null;
+  var d=new Date(g.due+"T00:00:00"), t=new Date(todayStr()+"T00:00:00");
+  if(isNaN(d.getTime())) return null;
+  return Math.round((d-t)/864e5);
+}
+function dueLabel(g){
+  var n=daysLeft(g);
+  if(n===null) return "";
+  if(n<0) return Math.abs(n)+" days over";
+  if(n===0) return "due today";
+  if(n===1) return "due tomorrow";
+  return n+" days left";
+}
+/* Five bands, so the eye does the reading: nothing, a quarter, half,
+   most, all.                                                          */
+function band(p){
+  if(p>=100) return "b100";
+  if(p>75)   return "b75";
+  if(p>50)   return "b50";
+  if(p>0)    return "b25";
+  return "b0";
 }
 function boot(){
   var s=null;
@@ -960,7 +1159,10 @@ function boot(){
   /* the tutor answers aloud unless it has been turned off, because a
      conversation that only listens is not a conversation                */
   if(s.speak===undefined) s.speak=true;
-  state=s; sync();
+  /* Always tidy. Panels move while you work, and every open starts from
+     the grid again rather than from wherever last week left them.    */
+  s.free=false; s.layout={};
+  state=s; toGoals(); sync();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
   rollRecurring();          /* bring every habit into today before the first draw */
@@ -1001,11 +1203,45 @@ function save(){
   if(typeof paintWhere==="function") paintWhere();
 }
 
+/* Search: every word you typed has to appear somewhere in the thing, in
+   any order. Two words narrow it, they do not have to sit together.   */
+var searchText="";
+function searchQ(){ return searchText.trim().toLowerCase(); }
+function hit(text,q){
+  if(!q) return true;
+  var t=String(text||"").toLowerCase();
+  return q.split(/\s+/).every(function(w){ return t.indexOf(w)>=0; });
+}
 function gById(id){ for(var i=0;i<state.groups.length;i++) if(state.groups[i].id===id) return state.groups[i]; return null; }
 function detach(sid){
   state.groups.forEach(function(g){ var i=g.subs.indexOf(sid); if(i>=0) g.subs.splice(i,1); });
 }
 function killed(id){ return state.killed.indexOf(id)>=0; }
+/* A finished goal leaves the board rather than sitting there at 100%. Its
+   subtasks stay where they are, so putting it back is one press.      */
+function archiveGoal(id){
+  var g=gById(id); if(!g) return false;
+  g.archivedAt=todayStr();
+  state.archive.unshift(g);
+  state.groups.splice(state.groups.indexOf(g),1);
+  ["oftad","plan","done"].forEach(function(z){
+    state[z]=state[z].filter(function(c){ return g.subs.indexOf(c.id)<0; });
+  });
+  if(state.sel===id) state.sel=state.groups.length?state.groups[0].id:"";
+  touchHist(); save(); renderAll();
+  return true;
+}
+function unarchiveGoal(id){
+  var i=-1;
+  state.archive.forEach(function(g,n){ if(g.id===id) i=n; });
+  if(i<0) return false;
+  var g=state.archive.splice(i,1)[0];
+  delete g.archivedAt;
+  state.groups.push(g);
+  state.sel=g.id;
+  touchHist(); save(); renderAll();
+  return true;
+}
 
 function sync(){
   if(state.seedRev>=SEED_REV) return false;
@@ -1014,7 +1250,7 @@ function sync(){
     var g=gById(sg.id);
     if(!g){
       if(killed(sg.id)) return;
-      g={id:sg.id,name:sg.name,subs:[]};
+      g={id:sg.id,name:sg.name,subs:[],due:"",prio:"mid",tags:[]};
       state.groups.push(g);
     } else {
       if(!ue[sg.id+"|name"]) g.name=sg.name;
@@ -1068,27 +1304,55 @@ function statusOf(s){
   if(s.status==="doing"||s.pct>0) return {k:"run",label:"Doing"};
   return {k:"idle",label:"Todo"};
 }
+/* The alarm. Not a list of everything imperfect: the goals whose deadline
+   is closest and whose priority is highest, at the same time. Urgency is
+   how near the date is; weight is what you said the goal was worth. One
+   times the other, highest first.
+
+   Each alarm carries the one subtask inside it that most wants doing, so
+   pressing it lands you on the work rather than on the goal.          */
+function urgency(g){
+  var n=daysLeft(g);
+  if(n===null) return 2;
+  if(n<0) return 100;
+  if(n<=3) return 50;
+  if(n<=7) return 25;
+  if(n<=14) return 12;
+  if(n<=30) return 6;
+  return 3;
+}
+function worstIn(g){
+  var best=null;
+  g.subs.forEach(function(id){
+    var x=state.subs[id];
+    if(!x||x.pct>=100||x.status==="done") return;
+    var sc=(x.status==="blocked"?100:0)+ageOf(x.upd)+(x.pct>0?10:0);
+    if(!best||sc>best.sc) best={sc:sc,s:x};
+  });
+  return best&&best.s;
+}
 function alerts(){
-  var out=[], rank={crit:0,serious:1,warn:2};
+  var out=[];
   state.groups.forEach(function(g){
-    var gp=groupPct(g);
-    g.subs.forEach(function(id){
-      var s=state.subs[id]; if(!s||s.pct>=100||s.status==="done") return;
-      var a=ageOf(s.upd);
-      if(s.status==="blocked") out.push({sev:"crit",kind:"Blocked",t:s.name,w:g.name+" · held at "+s.pct+"% for "+a+" days"});
-      else if(s.rep){
-        if(periodKey(s.rep)) out.push({sev:"serious",kind:"Due",t:s.name,
-          w:g.name+" \u00b7 "+repLabel(s.rep).toLowerCase()+(s.streak?", "+s.streak+" in a row so far":"")});
-      }
-      else if(s.pct>0 && a>=14) out.push({sev:"warn",kind:"Stalled",t:s.name,w:g.name+" · no movement in "+a+" days"});
-      else if(s.pct===0 && gp>=45) out.push({sev:"serious",kind:"Not started",t:s.name,w:g.name+" is already at "+gp+"%"});
+    var p=groupPct(g);
+    if(p>=100) return;
+    var u=urgency(g), w=PRIO_W[g.prio]||2, score=u*w, n=daysLeft(g);
+    var sev = score>=150 ? "crit" : (score>=50 ? "serious" : "warn");
+    var sub=worstIn(g);
+    out.push({
+      score:score, sev:sev, gid:g.id, sid:sub?sub.id:"",
+      kind:(n!==null&&n<0)?"Overdue":(g.prio==="high"?"High":"Goal"),
+      t:g.name,
+      w:(n!==null?dueLabel(g):"no deadline set")+" \u00b7 "+(g.prio==="high"?"high":g.prio==="low"?"low":"middle")+
+        " priority \u00b7 "+p+"%"+(sub?" \u00b7 next: "+sub.name:"")
     });
   });
-  var open=state.oftad.length+state.plan.length;
-  if(open && new Date().getHours()>=15) out.unshift({sev:"warn",kind:"Today",t:open+" card"+(open>1?"s":"")+" still open in the docks",w:"It is past 15:00"});
-  out.sort(function(a,b){ return rank[a.sev]-rank[b.sev]; });
+  out.sort(function(x,y){ return y.score-x.score; });
   return out;
 }
+/* the siren: only the ones that genuinely cannot wait */
+function screaming(){ return alerts().filter(function(a){ return a.score>=150; }).length; }
+
 
 /* A copy of the whole board, once a day, for the last 7 days. It does not
    survive this browser being wiped, but it does survive a bad afternoon. */
@@ -1152,6 +1416,9 @@ function pickToday(){
       if(s.status==="blocked") return;            /* you cannot work a blocked thing */
       if(taken[s.id]||skip.indexOf(s.id)>=0) return;
       var a=ageOf(s.upd), sc=0, why="";
+      /* the goal's own weight and date carry most of it */
+      var u=urgency(g), w=PRIO_W[g.prio]||2, n=daysLeft(g);
+      sc += u*w*0.55;
       if(s.rep && periodKey(s.rep)){
         sc+=55;
         why="It repeats "+repLabel(s.rep).toLowerCase()+" and today is not done"+
@@ -1162,7 +1429,14 @@ function pickToday(){
       sc += Math.min(a,30)*0.8;                   /* the thing nobody has touched */
       if(moving===1&&s.pct>0) sc+=18;             /* the only thing moving in there */
       if(!why){
-        if(a>=14&&s.pct>0)
+        if(n!==null&&n<0)
+          why=g.name+" is "+Math.abs(n)+" days past its deadline"+
+            (g.prio==="high"?" and you marked it high priority":"")+". This is its next step.";
+        else if(n!==null&&n<=7&&g.prio==="high")
+          why=g.name+" is high priority and "+dueLabel(g)+". This is its next step.";
+        else if(n!==null&&n<=3)
+          why=g.name+" is "+dueLabel(g)+", and this is what is left.";
+        else if(a>=14&&s.pct>0)
           why=g.name+" has not moved in "+a+" days, and this is the part already started.";
         else if(moving===1&&s.pct>0)
           why="It is the only thing moving in "+g.name+", at "+s.pct+"%.";
@@ -1239,29 +1513,65 @@ axis($("#axis-main")); axis($("#axis-sub"));
 $("#ns-rep").innerHTML=REPEATS.map(function(o){
   return '<option value="'+o[0]+'">'+o[1]+"</option>"; }).join("");
 
+function goalsShown(){
+  var q=searchQ(), tf=state.tagFilter||[];
+  return state.groups.filter(function(g){
+    if(tf.length && !tf.every(function(t){ return g.tags.indexOf(t)>=0; })) return false;
+    if(!q) return true;
+    if(hit(g.name,q)) return true;
+    if(g.tags.some(function(t){ return hit(t,q); })) return true;
+    return g.subs.some(function(id){ var x=state.subs[id]; return x&&hit(x.name,q); });
+  });
+}
+function goalRow(g){
+  var p=groupPct(g), sel=g.id===state.sel, b=band(p), n=daysLeft(g);
+  var late=(n!==null&&n<0), soon=(n!==null&&n>=0&&n<=3);
+  return '<div class="row pick'+(sel?" sel":"")+'" data-group="'+g.id+'" data-tip="'+esc(g.name)+"|"+p+"% · "+groupDone(g)+" of "+g.subs.length+' done">'+
+    '<div class="rhead"><button class="grip" data-grip="task:'+g.id+'" aria-label="Drag '+esc(g.name)+'">'+GRIP+'</button>'+
+    '<span class="rname">'+esc(g.name)+'</span>'+
+    '<span class="pill pr-'+g.prio+'"><i></i>'+g.prio.toUpperCase()+'</span>'+
+    (n!==null?'<span class="pill due'+(late?" late":(soon?" soon":""))+'">'+esc(dueLabel(g))+'</span>':"")+
+    '<span class="rmeta">'+groupDone(g)+"/"+g.subs.length+'</span>'+
+    '<span class="rval '+b+'">'+p+'%</span>'+
+    '<button class="pen" data-gedit="'+g.id+'" aria-expanded="'+(sel&&openGroupEd)+
+      '" aria-label="Edit '+esc(g.name)+'">'+PEN+'</button></div>'+
+    (g.tags.length?'<div class="tagrow">'+g.tags.map(function(t){
+      return '<button class="tag" data-tagpick="'+esc(t)+'">'+esc(t)+'</button>'; }).join("")+'</div>':"")+
+    '<div class="track">'+GRID+'<div class="fill '+b+'" style="width:'+p+'%"></div></div></div>';
+}
+function renderFilter(){
+  var bar=$("#filterbar"); if(!bar) return;
+  var tf=state.tagFilter||[], q=searchQ();
+  if(!tf.length && !q){ bar.hidden=true; bar.innerHTML=""; return; }
+  bar.hidden=false;
+  bar.innerHTML='<span class="fb-k">Showing</span>'+
+    (q?'<span class="tag on">\u201c'+esc(q)+'\u201d</span>':"")+
+    tf.map(function(t){ return '<button class="tag on" data-tagpick="'+esc(t)+'">'+esc(t)+' \u00d7</button>'; }).join("")+
+    '<button class="btn" id="fb-clear">Clear</button>';
+}
 function renderMain(){
-  $("#main-bars").innerHTML=state.groups.map(function(g){
-    var p=groupPct(g), sel=g.id===state.sel;
-    return '<div class="row pick'+(sel?" sel":"")+'" data-group="'+g.id+'" data-tip="'+esc(g.name)+"|"+p+"% · "+groupDone(g)+" of "+g.subs.length+' subtasks done">'+
-      '<div class="rhead"><button class="grip" data-grip="task:'+g.id+'" aria-label="Drag '+esc(g.name)+'">'+GRIP+'</button>'+
-      '<span class="rname">'+esc(g.name)+'</span>'+
-      '<span class="rmeta">'+groupDone(g)+"/"+g.subs.length+'</span>'+
-      '<span class="rval">'+p+'%</span>'+
-      '<button class="pen" data-gedit="'+g.id+'" aria-expanded="'+(sel&&openGroupEd)+
-        '" aria-label="Edit '+esc(g.name)+'">'+PEN+'</button></div>'+
-      '<div class="track">'+GRID+'<div class="fill'+(p>=100?" done":"")+'" style="width:'+p+'%"></div></div></div>';
-  }).join("")||'<p class="calm">No main tasks yet. Add one below.</p>';
+  renderFilter();
+  var shown=goalsShown();
+  $("#main-bars").innerHTML=shown.map(goalRow).join("")||
+    '<p class="calm">'+(state.groups.length?"Nothing matches.":"No goals yet. Add one below.")+'</p>';
   var gsel=gById(state.sel);
-  $("#main-editor").innerHTML = (openGroupEd && gsel) ?
-    '<div class="editor">'+
-      '<label class="wide">Main task name<input class="f" data-ged="name" value="'+esc(gsel.name)+'"></label>'+
-      '<div class="acts"><button class="btn danger" data-gdel="'+gsel.id+'">Remove this main task and its '+
-        gsel.subs.length+' subtasks</button>'+
-      '<span style="font-size:12px;color:var(--muted)">The name saves when you leave the box.</span></div>'+
-    '</div>' : "";
-  $("#main-table").innerHTML=tbl(state.groups.map(function(g){
+  $("#main-editor").innerHTML = (openGroupEd && gsel) ? goalEditor(gsel) : "";
+  $("#main-table").innerHTML=tbl(shown.map(function(g){
     return [esc(g.name), groupDone(g)+" / "+g.subs.length, groupPct(g)+"%"]; }),
-    ["Main task","Subtasks done","Complete"]);
+    ["Goal","Subtasks done","Complete"]);
+}
+function goalEditor(g){
+  return '<div class="editor">'+
+    '<label class="wide">Goal<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
+    '<label>Deadline<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
+    '<label>Priority<select class="f" data-ged="prio">'+PRIOS.map(function(o){
+      return '<option value="'+o[0]+'"'+(g.prio===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
+    '<label class="wide">Tags, up to five, separated by commas'+
+      '<input class="f" data-ged="tags" value="'+esc(g.tags.join(", "))+'" placeholder="sap, migration, q4"></label>'+
+    '<div class="acts">'+
+      '<button class="btn" data-gdone="'+g.id+'">Archive this goal</button>'+
+      '<button class="btn danger" data-gdel="'+g.id+'">Remove it and its '+g.subs.length+' subtasks</button>'+
+    '</div></div>';
 }
 
 /* the strip scrolls the picked card into view; on a wide screen it does nothing */
@@ -1271,16 +1581,19 @@ function showPicked(){
   if(!el||!el.scrollIntoView) return;
   try{ el.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }catch(e){}
 }
+function subsShown(g){
+  var q=searchQ();
+  return g.subs.filter(function(id){ var x=state.subs[id]; return x && hit(x.name,q); });
+}
 function renderSubs(){
   var g=gById(state.sel);
   if(!g){ $("#sub-bars").innerHTML=""; $("#sub-title").textContent="nothing selected"; return; }
   $("#sub-title").textContent=g.name;
-  $("#sub-note").textContent="Drag across a bar to set its progress, or drag it away by the handle. "+groupDone(g)+" of "+g.subs.length+" done, "+groupPct(g)+"% overall.";
   /* the editor itself lives with the main tasks, where it belongs */
   $("#group-editor").innerHTML="";
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
-  $("#sub-bars").innerHTML=g.subs.map(function(id){
+  $("#sub-bars").innerHTML=subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
     var st=statusOf(s), a=ageOf(s.upd);
     return '<div class="row" data-sub="'+s.id+'">'+
@@ -1290,14 +1603,14 @@ function renderSubs(){
       (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
-      '<span class="rval">'+s.pct+'%</span>'+
+      '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
       '<div class="track scrub" data-scrub="'+s.id+'" data-tip="'+esc(s.name)+"|"+s.pct+"% · "+st.label+" · last moved "+(a===0?"today":a+" days ago")+'" role="slider" tabindex="0" aria-label="'+esc(s.name)+' progress" aria-valuenow="'+s.pct+'" aria-valuemin="0" aria-valuemax="100">'+
-      GRID+'<div class="fill'+(s.pct>=100?" done":"")+'" style="width:'+s.pct+'%"></div></div>'+
+      GRID+'<div class="fill '+band(s.pct)+'" style="width:'+s.pct+'%"></div></div>'+
       (openEd===s.id?subEditor(s):"")+"</div>";
   }).join("")||'<p class="calm">No subtasks yet. Add one above.</p>';
 
-  $("#sub-table").innerHTML=tbl(g.subs.map(function(id){
+  $("#sub-table").innerHTML=tbl(subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return ["","",""];
     return [esc(s.name), statusOf(s).label, s.pct+"%"]; }),
     ["Subtask","Status","Complete"]);
@@ -1328,8 +1641,9 @@ function renderKpis(){
   ease($("#kpi-done"),done,0,"");
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
   var al=alerts();
-  ease($("#kpi-alert"),al.length,0,"");
-  $("#kpi-alert-sub").textContent=al.length?"blocked, stalled or untouched":"nothing needs chasing";
+  var hot=al.filter(function(a){ return a.score>=150; }).length;
+  ease($("#kpi-alert"),hot,0,"");
+  $("#kpi-alert-sub").textContent=hot?"past or near a deadline you called important":"nothing is shouting";
   var planned=state.oftad.length+state.plan.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";
@@ -1359,11 +1673,15 @@ function drawSpark(){
     '<circle cx="'+X(h.length-1).toFixed(1)+'" cy="'+Y(h[h.length-1].v).toFixed(1)+'" r="2.6" fill="var(--run)"/>';
 }
 function renderAlerts(){
-  var al=alerts(), box=$("#alerts");
-  if(!al.length){ box.innerHTML='<p class="calm">Nothing blocked and nothing stalled.</p>'; return; }
-  box.innerHTML=al.slice(0,12).map(function(a){
-    return '<div class="alert"><span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
-      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+a.kind+"</span></div>"; }).join("");
+  var q=searchQ();
+  var al=alerts().filter(function(a){ return hit(a.t+" "+a.w,q); });
+  var box=$("#alerts"), panel=$('[data-panel="alerts"]');
+  if(panel) panel.classList.toggle("siren", screaming()>0 && !q);
+  if(!al.length){ box.innerHTML='<p class="calm">Nothing is close enough to shout about.</p>'; return; }
+  box.innerHTML=al.slice(0,8).map(function(a){
+    return '<button class="alert'+(a.score>=150?" hot":"")+'" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
+      '<span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
+      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+esc(a.kind)+"</span></button>"; }).join("");
 }
 
 /* ---------------- docks ---------------- */
@@ -1400,15 +1718,15 @@ function renderDocks(){
   var covered={}; state.oftad.forEach(function(c){ covered[cardGid(c)]=1; });
   $("#oftad").innerHTML = state.oftad.length
     ? state.oftad.map(function(c,i){ return chipHTML(c,i,"oftad"); }).join("")
-    : '<p class="hint"><b>One subtask per main task. No more.</b>Drag a bar in from the subtask list. A second from the same main task replaces it.</p>';
+    : '<p class="hint">Empty</p>';
   $("#plan").innerHTML = state.plan.length
     ? state.plan.map(function(c,i){ return chipHTML(c,i,"plan"); }).join("")
-    : '<p class="hint"><b>Everything else you might get to</b>No limit here. Drag from either chart.</p>';
+    : '<p class="hint">Empty</p>';
   $("#done").innerHTML = state.done.length
     ? state.done.map(function(c,i){ return chipHTML(c,i,"done"); }).join("")
-    : '<p class="hint"><b>Drag a card here when it is finished</b>Only for today. Tomorrow the list is empty again.</p>';
+    : '<p class="hint">Empty</p>';
   renderPick();
-  $("#oftad-count").textContent=state.oftad.length+" of "+state.groups.length+" main tasks covered";
+  $("#oftad-count").textContent=state.oftad.length+" of "+state.groups.length+" goals covered";
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
   $("#plan-count").textContent=state.plan.length?state.plan.length+" queued":"Nothing queued";
   $("#plan-roll").textContent=rollNote;
@@ -1445,12 +1763,30 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderDocks(); renderSnaps();
+  if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   /* content can change a panel's height, so re-separate before measuring */
   if(typeof resolveOverlaps==="function") resolveOverlaps(null);
   if(typeof fitCanvas==="function") fitCanvas();
 }
 renderAll();
+bindSeek();
 $("#revnote").textContent="Drag any panel by its header to move it anywhere, and pull its right edge to resize. Tidy up puts them back. Panels never overlap: whatever you drop onto steps out below. Opened from the claude.ai link, the board mirrors today\u2019s three docks so the 05:00 and 20:00 reminders can name real tasks; the saved file keeps everything local and mirrors nothing. Board revision "+SEED_REV+" · "+allSubs().length+" subtasks across "+state.groups.length+" main tasks. Adding, removing and editing all happen here in the browser and survive a reload. When new work is fed in from a Claude session the board merges it: new items appear, renames apply, and nothing you have already set is overwritten.";
+
+/* One query for the whole board. Every box types into it, and every box
+   shows it, so you never wonder which list is filtered.               */
+function bindSeek(){
+  var boxes=document.querySelectorAll(".seek-in");
+  Array.prototype.forEach.call(boxes,function(b){
+    b.addEventListener("input",function(){
+      searchText=b.value;
+      Array.prototype.forEach.call(boxes,function(o){ if(o!==b) o.value=b.value; });
+      renderAll();
+    });
+    b.addEventListener("keydown",function(e){
+      if(e.key==="Escape"){ searchText=""; b.value=""; renderAll(); }
+    });
+  });
+}
 
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
@@ -1476,6 +1812,42 @@ $("#main-bars").addEventListener("click",function(e){
 $("#edit-group").addEventListener("click",function(){ openGroupEd=!openGroupEd; renderSubs(); });
 
 document.addEventListener("click",function(e){
+  var go=e.target.closest("[data-goto-goal]");
+  if(go){
+    var gid=go.dataset.gotoGoal, sid=go.dataset.gotoSub;
+    state.sel=gid; openGroupEd=false; openEd=sid||""; save(); renderAll();
+    showPicked();
+    var want=sid?$('#sub-bars [data-sub="'+sid+'"]'):$('[data-panel="subs"]');
+    if(want&&want.scrollIntoView) want.scrollIntoView({behavior:"smooth",block:"center"});
+    if(want) flashIn(want);
+    return;
+  }
+  if(e.target.closest("#fb-clear")){
+    state.tagFilter=[]; searchText="";
+    Array.prototype.forEach.call(document.querySelectorAll(".seek-in"),function(x){ x.value=""; });
+    save(); renderAll(); return;
+  }
+  var tp=e.target.closest("[data-tagpick]");
+  if(tp){ toggleTag(tp.dataset.tagpick); return; }
+  var ar=e.target.closest("[data-arch]");
+  if(ar){ archiveGoal(ar.dataset.arch); return; }
+  var un=e.target.closest("[data-unarch]");
+  if(un){ unarchiveGoal(un.dataset.unarch); return; }
+  var gd2=e.target.closest("[data-gdone]");
+  if(gd2){
+    if(!armGate("arch:"+gd2.dataset.gdone, gd2, "Archive it?")) return;
+    archiveGoal(gd2.dataset.gdone); return;
+  }
+  var bg=e.target.closest("[data-bl-goal]");
+  if(bg){
+    var it=state.backlog.splice(+bg.dataset.blGoal,1)[0];
+    if(it){ var g={id:uid("g"),name:it.t,subs:[],due:"",prio:"mid",tags:[]};
+      state.groups.push(g); state.sel=g.id; openGroupEd=true;
+      save(); location.hash="#/board"; renderAll(); }
+    return;
+  }
+  var bd=e.target.closest("[data-bl-del]");
+  if(bd){ state.backlog.splice(+bd.dataset.blDel,1); save(); renderAll(); return; }
   var sn=e.target.closest("[data-snap]");
   if(sn){
     if(!armGate("snap:"+sn.dataset.snap, sn, "Replace today with "+sn.dataset.snap+"?")) return;
@@ -1528,7 +1900,14 @@ document.addEventListener("change",function(e){
   if(f.dataset.ged){
     var g=gById(state.sel); if(!g) return;
     var gk=f.dataset.ged;
-    if(gk==="name"){ if(!f.value.trim()){ renderSubs(); return; } g.name=f.value.trim(); mark(g.id,"name"); }
+    if(gk==="name"){ if(!f.value.trim()){ renderAll(); return; } g.name=f.value.trim(); mark(g.id,"name"); }
+    else if(gk==="due"){ g.due=f.value||""; mark(g.id,"due"); }
+    else if(gk==="prio"){ g.prio=f.value||"mid"; mark(g.id,"prio"); }
+    else if(gk==="tags"){
+      g.tags=f.value.split(",").map(function(t){ return t.trim().toLowerCase(); })
+        .filter(function(t,i,a){ return t && a.indexOf(t)===i; }).slice(0,5);
+      mark(g.id,"tags");
+    }
     save(); renderAll();
   }
 });
@@ -2192,15 +2571,17 @@ function speakOut(text){
 var ORB=$("#bot-orb"), SHEET=$("#botsheet");
 function orbSize(){ return ORB.offsetWidth||66; }
 function orbClamp(){
-  var w=orbSize(), m=10;
+  /* on a phone the tab bar owns the bottom of the screen, so the orb keeps
+     clear of it rather than sitting on top of Archive                   */
+  var w=orbSize(), m=10, floor=(window.innerWidth<=820?78:10);
   var x=Math.min(Math.max(m,parseFloat(ORB.style.left)||0), window.innerWidth-w-m);
-  var y=Math.min(Math.max(m,parseFloat(ORB.style.top)||0), window.innerHeight-w-m);
+  var y=Math.min(Math.max(m,parseFloat(ORB.style.top)||0), window.innerHeight-w-floor);
   ORB.style.left=x+"px"; ORB.style.top=y+"px";
   state.orbPos={x:x,y:y}; 
 }
 function orbPlace(){
   var P=state.orbPos, w=orbSize(), m=18;
-  if(!P) P={x:window.innerWidth-w-m, y:window.innerHeight-w-m-6};
+  if(!P) P={x:window.innerWidth-w-m, y:window.innerHeight-w-(window.innerWidth<=820?84:24)};
   ORB.style.left=P.x+"px"; ORB.style.top=P.y+"px";
   orbClamp(); sheetPlace();
 }
@@ -3470,6 +3851,7 @@ function boot2(){
   if(!state.done) state.done=[]; if(!state.dayLog) state.dayLog=[];
   if(!state.hist) state.hist=[]; if(!state.log) state.log=[];
   if(!state.groups) state.groups=[]; if(!state.subs) state.subs={};
+  toGoals();
   if(!state.sel||!gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
   sync();
   if(!state.hist.length) seedHist();
@@ -3621,6 +4003,145 @@ function catchRedirect(){
 
 
 
+
+
+/* ---------------- the four pages ----------------
+   One board, four ways in. The rail is a pill row on a desktop and a tab bar
+   along the bottom of a phone, which is where a thumb already is.        */
+var I_BOARD='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-6M21 19H3"/></svg>';
+var I_TAGS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11V4h7l10 10-7 7L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
+var I_BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h9"/></svg>';
+var I_ARCH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></svg>';
+var PAGES=[["board","Board",I_BOARD],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
+var curView="board";
+
+(function(){
+  var rail=$("#rail");
+  PAGES.forEach(function(v){
+    var b=document.createElement("button");
+    b.type="button"; b.dataset.view=v[0];
+    b.innerHTML=v[2]+'<span>'+v[1]+'</span>'+(v[0]==="board"?'<span class="bell" id="rail-bell" hidden></span>':"");
+    b.addEventListener("click",function(){ location.hash="#/"+v[0]; });
+    rail.appendChild(b);
+  });
+})();
+function showView(v){
+  if(!PAGES.some(function(x){ return x[0]===v; })) v="board";
+  curView=v;
+  PAGES.forEach(function(x){
+    var el=$("#v-"+x[0]); if(el) el.classList.toggle("is-on",x[0]===v);
+  });
+  Array.prototype.forEach.call($("#rail").children,function(b){
+    if(b.dataset.view===v) b.setAttribute("aria-current","page");
+    else b.removeAttribute("aria-current");
+  });
+  document.body.classList.toggle("on-board",v==="board");
+  renderAll();
+  scrollTo(0,0);
+  if(v==="board"){ try{ fitCanvas(); }catch(e){} }
+}
+function readHash(){
+  var m=String(location.hash||"").match(/^#\/([a-z]+)/);
+  showView(m?m[1]:"board");
+}
+
+/* ---------------- tags ---------------- */
+function renderTags(){
+  var grid=$("#tag-grid"); if(!grid) return;
+  var q=searchQ(), tags=allTags().filter(function(x){ return hit(x.t,q)||!q; });
+  grid.innerHTML = tags.length ? tags.map(function(x){
+    var gs=state.groups.filter(function(g){ return g.tags.indexOf(x.t)>=0; });
+    var pct=gs.length?Math.round(gs.reduce(function(t,g){ return t+groupPct(g); },0)/gs.length):0;
+    var on=state.tagFilter.indexOf(x.t)>=0;
+    return '<button class="tcard" data-tagpick="'+esc(x.t)+'" aria-pressed="'+on+'">'+
+      '<div class="tn">'+esc(x.t)+'</div>'+
+      '<div class="tbig '+band(pct)+'" style="color:var(--'+band(pct)+')">'+pct+'%</div>'+
+      '<div class="tsub">'+x.n+' goal'+(x.n>1?"s":"")+'</div>'+
+      '<div class="track">'+GRID+'<div class="fill '+band(pct)+'" style="width:'+pct+'%"></div></div>'+
+      '</button>';
+  }).join("") : '<p class="calm">No tags yet. Add up to five to any goal from its pen.</p>';
+
+  var list=$("#tag-goals");
+  var picked=state.tagFilter.length?goalsShown():[];
+  list.innerHTML = picked.length ? picked.map(gcard).join("")
+    : '<p class="calm">'+(state.tagFilter.length?"Nothing carries all of those tags.":"Press a tag to see its goals.")+'</p>';
+}
+function gcard(g){
+  var p=groupPct(g), n=daysLeft(g);
+  return '<div class="gcard"><span class="pill pr-'+g.prio+'"><i></i>'+g.prio.toUpperCase()+'</span>'+
+    '<button class="gname" style="background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer" '+
+      'data-goto-goal="'+g.id+'" data-goto-sub="">'+esc(g.name)+'</button>'+
+    (n!==null?'<span class="gmeta">'+esc(dueLabel(g))+'</span>':"")+
+    '<span class="gmeta '+band(p)+'" style="color:var(--'+band(p)+')">'+p+'%</span></div>';
+}
+
+/* ---------------- backlog ----------------
+   Things worth doing that are not a goal yet. Somewhere to put an idea so it
+   stops taking up room in your head.                                    */
+function renderBacklog(){
+  var box=$("#backlog-list"); if(!box) return;
+  var q=searchQ();
+  var items=state.backlog.filter(function(b){ return hit(b.t,q); });
+  box.innerHTML = items.length ? items.map(function(b,i){
+    return '<div class="gcard"><span class="gmeta">'+esc(b.d)+'</span>'+
+      '<span class="gname">'+esc(b.t)+'</span>'+
+      '<button class="btn" data-bl-goal="'+i+'">Make it a goal</button>'+
+      '<button class="btn danger" data-bl-del="'+i+'">Remove</button></div>';
+  }).join("") : '<p class="calm">'+(state.backlog.length?"Nothing matches.":"Nothing waiting. Add the next idea above.")+'</p>';
+}
+
+/* ---------------- archive ---------------- */
+function renderArchive(){
+  var box=$("#archive-list"); if(!box) return;
+  var q=searchQ();
+  var items=state.archive.filter(function(g){ return hit(g.name,q); });
+  box.innerHTML = items.length ? items.map(function(g){
+    var p=groupPct(g);
+    return '<div class="gcard"><span class="gmeta">'+esc(g.archivedAt||"")+'</span>'+
+      '<span class="gname">'+esc(g.name)+'</span>'+
+      '<span class="gmeta">'+g.subs.length+' subtasks</span>'+
+      '<span class="gmeta '+band(p)+'" style="color:var(--'+band(p)+')">'+p+'%</span>'+
+      '<button class="btn" data-unarch="'+g.id+'">Put it back</button></div>';
+  }).join("") : '<p class="calm">'+(state.archive.length?"Nothing matches.":"Nothing archived yet. Finish a goal and archive it from its pen.")+'</p>';
+}
+
+$("#bl-add").addEventListener("click",function(){
+  var v=$("#bl-name").value.trim(); if(!v){ $("#bl-name").focus(); return; }
+  state.backlog.unshift({t:v,d:todayStr()});
+  $("#bl-name").value="";
+  save(); renderAll();
+});
+$("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl-add").click(); });
+
+/* ---------------- the brain speaks up ----------------
+   It already knows what is on fire and what to do next. This is it saying so
+   without being asked, once when you arrive and then only when the answer
+   changes.                                                             */
+var saidWhat="";
+function nudge(){
+  var hot=alerts().filter(function(a){ return a.score>=150; });
+  var msg="", key="";
+  if(hot.length){
+    key="hot:"+hot[0].gid;
+    msg=hot.length===1
+      ? hot[0].t+" needs you: "+hot[0].w.split(" \\u00b7 ").slice(0,2).join(", ")+"."
+      : hot.length+" goals are past or nearly past their deadline. "+hot[0].t+" is the worst.";
+  } else if(!state.oftad.length){
+    var pk=pickToday();
+    if(pk){ key="pick:"+pk.s.id; msg="Today: "+pk.s.name+". "+pk.why; }
+  }
+  if(!msg||key===saidWhat) return;
+  saidWhat=key;
+  if(typeof toast==="function") toast("",msg);
+  var bell=$("#rail-bell");
+  if(bell){ bell.hidden=!hot.length; bell.textContent=hot.length||""; }
+}
+
+addEventListener("hashchange",readHash);
+readHash();
+bindSeek();
+setTimeout(nudge,1600);
+setInterval(nudge,1800000);
 
 })();
 </script>
