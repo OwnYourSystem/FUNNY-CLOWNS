@@ -12,19 +12,31 @@ const FEEDS = {
   football: "https://news.google.com/rss/search?q=(football+OR+%22premier+league%22+OR+%22champions+league%22)+when:2d",
   world:    "https://news.google.com/rss/headlines/section/topic/WORLD",
   science:  "https://news.google.com/rss/search?q=(research+OR+study+OR+physics+OR+climate+OR+biology)+when:2d",
-  denmark:  "https://news.google.com/rss/search?q=Denmark+when:2d"
+  /* Not a search. "Denmark" as a keyword search returns whatever the
+     single biggest story mentioning Denmark is, in any edition, and right
+     now that is a US-Greenland-Denmark security deal covered by American
+     and British outlets: the search ranks by how big the story is, not
+     by whose country it is. Google's own edition front page is what
+     actually means "the news, for Denmark": the same curated homepage
+     the topic sections use for WORLD/TECHNOLOGY/etc, just the Danish
+     edition of it instead of the global one.                          */
+  denmark:  "https://news.google.com/rss"
 };
-/* Every feed reads through the one edition below except Denmark, which
-   wants the Danish edition of Google News rather than a generic one
-   searching for the word "Denmark". A URL can carry gl/ceid only once:
-   most servers, Google's RSS included, resolve a repeated query key to
-   its LAST occurrence, so appending the shared edition after a feed's own
-   gl=DK silently threw the Danish edition away. That is exactly what was
-   happening here: "Denmark" news meant a UK edition's search for the word
-   Denmark, which surfaces Greenland-deal coverage from American and
-   British outlets, not Danish news.                                    */
+/* Every feed reads through the one edition below except Denmark. A URL
+   can carry gl/ceid only once: most servers, Google's RSS included,
+   resolve a repeated query key to its LAST occurrence, so appending the
+   shared edition after a feed's own gl=DK would silently throw the
+   Danish edition away.
+
+   Denmark's own edition is the Danish-language one, hl=da, not English.
+   An English-language Danish edition still indexes mostly international,
+   English-writing coverage of Denmark, the same wrong result as the
+   search. DR, TV2, Politiken and Berlingske write in Danish, and da is
+   what actually reaches them. The headline in the banner will read in
+   Danish for this one feed, and that is correct: it is what the front
+   page of Danish news looks like.                                     */
 const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
-const LOCALE = { denmark: "hl=en-GB&gl=DK&ceid=DK:en" };
+const LOCALE = { denmark: "hl=da&gl=DK&ceid=DK:da" };
 
 /* <source url="…">BBC</source> carries an attribute, so the open tag has to
    allow one or the publisher comes back empty. */
