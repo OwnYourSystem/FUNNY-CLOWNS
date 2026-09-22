@@ -62,6 +62,10 @@ function clean(t) {
 }
 
 export default async function handler(req, res) {
+  /* The board also runs from a claude.ai artifact frame and from other
+     Vercel branch deployments, none of which share this origin, and the
+     feed is public and read-only, so any origin may read it. */
+  res.setHeader("access-control-allow-origin", "*");
   const want = String(req.query.f || "")
     .split(",").map(s => s.trim()).filter(s => FEEDS[s]).slice(0, 6);
   if (!want.length) return res.status(200).json({ items: [] });
