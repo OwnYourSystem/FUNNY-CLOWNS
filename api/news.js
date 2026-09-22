@@ -36,7 +36,12 @@ const FEEDS = {
    Danish for this one feed, and that is correct: it is what the front
    page of Danish news looks like.                                     */
 const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
-const LOCALE = { denmark: "hl=da&gl=DK&ceid=DK:da" };
+/* hl needs the full locale, language-COUNTRY, the same shape as the
+   default's en-GB. A bare "da" is not a locale Google recognises, and
+   rather than reject it, it silently substituted a nearby Nordic edition
+   that was not Denmark: Norwegian papers, VG and Dagbladet and
+   Aftenposten, came back for a Danish request.                        */
+const LOCALE = { denmark: "hl=da-DK&gl=DK&ceid=DK:da" };
 
 /* <source url="…">BBC</source> carries an attribute, so the open tag has to
    allow one or the publisher comes back empty. */
