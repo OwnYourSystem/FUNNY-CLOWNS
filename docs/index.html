@@ -2432,12 +2432,17 @@ function drawSpark(){
 /* ---------------- the world, in the same strip ----------------
    A browser cannot read a news feed from this origin, and the feed is XML,
    so a small function on the same server fetches it and hands back titles.
-   There is no server behind a local file or inside an artifact frame, so
-   the call simply fails there and the banner carries the board alone.
+   A plain static host has no function behind this path, and an artifact
+   frame is never the same origin as one, so /api/news on its own only
+   works from the Vercel deployment itself. Everywhere else falls back to
+   asking that deployment directly - it answers any origin, since the feed
+   is public and read-only.
 
    It is fetched once on load and every fifteen minutes after, and held in
    this tab only. Nothing about the board is sent with the request.      */
 var NEWS=[], newsAt=0, newsBusy=false, newsOff=false;
+var NEWS_HOST = /(^|\.)vercel\.app$/.test(location.hostname) ? ""
+  : "https://funny-clowns-git-app-oys-s-projects.vercel.app";
 function newsItems(){ return NEWS; }
 function loadNews(force){
   var me=state.me||freshMe(), want=(me.feeds||[]).slice(0,6);
@@ -2446,10 +2451,11 @@ function loadNews(force){
   if(!force && Date.now()-newsAt < 900000) return;
   if(location.protocol.indexOf("http")!==0) return;   /* no server, no news */
   newsBusy=true;
-  fetch("/api/news?f="+encodeURIComponent(want.join(",")))
+  fetch(NEWS_HOST+"/api/news?f="+encodeURIComponent(want.join(",")))
     .then(function(r){
-      /* An artifact frame and a plain static host have no function behind
-         this path. One 404 is enough to know; stop asking. */
+      /* A plain static host with no function behind this path, and no
+         fallback host to try either, is the one case left that can 404.
+         One 404 is enough to know; stop asking. */
       if(r.status===404){ newsOff=true; return {items:[]}; }
       return r.ok ? r.json() : {items:[]};
     })
