@@ -30,15 +30,17 @@ const FEEDS = {
      What works is not asking Google to localise for us. It is naming
      the outlets: a search restricted to the actual Danish papers, the
      same shape the tech/finance/football feeds already use for a topic
-     Google's sections do not carry cleanly. dr.dk and tv2.dk are whole
-     broadcaster domains, so an unscoped site: search also pulled in a
-     radio stream page and a bare search page; their /nyheder section
-     keeps the match to actual news articles. Once the search was doing
+     Google's sections do not carry cleanly. Once the search was doing
      the localising instead of the edition parameters, hl=da-DK/ceid=DK:da
      stopped getting silently swapped for Norway and started returning
      actual Danish-language headlines - that substitution was specific
-     to the bare front-page endpoint, not this search shape.           */
-  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk/nyheder+OR+site:tv2.dk/nyheder+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
+     to the bare front-page endpoint, not this search shape. dr.dk and
+     tv2.dk are whole broadcaster domains, so this also matches the odd
+     radio-stream or search page; a path restriction to /nyheder kept
+     those out but starved the query down to as little as one story at
+     a time, so junk pages are dropped by title length instead, below,
+     and the site: match is left unrestricted for a steady result count. */
+  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk+OR+site:tv2.dk+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
 };
 const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
 const LOCALE = { denmark: "hl=da-DK&gl=DK&ceid=DK:da" };
@@ -66,8 +68,7 @@ export default async function handler(req, res) {
 
   const per = Math.max(1, Math.ceil(12 / want.length));
   const jobs = want.map(async key => {
-    const _dbg = req.query.dq && key === "denmark" ? String(req.query.dq) : null;
-    const url = (_dbg || FEEDS[key]) + (FEEDS[key].includes("?") ? "&" : "?") + (LOCALE[key] || DEFAULT_LOCALE);
+    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + (LOCALE[key] || DEFAULT_LOCALE);
     try {
       const ctl = AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
       const r = await fetch(url, { signal: ctl, headers: { "user-agent": "Mozilla/5.0" } });
