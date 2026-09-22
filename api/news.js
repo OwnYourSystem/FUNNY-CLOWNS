@@ -12,36 +12,28 @@ const FEEDS = {
   football: "https://news.google.com/rss/search?q=(football+OR+%22premier+league%22+OR+%22champions+league%22)+when:2d",
   world:    "https://news.google.com/rss/headlines/section/topic/WORLD",
   science:  "https://news.google.com/rss/search?q=(research+OR+study+OR+physics+OR+climate+OR+biology)+when:2d",
-  /* Not a search. "Denmark" as a keyword search returns whatever the
-     single biggest story mentioning Denmark is, in any edition, and right
-     now that is a US-Greenland-Denmark security deal covered by American
-     and British outlets: the search ranks by how big the story is, not
-     by whose country it is. Google's own edition front page is what
-     actually means "the news, for Denmark": the same curated homepage
-     the topic sections use for WORLD/TECHNOLOGY/etc, just the Danish
-     edition of it instead of the global one.                          */
-  denmark:  "https://news.google.com/rss"
+  /* Three things were tried here and all three failed, live-tested one
+     at a time against the real endpoint:
+       - a plain keyword search for "Denmark": ranks by how big the
+         story is, in any edition, and a US-Greenland-Denmark security
+         deal outranks everything else that mentions the country, so
+         every item came back as American or British coverage of that
+         one story.
+       - Google's own edition front page with gl=DK&ceid=DK:en: the
+         root /rss endpoint does not honour gl for this account at all;
+         it came back as the same generic US/international top stories
+         served with no locale set.
+       - the same front page with ceid=DK:da, Denmark's actual language:
+         rather than reject an edition it does not serve, Google quietly
+         substituted a Norwegian one. VG, Dagbladet and Aftenposten came
+         back for a request that specified Denmark.
+     What works is not asking Google to localise for us. It is naming
+     the outlets: a search restricted to the actual Danish papers, the
+     same shape the tech/finance/football feeds already use for a topic
+     Google's sections do not carry cleanly.                            */
+  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk+OR+site:tv2.dk+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
 };
-/* Every feed reads through the one edition below except Denmark. A URL
-   can carry gl/ceid only once: most servers, Google's RSS included,
-   resolve a repeated query key to its LAST occurrence, so appending the
-   shared edition after a feed's own gl=DK would silently throw the
-   Danish edition away.
-
-   Denmark's own edition is the Danish-language one, hl=da, not English.
-   An English-language Danish edition still indexes mostly international,
-   English-writing coverage of Denmark, the same wrong result as the
-   search. DR, TV2, Politiken and Berlingske write in Danish, and da is
-   what actually reaches them. The headline in the banner will read in
-   Danish for this one feed, and that is correct: it is what the front
-   page of Danish news looks like.                                     */
 const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
-/* hl needs the full locale, language-COUNTRY, the same shape as the
-   default's en-GB. A bare "da" is not a locale Google recognises, and
-   rather than reject it, it silently substituted a nearby Nordic edition
-   that was not Denmark: Norwegian papers, VG and Dagbladet and
-   Aftenposten, came back for a Danish request.                        */
-const LOCALE = { denmark: "hl=da-DK&gl=DK&ceid=DK:da" };
 
 /* <source url="…">BBC</source> carries an attribute, so the open tag has to
    allow one or the publisher comes back empty. */
@@ -66,8 +58,7 @@ export default async function handler(req, res) {
 
   const per = Math.max(1, Math.ceil(12 / want.length));
   const jobs = want.map(async key => {
-    var _dbg = req.query.dloc && key === "denmark" ? String(req.query.dloc) : null;
-    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + (_dbg || LOCALE[key] || DEFAULT_LOCALE);
+    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + DEFAULT_LOCALE;
     try {
       const ctl = AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
       const r = await fetch(url, { signal: ctl, headers: { "user-agent": "Mozilla/5.0" } });
