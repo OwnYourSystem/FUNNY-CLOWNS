@@ -30,8 +30,11 @@ const FEEDS = {
      What works is not asking Google to localise for us. It is naming
      the outlets: a search restricted to the actual Danish papers, the
      same shape the tech/finance/football feeds already use for a topic
-     Google's sections do not carry cleanly.                            */
-  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk+OR+site:tv2.dk+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
+     Google's sections do not carry cleanly. dr.dk and tv2.dk are whole
+     broadcaster domains, so an unscoped site: search also pulled in a
+     radio stream page and a bare search page; their /nyheder section
+     keeps the match to actual news articles.                          */
+  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk/nyheder+OR+site:tv2.dk/nyheder+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
 };
 const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
 
@@ -71,7 +74,9 @@ export default async function handler(req, res) {
         /* Google appends " - Publisher" to every headline, and the source
            field already carries it. One of the two is enough. */
         if (src && t.endsWith(" - " + src)) t = t.slice(0, -(src.length + 3));
-        return t ? { k: key, t, s: src } : null;
+        /* a stray site: match can be a menu or search page rather than a
+           story, and those titles come back too short to be a headline */
+        return t.length > 12 ? { k: key, t, s: src } : null;
       }).filter(Boolean);
     } catch (e) { return []; }
   });
