@@ -873,13 +873,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
    belonged on a board you drag things on.                                 */
 #scroll{max-width:1200px; margin-inline:auto; padding-inline:20px; padding-block:34px 60px;
   display:flex; flex-direction:column; gap:22px}
-#canvas>[data-panel]{transform:translate3d(0,calc(var(--par,0px) + var(--lag,0px)),0)}
-.par-sky{position:fixed; inset:-20% -10% auto -10%; height:120%; z-index:0; pointer-events:none;
-  opacity:.9; transform:translate3d(0,var(--par,0px),0)}
-.par-sky i{position:absolute; display:block; border-radius:50%; filter:blur(60px); opacity:.5}
-.par-sky i:nth-child(1){left:6%;  top:12%; width:38vw; height:38vw; background:var(--accent-wash)}
-.par-sky i:nth-child(2){right:4%; top:38%; width:30vw; height:30vw; background:rgba(120,140,255,.10)}
-.par-sky i:nth-child(3){left:32%; top:68%; width:44vw; height:44vw; background:rgba(255,255,255,.045)}
 
 
 .hint{font-family:var(--mono); font-size:.74rem; color:var(--muted); letter-spacing:.08em}
@@ -933,10 +926,6 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
 @media (max-width:820px){
   body{background:var(--nm-bg)}
   .wrap{--panel:var(--nm-bg); --raised:var(--nm-bg); --ground:var(--nm-bg)}
-  /* Flight on a phone is the river behind the board and nothing else. No
-     per-panel drift and no banking, so the stack holds still in the hand. */
-  #canvas>[data-panel]{transform:none}
-  .par-sky{display:none}
   /* A moulded surface needs one flat colour to be moulded out of. The river
      behind the board mottles it, so on the phone it is turned right down: it
      still answers the Flight switch, it just stops fighting the light.   */
@@ -3279,7 +3268,6 @@ $("#io-reset").addEventListener("click",function(){
    every width, so the handles, the free mode and the button are gone. What
    is left is the one thing they were hiding: the layout is not yours to
    maintain.                                                              */
-var CANVAS=$("#canvas");
 var wasStrip=stripMode();
 addEventListener("resize",function(){
   if(stripMode()!==wasStrip){ wasStrip=stripMode(); renderMain(); }
@@ -3727,7 +3715,7 @@ function riverFrame(ts){
   if(!rctx){ riverRAF=null; return; }
   var dt=Math.min(64, ts-tNow||16); tNow=ts;
   driftCam(ts);
-  var ck=cam.hold?0.24:0.055;          /* settles decisively when a hand reaches in */
+  var ck=0.055;
   cam.x+=(cam.tx-cam.x)*ck; cam.y+=(cam.ty-cam.y)*ck;
   var cx=W*0.5 + cam.x*W*0.16;
   var hz=H*(0.30 + cam.y*0.10);
@@ -3794,50 +3782,25 @@ function riverFrame(ts){
   riverRAF=requestAnimationFrame(riverFrame);
 }
 
-/* ---------------- drone camera ---------------- */
-/* Only a real device tilt banks the board. A pointer must never move it:
-   the board would shift out from under whatever you were reaching for, and
-   panels far from the perspective origin shifted far enough to miss. */
+/* ---------------- the river's own drift ----------------
+   The panels used to bank with a device tilt too: a 3D rotateX/rotateY on
+   the whole canvas. That read as depth on a screen sitting on a desk and
+   as motion sickness on one held in the hand, and "held in the hand" was
+   never only the phone: a tablet is wide enough to pass as a desktop by
+   width alone, so it got the tilt too and floated the same way, on a
+   screen even less likely to be sitting still on a desk. The panels no
+   longer move for tilt or for scroll, on any device. What is left is the
+   river behind them: it answers a real device tilt if one arrives and
+   drifts gently on its own otherwise, because a background is allowed to
+   breathe in a way the goals you are reading are not.                    */
 var tiltSource="";
-function applyCam(){
-  if(!CANVAS) return;
-  /* A phone is held, and a held thing is never level. Banking the board to
-     follow the hand means it never holds still: every small movement of the
-     wrist rotates the whole page under the thumb. The tilt belongs to a
-     screen that sits on a desk.                                          */
-  if(tiltSource!=="device"||cam.hold||!wideMotion()){ CANVAS.style.transform=""; return; }
-  CANVAS.style.transform="perspective(1600px) rotateX("+(-cam.y*4.2).toFixed(3)+
-    "deg) rotateY("+(cam.x*5.4).toFixed(3)+"deg)";
-}
-function camLoop(){
-  applyCam();
-  if(motionOn) requestAnimationFrame(camLoop);
-}
-/* reaching in settles the camera level, so every hit test stays honest */
-function holdCam(on){
-  cam.hold=on?1:0;
-  document.body.classList.toggle("cam-hold",!!on);
-  if(on){ cam.tx=0; cam.ty=0; }
-}
-var holdT=null;
-document.addEventListener("pointerdown",function(){ clearTimeout(holdT); holdCam(true); },true);
-document.addEventListener("pointerup",function(){
-  clearTimeout(holdT); holdT=setTimeout(function(){ holdCam(false); },450);
-},true);
-document.addEventListener("pointercancel",function(){
-  clearTimeout(holdT); holdT=setTimeout(function(){ holdCam(false); },450);
-},true);
-
-var motionOn=false, tiltBound=false;
 function onTilt(e){
   if(e.gamma==null&&e.beta==null) return;
   tiltSource="device";
-  if(cam.hold) return;
   cam.tx=Math.max(-1,Math.min(1,(e.gamma||0)/34));
   cam.ty=Math.max(-1,Math.min(1,((e.beta||0)-48)/40));
 }
-/* with no device to tilt, the valley drifts on its own so the scene still
-   breathes, but the board itself stays put */
+var motionOn=false, tiltBound=false;
 function driftCam(ts){
   if(tiltSource==="device") return;
   cam.tx=Math.sin(ts/9000)*0.55;
@@ -3847,7 +3810,6 @@ function startMotion(){
   motionOn=true; document.body.classList.remove("flat");
   readInk(); sizeRiver(); buildFlow();
   if(!riverRAF) riverRAF=requestAnimationFrame(riverFrame);
-  requestAnimationFrame(camLoop);
   if(!tiltBound){
     tiltBound=true;
     window.addEventListener("deviceorientation",onTilt);
@@ -3856,10 +3818,9 @@ function startMotion(){
 }
 function stopMotion(){
   motionOn=false; document.body.classList.add("flat");
-  if(typeof levelOut==="function") levelOut();
   if(riverRAF){ cancelAnimationFrame(riverRAF); riverRAF=null; }
   if(rctx) rctx.clearRect(0,0,W,H);
-  cam.tx=cam.ty=cam.x=cam.y=0; applyCam();
+  cam.tx=cam.ty=cam.x=cam.y=0;
   state.motion=false; save(); paintMotionBtn();
 }
 function paintMotionBtn(){
@@ -4531,101 +4492,17 @@ function ease(el,to,dec,suffix){
 })();
 
 
-/* ---------------- depth on scroll ----------------
-   Every panel answers the same scroll at its own rate, by position and by
-   speed. The deep ones move most, the day's cards least, so the board
-   reads as depth rather than as one flat sheet.
-
-   The three placeholder pages that used to sit behind a rail are gone, and
-   the glide that carried them with them. Half built is not a feature, and a
-   page that arrives after your hand has no place on a board you drag things
-   on. What is left is the half that belonged here.                       */
-/* ---------------- 2. parallax ----------------
-   Every layer answers the same scroll at its own rate. The sky moves
-   most, the wide panels next, the day's cards least, so the page reads
-   as depth rather than as one flat sheet.                            */
-/* The badge sits directly on top of the summary strip. Left out of this
-   list it held still while the strip drifted 46px away from it, which is
-   the gap that opened and closed under it as you scrolled. It travels with
-   the strip now. */
-var DEPTH={now:.10, kpis:.10, mains:.055, subs:.08, oftad:.028, plan:.05, done:.034, alerts:.018};
-var parRAF=null, SKY=null;
-(function(){
-  var w=document.querySelector(".wrap");
-  if(!w) return;
-  w.insertAdjacentHTML("afterbegin",'<div class="par-sky" aria-hidden="true"><i></i><i></i><i></i></div>');
-  SKY=w.firstElementChild;
-})();
-/* Wide enough that the panels sit side by side. In one column each panel
-   drifting at its own rate is not depth, it is a stack that will not settle:
-   the gaps between them open and close as you scroll. */
-function wideMotion(){ return window.innerWidth>820; }
-/* Depth is what the Flight switch is for. It used to run whether the switch
-   was on or off, which made the switch a lie. */
-function flying(){ return motionOn && !REDUCE && wideMotion(); }
-function levelOut(){
-  if(SKY) SKY.style.setProperty("--par","0px");
-  var host=$("#canvas"); if(!host) return;
-  Array.prototype.forEach.call(host.children,function(p){
-    p.style.setProperty("--par","0px");
-    p.style.setProperty("--lag","0px");
-  });
-}
-function parallax(at){
-  if(!flying()){ levelOut(); return; }
-  var y=(at===undefined) ? (window.pageYOffset||document.documentElement.scrollTop||0) : at;
-  if(SKY) SKY.style.setProperty("--par",(y*.14).toFixed(1)+"px");
-  if(curView!=="board") return;
-  var host=$("#canvas"); if(!host) return;
-  Array.prototype.forEach.call(host.children,function(p){
-    var k=DEPTH[p.getAttribute("data-panel")];
-    if(k===undefined) return;
-    var d=y*k; if(d>46) d=46; if(d<-46) d=-46;
-    p.style.setProperty("--par",d.toFixed(1)+"px");
-  });
-}
-parallax();
-
-
-/* the panels lean by moving, never by shearing: a skew shifts a panel further
-   the further across it you are, and a 28 pixel handle then sits away from
-   where it is drawn                                                       */
-var DRIFT=0, driftRAF=null, driftLast=0, driftHold=0, driftIdle=0;
-function setLag(v){
-  if(!flying()) v=0;
-  var host=$("#canvas"); if(!host) return;
-  Array.prototype.forEach.call(host.children,function(p){
-    var k=DEPTH[p.getAttribute("data-panel")];
-    if(k===undefined) return;
-    var t=v*k*2.2;
-    if(t>18) t=18; if(t<-18) t=-18;
-    p.style.setProperty("--lag",t.toFixed(2)+"px");
-  });
-}
-function driftFrame(){
-  var y=window.pageYOffset||document.documentElement.scrollTop||0;
-  DRIFT = DRIFT*0.82 + (y-driftLast)*0.18; driftLast=y;
-  setLag(driftHold ? 0 : DRIFT);
-  parallax(y);
-  driftIdle = Math.abs(DRIFT)<0.03 ? driftIdle+1 : 0;
-  if(driftIdle>30 && !driftHold){ driftRAF=null; setLag(0); return; }
-  driftRAF=requestAnimationFrame(driftFrame);
-}
-function wake(){
-  if(!flying()){ if(driftRAF){ cancelAnimationFrame(driftRAF); driftRAF=null; } levelOut(); return; }
-  driftIdle=0; if(!driftRAF) driftRAF=requestAnimationFrame(driftFrame);
-}
-/* anything being dragged gets the board back at once, with no lag to fight */
-var GRAB="[data-grip],[data-card],[data-scrub],#bot-orb,.track";
-addEventListener("pointerdown",function(e){
-  if(e.target.closest && e.target.closest(GRAB)){ driftHold++; setLag(0); wake(); }
-},true);
-function letGo(){ if(driftHold){ driftHold=0; wake(); } }
-addEventListener("pointerup",letGo,true);
-addEventListener("pointercancel",letGo,true);
-addEventListener("scroll",wake,{passive:true});
-addEventListener("resize",wake);
-wake();
+/* ---------------- the panels hold still ----------------
+   Every panel used to answer scroll at its own rate, by position and by
+   velocity, plus a lean when a device tilted: depth, the same idea as the
+   drone camera above. It read as alive on a desktop. On a phone it was
+   seasickness, so it was cut there first. It turned out width was the
+   wrong test for "does this device get carried": a tablet is wide enough
+   to pass the same test a desktop passes, held in a hand the same way a
+   phone is, and it floated exactly the same way a phone did. Rather than
+   chase a better test, the depth is gone outright. The grid holds its
+   place and the goals you are reading do not drift while you read them,
+   on a desk, in a hand, or anywhere else.                                */
 
 /* ---------------- account, and the board that follows you ----------------
    Sign in and the board stops being one browser's secret. It is kept as one
