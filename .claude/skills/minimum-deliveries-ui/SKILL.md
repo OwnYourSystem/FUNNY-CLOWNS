@@ -268,37 +268,50 @@ this board keeps everything in the person's own browser.
 inside `@media (prefers-reduced-motion: no-preference)` or guarded by a
 `REDUCE` flag read once at boot.
 
-**Depth on scroll.** Each panel answers the same scroll at its own rate:
-`transform: translate3d(0, calc(var(--par) + var(--lag)), 0)`, set from a
-rAF loop. `--par` is position parallax (factor by panel, capped at 46px),
-`--lag` is velocity lag (capped at 18px, zeroed the instant anything is
-grabbed). Deeper panels move more.
+**The panels hold still.** Nothing about the grid moves for scroll, for a
+pointer, or for a device tilt, on any device. This was not always true and
+is worth knowing why it is now.
+
+An earlier version gave every panel `transform: translate3d(0, calc(var(--par)
++ var(--lag)), 0)` from a rAF loop, `--par` capped at 46px of scroll
+parallax, `--lag` capped at 18px of velocity lag, deeper panels moving
+more, plus a `rotateX`/`rotateY` bank on the whole canvas from a real
+device tilt. On a desktop that read as depth. On a phone it read as
+seasickness, so it was gated off below 820px width, on the reasoning that
+a phone is held and a held thing is never level: banking the board to
+follow the hand meant it never held still under the thumb.
+
+That gate used screen width as a stand-in for "is this device held in the
+hand," and the stand-in was wrong. A tablet is wide enough to pass the
+820px test the same way a desktop does, in portrait or landscape, and it
+is held in the hand the same way a phone is. It floated exactly the same
+way a phone did, on a screen even less likely to be sitting on a desk.
+Rather than find a better test (`pointer:fine` without `any-hover` gets
+closer, but a touchscreen laptop still has a trackpad and still sits on a
+desk, so even that is not clean), the whole system was cut. `DEPTH`,
+`parRAF`/`SKY`, `wideMotion`/`flying`, `parallax`/`levelOut`, `setLag`/
+`driftFrame`, the `.par-sky` layer, `applyCam`/`camLoop`/`holdCam`: gone.
+The grid is a grid; a goal does not move while you are reading it,
+anywhere.
 
 **Lean by moving, never by shearing.** A `skewY` shifts an element further
 the further across it you are, so a 28px drag handle ends up 18px from
-where it is drawn. A translate keeps every box square to the screen.
+where it is drawn. Kept as a rule for anything that still leans, even
+though the one thing it used to guard (the panel drift above) is gone.
 
-**Flight is a switch, so it must switch something.** The parallax and the
-lag used to run whether Flight was on or off, which made the button a lie.
-Both are gated on it now, and `stopMotion()` levels the board rather than
-leaving the last offsets in place.
-
-**A phone gets the ambience, not the depth.** Below 820px there is no
-per-panel drift and no device tilt: `#canvas>[data-panel]{transform:none}`,
-the sky layer is hidden, and `applyCam` refuses. Two reasons, both learned
-the hard way. A phone is held, and a held thing is never level, so banking
-the board to follow the hand means it never holds still under the thumb.
-And in one column, panels drifting at their own rates is not depth — it is
-a stack whose gaps open and close as you scroll.
+**The river still breathes.** The decorative canvas behind the board
+(`riverFrame`) is a background, not the content, and it keeps its own
+gentle drift: `cam.tx`/`cam.ty` ease toward a real device tilt if one
+arrives (`onTilt`) and sway on their own otherwise (`driftCam`), feeding
+only the river's vanishing point. It never touches a panel. A background
+is allowed to move in a way the goals you are reading are not, and Flight
+on/off still gates it, honestly this time: `motionOn` controls exactly
+one thing now.
 
 **Anything read during boot is declared above `var state=boot()`.** This has
 now bitten three times: `DAYS_SHORT`, then `FEEDS`, then `SUB_W`. A `var`
 assigned below that line is `undefined` when `toGoals()` migrates against it,
 and the whole script dies there with the board blank.
-
-**Every panel in the grid needs a DEPTH entry.** One left out holds still
-between two that move, and the gap under it breathes. If a panel has no
-business moving, give it its neighbour's factor so the pair travels as one.
 
 **No glide.** An earlier version held the content by the window and moved it
 by a transform chasing the scroll, Lusion style. It reads beautifully and it
