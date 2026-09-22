@@ -12,9 +12,31 @@ const FEEDS = {
   football: "https://news.google.com/rss/search?q=(football+OR+%22premier+league%22+OR+%22champions+league%22)+when:2d",
   world:    "https://news.google.com/rss/headlines/section/topic/WORLD",
   science:  "https://news.google.com/rss/search?q=(research+OR+study+OR+physics+OR+climate+OR+biology)+when:2d",
-  denmark:  "https://news.google.com/rss/search?q=Denmark+when:2d&gl=DK&ceid=DK:en"
+  /* Three things were tried here and all three failed, live-tested one
+     at a time against the real endpoint:
+       - a plain keyword search for "Denmark": ranks by how big the
+         story is, in any edition, and a US-Greenland-Denmark security
+         deal outranks everything else that mentions the country, so
+         every item came back as American or British coverage of that
+         one story.
+       - Google's own edition front page with gl=DK&ceid=DK:en: the
+         root /rss endpoint does not honour gl for this account at all;
+         it came back as the same generic US/international top stories
+         served with no locale set.
+       - the same front page with ceid=DK:da, Denmark's actual language:
+         rather than reject an edition it does not serve, Google quietly
+         substituted a Norwegian one. VG, Dagbladet and Aftenposten came
+         back for a request that specified Denmark.
+     What works is not asking Google to localise for us. It is naming
+     the outlets: a search restricted to the actual Danish papers, the
+     same shape the tech/finance/football feeds already use for a topic
+     Google's sections do not carry cleanly. dr.dk and tv2.dk are whole
+     broadcaster domains, so an unscoped site: search also pulled in a
+     radio stream page and a bare search page; their /nyheder section
+     keeps the match to actual news articles.                          */
+  denmark:  "https://news.google.com/rss/search?q=(site:dr.dk/nyheder+OR+site:tv2.dk/nyheder+OR+site:politiken.dk+OR+site:berlingske.dk+OR+site:jyllands-posten.dk)+when:2d"
 };
-const LANG = "hl=en-GB&gl=GB&ceid=GB:en";
+const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
 
 /* <source url="…">BBC</source> carries an attribute, so the open tag has to
    allow one or the publisher comes back empty. */
@@ -39,7 +61,7 @@ export default async function handler(req, res) {
 
   const per = Math.max(1, Math.ceil(12 / want.length));
   const jobs = want.map(async key => {
-    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + LANG;
+    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + DEFAULT_LOCALE;
     try {
       const ctl = AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
       const r = await fetch(url, { signal: ctl, headers: { "user-agent": "Mozilla/5.0" } });
@@ -52,7 +74,9 @@ export default async function handler(req, res) {
         /* Google appends " - Publisher" to every headline, and the source
            field already carries it. One of the two is enough. */
         if (src && t.endsWith(" - " + src)) t = t.slice(0, -(src.length + 3));
-        return t ? { k: key, t, s: src } : null;
+        /* a stray site: match can be a menu or search page rather than a
+           story, and those titles come back too short to be a headline */
+        return t.length > 12 ? { k: key, t, s: src } : null;
       }).filter(Boolean);
     } catch (e) { return []; }
   });
