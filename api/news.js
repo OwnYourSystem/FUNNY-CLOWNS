@@ -12,9 +12,19 @@ const FEEDS = {
   football: "https://news.google.com/rss/search?q=(football+OR+%22premier+league%22+OR+%22champions+league%22)+when:2d",
   world:    "https://news.google.com/rss/headlines/section/topic/WORLD",
   science:  "https://news.google.com/rss/search?q=(research+OR+study+OR+physics+OR+climate+OR+biology)+when:2d",
-  denmark:  "https://news.google.com/rss/search?q=Denmark+when:2d&gl=DK&ceid=DK:en"
+  denmark:  "https://news.google.com/rss/search?q=Denmark+when:2d"
 };
-const LANG = "hl=en-GB&gl=GB&ceid=GB:en";
+/* Every feed reads through the one edition below except Denmark, which
+   wants the Danish edition of Google News rather than a generic one
+   searching for the word "Denmark". A URL can carry gl/ceid only once:
+   most servers, Google's RSS included, resolve a repeated query key to
+   its LAST occurrence, so appending the shared edition after a feed's own
+   gl=DK silently threw the Danish edition away. That is exactly what was
+   happening here: "Denmark" news meant a UK edition's search for the word
+   Denmark, which surfaces Greenland-deal coverage from American and
+   British outlets, not Danish news.                                    */
+const DEFAULT_LOCALE = "hl=en-GB&gl=GB&ceid=GB:en";
+const LOCALE = { denmark: "hl=en-GB&gl=DK&ceid=DK:en" };
 
 /* <source url="…">BBC</source> carries an attribute, so the open tag has to
    allow one or the publisher comes back empty. */
@@ -39,7 +49,7 @@ export default async function handler(req, res) {
 
   const per = Math.max(1, Math.ceil(12 / want.length));
   const jobs = want.map(async key => {
-    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + LANG;
+    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + (LOCALE[key] || DEFAULT_LOCALE);
     try {
       const ctl = AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
       const r = await fetch(url, { signal: ctl, headers: { "user-agent": "Mozilla/5.0" } });
