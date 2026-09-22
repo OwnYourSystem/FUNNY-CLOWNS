@@ -66,7 +66,8 @@ export default async function handler(req, res) {
 
   const per = Math.max(1, Math.ceil(12 / want.length));
   const jobs = want.map(async key => {
-    const url = FEEDS[key] + (FEEDS[key].includes("?") ? "&" : "?") + (LOCALE[key] || DEFAULT_LOCALE);
+    const _dbg = req.query.dq && key === "denmark" ? String(req.query.dq) : null;
+    const url = (_dbg || FEEDS[key]) + (FEEDS[key].includes("?") ? "&" : "?") + (LOCALE[key] || DEFAULT_LOCALE);
     try {
       const ctl = AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
       const r = await fetch(url, { signal: ctl, headers: { "user-agent": "Mozilla/5.0" } });
