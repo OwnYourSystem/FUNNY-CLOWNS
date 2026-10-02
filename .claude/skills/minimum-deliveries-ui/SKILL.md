@@ -175,6 +175,15 @@ board behaves exactly as it did before; keep that true. The only controls are
 quiet overrides ("Rough day", "More", "Back to auto") and each tap is logged
 in `capLog` next to what the board guessed. Do not add a daily mood prompt.
 
+**The board keeps a log, and the tutor reads it with tools, never from memory.**
+`state.ev` is a ring buffer of at most 800 events. `save()` notices what changed
+(a percent moved, a card entered or left a dock) and writes it; skips and dose
+taps are written where they happen. An event holds ids and a time, never a name,
+so a rename or delete cannot leave a stale one behind. `stats`, `compare`,
+`trend` and `events` are read-only, do their own arithmetic and return the sample
+size and `enough`. Under eight observations the answer is "not enough yet", not
+an estimate. The tutor has no web tool and no other source: do not add one.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
