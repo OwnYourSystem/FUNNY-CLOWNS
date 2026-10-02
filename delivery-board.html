@@ -240,7 +240,8 @@ body.flat #canvas{transform:none!important}
 
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
-#canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"]{grid-column:1/-1}
+#canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"],
+#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{grid-column:1/-1}
 #bot-orb{position:fixed; z-index:130; width:66px; height:66px; border-radius:50%;
   display:grid; place-items:center; cursor:grab; touch-action:none; color:#fff;
   background:var(--accent); border:none; padding:0;
@@ -1071,6 +1072,18 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <div id="canvas">
   <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
+
+  <div class="panel" data-panel="plan">
+      <div class="p-head">
+        <div>
+          <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
+        </div>
+        <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
+      </div>
+      <div class="drop" id="plan"></div>
+      <div class="dock-foot"><span id="plan-count"></span><span id="plan-roll"></span></div>
+  </div>
+
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
       <div class="k-label">Overall</div>
@@ -1146,16 +1159,6 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
   </section>
 
-  <div class="panel" data-panel="plan">
-      <div class="p-head">
-        <div>
-          <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
-        </div>
-        <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
-      </div>
-      <div class="drop" id="plan"></div>
-      <div class="dock-foot"><span id="plan-count"></span><span id="plan-roll"></span></div>
-  </div>
   <div class="panel" data-panel="done">
       <div class="p-head">
         <div>
