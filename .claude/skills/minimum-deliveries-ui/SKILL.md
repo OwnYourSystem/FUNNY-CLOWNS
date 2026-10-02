@@ -226,6 +226,17 @@ those from the tutor and the board. Only kept items reach the tutor, through
 `get_memory` and the snapshot. One question at a time, never a second before the
 first is answered.
 
+**One hint a day, built from the person's own numbers or the library, and it
+learns which kind helps.** `hintCands()` makes candidates (days finished, a goal
+that stopped moving, a library entry that fits today); each must pass
+`replyCheck()` against the facts it was built from before it is shown. At most
+one a day; the person answers helpful, not for me or later, and starting the
+experiment a hint suggests counts as acting on it. `hintChoose()` tries each kind
+once, then favours the best record; three refusals and no help silences a kind.
+It becomes a reminder only when reminders are on and the board is open: a
+browser cannot wake a closed page. Do not claim background delivery; it needs a
+server (`notes/push-design.md`).
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

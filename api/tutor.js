@@ -88,7 +88,7 @@ export const SYSTEM =
    against the page's own list, so the two cannot drift apart quietly. */
 export const TOOLS = [
   "board_state", "stats", "compare", "trend", "events", "find_evidence", "start_experiment", "stop_experiment",
-  "experiment_status", "get_memory", "propose_memory", "forget_memory", "set_dose", "set_progress", "set_status",
+  "experiment_status", "get_hint", "get_memory", "propose_memory", "forget_memory", "set_dose", "set_progress", "set_status",
   "add_subtask", "rename_subtask", "remove_subtask", "move_subtask", "add_main_task", "focus_today",
   "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task"
 ];
