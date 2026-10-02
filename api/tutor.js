@@ -62,6 +62,10 @@ export const SYSTEM =
 "date, the time and today's dose; it is not the person speaking. On a low-dose day suggest only the smallest step and " +
 "never add work. If the person says they are worn out, call set_dose with rough; if they want more, call it with more. " +
 "Do not ask how they feel every day. The board already guessed.\n\n" +
+"When you give advice, call find_evidence and cite its entries by id in square brackets, like [E-FLOOR-01]. Say what kind of " +
+"source it is: today every entry is practitioner opinion, not a trial. If find_evidence returns nothing, say the library has " +
+"nothing on that. Never say what research shows from memory, and never cite anything that was not returned. Offer the " +
+"entry's small experiment as something to try and measure, not as a rule. Quote shares and counts as the tools return them.\n\n" +
 "To answer anything about patterns or history, call stats, compare, trend or events. They are read-only and exact. " +
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough " +
 "data yet and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with " +
@@ -78,7 +82,7 @@ export const SYSTEM =
    keeps a caller from adding one that does something else. A test checks it
    against the page's own list, so the two cannot drift apart quietly. */
 export const TOOLS = [
-  "board_state", "stats", "compare", "trend", "events", "set_dose", "set_progress", "set_status",
+  "board_state", "stats", "compare", "trend", "events", "find_evidence", "set_dose", "set_progress", "set_status",
   "add_subtask", "rename_subtask", "remove_subtask", "move_subtask", "add_main_task", "focus_today",
   "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task"
 ];
