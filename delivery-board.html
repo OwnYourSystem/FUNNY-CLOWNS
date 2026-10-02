@@ -1123,6 +1123,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="addrow" id="add-main-row">
         <input class="f" id="ng-name" placeholder="New goal" aria-label="New goal">
         <button class="btn" id="ng-add">Add</button>
+        <button class="btn" id="ng-back" title="Keep it in the Backlog until you are ready to work on it">To backlog</button>
       </div>
     </div>
 
@@ -1330,7 +1331,6 @@ try{var _t=localStorage.getItem("oys-theme");
       <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
       <span class="bot-name">Board tutor</span>
       <span class="bot-tools">
-        <button class="mini" id="bot-speak" aria-pressed="false" title="Read replies aloud">Speak</button>
         <button class="mini" id="bot-clear" title="Start over">Clear</button>
         <button class="mini" id="bot-min" title="Put the conversation away">Minimise</button>
       </span>
@@ -1610,7 +1610,7 @@ function toGoals(){
   if(!Array.isArray(me.work)||me.work.length!==2) me.work=d.work;
   if(!Array.isArray(me.feeds)) me.feeds=[];
   me.feeds=me.feeds.filter(function(k){ return FEEDS.some(function(f){ return f[0]===k; }); });
-  state.groups.concat(state.archive).forEach(function(g){
+  state.groups.concat(state.archive, state.backlog.filter(function(b){ return b.goal; }).map(function(b){ return b.goal; })).forEach(function(g){
     if(g.due===undefined) g.due="";
     if(!g.prio) g.prio="mid";
     if(!Array.isArray(g.tags)) g.tags=[];
@@ -1655,9 +1655,8 @@ function boot(){
   if(!s || s.v!==2 || !s.groups) { s=blankState(); }
   if(!s.ue) s.ue={}; if(!s.killed) s.killed=[]; if(!s.oftad) s.oftad=[];
   if(!s.plan) s.plan=[]; if(!s.done) s.done=[]; if(!s.dayLog) s.dayLog=[];
-  /* the tutor answers aloud unless it has been turned off, because a
-     conversation that only listens is not a conversation                */
-  if(s.speak===undefined) s.speak=true;
+  /* the tutor no longer speaks its replies; a flag an older build saved goes */
+  delete s.speak;
   /* the grid is the only layout now; anything a older build saved goes */
   delete s.free; delete s.layout;
   /* sync adds any goal the seed grew since last time, and those arrive
@@ -1731,6 +1730,26 @@ function archiveGoal(id){
   touchHist(); save(); renderAll();
   return true;
 }
+/* A goal can wait in the Backlog instead of sitting on the board. It leaves
+   the same way an archived one does, with its subtasks kept, so it counts for
+   nothing in Overall, the alarms or the verdict until it is made active.  */
+function backlogGoal(id){
+  var g=gById(id); if(!g) return false;
+  state.backlog.unshift({t:g.name, d:todayStr(), goal:g});
+  state.groups.splice(state.groups.indexOf(g),1);
+  ["oftad","plan","done"].forEach(function(z){
+    state[z]=state[z].filter(function(c){ return c.id!==g.id && g.subs.indexOf(c.id)<0; });
+  });
+  if(state.sel===id) state.sel=state.groups.length?state.groups[0].id:"";
+  openGroupEd=false;
+  touchHist(); save(); renderAll();
+  return true;
+}
+/* true when a goal with this id is already waiting in the backlog or archive */
+function waiting(id){
+  return state.archive.some(function(g){ return g.id===id; }) ||
+         state.backlog.some(function(b){ return b.goal && b.goal.id===id; });
+}
 function unarchiveGoal(id){
   var i=-1;
   state.archive.forEach(function(g,n){ if(g.id===id) i=n; });
@@ -1749,7 +1768,7 @@ function sync(){
   SEED.forEach(function(sg){
     var g=gById(sg.id);
     if(!g){
-      if(killed(sg.id)) return;
+      if(killed(sg.id)||waiting(sg.id)) return;
       g={id:sg.id,name:sg.name,subs:[],due:"",prio:"mid",tags:[]};
       state.groups.push(g);
     } else {
@@ -2322,6 +2341,7 @@ function goalEditor(g){
     '<label class="wide">Tags, up to five, separated by commas'+
       '<input class="f" data-ged="tags" value="'+esc(g.tags.join(", "))+'" placeholder="sap, migration, q4"></label>'+
     '<div class="acts">'+
+      '<button class="btn" data-gback="'+g.id+'">Move to backlog</button>'+
       '<button class="btn" data-gdone="'+g.id+'">Archive this goal</button>'+
       '<button class="btn danger" data-gdel="'+g.id+'">Remove it and its '+g.subs.length+' subtasks</button>'+
     '</div></div>';
@@ -2354,7 +2374,7 @@ function renderSubs(){
 
   $("#sub-bars").innerHTML=subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), a=ageOf(s.upd), n=daysLeft(s);
+    var st=statusOf(s), n=daysLeft(s);
     var late=(n!==null&&n<0), soon=(n!==null&&n>=0&&n<=3);
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
@@ -2368,7 +2388,7 @@ function renderSubs(){
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
-      '<div class="track scrub" data-scrub="'+s.id+'" data-tip="'+esc(s.name)+"|"+s.pct+"% · "+st.label+" · last moved "+(a===0?"today":a+" days ago")+'" role="slider" tabindex="0" aria-label="'+esc(s.name)+' progress" aria-valuenow="'+s.pct+'" aria-valuemin="0" aria-valuemax="100">'+
+      '<div class="track scrub" data-scrub="'+s.id+'" data-tip="'+esc(s.name)+"|"+s.pct+"% · "+st.label+'" role="slider" tabindex="0" aria-label="'+esc(s.name)+' progress" aria-valuenow="'+s.pct+'" aria-valuemin="0" aria-valuemax="100">'+
       GRID+'<div class="fill '+band(s.pct)+'" style="width:'+s.pct+'%"></div></div>'+
       (openEd===s.id?subEditor(s):"")+"</div>";
   }).join("")||'<p class="calm">No subtasks yet. Add one above.</p>';
@@ -2390,7 +2410,6 @@ function subEditor(s){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
-    '<label>Last moved<input class="f" type="date" data-ed="upd" value="'+esc(s.upd)+'"></label>'+
     '<div class="acts"><button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
     '<span style="font-size:12px;color:var(--muted)">Drag this row onto another main task to move it there.</span></div>'+
   '</div>';
@@ -2837,16 +2856,26 @@ document.addEventListener("click",function(e){
     if(!armGate("arch:"+gd2.dataset.gdone, gd2, "Archive it?")) return;
     archiveGoal(gd2.dataset.gdone); return;
   }
+  var gb=e.target.closest("[data-gback]");
+  if(gb){ backlogGoal(gb.dataset.gback); return; }
   var bg=e.target.closest("[data-bl-goal]");
   if(bg){
     var it=state.backlog.splice(+bg.dataset.blGoal,1)[0];
-    if(it){ var g=newGoal(it.t);
-      state.groups.push(g); state.sel=g.id; openGroupEd=true;
-      save(); location.hash="#/board"; renderAll(); }
+    if(it){ var g=it.goal||newGoal(it.t);
+      state.groups.push(g); state.sel=g.id; openGroupEd=!it.goal;
+      touchHist(); save(); location.hash="#/board"; renderAll(); }
     return;
   }
   var bd=e.target.closest("[data-bl-del]");
-  if(bd){ state.backlog.splice(+bd.dataset.blDel,1); save(); renderAll(); return; }
+  if(bd){
+    var bi=+bd.dataset.blDel, bit=state.backlog[bi]; if(!bit) return;
+    if(bit.goal){
+      if(!armGate("bldel:"+bit.goal.id,bd,"Remove it and all "+bit.goal.subs.length+"?")) return;
+      bit.goal.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); });
+      state.killed.push(bit.goal.id);
+    }
+    state.backlog.splice(bi,1); touchHist(); save(); renderAll(); return;
+  }
   var sn=e.target.closest("[data-snap]");
   if(sn){
     if(!armGate("snap:"+sn.dataset.snap, sn, "Replace today with "+sn.dataset.snap+"?")) return;
@@ -2895,7 +2924,6 @@ document.addEventListener("change",function(e){
     else if(k==="tag") s.tag=v.trim();
     else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
     else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
-    else if(k==="upd") s.upd=v||todayStr();
     touchHist(); save(); renderAll(); return;
   }
   if(f.dataset.ged){
@@ -2917,6 +2945,13 @@ $("#ng-add").addEventListener("click",function(){
   var n=$("#ng-name").value.trim(); if(!n){ $("#ng-name").focus(); return; }
   var g=newGoal(n);
   state.groups.push(g); state.sel=g.id;
+  $("#ng-name").value="";
+  save(); renderAll();
+});
+$("#ng-back").addEventListener("click",function(){
+  var n=$("#ng-name").value.trim(); if(!n){ $("#ng-name").focus(); return; }
+  var g=newGoal(n);
+  state.backlog.unshift({t:g.name, d:todayStr(), goal:g});
   $("#ng-name").value="";
   save(); renderAll();
 });
@@ -3296,7 +3331,7 @@ function wide(){ return window.innerWidth>=900; }
 var boardDb=null, syncT=null;
 /* ---------------- voice ---------------- */
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var canSpeak=("speechSynthesis" in window), rec=null, hearing=false, handsFree=false, spokeLast=false;
+var rec=null, hearing=false;
 var VOICE_ERR={
   "not-allowed":"The microphone is blocked here. Inside this frame the browser may refuse it — the typed box still works.",
   "service-not-allowed":"This browser will not run speech recognition in an embedded page. Type instead.",
@@ -3376,7 +3411,6 @@ function paintOrb(){
   ORB.setAttribute("aria-label",off?"Open the board tutor":"Talk to the board");
 }
 function stopHearing(){
-  handsFree=false;
   try{ if(rec) rec.stop(); }catch(e){}
   micUI(false);
 }
@@ -3394,11 +3428,11 @@ function listen(){
         var said=txt.trim();
         micUI(false);
         try{ rec.stop(); }catch(err){}
-        if(said){ spokeLast=true; botAsk(said); }
+        if(said) botAsk(said);
       }
     };
     rec.onerror=function(e){
-      micUI(false); handsFree=false;
+      micUI(false);
       var code=e&&e.error;
       if(code==="not-allowed"||code==="service-not-allowed"){
         state.srBlocked=true; save(); paintOrb();
@@ -3414,21 +3448,6 @@ function listen(){
     micUI(true);
     rec.start();
   }catch(err){ micUI(false); botBubble("err","This browser cannot listen. Type instead."); }
-}
-function speakOut(text){
-  if(!state.speak||!canSpeak||!text) return;
-  try{
-    speechSynthesis.cancel();
-    var u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g," ").slice(0,700));
-    u.lang=navigator.language||"en-US"; u.rate=1.03; u.pitch=1;
-    /* Some browsers never fire onend, which would end the conversation in
-       silence. A timer sized to the answer picks the turn back up.       */
-    var again=function(){ if(handsFree&&spokeLast&&!hearing&&!botBusy) listen(); };
-    var guard=setTimeout(again, 1800+Math.min(String(text).length*70, 12000));
-    u.onend=function(){ clearTimeout(guard); setTimeout(again,250); };
-    u.onerror=function(){ clearTimeout(guard); setTimeout(again,250); };
-    speechSynthesis.speak(u);
-  }catch(e){}
 }
 
 /* ---------------- the orb, and the sheet it opens ----------------
@@ -3573,7 +3592,6 @@ function orbTap(){
     }
     state.micBlocked=false; save(); paintOrb();
     note(""); hideToast();
-    handsFree=!!state.speak;
     listen();
   },function(e){
     micUI(false);
@@ -3581,12 +3599,6 @@ function orbTap(){
   });
 }
 $("#bot-min").addEventListener("click",function(e){ e.stopPropagation(); stopHearing(); botOpen(false); });
-$("#bot-speak").addEventListener("click",function(e){
-  e.stopPropagation();
-  state.speak=!state.speak; save();
-  this.setAttribute("aria-pressed",state.speak?"true":"false");
-  if(!state.speak){ try{ speechSynthesis.cancel(); }catch(err){} handsFree=false; }
-});
 
 (function(){
   if(!window.claude||typeof claude.use!=="function") return;
@@ -4394,9 +4406,7 @@ async function botAsk(text){
     if(botTurns.length>14) botTurns=botTurns.slice(-14);
     botRender();
     toast(said,reply);
-    speakOut(reply);
-    if(handsFree&&(!state.speak||!canSpeak)) setTimeout(listen,400);
-    else if(!hearing&&!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
+    if(!hearing&&!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
     return;
   }
   botBusy=true;
@@ -4416,7 +4426,6 @@ async function botAsk(text){
     );
     botTurns.push({role:"assistant",content:res.text});
     botRender();
-    speakOut(res.text);
     if(!hearing) try{ $("#bot-input").focus(); }catch(e){}
   }catch(e){
     var msg=BOT_ERR[e&&e.code]||("Something went wrong"+(e&&e.code?" ("+e.code+")":"")+".");
@@ -4433,7 +4442,6 @@ async function botAsk(text){
 (function(){
   ORB.hidden=false;
   paintOrb(); orbPlace();
-  $("#bot-speak").setAttribute("aria-pressed",state.speak?"true":"false");
   botOpen(false);   /* it opens when you ask for it, never on its own */
   var chips=[["What is left today?","what is left today"],
              ["What needs a look?","what needs a look"],
@@ -5264,10 +5272,14 @@ function renderBacklog(){
   var box=$("#backlog-list"); if(!box) return;
   var q=searchQ();
   var items=state.backlog.filter(function(b){ return hit(b.t,q); });
-  box.innerHTML = items.length ? items.map(function(b,i){
+  box.innerHTML = items.length ? items.map(function(b){
+    var i=state.backlog.indexOf(b), g=b.goal, p=g?groupPct(g):0, n=g?daysLeft(g):null;
     return '<div class="gcard"><span class="gmeta">'+esc(b.d)+'</span>'+
       '<span class="gname">'+esc(b.t)+'</span>'+
-      '<button class="btn" data-bl-goal="'+i+'">Make it a goal</button>'+
+      (g?'<span class="gmeta">'+g.subs.length+' subtasks</span>'+
+         (n!==null?'<span class="gmeta">'+esc(dueLabel(g))+'</span>':"")+
+         '<span class="gmeta '+band(p)+'" style="color:var(--'+band(p)+')">'+p+'%</span>':"")+
+      '<button class="btn" data-bl-goal="'+i+'">'+(g?"Make it active":"Make it a goal")+'</button>'+
       '<button class="btn danger" data-bl-del="'+i+'">Remove</button></div>';
   }).join("") : '<p class="calm">'+(state.backlog.length?"Nothing matches.":"Nothing waiting. Add the next idea above.")+'</p>';
 }
