@@ -1615,7 +1615,9 @@ function toGoals(){
     if(!g.where) g.where=guessWhere(g.name);
     g.subs.forEach(function(id){
       var x=state.subs[id];
-      if(x && !SUB_W[x.prio]) x.prio="mid";
+      if(!x) return;
+      if(!SUB_W[x.prio]) x.prio="mid";
+      if(x.due===undefined) x.due="";
     });
   });
 }
@@ -1767,7 +1769,7 @@ function sync(){
   state.groups.forEach(function(g){ delete g.icon; delete g.mp; });
   Object.keys(state.subs).forEach(function(id){
     var sx=state.subs[id];
-    delete sx.pri; delete sx.est; delete sx.spent; delete sx.due;
+    delete sx.pri; delete sx.est; delete sx.spent;
   });
   RETIRED.forEach(function(id){
     if(state.subs[id]){ detach(id); delete state.subs[id]; state.killed.push(id); return; }
@@ -2030,6 +2032,7 @@ function goalScore(g,c,me){
 /* within-goal only: which step of this goal, now */
 function subScore(s,g,moving){
   var sc = SUB_W[s.prio||"mid"] + Math.min(ageOf(s.upd),30)*0.8;
+  sc += urgency(s)*0.5;                     /* its own deadline, not the goal's */
   if(s.rep && periodKey(s.rep)) sc+=55;     /* a habit due today still wins */
   if(s.pct>0&&s.pct<100) sc+=22;
   if(moving===1&&s.pct>0) sc+=18;
@@ -2342,7 +2345,8 @@ function renderSubs(){
 
   $("#sub-bars").innerHTML=subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), a=ageOf(s.upd);
+    var st=statusOf(s), a=ageOf(s.upd), n=daysLeft(s);
+    var late=(n!==null&&n<0), soon=(n!==null&&n>=0&&n<=3);
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
       '<span class="rname">'+esc(s.name)+'</span>'+
@@ -2351,6 +2355,7 @@ function renderSubs(){
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
       ((s.prio&&s.prio!=="mid")?'<span class="pill pr-'+s.prio+' sub"><i></i>'+
         s.prio.toUpperCase()+'</span>':"")+
+      (n!==null?'<span class="pill due sub'+(late?" late":(soon?" soon":""))+'">'+esc(dueLabel(s))+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -2371,6 +2376,7 @@ function subEditor(s){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Priority, inside this goal<select class="f" data-ed="prio">'+PRIOS.map(function(o){
       return '<option value="'+o[0]+'"'+((s.prio||"mid")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
+    '<label>Deadline<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label>'+
     '<label>Repeats<select class="f" data-ed="rep">'+REPEATS.map(function(o){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
@@ -2879,6 +2885,7 @@ document.addEventListener("change",function(e){
     }
     else if(k==="tag") s.tag=v.trim();
     else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
+    else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
     else if(k==="upd") s.upd=v||todayStr();
     touchHist(); save(); renderAll(); return;
   }
