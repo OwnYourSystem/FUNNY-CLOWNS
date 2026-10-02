@@ -184,8 +184,9 @@ so a rename or delete cannot leave a stale one behind. `stats`, `compare`,
 size and `enough`. Under eight observations the answer is "not enough yet", not
 an estimate. The tutor has no web tool and no other source: do not add one.
 
-**Outside the artifact the tutor goes through `api/tutor.js`, and the page never
-holds a key.** The function owns the rules, the model, the thinking settings
+**Outside the artifact the tutor would go through `api/tutor.js` (parked: the
+`TUTOR_PROXY` flag is false and nothing calls it), and the page never holds a
+key.** The function owns the rules, the model, the thinking settings
 and the token ceiling; the page sends a transcript and the tools it can run,
 and runs them itself. A tool with a `type` (web search, fetch, code execution,
 MCP), a tool not on the function's list, a `system` message, an image: all
