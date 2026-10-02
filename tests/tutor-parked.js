@@ -1,0 +1,20 @@
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const KEY='oys-min-deliveries-v1';
+(async () => {
+  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const p = await b.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  let calls=0; await p.route('**/api/tutor', r=>{ calls++; r.fulfill({status:503,body:'{}'}); });
+  await p.goto('http://localhost:8731/index.html'); await p.waitForSelector('.row.pick');
+  await p.evaluate(KEY=>{ const s=JSON.parse(localStorage.getItem(KEY)); s.me=s.me||{}; s.me.done=true; localStorage.setItem(KEY,JSON.stringify(s)); localStorage.setItem(KEY+'.account',JSON.stringify({access_token:'t',refresh_token:'',at:Date.now(),email:'',uid:'u'})); },KEY);
+  await p.reload(); await p.waitForSelector('.row.pick');
+  const log=()=>p.evaluate(()=>[...document.querySelectorAll('#bot-log .bot-msg')].map(d=>d.className.replace('bot-msg ','')+': '+d.textContent));
+  await p.evaluate(()=>window.__board.ask('Tell me what you notice about my mornings')); await p.waitForTimeout(400);
+  console.log('SIGNED_IN_UNMATCHED='+JSON.stringify((await log()).slice(-1)));
+  console.log('PROXY_CALLS='+calls);
+  await p.evaluate(()=>window.__board.ask('what do i skip')); await p.waitForTimeout(300);
+  console.log('OFFLINE_ANSWER='+JSON.stringify((await log()).slice(-1)).slice(0,120));
+  await p.evaluate(()=>document.querySelector('#bot-clear').click());
+  console.log('EMPTY_TEXT='+await p.evaluate(()=>document.querySelector('#bot-log .bot-empty').textContent));
+  console.log('ERRORS='+JSON.stringify(errs));
+  await b.close();
+})();

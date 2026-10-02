@@ -37,7 +37,9 @@ const site = http.createServer(async (q, s) => {
   }
   const f = path.join(ROOT, q.url === "/" ? "index.html" : q.url.split("?")[0]);
   if (!fs.existsSync(f)) { s.writeHead(404); return s.end(); }
-  s.writeHead(200, { "content-type": f.endsWith(".html") ? "text/html" : f.endsWith(".js") ? "text/javascript" : f.endsWith(".webmanifest") ? "application/manifest+json" : "application/octet-stream" }); s.end(fs.readFileSync(f));
+  const flip = process.env.TUTOR_ON === "1";
+  const bytes = f.endsWith(".html") && flip ? Buffer.from(fs.readFileSync(f, "utf8").replace("var TUTOR_PROXY=false;", "var TUTOR_PROXY=true;")) : fs.readFileSync(f);
+  s.writeHead(200, { "content-type": f.endsWith(".html") ? "text/html" : f.endsWith(".js") ? "text/javascript" : f.endsWith(".webmanifest") ? "application/manifest+json" : "application/octet-stream" }); s.end(bytes);
 });
 await new Promise((r) => site.listen(0, r));
 const URL = "http://127.0.0.1:" + site.address().port + "/index.html";

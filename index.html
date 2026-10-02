@@ -4733,7 +4733,7 @@ function botRender(){
   if(!botTurns.length){
     var e=document.createElement("p"); e.className="bot-empty";
     e.textContent="Ask it to move something along, pick your task for the day, or tell you what is stuck."+
-      (botSample?"":" Questions it cannot answer itself go to a hosted model, which sees your question and only the numbers it asks for.");
+      ((botSample||!proxyReady())?"":" Questions it cannot answer itself go to a hosted model, which sees your question and only the numbers it asks for.");
     log.appendChild(e); return;
   }
   botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
@@ -4748,6 +4748,12 @@ function botRender(){
    model asked for. The transcript is kept exactly as the API gave it and only
    ever appended to: the model's reasoning blocks are signed against what came
    before them, so editing history would throw them away.                  */
+/* PARKED. The hosted tutor is built and tested but switched off: the model
+   that should sit behind it has not been chosen yet (it may be a tuned one),
+   and until it is, nothing in the page may call it or change how a sentence
+   is read. Turning it on is this one flag, an ANTHROPIC_API_KEY on the
+   function, and a decision about the model in api/tutor.js.               */
+var TUTOR_PROXY=false;
 var TUTOR_URL="/api/tutor", WIRE_MAX=40, TUTOR_STEPS=8;
 var wire=[];
 function wireClear(){ wire=[]; }
@@ -4764,7 +4770,7 @@ function wireTrim(){
   while(i<wire.length && !wireStartsTurn(wire[i])) i++;
   wire=wire.slice(i);
 }
-function proxyReady(){ return location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1"; }
+function proxyReady(){ return TUTOR_PROXY && (location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1"); }
 function coded(code,msg){ var e=new Error(msg||code); e.code=code; return e; }
 function tutorPost(payload,signal){
   function go(){
