@@ -206,6 +206,15 @@ any reply that cites an id not in the library, says what research shows with
 no citation, uses a clinical word, or quotes a number no tool returned. The
 page does not stream a reply: it is read by the check first.
 
+**An experiment is started by the person, one at a time, with its outcome fixed in
+the library.** `expStart()` refuses an entry whose `tryit.outcome` is null. The
+result compares the experiment's days with the same number of days just before,
+on active days only, using a seeded permutation test and bootstrap range, so the
+same days always give the same answer. It says "not enough" under 5 active days
+on either side or when the 800-event log does not reach back to the baseline, and
+it always says it is two stretches of one life, not a trial. Do not add a second
+outcome after the fact, and do not start an experiment from the tutor unasked.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

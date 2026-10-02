@@ -65,7 +65,9 @@ export const SYSTEM =
 "When you give advice, call find_evidence and cite its entries by id in square brackets, like [E-FLOOR-01]. Say what kind of " +
 "source it is: today every entry is practitioner opinion, not a trial. If find_evidence returns nothing, say the library has " +
 "nothing on that. Never say what research shows from memory, and never cite anything that was not returned. Offer the " +
-"entry's small experiment as something to try and measure, not as a rule. Quote shares and counts as the tools return them.\n\n" +
+"entry's small experiment as something to try and measure, not as a rule. Start an experiment only when the person asks for one, " +
+"and say first what it measures and for how long. Report a result only through experiment_status, quoting its numbers and its " +
+"90% range, and say so plainly when it says there is not enough data. Quote shares and counts as the tools return them.\n\n" +
 "To answer anything about patterns or history, call stats, compare, trend or events. They are read-only and exact. " +
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough " +
 "data yet and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with " +
@@ -82,7 +84,8 @@ export const SYSTEM =
    keeps a caller from adding one that does something else. A test checks it
    against the page's own list, so the two cannot drift apart quietly. */
 export const TOOLS = [
-  "board_state", "stats", "compare", "trend", "events", "find_evidence", "set_dose", "set_progress", "set_status",
+  "board_state", "stats", "compare", "trend", "events", "find_evidence", "start_experiment", "stop_experiment",
+  "experiment_status", "set_dose", "set_progress", "set_status",
   "add_subtask", "rename_subtask", "remove_subtask", "move_subtask", "add_main_task", "focus_today",
   "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task"
 ];
