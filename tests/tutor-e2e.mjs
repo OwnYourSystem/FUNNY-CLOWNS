@@ -155,6 +155,28 @@ await ok("an exact command still acts locally, no model call", async () => {
   assert.equal(pct, 45);
 });
 
+// 6c. the evidence tool and the reply check, end to end
+queue = [() => toolUse("find_evidence", { topic: "motivation" }, "tu_e"), (b) => {
+  const r = JSON.parse(b.messages[b.messages.length - 1].content[0].content);
+  return text("A small start tends to beat waiting to feel ready [" + r.results[0].id + "]. It is practitioner opinion, not a trial.");
+}]; upstream = [];
+await ask("I never feel like starting anything lately, can you help me think");
+await ok("find_evidence runs in the page, and a cited reply is shown", async () => {
+  assert.equal(upstream.length, 2);
+  const r = JSON.parse(upstream[1].messages[upstream[1].messages.length - 1].content[0].content);
+  assert.ok(r.n >= 1 && r.results[0].id.startsWith("E-") && /practitioner/.test(r.results[0].strength));
+  assert.match((await log()).slice(-1)[0], /^bot: A small start tends to beat waiting to feel ready \[E-/);
+});
+queue = [() => text("Studies show mornings are the best time for everyone.")]; upstream = [];
+await ask("Tell me honestly whether mornings are better for people like me");
+await ok("an uncited 'studies show' is held back before the person sees it", async () => { assert.match((await log()).slice(-1)[0], /I held that answer back: it said what research shows without a library citation/); });
+queue = [() => toolUse("stats", { metric: "completions", days: 30 }, "tu_n"), () => text("You finished 99 items in 30 days.")]; upstream = [];
+await ask("How much have I really finished lately in total");
+await ok("a number no tool returned is held back", async () => { assert.match((await log()).slice(-1)[0], /I held that answer back: it quoted 99, which no tool returned/); });
+queue = [() => text("You may be dealing with depression.")]; upstream = [];
+await ask("Why do I feel so flat when I look at my list");
+await ok("a clinical word is held back", async () => { assert.match((await log()).slice(-1)[0], /I held that answer back: it used a clinical word/); });
+
 // 7. signed out: no call, a plain message
 await page.evaluate((KEY) => localStorage.removeItem(KEY + ".account"), KEY);
 await page.reload(); await page.waitForSelector(".row.pick");

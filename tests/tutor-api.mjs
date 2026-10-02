@@ -56,7 +56,7 @@ await ok("the page's tool names are exactly the allowed list", () => {
   const names = [...src.slice(i, j).matchAll(/\n  \{name:"([a-z_]+)"/g)].map((m) => m[1]);
   assert.deepEqual([...names].sort(), [...TOOLS].sort());
 });
-await ok("the rules name every history tool and the dose tool", () => { for (const w of ["stats", "compare", "trend", "events", "set_dose", "board_state"]) assert.ok(SYSTEM.includes(w), w); });
+await ok("the rules name every history tool and the dose tool", () => { for (const w of ["stats", "compare", "trend", "events", "find_evidence", "set_dose", "board_state"]) assert.ok(SYSTEM.includes(w), w); });
 
 // a normal turn
 seen = [];

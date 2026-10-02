@@ -196,6 +196,16 @@ the model's reasoning blocks are signed against everything before them. Open
 conversation must not run `guessIntent()`: when a model is there, only the
 exact patterns act and everything else is chat.
 
+**Advice comes from `EVIDENCE`, by id, or not at all.** Every entry is either
+`practitioner` (a sentence taken word for word from a saved note, with the
+quote in the entry and a test that finds it in the note) or `checked` (a paper,
+with its abstract, DOI, who checked it and when, and only numbers that appear
+in the abstract). Anything unconfirmed lives in `notes/evidence-candidates.md`,
+never in the page. Do not add an entry from memory. `replyCheck()` holds back
+any reply that cites an id not in the library, says what research shows with
+no citation, uses a clinical word, or quotes a number no tool returned. The
+page does not stream a reply: it is read by the check first.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
