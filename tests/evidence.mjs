@@ -99,6 +99,7 @@ await ok("checker: a number no tool returned fails, once history was used", asyn
   assert.equal((await chk("Morning was 72% of them.", '{"share":0.72}', true)).ok, true);
   assert.equal((await chk("About 9 items.", '{"n":5}', false)).ok, true, "numbers are not policed when no history tool ran");
 });
+await ok("checker: a bare id in the text is not mistaken for a number", async () => { assert.equal((await chk("Say try E-STRETCH-01 to test halving the step for 14 days.", '{"days":14}', true)).ok, true); });
 await ok("checker: ids in tags are not mistaken for numbers", async () => { assert.equal((await chk("Try this [E-FLOOR-01] for 7 days.", '{"days":7}', true)).ok, true); });
 await ok("no page errors", async () => { assert.deepEqual(errs, []); });
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");
