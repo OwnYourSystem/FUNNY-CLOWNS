@@ -166,6 +166,15 @@ one that is overdue. `verdict()` picks the goal, then the step, in that
 order, and `worstIn()` uses the same within-goal ranking so the alarm and
 the verdict never point at different steps of one goal.
 
+**The dose is guessed, never asked.** `doseNow()` sizes the day from what the
+board already holds: done over planned for the last three planned days, and
+the person's own recent overrides. Under 40% is a low day. A low day caps the
+urgency term and favours the step already started, so the overdue goal stays
+on the board and stops shouting. With no history it returns normal and the
+board behaves exactly as it did before; keep that true. The only controls are
+quiet overrides ("Rough day", "More", "Back to auto") and each tap is logged
+in `capLog` next to what the board guessed. Do not add a daily mood prompt.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

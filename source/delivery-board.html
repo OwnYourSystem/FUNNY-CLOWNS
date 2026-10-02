@@ -652,6 +652,11 @@ button.now-n:hover{color:var(--run)}
 .nb-where{flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--muted); border:1px solid var(--hair);
   border-radius:999px; padding:3px 9px; white-space:nowrap}
+.nb-dose{flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); background:transparent; border:1px solid var(--hair);
+  border-radius:999px; padding:3px 9px; white-space:nowrap; cursor:pointer;
+  transition:color .2s var(--ease), border-color .2s var(--ease)}
+.nb-dose:hover{color:var(--ink); border-color:var(--rule)}
 .nb-go{flex:none; width:30px; height:30px; border:0; border-radius:50%; background:transparent;
   color:var(--muted); cursor:pointer; display:grid; place-items:center;
   transition:color .2s var(--ease), background .2s var(--ease)}
@@ -659,7 +664,7 @@ button.now-n:hover{color:var(--run)}
 .nb-go svg{width:15px; height:15px}
 @media (max-width:640px){
   .nowbadge{gap:10px; padding:8px 11px 8px 8px}
-  .nb-where{display:none}
+  .nb-where,.nb-dx{display:none}
   .nb-n{font-size:15px}
   .nb-ico{width:34px; height:34px}
 }
@@ -1655,6 +1660,7 @@ function boot(){
   if(!s || s.v!==2 || !s.groups) { s=blankState(); }
   if(!s.ue) s.ue={}; if(!s.killed) s.killed=[]; if(!s.oftad) s.oftad=[];
   if(!s.plan) s.plan=[]; if(!s.done) s.done=[]; if(!s.dayLog) s.dayLog=[];
+  if(!s.capLog) s.capLog=[];
   /* the tutor no longer speaks its replies; a flag an older build saved goes */
   delete s.speak;
   /* the grid is the only layout now; anything a older build saved goes */
@@ -2039,12 +2045,78 @@ function goalAge(g){
 }
 /* cross-goal only: the deadline, the flag on the goal, how far behind it is
    and how long since anything in it moved at all */
+/* The dose. How much today can carry, worked out from what the board
+   already knows, so nobody has to report a mood each morning. It reads the
+   last three days that had a plan, done over planned: under 40% is a low
+   day. Two "rough day" taps in the last three days say the same, and two
+   "more" taps lift it. One tap today overrides the guess, and the tap is
+   kept beside what the board guessed, because that gap is what there is to
+   learn from. With no history it says nothing, and the board behaves
+   exactly as it did before. A low day shrinks the dose, never the list:
+   an overdue goal stays on the board, it just stops shouting.          */
+var DOSE_N={low:1,normal:3,high:5};
+function doseEstimate(){
+  var t=todayStr();
+  var days=(state.dayLog||[]).filter(function(d){ return d.planned>0 && ageOf(d.d)<=7; }).slice(0,3);
+  var lows=0, highs=0;
+  (state.capLog||[]).forEach(function(x){
+    if(x.d===t || ageOf(x.d)>3) return;
+    if(x.you==="low") lows++; else if(x.you==="high") highs++;
+  });
+  if(lows>=2) return {band:"low", n:DOSE_N.low, src:"auto",
+    why:"You called "+lows+" of the last 3 days rough, so today starts light."};
+  if(days.length>=2){
+    var dn=0, pl=0; days.forEach(function(d){ dn+=d.done; pl+=d.planned; });
+    if(pl && dn/pl<0.4) return {band:"low", n:DOSE_N.low, src:"auto",
+      why:"The last "+days.length+" days landed "+dn+" of "+pl+", so today is sized to one thing."};
+  }
+  if(highs>=2) return {band:"high", n:DOSE_N.high, src:"auto",
+    why:"You asked for more on "+highs+" of the last 3 days."};
+  return {band:"normal", n:DOSE_N.normal, src:"auto", why:""};
+}
+function doseNow(){
+  var cap=state.cap;
+  if(cap && cap.d===todayStr() && DOSE_N[cap.mode]){
+    return {band:cap.mode, n:DOSE_N[cap.mode], src:"you",
+      why: cap.mode==="low" ? "You called today a rough one."
+         : cap.mode==="high" ? "You asked for more today." : ""};
+  }
+  return doseEstimate();
+}
+function setDoseState(mode){
+  var t=todayStr();
+  if(!state.capLog) state.capLog=[];
+  state.capLog=state.capLog.filter(function(x){ return x.d!==t; });
+  if(mode==="auto" || !DOSE_N[mode]){ state.cap=null; return; }
+  state.capLog.unshift({d:t, est:doseEstimate().band, you:mode});
+  if(state.capLog.length>60) state.capLog.pop();
+  state.cap={d:t, mode:mode};
+}
+function setDose(mode){ setDoseState(mode); save(); renderAll(); }
+function doseMet(dz){ return dz.band==="low" && state.done.length>=dz.n; }
+/* which of the quiet overrides to offer. The board asks nothing; these
+   only exist for when it guessed wrong.                              */
+function doseBtns(dz){
+  var b=[];
+  if(dz.band==="normal" && dz.src==="auto") return [["low","Rough day"]];
+  if(dz.band!=="low") b.push(["low","Rough day"]);
+  if(dz.band==="low") b.push(["high","More"]);
+  if(dz.src==="you") b.push(["auto","Back to auto"]);
+  else if(dz.band==="low") b.push(["normal","Not a rough day"]);
+  return b;
+}
+function doseBtnHTML(dz){
+  return doseBtns(dz).map(function(x){
+    return '<button class="btn" data-dose="'+x[0]+'">'+x[1]+'</button>'; }).join("");
+}
 function goalScore(g,c,me){
+  var low=doseNow().band==="low";
   var u=urgency(g), w=PRIO_W[g.prio]||2;
+  if(low && u>25) u=25;                     /* a low day shrinks the dose, not the list */
   var sc = u*w*0.55 + (100-groupPct(g))*0.30 + Math.min(goalAge(g),30)*0.8;
   var started=false;
   g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct>0&&x.pct<100) started=true; });
-  if(started) sc+=12;                       /* finishing beats starting */
+  if(started) sc+=low?30:12;                /* finishing beats starting */
   if(me.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
   if(g.where==="body" && c.free) sc+=38;
   if(g.where==="work" && c.atWork) sc+=30;
@@ -2054,9 +2126,10 @@ function goalScore(g,c,me){
 /* within-goal only: which step of this goal, now */
 function subScore(s,g,moving){
   var sc = SUB_W[s.prio||"mid"] + Math.min(ageOf(s.upd),30)*0.8;
-  sc += urgency(s)*0.5;                     /* its own deadline, not the goal's */
+  var low=doseNow().band==="low";
+  sc += (low?Math.min(urgency(s),25):urgency(s))*0.5;   /* its own deadline, not the goal's */
   if(s.rep && periodKey(s.rep)) sc+=55;     /* a habit due today still wins */
-  if(s.pct>0&&s.pct<100) sc+=22;
+  if(s.pct>0&&s.pct<100) sc+=low?40:22;
   if(moving===1&&s.pct>0) sc+=18;
   return sc;
 }
@@ -2123,6 +2196,9 @@ function verdictWhy(v){
   else
     out.push(g.name+" is at "+groupPct(g)+"% and this is its first step.");
   if(northHit(g,state.me,s)) out.push("It is also the thing you said matters most.");
+  var dz=doseNow();
+  if(dz.band==="low") out.push(dz.why+" Do the smallest version of it, five minutes, then stop.");
+  else if(dz.band==="high") out.push(dz.why+" Do not borrow from tomorrow.");
   if(v.soft&&v.sw) out.push("Mind that "+v.sw+". Keep it short.");
   return out.join(" ");
 }
@@ -2162,11 +2238,22 @@ function renderBadge(){
       '<button class="nb-go" data-goto-view="planner" aria-label="Why">'+I_ARROW+'</button>';
     return;
   }
+  var dz=doseNow();
+  if(doseMet(dz)){
+    bar.className="nowbadge calm-card";
+    bar.innerHTML=ico+'<span class="nb-k">Right now</span>'+
+      '<button class="nb-n" data-dose="high">That is today\u2019s dose. Stop, or ask for more.</button>'+
+      '<button class="nb-go" data-goto-view="planner" aria-label="Why">'+I_ARROW+'</button>';
+    return;
+  }
   bar.className="nowbadge"+(v.soft?" soft":"");
   bar.innerHTML=ico+'<span class="nb-k">Do this now</span>'+
     '<button class="nb-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'" title="'+
       esc(verdictWhy(v))+'">'+esc(v.s.name)+'</button>'+
     '<span class="nb-where">'+esc(whereLabel(v.g.where))+'</span>'+
+    '<button class="nb-dose" data-dose="'+doseBtns(dz)[0][0]+'">'+
+      (dz.band==="low"?'<span class="nb-dx">Low day \u00b7 </span>More'
+        :dz.band==="high"?'<span class="nb-dx">More \u00b7 </span>Rough day':"Rough day")+'</button>'+
     '<button class="nb-go" data-goto-view="planner" aria-label="Why this one">'+I_ARROW+'</button>';
 }
 function renderVerdict(){
@@ -2193,6 +2280,15 @@ function renderVerdict(){
         : "Everything that can be done in this hour is either done, blocked or already picked up.")+'</div>';
     return;
   }
+  var dz=doseNow();
+  if(doseMet(dz)){
+    box.className="nowc calm-card";
+    box.innerHTML='<div class="now-k">Right now</div>'+
+      '<div class="now-n">That is today\u2019s dose.</div>'+
+      '<div class="now-w">'+esc(dz.why+" You did what it was sized for. Stop here, or ask for more on purpose.")+'</div>'+
+      '<div class="now-acts">'+doseBtnHTML(dz)+'</div>';
+    return;
+  }
   box.className="nowc"+(v.soft?" soft":"");
   box.innerHTML=
     '<div class="now-k">Do this now<span class="now-where">'+esc(whereLabel(v.g.where))+'</span></div>'+
@@ -2205,6 +2301,7 @@ function renderVerdict(){
       '<button class="btn take" data-pick-take="'+v.s.id+'">Take it</button>'+
       '<button class="btn" data-pick-skip="'+v.s.id+'">Not this</button>'+
       '<button class="btn" data-goto-view="planner">Why</button>'+
+      doseBtnHTML(dz)+
     '</div>';
 }
 function renderPick(){
@@ -2596,7 +2693,12 @@ function renderDocks(){
   renderPick();
   $("#oftad-count").textContent=state.oftad.length+" of "+state.groups.length+" goals covered";
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
-  $("#plan-count").textContent=state.plan.length?state.plan.length+" queued":"Nothing queued";
+  var dz=doseNow(), pc=state.plan.length?state.plan.length+" queued":"Nothing queued";
+  if(dz.band!=="normal"){
+    pc+=" \u00b7 "+(dz.band==="low"?"low day":"more")+", dose "+dz.n;
+    if(dz.band==="low" && state.plan.length+state.oftad.length>dz.n) pc+=" \u00b7 more than a low day carries";
+  }
+  $("#plan-count").textContent=pc;
   $("#plan-roll").textContent=rollNote;
   $("#done-count").textContent=state.done.length?state.done.length+" finished today":"Nothing finished yet today";
   if(typeof mirrorToday==="function") mirrorToday();
@@ -2884,6 +2986,8 @@ document.addEventListener("click",function(e){
       : "That day is no longer kept.");
     return;
   }
+  var dzb=e.target.closest("[data-dose]");
+  if(dzb){ setDose(dzb.dataset.dose); return; }
   var tk=e.target.closest("[data-pick-take]");
   if(tk){ takePick(tk.dataset.pickTake); return; }
   var sk=e.target.closest("[data-pick-skip]");
@@ -3919,6 +4023,8 @@ function botSnapshot(){
   out.push(dock("ONE TASK A DAY (max one subtask per main task)",state.oftad));
   out.push(dock("TODAY'S PLAN",state.plan));
   out.push(dock("DONE TODAY",state.done));
+  var dzs=doseNow();
+  out.push("TODAY'S DOSE: "+dzs.band+" ("+dzs.n+(dzs.n===1?" thing":" things")+")"+(dzs.why?". "+dzs.why:""));
   var al=alerts();
   out.push("NEEDS A LOOK: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
   return out.join("\n");
@@ -3933,6 +4039,9 @@ var BOT_RULES=
 "You can do everything the buttons can: set progress and status, add, rename, remove and move subtasks, "+
 "add main tasks, set how often a subtask repeats, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
 "is ambiguous the tool will tell you, so ask which one.\n\n"+
+"The board sizes each day: TODAY'S DOSE below. On a low day suggest only the smallest step and never add work. "+
+"If the person says they are worn out, call set_dose with rough; if they want more, call it with more. "+
+"Do not ask how they feel every day. The board already guessed.\n\n"+
 "Teach rather than lecture. Ask one question at a time, never a list of them. Keep every answer under "+
 "50 words unless you are listing tasks. No preamble, no restating the question. After a change, say what "+
 "changed in one short line, then offer the single next step. When a streak is running, say so.\n\n"+
@@ -3943,6 +4052,16 @@ function botTools(){
   return [
   {name:"board_state",description:"The whole board again, fresh: every main task, its subtasks with percent and status, the three docks and the watchlist. Use it after making changes, or when unsure of a name.",
    execute:function(){ return botSnapshot(); }},
+  {name:"set_dose",description:"Size today: rough (low day, one thing), more (a good day, five things), normal, or auto (let the board guess again). Returns the new dose.",
+   inputSchema:{type:"object",properties:{mode:{type:"string",enum:["rough","more","normal","auto"]}},required:["mode"]},
+   execute:function(a){
+     var m=String(a.mode||"").toLowerCase();
+     var map={rough:"low",more:"high",normal:"normal",auto:"auto"};
+     if(!map[m]) throw new Error("Mode must be rough, more, normal or auto.");
+     setDoseState(map[m]);
+     var dz=doseNow();
+     return done("Today is "+dz.band+": "+dz.n+(dz.n===1?" thing.":" things."));
+   }},
   {name:"set_progress",description:"Set one subtask's percent complete, 0 to 100. Returns the new value. 100 marks it done; below 100 moves a finished task back to doing.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"},percent:{type:"number"}},required:["subtask","percent"]},
    execute:function(a){
