@@ -215,6 +215,17 @@ on either side or when the 800-event log does not reach back to the baseline, an
 it always says it is two stretches of one life, not a trial. Do not add a second
 outcome after the fact, and do not start an experiment from the tutor unasked.
 
+**The board learns only what you say yes to.** `memTick()` runs once a day, looks
+for one clear pattern (finishing hours, a normal day's size, a reliably lighter
+weekday, a skip reason that keeps coming up), and asks, with the numbers.
+Nothing is used before a yes. A yes changes one setting and is listed in the
+Planner with where it came from; Remove puts the setting back. Learned and
+tutor-suggested items lapse after 60 days unless seen again; what the person
+typed stays. No moods, no health, nothing about who they are: `memOk()` refuses
+those from the tutor and the board. Only kept items reach the tutor, through
+`get_memory` and the snapshot. One question at a time, never a second before the
+first is answered.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
