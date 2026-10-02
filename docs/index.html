@@ -2334,9 +2334,15 @@ function showPicked(){
   if(!el||!el.scrollIntoView) return;
   try{ el.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }catch(e){}
 }
+/* Furthest along first. g.subs itself keeps insertion order, since that is
+   what subScore and the rest of the ranking read; only what is shown here
+   is sorted, so the list reads as progress without touching the planner.
+   The sort is stable, so two subtasks at the same percent keep their
+   relative order instead of reshuffling on every render.               */
 function subsShown(g){
   var q=searchQ();
-  return g.subs.filter(function(id){ var x=state.subs[id]; return x && hit(x.name,q); });
+  return g.subs.filter(function(id){ var x=state.subs[id]; return x && hit(x.name,q); })
+    .sort(function(a,b){ return (state.subs[b].pct||0)-(state.subs[a].pct||0); });
 }
 function renderSubs(){
   var g=gById(state.sel);
@@ -3119,14 +3125,6 @@ document.addEventListener("pointerup",function(e){
     var sb=state.subs[c.id], g=gById(row.dataset.group);
     if(sb&&g&&sb.gid!==g.id){ detach(sb.id); g.subs.push(sb.id); sb.gid=g.id; mark(sb.id,"group"); save(); renderAll(); }
     return;
-  }
-  if(c.k==="sub"&&row.dataset.sub){
-    var g2=gById(state.sel); if(!g2) return;
-    var cur=g2.subs.indexOf(c.id); if(cur<0) return;
-    var at=edgeIndex(g2.subs,row,e.clientY);
-    g2.subs.splice(cur,1);
-    g2.subs.splice(at>cur?at-1:at,0,c.id);
-    save(); renderSubs(); return;
   }
   if(c.k==="task"&&row.dataset.group){
     var ids=state.groups.map(function(g){ return g.id; });
