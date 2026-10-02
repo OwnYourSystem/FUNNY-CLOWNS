@@ -184,6 +184,17 @@ so a rename or delete cannot leave a stale one behind. `stats`, `compare`,
 size and `enough`. Under eight observations the answer is "not enough yet", not
 an estimate. The tutor has no web tool and no other source: do not add one.
 
+**Outside the artifact the tutor goes through `api/tutor.js`, and the page never
+holds a key.** The function owns the rules, the model, the thinking settings
+and the token ceiling; the page sends a transcript and the tools it can run,
+and runs them itself. A tool with a `type` (web search, fetch, code execution,
+MCP), a tool not on the function's list, a `system` message, an image: all
+refused. If you add a tool to `botTools()`, add its name to `TOOLS` in
+`api/tutor.js` (a test fails until you do). Keep the transcript append-only:
+the model's reasoning blocks are signed against everything before them. Open
+conversation must not run `guessIntent()`: when a model is there, only the
+exact patterns act and everything else is chat.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

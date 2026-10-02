@@ -1,0 +1,9 @@
+{
+  "name": "funny-clowns",
+  "private": true,
+  "type": "module",
+  "description": "The board is one static file. This file exists only so Vercel installs the SDK that api/tutor.js uses.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  }
+}

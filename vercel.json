@@ -40,5 +40,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/tutor.js": {
+      "maxDuration": 60
+    }
+  }
 }
