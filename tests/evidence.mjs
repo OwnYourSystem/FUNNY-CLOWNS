@@ -23,11 +23,16 @@ await ok("every entry has the required fields and a unique id", () => {
     for (const k of ["id", "status", "tags", "claim", "strength", "from", "source", "quote", "limits", "tryit"]) assert.ok(e[k] !== undefined, e.id + " lacks " + k);
     assert.match(e.id, /^E-[A-Z0-9]+-\d\d$/); assert.ok(!ids.has(e.id), "duplicate " + e.id); ids.add(e.id);
     assert.ok(Array.isArray(e.tags) && e.tags.length >= 4, e.id + " tags");
-    assert.ok(e.tryit.do && e.tryit.days > 0 && ["completions", "finished", "skips", "takes", "progress_moves"].includes(e.tryit.measure), e.id + " tryit");
+    assert.ok(e.tryit.do && e.tryit.days > 0, e.id + " tryit");
+    assert.ok(e.tryit.outcome === null || (["completion_days", "completions_per_day", "moves_per_day", "skips_per_day"].includes(e.tryit.outcome.metric) && ["up", "down"].includes(e.tryit.outcome.direction)), e.id + " outcome");
     assert.ok(e.claim.length < 260 && e.limits.length > 10, e.id + " lengths");
   }
 });
 await ok("only practitioner and checked entries are in the file; nothing unverified ships", () => { for (const e of LIB) assert.ok(["practitioner", "checked"].includes(e.status), e.id + " is " + e.status); });
+await ok("at least some entries can be run as experiments, and the ones that cannot say so", () => {
+  const run = LIB.filter((e) => e.tryit.outcome), no = LIB.filter((e) => !e.tryit.outcome);
+  assert.ok(run.length >= 5 && no.length >= 1);
+});
 await ok("no tag is a word the search ignores or too short to match", () => {
   const stop = /^(?:the|and|for|why|how|what|does|did|that|this|with|about|when|you|are|was|have|has|can|should|not|but|say|says|tell|give|any|from|they|them|get|make|more|less|much|just|into|out|off|over|than|then|there|here|been|will|would|could)$/;
   for (const e of LIB) for (const t of e.tags) assert.ok(t.length > 2 && !stop.test(t), e.id + ": dead tag " + t);

@@ -241,7 +241,10 @@ body.flat #canvas{transform:none!important}
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
 #canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"],
-#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{grid-column:1/-1}
+#canvas>[data-panel="plan"],#canvas>[data-panel="done"],#canvas>[data-panel="exp"]{grid-column:1/-1}
+.exp-panel[hidden]{display:none}
+.exp-do{font-size:15px; color:var(--ink); margin:2px 0 8px; line-height:1.5}
+.exp-w{font-size:12.5px; color:var(--muted); margin:0; line-height:1.6}
 #bot-orb{position:fixed; z-index:130; width:66px; height:66px; border-radius:50%;
   display:grid; place-items:center; cursor:grab; touch-action:none; color:#fff;
   background:var(--accent); border:none; padding:0;
@@ -1091,6 +1094,8 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="dock-foot"><span id="plan-count"></span><span id="plan-roll"></span></div>
   </div>
 
+  <section class="panel exp-panel" data-panel="exp" id="exp-card" aria-label="Experiment" hidden></section>
+
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
       <div class="k-label">Overall</div>
@@ -1675,6 +1680,7 @@ function boot(){
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
   rollRecurring();          /* bring every habit into today before the first draw */
   evPrev=evSnap();          /* what changes from here on is what the person did */
+  if(!state.exp) state.exp={active:null,done:[],unseen:false};
   return state;
 }
 function migrate1(old){
@@ -2172,21 +2178,21 @@ function setSkipWhy(code){
 
 /* EVIDENCE:BEGIN */
 var EVIDENCE=[
- {"id":"E-CAP-01","status":"practitioner","tags":["capacity","energy","tired","exhausted","flat","low","overload","sleep","dose","limit"],"claim":"Size the day to what you can reliably sustain today, not to what you should be able to do.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"2"},"quote":"What can your nervous system, body and mind reliably sustain right now?","limits":"A framing, with no number for what a day can hold. The board's dose is only a guess from your recent days.","tryit":{"do":"On a day you feel flat, plan one step only.","measure":"completions","days":7}},
- {"id":"E-BARRIER-01","status":"practitioner","tags":["stuck","skip","skipped","avoid","procrastinate","fear","afraid","anxious","meaning","want","know","reason","barrier","blocked"],"claim":"Not doing something has different causes (can't, afraid, doesn't know how, doesn't want to), and each needs a different fix.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"1"},"quote":"These require different interventions.","limits":"A way to ask the question, not a diagnosis. Only you can say which cause it is.","tryit":{"do":"After a skip, tap the reason, and leave the plan alone until one reason repeats.","measure":"skips","days":14,"group_by":"reason"}},
- {"id":"E-FLOOR-01","status":"practitioner","tags":["floor","minimum","small","smallest","daily","habit","streak","consistency","recovery","rest","one"],"claim":"Aim for one action a day that keeps or builds capacity; recovery counts when it protects tomorrow.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"4"},"quote":"Recovery can therefore count as productive behavior when recovery is what increases future functioning.","limits":"Rest can also hide avoidance. The board cannot tell which one a given day was.","tryit":{"do":"Name the smallest version of each goal and count it as done.","measure":"completions","days":14}},
- {"id":"E-STRETCH-01","status":"practitioner","tags":["stretch","challenge","comfort","growth","hard","push","big","shrink","bigger","difficult"],"claim":"Most growth happens in the stretch zone, uncomfortable but manageable. Break a big step into things you can observe yourself doing.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"5"},"quote":"uncomfortable but manageable","limits":"Where the zone starts is personal and moves day to day. Stop at warning signs, such as worsening symptoms.","tryit":{"do":"When a step is skipped as too big, cut it in half and take the half.","measure":"skips","days":14,"group_by":"reason"}},
- {"id":"E-START-01","status":"practitioner","tags":["start","begin","ready","motivation","procrastinate","activation","confidence","feeling","motivated","getting started"],"claim":"Do not wait to feel ready. Make the first action small enough to begin, and confidence tends to follow the action.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"6"},"quote":"The action only needs to be small enough that you can begin.","limits":"Practitioner view. It describes a common order of events, not a rule.","tryit":{"do":"Start the step for five minutes with no target after that.","measure":"progress_moves","days":7}},
- {"id":"E-CHOICE-01","status":"practitioner","tags":["pressure","choice","autonomy","resistance","forced","pushed","nagging","control"],"claim":"Pressure tends to start a power struggle. Choosing between steps that fit today's capacity keeps control with you, but rest should not become a way to avoid.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"7"},"quote":"Pressure creates a power struggle.","limits":"The line between rest and avoidance is a judgement the board cannot make for you.","tryit":{"do":"Pick between two steps that fit today instead of taking the first one offered.","measure":"completions","days":7}},
- {"id":"E-FAIL-01","status":"practitioner","tags":["failure","miss","missed","shame","data","expected","mistake","fail","slip","behind"],"claim":"Treat a missed plan as a measurement: what you expected, what happened, what got in the way, then one next experiment.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"9"},"quote":"A failed plan becomes a measurement of the system.","limits":"It removes shame, not responsibility. One miss is a data point, so do not draw a pattern from it.","tryit":{"do":"After a missed day, write expected against done, and the one barrier.","measure":"completions","days":14,"group_by":"day"}},
- {"id":"E-GUILT-01","status":"practitioner","tags":["guilt","bad","badday","past","wasted","timeline","regret","nothing","guilty"],"claim":"A bad day is one data point. It does not change the days around it, so the next move is a small adjustment, not a verdict on you.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"3"},"quote":"it does not corrupt the entire timeline","limits":"A perspective, offered as comfort. It is not a measured result.","tryit":{"do":"After a bad day, do the smallest version of one step and nothing more.","measure":"completions","days":7}},
- {"id":"E-EVID-01","status":"practitioner","tags":["progress","evidence","record","log","track","notice","confidence","identity","proof","journal"],"claim":"Record what you did, what discomfort you handled and what you learned. Evidence of progress is more convincing than telling yourself you are strong.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"10"},"quote":"Every day, record three pieces of evidence:","limits":"Practitioner view. The board logs what you did, but not what you handled or learned.","tryit":{"do":"Each evening note one thing you did, one you tolerated and one you learned.","measure":"completions","days":14}},
- {"id":"E-CYCLE-01","status":"practitioner","tags":["burnout","rest","recovery","cycle","consolidate","plateau","week","rhythm","stress","overwork"],"claim":"Alternate pushing and consolidating. Development comes from stress plus recovery, not stress alone.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"12"},"quote":"not stress alone","limits":"A general principle with no schedule proven for you.","tryit":{"do":"Make every fourth week a hold week with no new load.","measure":"completions","days":28,"group_by":"day"}},
- {"id":"E-MEAS-01","status":"practitioner","tags":["measure","metrics","output","productive","balance","wellbeing","sleep","mood","anxiety","numbers"],"claim":"Output alone can mislead. More done with worse sleep or mood is not progress.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"13"},"quote":"A person might become more productive while sleep, anxiety and physical symptoms deteriorate.","limits":"The board measures output only. It has no sleep, mood or energy data yet.","tryit":{"do":"Once a week, note energy, mood and stress next to your completions.","measure":"completions","days":14,"group_by":"day"}},
- {"id":"E-REASSESS-01","status":"practitioner","tags":["extra","borrow","overdo","add","reassess","good","exploit","overreach","lots"],"claim":"After a step is done, reassess before adding more work, and do not spend an unusually good day by borrowing from tomorrow.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"14"},"quote":"Then reassess rather than automatically adding more work.","limits":"No evidence is given that stopping early helps. Treat it as a test, not a rule.","tryit":{"do":"On one good day, stop at the dose and see how tomorrow goes.","measure":"completions","days":7}},
- {"id":"E-BODY-01","status":"practitioner","tags":["exercise","body","movement","sleep","physical","training","gym","energy","mood","bike","walk"],"claim":"A neglected physical baseline drags everything else, so regular movement is the first lever to try.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"1"},"quote":"If the hardware is neglected, the software will lag.","limits":"Opinion, with no amount of exercise given. Not medical advice.","tryit":{"do":"Move for ten minutes before the first task on three days this week.","measure":"completions","days":7,"group_by":"day"}},
- {"id":"E-ONE-01","status":"practitioner","tags":["focus","single","overwhelm","list","priority","overwhelmed","long","many","anxious","everything"],"claim":"When the list is long, pick the one action that makes the rest easier and do only that today.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"2"},"quote":"Anxiety thrives on massive, paralyzing to-do lists.","limits":"A practitioner view. Picking wrongly costs a day, so keep the pick small.","tryit":{"do":"Use One Task A Day alone for three days.","measure":"completions","days":7}},
- {"id":"E-ENV-01","status":"practitioner","tags":["environment","friction","autopilot","habit","willpower","distraction","setup","routine","cue","automatic"],"claim":"Do not rely on motivation. Set up your surroundings so that starting the right thing takes no willpower and the wrong thing takes effort.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"4"},"quote":"Motivation is a highly unreliable emotion; we do not rely on it.","limits":"Opinion. Which change helps most is personal.","tryit":{"do":"Remove one step of friction before a recurring task: open the file, lay out the kit.","measure":"completions","days":14,"group_by":"weekday"}}
+ {"id":"E-CAP-01","status":"practitioner","tags":["capacity","energy","tired","exhausted","flat","low","overload","sleep","dose","limit"],"claim":"Size the day to what you can reliably sustain today, not to what you should be able to do.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"2"},"quote":"What can your nervous system, body and mind reliably sustain right now?","limits":"A framing, with no number for what a day can hold. The board's dose is only a guess from your recent days.","tryit":{"do":"On a day you feel flat, plan one step only.","days":7,"outcome":{"metric":"completion_days","direction":"up"}}},
+ {"id":"E-BARRIER-01","status":"practitioner","tags":["stuck","skip","skipped","avoid","procrastinate","fear","afraid","anxious","meaning","want","know","reason","barrier","blocked"],"claim":"Not doing something has different causes (can't, afraid, doesn't know how, doesn't want to), and each needs a different fix.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"1"},"quote":"These require different interventions.","limits":"A way to ask the question, not a diagnosis. Only you can say which cause it is.","tryit":{"do":"After a skip, tap the reason, and leave the plan alone until one reason repeats.","days":14,"outcome":null}},
+ {"id":"E-FLOOR-01","status":"practitioner","tags":["floor","minimum","small","smallest","daily","habit","streak","consistency","recovery","rest","one"],"claim":"Aim for one action a day that keeps or builds capacity; recovery counts when it protects tomorrow.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"4"},"quote":"Recovery can therefore count as productive behavior when recovery is what increases future functioning.","limits":"Rest can also hide avoidance. The board cannot tell which one a given day was.","tryit":{"do":"Name the smallest version of each goal and count it as done.","days":14,"outcome":{"metric":"completion_days","direction":"up"}}},
+ {"id":"E-STRETCH-01","status":"practitioner","tags":["stretch","challenge","comfort","growth","hard","push","big","shrink","bigger","difficult"],"claim":"Most growth happens in the stretch zone, uncomfortable but manageable. Break a big step into things you can observe yourself doing.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"5"},"quote":"uncomfortable but manageable","limits":"Where the zone starts is personal and moves day to day. Stop at warning signs, such as worsening symptoms.","tryit":{"do":"When a step is skipped as too big, cut it in half and take the half.","days":14,"outcome":{"metric":"skips_per_day","direction":"down"}}},
+ {"id":"E-START-01","status":"practitioner","tags":["start","begin","ready","motivation","procrastinate","activation","confidence","feeling","motivated","getting started"],"claim":"Do not wait to feel ready. Make the first action small enough to begin, and confidence tends to follow the action.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"6"},"quote":"The action only needs to be small enough that you can begin.","limits":"Practitioner view. It describes a common order of events, not a rule.","tryit":{"do":"Start the step for five minutes with no target after that.","days":7,"outcome":{"metric":"moves_per_day","direction":"up"}}},
+ {"id":"E-CHOICE-01","status":"practitioner","tags":["pressure","choice","autonomy","resistance","forced","pushed","nagging","control"],"claim":"Pressure tends to start a power struggle. Choosing between steps that fit today's capacity keeps control with you, but rest should not become a way to avoid.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"7"},"quote":"Pressure creates a power struggle.","limits":"The line between rest and avoidance is a judgement the board cannot make for you.","tryit":{"do":"Pick between two steps that fit today instead of taking the first one offered.","days":7,"outcome":{"metric":"completions_per_day","direction":"up"}}},
+ {"id":"E-FAIL-01","status":"practitioner","tags":["failure","miss","missed","shame","data","expected","mistake","fail","slip","behind"],"claim":"Treat a missed plan as a measurement: what you expected, what happened, what got in the way, then one next experiment.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"9"},"quote":"A failed plan becomes a measurement of the system.","limits":"It removes shame, not responsibility. One miss is a data point, so do not draw a pattern from it.","tryit":{"do":"After a missed day, write expected against done, and the one barrier.","days":14,"outcome":null}},
+ {"id":"E-GUILT-01","status":"practitioner","tags":["guilt","bad","badday","past","wasted","timeline","regret","nothing","guilty"],"claim":"A bad day is one data point. It does not change the days around it, so the next move is a small adjustment, not a verdict on you.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"3"},"quote":"it does not corrupt the entire timeline","limits":"A perspective, offered as comfort. It is not a measured result.","tryit":{"do":"After a bad day, do the smallest version of one step and nothing more.","days":7,"outcome":{"metric":"completion_days","direction":"up"}}},
+ {"id":"E-EVID-01","status":"practitioner","tags":["progress","evidence","record","log","track","notice","confidence","identity","proof","journal"],"claim":"Record what you did, what discomfort you handled and what you learned. Evidence of progress is more convincing than telling yourself you are strong.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"10"},"quote":"Every day, record three pieces of evidence:","limits":"Practitioner view. The board logs what you did, but not what you handled or learned.","tryit":{"do":"Each evening note one thing you did, one you tolerated and one you learned.","days":14,"outcome":null}},
+ {"id":"E-CYCLE-01","status":"practitioner","tags":["burnout","rest","recovery","cycle","consolidate","plateau","week","rhythm","stress","overwork"],"claim":"Alternate pushing and consolidating. Development comes from stress plus recovery, not stress alone.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"12"},"quote":"not stress alone","limits":"A general principle with no schedule proven for you.","tryit":{"do":"Make every fourth week a hold week with no new load.","days":28,"outcome":null}},
+ {"id":"E-MEAS-01","status":"practitioner","tags":["measure","metrics","output","productive","balance","wellbeing","sleep","mood","anxiety","numbers"],"claim":"Output alone can mislead. More done with worse sleep or mood is not progress.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"13"},"quote":"A person might become more productive while sleep, anxiety and physical symptoms deteriorate.","limits":"The board measures output only. It has no sleep, mood or energy data yet.","tryit":{"do":"Once a week, note energy, mood and stress next to your completions.","days":14,"outcome":null}},
+ {"id":"E-REASSESS-01","status":"practitioner","tags":["extra","borrow","overdo","add","reassess","good","exploit","overreach","lots"],"claim":"After a step is done, reassess before adding more work, and do not spend an unusually good day by borrowing from tomorrow.","strength":"practitioner opinion","from":"Record 1, a psychologist's advice","source":{"kind":"notes","file":"adaptive-1-percent-method.md","section":"14"},"quote":"Then reassess rather than automatically adding more work.","limits":"No evidence is given that stopping early helps. Treat it as a test, not a rule.","tryit":{"do":"On one good day, stop at the dose and see how tomorrow goes.","days":7,"outcome":null}},
+ {"id":"E-BODY-01","status":"practitioner","tags":["exercise","body","movement","sleep","physical","training","gym","energy","mood","bike","walk"],"claim":"A neglected physical baseline drags everything else, so regular movement is the first lever to try.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"1"},"quote":"If the hardware is neglected, the software will lag.","limits":"Opinion, with no amount of exercise given. Not medical advice.","tryit":{"do":"Move for ten minutes before the first task on three days this week.","days":7,"outcome":{"metric":"completions_per_day","direction":"up"}}},
+ {"id":"E-ONE-01","status":"practitioner","tags":["focus","single","overwhelm","list","priority","overwhelmed","long","many","anxious","everything"],"claim":"When the list is long, pick the one action that makes the rest easier and do only that today.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"2"},"quote":"Anxiety thrives on massive, paralyzing to-do lists.","limits":"A practitioner view. Picking wrongly costs a day, so keep the pick small.","tryit":{"do":"Use One Task A Day alone for three days.","days":7,"outcome":{"metric":"completion_days","direction":"up"}}},
+ {"id":"E-ENV-01","status":"practitioner","tags":["environment","friction","autopilot","habit","willpower","distraction","setup","routine","cue","automatic"],"claim":"Do not rely on motivation. Set up your surroundings so that starting the right thing takes no willpower and the wrong thing takes effort.","strength":"practitioner opinion","from":"Record 2, a practitioner's advice","source":{"kind":"notes","file":"systems-continuum-approach.md","section":"4"},"quote":"Motivation is a highly unreliable emotion; we do not rely on it.","limits":"Opinion. Which change helps most is personal.","tryit":{"do":"Remove one step of friction before a recurring task: open the file, lay out the kit.","days":14,"outcome":{"metric":"completions_per_day","direction":"up"}}}
 ];
 /* EVIDENCE:END */
 
@@ -2233,8 +2239,13 @@ function libFind(query,limit){
 }
 function libView(e){
   return {id:e.id, claim:e.claim, strength:libLabel(e), from:e.from, limits:e.limits,
-    try_it:e.tryit.do+" ("+e.tryit.days+" days; then compare "+e.tryit.measure+
-      (e.tryit.group_by?" by "+e.tryit.group_by:"")+")"};
+    try_it:e.tryit.do, experiment:libRunHint(e)};
+}
+function libRunnable(e){ return !!(e.tryit && e.tryit.outcome); }
+function libRunHint(e){
+  return libRunnable(e)
+    ? "Say try "+e.id+" to run it for "+e.tryit.days+" days. The board measures "+EXP_METRICS[e.tryit.outcome.metric].label+" against the "+e.tryit.days+" days before."
+    : "The board cannot measure this one. Just try it.";
 }
 function libAnyChecked(list){ return list.some(function(e){ return e.status==="checked"; }); }
 /* what to look up when nobody names a topic: the thing the board can see */
@@ -2255,7 +2266,7 @@ function libSay(topic){
   if(!hits.length) return "The library has nothing on that yet. I would rather say so than guess.";
   var out=hits.map(function(e,i){
     return "["+e.id+"] "+e.claim+" Try: "+e.tryit.do+(i===0?" Limit: "+e.limits:"");
-  }).join(" ");
+  }).join(" ")+(libRunnable(hits[0])?" Say try "+hits[0].id+" to run it for "+hits[0].tryit.days+" days and I will measure it.":"");
   return (libAnyChecked(hits)?"From the library: ":"From the library, practitioner opinion and not a trial; no peer-reviewed entry is in it yet. ")+out;
 }
 /* The check that stands between a model and the person. It reads a finished
@@ -2293,11 +2304,186 @@ function recordTools(tools){
     c.execute=function(a){
       var out=t.execute(a);
       TURN_OUT+=" "+String(out==null?"":out);
-      if(/^(stats|compare|trend|events|find_evidence)$/.test(t.name)) TURN_HIST=true;
+      if(/^(stats|compare|trend|events|find_evidence|experiment_status)$/.test(t.name)) TURN_HIST=true;
       return out;
     };
     return c;
   });
+}
+
+
+/* ---------------- experiments: try one thing, measure it, say what it showed ----------------
+   An entry in the library can be run. The person starts it; the board never
+   does. One at a time, so that whatever changes can be put down to it. The
+   outcome it will be judged on is fixed in the library before it starts, so
+   nobody can go looking afterwards for something that moved. When the days
+   are up the board compares them with the same number of days just before,
+   on active days only (a day the board was not opened is not a bad day), and
+   says what it found, with a range and the size of the sample, including when
+   the answer is "not enough". It is two stretches of one life, not a
+   controlled trial, and the result says so every time.                    */
+var EXP_MIN=5, EXP_DRAWS=4000, EXP_KEEP=20;
+var EXP_METRICS={
+  completion_days:{label:"days with at least one thing finished", share:true},
+  completions_per_day:{label:"things finished per active day"},
+  moves_per_day:{label:"progress moves per active day"},
+  skips_per_day:{label:"skips per active day"}
+};
+function libEntry(id){
+  for(var i=0;i<EVIDENCE.length;i++) if(EVIDENCE[i].id===id) return EVIDENCE[i];
+  return null;
+}
+function addDays(str,n){ var p=str.split("-"); return dstr(new Date(+p[0],+p[1]-1,+p[2]+n)); }
+function expState(){
+  if(!state.exp) state.exp={active:null,done:[],unseen:false};
+  return state.exp;
+}
+/* a seeded generator, so the same days always give the same answer */
+function expSeed(str){ var h=2166136261, i; for(i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+function expRng(seed){
+  var a=seed>>>0;
+  return function(){
+    a=(a+0x6D2B79F5)>>>0; var t=a;
+    t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61);
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+function expMean(a){ var s=0, i; for(i=0;i<a.length;i++) s+=a[i]; return a.length?s/a.length:0; }
+/* one number per active day in [from, to), for the outcome the entry named */
+function expSeries(o,from,to){
+  var day={};
+  (state.ev||[]).forEach(function(e){
+    var d=dstr(new Date(e.t)); if(d<from||d>=to) return;
+    var x=day[d]||(day[d]={done:{},moves:0,skips:0});
+    if(e.k==="done") x.done[e.id]=1;
+    else if(e.k==="pct") x.moves++;
+    else if(e.k==="skip" && (!o.why || e.why===o.why)) x.skips++;
+  });
+  return Object.keys(day).sort().map(function(d){
+    var x=day[d], n=Object.keys(x.done).length;
+    return o.metric==="completion_days" ? (n>0?1:0) : o.metric==="completions_per_day" ? n :
+           o.metric==="moves_per_day" ? x.moves : x.skips;
+  });
+}
+/* the log keeps the last 800 events; a baseline that starts before them is not a baseline */
+function expCovered(fromDay){
+  var ev=state.ev||[];
+  return !(ev.length>=EV_MAX && dstr(new Date(ev[0].t))>fromDay);
+}
+/* difference in means, a permutation test and a bootstrap range, on the days given */
+function expTest(A,B,seedStr){
+  var rnd=expRng(expSeed(seedStr)), diff=expMean(B)-expMean(A), pool=A.concat(B), nb=B.length, extreme=0, d, i, j, t;
+  for(d=0;d<EXP_DRAWS;d++){
+    for(i=pool.length-1;i>0;i--){ j=Math.floor(rnd()*(i+1)); t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+    var sb=0, sa=0;
+    for(i=0;i<pool.length;i++){ if(i<nb) sb+=pool[i]; else sa+=pool[i]; }
+    var md=sb/nb-sa/(pool.length-nb);
+    if(Math.abs(md)>=Math.abs(diff)-1e-12) extreme++;
+  }
+  var diffs=[];
+  function pick(a){ var s=0, k; for(k=0;k<a.length;k++) s+=a[Math.floor(rnd()*a.length)]; return s/a.length; }
+  for(d=0;d<EXP_DRAWS;d++) diffs.push(pick(B)-pick(A));
+  diffs.sort(function(x,y){ return x-y; });
+  return {before:expMean(A), during:expMean(B), diff:diff,
+    lo:diffs[Math.floor(0.05*EXP_DRAWS)], hi:diffs[Math.floor(0.95*EXP_DRAWS)-1],
+    p:(extreme+1)/(EXP_DRAWS+1)};
+}
+function expResult(x){
+  var o=x.outcome, M=EXP_METRICS[o.metric], endDay=addDays(x.start,x.days), fromB=addDays(x.start,-x.days);
+  var r={ev:x.ev, start:x.start, days:x.days, outcome:o, label:M.label};
+  if(!expCovered(fromB)){ r.verdict="not_enough"; r.why="the event log does not reach back far enough"; return r; }
+  var A=expSeries(o,fromB,x.start), B=expSeries(o,x.start,endDay);
+  r.nBefore=A.length; r.nDuring=B.length;
+  if(A.length<EXP_MIN || B.length<EXP_MIN){ r.verdict="not_enough"; return r; }
+  var t=expTest(A,B,x.id+x.ev+x.start), k;
+  for(k in t) r[k]=t[k];
+  var better=o.direction==="down" ? t.diff<0 : t.diff>0;
+  r.verdict=((t.lo>0||t.hi<0) && t.p<0.10) ? (better?"better":"worse") : "unclear";
+  return r;
+}
+function expFmt(metric,v){
+  if(EXP_METRICS[metric].share) return Math.round(v*100)+"%";
+  return String(Math.round(v*100)/100);
+}
+function expSay(r){
+  if(r.verdict==="not_enough")
+    return "Not enough to say. "+(r.why?"The reason: "+r.why+". ":"")+"You were active on "+(r.nBefore||0)+" days before and "+(r.nDuring||0)+
+      " during, and I need at least "+EXP_MIN+" of each.";
+  var f=function(v){ return expFmt(r.outcome.metric,v); };
+  return r.label.charAt(0).toUpperCase()+r.label.slice(1)+": "+f(r.during)+" during, "+f(r.before)+" before (difference "+(r.diff>=0?"+":"")+f(r.diff)+
+    ", 90% range "+f(r.lo)+" to "+f(r.hi)+"), over "+r.nDuring+" and "+r.nBefore+" active days. "+
+    (r.verdict==="better"?"That looks better than before. ":r.verdict==="worse"?"That looks worse than before. ":"No clear difference. ")+
+    "This compares two stretches of your own life, not a controlled trial, so anything else that changed is mixed in. Treat it as a hint.";
+}
+function expStart(id){
+  var e=libEntry(id);
+  if(!e || !LIB_USE[e.status]) throw new Error("The library has no entry "+id+".");
+  if(!libRunnable(e)) throw new Error(id+" cannot be measured on this board, so I would not call it an experiment. Just try it.");
+  var x=expState();
+  if(x.active) throw new Error("One experiment at a time: "+x.active.ev+" is running. Say stop experiment first.");
+  x.active={id:uid("x"), ev:id, start:todayStr(), days:e.tryit.days, outcome:e.tryit.outcome, do:e.tryit.do};
+  x.unseen=false;
+  evAdd({t:Date.now(),k:"exp",ev:id,act:"start"});
+  touchHist(); save(); renderAll();
+  return "Started "+id+" for "+e.tryit.days+" days from today: "+e.tryit.do+" I will compare "+EXP_METRICS[e.tryit.outcome.metric].label+
+    " over these days with the "+e.tryit.days+" days before, and tell you what I find, including if it is not enough. Say stop experiment to end it.";
+}
+function expStopMsg(){
+  var x=expState();
+  if(!x.active) return "No experiment is running.";
+  var id=x.active.ev; x.active=null;
+  evAdd({t:Date.now(),k:"exp",ev:id,act:"stop"});
+  touchHist(); save(); renderAll();
+  return "Stopped "+id+". Nothing is measured from a stopped experiment.";
+}
+/* when its last day has passed, the result is worked out once and kept */
+function expTick(){
+  var x=state.exp; if(!x||!x.active) return false;
+  var a=x.active; if(todayStr()<addDays(a.start,a.days)) return false;
+  x.done.unshift({ev:a.ev, start:a.start, days:a.days, outcome:a.outcome, do:a.do, finished:todayStr(), result:expResult(a)});
+  if(x.done.length>EXP_KEEP) x.done.length=EXP_KEEP;
+  x.active=null; x.unseen=true;
+  evAdd({t:Date.now(),k:"exp",ev:a.ev,act:"end"});
+  save();
+  return true;
+}
+function expStatus(){
+  var x=expState();
+  if(x.active){
+    var a=x.active;
+    return {state:"running", id:a.ev, do:a.do, day:Math.min(a.days,ageOf(a.start)+1), days:a.days,
+      measures:EXP_METRICS[a.outcome.metric].label, ends:addDays(a.start,a.days)};
+  }
+  if(x.done.length){
+    var d=x.done[0];
+    return {state:"finished", unseen:!!x.unseen, id:d.ev, start:d.start, days:d.days, result:d.result, says:expSay(d.result)};
+  }
+  return {state:"none"};
+}
+function expStatusMsg(){
+  var st=expStatus();
+  if(st.state==="none") return "No experiment is running. Ask what to try, then say try and its id.";
+  if(st.state==="running") return "Day "+st.day+" of "+st.days+" of "+st.id+": "+st.do+" I am measuring "+st.measures+" and will tell you on "+st.ends+".";
+  return st.id+" finished. "+st.says;
+}
+function renderExp(){
+  var box=$("#exp-card"); if(!box) return;
+  expTick();
+  var st=expStatus();
+  if(st.state==="none" || (st.state==="finished" && !st.unseen)){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  if(st.state==="running"){
+    box.innerHTML='<div class="p-head"><div><div class="p-title">Experiment &mdash; day '+st.day+' of '+st.days+'</div></div>'+
+      '<div class="p-tools"><button class="mini" data-exp-stop>Stop</button></div></div>'+
+      '<p class="exp-do">'+esc(st.do)+'</p>'+
+      '<p class="exp-w">Measuring '+esc(st.measures)+', against the '+st.days+' days before. Nothing to read until it ends on '+esc(st.ends)+
+      '. Source: ['+esc(st.id)+'], practitioner opinion.</p>';
+  } else {
+    box.innerHTML='<div class="p-head"><div><div class="p-title">Experiment finished &mdash; '+esc(st.id)+'</div></div>'+
+      '<div class="p-tools"><button class="mini" data-exp-ack>Got it</button></div></div>'+
+      '<p class="exp-do">'+esc((libEntry(st.id)||{tryit:{do:""}}).tryit.do)+'</p>'+
+      '<p class="exp-w">'+esc(st.says)+'</p>';
+  }
 }
 
 /* ---------------- rollover ---------------- */
@@ -3065,7 +3251,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict();
+  renderVerdict(); renderExp();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -3318,6 +3504,10 @@ document.addEventListener("click",function(e){
       : "That day is no longer kept.");
     return;
   }
+  var xs=e.target.closest("[data-exp-stop]");
+  if(xs){ if(!armGate("expstop",xs,"Stop it?")) return; expStopMsg(); return; }
+  var xa=e.target.closest("[data-exp-ack]");
+  if(xa){ expState().unseen=false; save(); renderAll(); return; }
   var swb=e.target.closest("[data-skipwhy]");
   if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
   var dzb=e.target.closest("[data-dose]");
@@ -4379,7 +4569,9 @@ var BOT_RULES=
 "When you give advice, call find_evidence and cite its entries by id in square brackets, like [E-FLOOR-01]. Say what kind of "+
 "source it is: today every entry is practitioner opinion, not a trial. If find_evidence returns nothing, say the library has "+
 "nothing on that. Never say what research shows from memory, and never cite anything that was not returned. Offer the "+
-"entry's small experiment as something to try and measure, not as a rule. Quote shares and counts as the tools return them.\n\n"+
+"entry's small experiment as something to try and measure, not as a rule. Start an experiment only when the person asks for one, "+
+"and say first what it measures and for how long. Report a result only through experiment_status, quoting its numbers and its "+
+"90% range, and say so plainly when it says there is not enough data. Quote shares and counts as the tools return them.\n\n"+
 "To answer anything about patterns or history, call stats, compare, trend or events. They are read-only and exact. "+
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough data yet "+
 "and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with no events is a day "+
@@ -4414,6 +4606,15 @@ function botTools(){
        note:hits.length ? (libAnyChecked(hits)?"":"Every result is practitioner opinion, not a trial. No peer-reviewed entry is in the library yet.")
                         : "The library has nothing on that."});
    }},
+  {name:"start_experiment",description:"Start a library experiment for the person. Only when they ask for one, and say first what it measures and for how long. entry_id is a library id such as E-FLOOR-01. One experiment runs at a time. Entries the board cannot measure are refused.",
+   inputSchema:{type:"object",properties:{entry_id:{type:"string"}},required:["entry_id"]},
+   execute:function(a){ return expStart(String(a.entry_id||"").toUpperCase()); }},
+  {name:"stop_experiment",description:"Stop the running experiment. Nothing is measured from a stopped one.",
+   inputSchema:{type:"object",properties:{}},
+   execute:function(){ return expStopMsg(); }},
+  {name:"experiment_status",description:"Read-only. The running experiment (day, what it measures), or the last finished one with its result: both averages, the difference, a 90% range, the number of active days on each side, and a verdict of better, worse, unclear or not_enough. Report only these numbers, and say not enough when the verdict is not_enough.",
+   inputSchema:{type:"object",properties:{}},
+   execute:function(){ return JSON.stringify(expStatus()); }},
   {name:"set_dose",description:"Size today: rough (low day, one thing), more (a good day, five things), normal, or auto (let the board guess again). Returns the new dose.",
    inputSchema:{type:"object",properties:{mode:{type:"string",enum:["rough","more","normal","auto"]}},required:["mode"]},
    execute:function(a){
@@ -4643,6 +4844,10 @@ var EVERY={"day":"daily","daily":"daily","every day":"daily","weekday":"weekdays
   "month":"monthly","monthly":"monthly","every month":"monthly","never":"none","none":"none"};
 
 var BRAIN=[
+  /* --- experiments --------------------------------------------------- */
+  [/^(?:try|start|run|begin) (?:the )?(?:experiment )?(e-[a-z0-9]+-\d\d)$/, function(m){ return expStart(m[1].toUpperCase()); }],
+  [/^(?:stop|end|cancel|drop) (?:the |my )?experiment$/, function(){ return expStopMsg(); }],
+  [/^(?:how(?:'s| is| am i doing on)|what(?:'s| is)) (?:the |my )?experiment(?: going)?$|^(?:experiment|experiment status)$/, function(){ return expStatusMsg(); }],
   /* --- what the library says, answered with no model and no network --- */
   [/\bwhat (?:does|do) (?:the )?(?:evidence|research|science|studies) (?:say|show)(?: about| on| for)? ?(.*)$/, function(m){ return libSay(m[1]); }],
   [/\b(?:is there|any|got any) (?:evidence|research|science)(?: for| on| about)? ?(.*)$/, function(m){ return libSay(m[1]); }],
@@ -4786,7 +4991,8 @@ var BRAIN=[
 /* one hook, so the command engine can be exercised without a microphone */
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
-  lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; }}; }catch(e){}
+  lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
+  exp:{start:expStart, stop:expStopMsg, status:expStatus, test:expTest, say:expSay, tick:expTick, result:expResult}}; }catch(e){}
 /* When no pattern fits, read the sentence for what it is plainly asking.
    Speech does not arrive in the shape a pattern expects, so this reads the
    verb and takes whatever is left as the name.                            */
