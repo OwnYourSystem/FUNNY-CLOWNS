@@ -1930,12 +1930,18 @@ function alerts(){
    kind of hour it is.                                                    */
 function hm(t){ var m=String(t||"").match(/^(\d{1,2}):(\d{2})/); return m?(+m[1]*60 + +m[2]):0; }
 function clockLabel(t){ return String(t||"").slice(0,5); }
+/* True from "your day ends at" until 04:00. A day that ends after midnight
+   (00:30, say) is over only between that time and 04:00, not all day. */
+function pastDayEnd(me, mins){
+  var w=hm((me||{}).wind);
+  return w>=4*60 ? (mins>=w || mins<4*60) : (mins>=w && mins<4*60);
+}
 var DAYNAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function nowCtx(at){
   var d=at||new Date(), me=state.me||freshMe();
   var dow=d.getDay(), now=d.getHours()*60+d.getMinutes();
   var onDuty=me.days.indexOf(dow)>=0;
-  var a=hm(me.work[0]), b=hm(me.work[1]), c=+me.commute||0, w=hm(me.wind);
+  var a=hm(me.work[0]), b=hm(me.work[1]), c=+me.commute||0;
   var lunch = onDuty && now>=a+3*60 && now<=a+5*60;
   return {
     d:d, dow:dow, now:now, day:DAYNAME[dow],
@@ -1946,7 +1952,7 @@ function nowCtx(at){
     lunch: lunch,
     beforeWork: onDuty && now<a-c,
     afterWork: onDuty && now>b+c,
-    wound: now>=w || now<4*60,       /* past the end of the day, or the small hours */
+    wound: pastDayEnd(me, now),       /* past the end of the day, or the small hours */
     free: !(onDuty && now>=a-c && now<=b+c),
     home: clockLabel(me.work[1]),
     leave: clockLabel(me.work[0]),
@@ -4375,9 +4381,12 @@ function fire(title,body,tag){
     new Notification(title,{body:body,tag:tag});
   }catch(e){}
 }
-function checkRemind(){
+function checkRemind(at){
   if(!("Notification" in window)||Notification.permission!=="granted") return;
-  var me=state.me||freshMe(), now=new Date(), mins=now.getHours()*60+now.getMinutes();
+  var me=state.me||freshMe(), now=at instanceof Date ? at : new Date(), mins=now.getHours()*60+now.getMinutes();
+  /* Nothing is sent after the day is meant to be over. The board says the day
+     has an end, so its notifications respect it too. */
+  if(pastDayEnd(me, mins)) return;
   var today=todayStr();
   if(!state.told||state.told.d!==today) state.told={d:today, am:false, pm:false, hint:false};
 
@@ -5562,7 +5571,7 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, remind:checkRemind, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
+  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
   mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},

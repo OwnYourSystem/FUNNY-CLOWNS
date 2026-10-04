@@ -134,19 +134,26 @@ feature may exist, but the board must not say research backs it.
   association with well-being, not that planning causes it. The report's conclusion
   ("unequivocal", "empirical consensus") says more.
 
-## D. For our talk
+## D. Decided (2026-10-04, the owner's answers)
 
-1. Do we add the after-hours guard now? It is small and needs no research.
-2. Of the ideas in B (now 9), which do we want, and as plain features or as
-   experiments? My pick for the first one after the guard: "When X, I will do this
-   step", because it has the clearest paper behind it and is small.
-3. Do we want time estimates on steps at all? It is the only way to use the
-   planning-fallacy idea, and it moves the board away from "one next action".
-4. Which papers do we check first? My order: Aeon 2021 (the meta-analysis, open
-   access), Gollwitzer and Sheeran 2006, Uhlig 2023, the 2025 planning review, the
-   micro-breaks diary study. Scholarly sites are blocked from this session, so
-   someone needs to paste the abstracts, or we open them in your browser together.
-5. Can you paste the reference list from the Gemini chat? Report 2's own list has 10
-   items, and half of them are blogs and university web pages.
-6. Until a paper is checked, does the board keep calling these ideas "practitioner
-   opinion" or "no evidence claimed"? I suggest the second.
+1. **After-hours guard: yes, now.** Built (commit `25f1f99` on `app`): the brief, the
+   hint and the afternoon check stay quiet from "your day ends at" until 04:00. Test:
+   `tests/reminders.mjs`.
+2. **"When X, I will do this step": agreed as the next build**, offered as an
+   experiment the person starts, with no number quoted and no reminder by default.
+3. **Time estimates on steps: yes.** Optional "about how long" on a step, and the
+   board says "your steps usually take about N times your guess" from the person's own
+   finished steps only. Never "+50%". Built after item 2.
+4. **Paper check order: agreed** (Aeon 2021, Gollwitzer and Sheeran 2006, Uhlig 2023,
+   the 2025 planning review, the micro-breaks diary study). Still blocked from here:
+   the abstracts have to be pasted or opened together.
+5. **Gemini reference list: received as a screenshot.** The "Sources used in the
+   report" panel lists exactly the same 10 sources as the works-cited list in the Doc
+   (Align blog, Marquette nursing paper, CAES field report, UPenn page, "Journal
+   Development Manecos", "Everyday planning", Plantae, the 2025 Frontiers review, the
+   Aeon meta-analysis, the Uhlig field experiment). So Gemini had no other source for
+   the 43%, 50%, 40%, 300% and 80% figures: they most likely come from the Align blog,
+   which nobody has read yet. Gemini's "Thoughts" panel says it searched for
+   "sociological and academic databases", and the first source it opened was the Align
+   blog.
+6. **Wording: "no evidence claimed"** until a paper is checked.
