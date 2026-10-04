@@ -139,11 +139,17 @@ feature may exist, but the board must not say research backs it.
 1. **After-hours guard: yes, now.** Built (commit `25f1f99` on `app`): the brief, the
    hint and the afternoon check stay quiet from "your day ends at" until 04:00. Test:
    `tests/reminders.mjs`.
-2. **"When X, I will do this step": agreed as the next build**, offered as an
-   experiment the person starts, with no number quoted and no reminder by default.
-3. **Time estimates on steps: yes.** Optional "about how long" on a step, and the
-   board says "your steps usually take about N times your guess" from the person's own
-   finished steps only. Never "+50%". Built after item 2.
+2. **"When X, I will do this step": built** as an optional "When?" button on the
+   "Do this now" card. The person types a moment they will notice; the board shows it
+   beside the step, does not remind, and drops it when the step is done or after 14
+   days. It is a plain feature, not an experiment: the experiment engine only runs
+   library entries, and a library entry needs a paper that has been checked. The event
+   log notes that one was set, never the words. No study is cited anywhere in the UI.
+3. **Time estimates: built** as an optional "How long?" button. A guess is kept per
+   step. When a step with a guess is finished, the board asks once, quietly, how long it
+   took. From 5 such pairs it says how the person's guesses compare with what happened
+   ("about 1.5 times your guess, so a guess of 25 minutes has meant about 40"), in their
+   own numbers only. Never "+50%". Skip is always there.
 4. **Paper check order: agreed** (Aeon 2021, Gollwitzer and Sheeran 2006, Uhlig 2023,
    the 2025 planning review, the micro-breaks diary study). Still blocked from here:
    the abstracts have to be pasted or opened together.
