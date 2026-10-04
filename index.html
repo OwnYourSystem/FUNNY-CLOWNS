@@ -3172,6 +3172,7 @@ function floorToggle(id){
   if(on) e.d.push(id); else e.d.splice(at,1);
   e.n=f.items.length;
   evAdd({t:Date.now(),k:"floor",id:id,act:on?"on":"off"});
+  floorTouch();
   return on;
 }
 /* days in the last N (today included) on which every anchor was ticked */
@@ -3211,7 +3212,7 @@ function renderFloor(){
     return;
   }
   var on=floorToday(), days=floorDays(14), low=doseNow().band==="low";
-  box.innerHTML='<div class="floor-k">Minimum day<span class="floor-n">'+on.length+' of '+f.items.length+'</span></div>'+
+  box.innerHTML='<div class="floor-k">Minimum day <span class="floor-n">'+on.length+' of '+f.items.length+'</span></div>'+
     '<div class="floor-chips">'+f.items.map(function(x){
       return '<button type="button" class="floor-chip" data-floor="'+esc(x.id)+'" aria-pressed="'+(on.indexOf(x.id)>=0)+'">'+esc(x.t)+'</button>';
     }).join("")+'</div>'+

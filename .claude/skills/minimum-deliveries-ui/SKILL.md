@@ -303,6 +303,17 @@ too, because speech is misheard and names match loosely. The tool descriptions a
 `BOT_RULES` tell the model to say it is waiting, never that it is done. Do not add a
 destructive tool to the tutor without adding it to `PEND_TOOLS`.
 
+**A minimum day is a floor the person writes, never one the board decides.**
+`state.floor={items:[{id,t}],log:{date:{d:[ids],n}}}`: up to four anchors in the
+person's own words (60 characters each), set in a dialog from the strip at the top of
+One Task A Day. The four suggested kinds in the placeholders (body, one thing you owe,
+a small step on something you are growing, a way to recover) come from the first note
+and are only prompts. Each anchor is a tap for today; the board never ticks one. A day
+is met when every anchor is ticked; the strip says "Met on N of the last 14 days", counts
+only days it was opened, and on a low day says "these are enough". The event log records
+a tick by anchor id, never the words. It stays hidden until the planner has met the
+person, and an empty strip is one quiet line. Do not turn it into a streak or a score.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
