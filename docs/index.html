@@ -241,10 +241,10 @@ body.flat #canvas{transform:none!important}
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
 #canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"],
-#canvas>[data-panel="plan"],#canvas>[data-panel="done"],#canvas>[data-panel="exp"],#canvas>[data-panel="learn"],#canvas>[data-panel="hint"]{grid-column:1/-1}
+#canvas>[data-panel="plan"],#canvas>[data-panel="done"],#canvas>[data-panel="exp"],#canvas>[data-panel="learn"],#canvas>[data-panel="hint"],#canvas>[data-panel="barrier"]{grid-column:1/-1}
 .exp-panel[hidden]{display:none}
 #mem-panel .heldrow .mini{margin-left:6px}
-#hint-on[aria-pressed="true"],#hint-note[aria-pressed="true"]{color:var(--ink-2); border-color:var(--rule)}
+#hint-on[aria-pressed="true"],#hint-note[aria-pressed="true"],#bar-on[aria-pressed="true"]{color:var(--ink-2); border-color:var(--rule)}
 #mem-learn[aria-pressed="true"]{color:var(--ink-2); border-color:var(--rule)}   /* a setting that is on is not an alarm */
 .exp-do{font-size:15px; color:var(--ink); margin:2px 0 8px; line-height:1.5}
 .exp-w{font-size:12.5px; color:var(--muted); margin:0; line-height:1.6}
@@ -1101,6 +1101,8 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <section class="panel exp-panel" data-panel="learn" id="learn-card" aria-label="What the board noticed" hidden></section>
 
+  <section class="panel exp-panel" data-panel="barrier" id="barrier-card" aria-label="What is in the way" hidden></section>
+
   <section class="panel exp-panel" data-panel="hint" id="hint-card" aria-label="Today's hint" hidden></section>
 
   <section class="kpis" data-panel="kpis" aria-label="Summary">
@@ -1266,7 +1268,8 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="p-head"><div><div class="p-title">Daily hint</div>
         <div class="p-note">One a day at most, built from your own numbers or the library, with where it came from. It learns which kind you find helpful. A reminder only arrives while the board is open: a browser cannot wake a closed page.</div></div>
         <div class="p-tools"><button class="mini" id="hint-on" aria-pressed="true">Hints on</button>
-        <button class="mini" id="hint-note" aria-pressed="true">Also as a reminder</button></div></div>
+        <button class="mini" id="hint-note" aria-pressed="true">Also as a reminder</button>
+        <button class="mini" id="bar-on" aria-pressed="true">Low-day check-in on</button></div></div>
       <div id="hint-stats"></div>
       <div class="dock-foot"><button class="mini" id="hint-reset">Forget what helps</button></div>
     </section>
@@ -2332,7 +2335,7 @@ function recordTools(tools){
     c.execute=function(a){
       var out=t.execute(a);
       TURN_OUT+=" "+String(out==null?"":out);
-      if(/^(stats|compare|trend|events|find_evidence|experiment_status|get_hint)$/.test(t.name)) TURN_HIST=true;
+      if(/^(stats|compare|trend|events|find_evidence|experiment_status|get_hint|barrier_status)$/.test(t.name)) TURN_HIST=true;
       return out;
     };
     return c;
@@ -2830,7 +2833,7 @@ function renderHint(){
   var box=$("#hint-card"); if(!box) return;
   hintTick();
   var h=state.hint, xs=state.exp&&state.exp.done&&state.exp.done.length&&state.exp.unseen;
-  if(!h || h.d!==todayStr() || hintDone(h) || memProposed() || xs || !hintOn()){ box.hidden=true; box.innerHTML=""; return; }
+  if(!h || h.d!==todayStr() || hintDone(h) || memProposed() || xs || !hintOn() || barVisible()){ box.hidden=true; box.innerHTML=""; return; }
   box.hidden=false;
   box.innerHTML='<div class="p-head"><div><div class="p-title">Today’s hint &mdash; '+esc(HINT_NAMES[h.type])+'</div></div></div>'+
     '<p class="exp-do">'+esc(h.t)+'</p><p class="exp-w">'+esc(h.evid)+'</p>'+
@@ -2849,7 +2852,8 @@ function renderHintPanel(){
     return '<div class="heldrow"><span class="hn">'+esc(HINT_NAMES[t])+'</span><span class="hw">'+
       (r.n?r.h+" helpful, "+r.no+" not for me":"not tried yet")+(mute?" · not shown again until you reset":"")+'</span></div>';
   }).join("");
-  var a=$("#hint-on"), b=$("#hint-note");
+  var a=$("#hint-on"), b=$("#hint-note"), c=$("#bar-on");
+  if(c){ c.setAttribute("aria-pressed",barOn()?"true":"false"); c.textContent=barOn()?"Low-day check-in on":"Low-day check-in off"; }
   if(a){ a.setAttribute("aria-pressed",hintOn()?"true":"false"); a.textContent=hintOn()?"Hints on":"Hints off"; }
   if(b){ var nn=!(state.me&&state.me.hintNote===false); b.setAttribute("aria-pressed",nn?"true":"false"); b.textContent=nn?"Also as a reminder":"Card only"; }
 }
@@ -2858,6 +2862,120 @@ function hintRoute(e){
   if(x){ hintAnswer(x.dataset.hintA); renderAll(); return true; }
   x=e.target.closest("[data-hint-try]");
   if(x){ try{ expStart(x.dataset.hintTry); }catch(er){ toast("Experiment",er.message); } save(); renderAll(); return true; }
+  return false;
+}
+
+
+/* ---------------- after three low days: what is in the way? ----------------
+   A low day is allowed, and the board makes room for it. But a low day that
+   repeats can be rest, or it can be a way of not looking at something, and the
+   board cannot tell which. Shrinking the dose again would make both worse.
+   So after three low days in a row it asks once, in plain words, and the
+   answer decides what it offers: tiredness and overload want protecting,
+   fear wants a smaller first step, not knowing how wants the step broken
+   down, and not wanting it wants a hard look at whether it is still yours.
+   It never diagnoses, it asks again no sooner than two weeks, and if the
+   pattern is long or keeps coming back it says plainly that talking to
+   someone is worth it. The question can be turned off.                  */
+var BAR_WHY={
+  cant:{label:"I can’t (too tired, or too much)", ids:["E-CAP-01","E-CYCLE-01"], lead:"That is a capacity problem, so protect capacity before anything else."},
+  afraid:{label:"I’m afraid of it", ids:["E-STRETCH-01","E-START-01"], lead:"Fear usually wants a smaller first step, not a push."},
+  how:{label:"I don’t know how", ids:["E-STRETCH-01","E-ONE-01"], lead:"Not knowing how wants the step broken into things you can actually do."},
+  want:{label:"I don’t want to", ids:["E-CHOICE-01"], lead:"If you do not want it, pushing harder will not work, and it is worth asking whether it is still yours. You can move a goal to the Backlog: open it and press Move to backlog."},
+  patch:{label:"Just a rough patch", ids:["E-GUILT-01"], lead:"Fine. Nothing needs fixing."}
+};
+var BAR_ORDER=["cant","afraid","how","want","patch"];
+function barOn(){ return !(state.me && state.me.barrier===false); }
+function barState(){ if(!state.barrier) state.barrier={asked:[],next:"",show:null,force:false}; return state.barrier; }
+function barDaysBetween(a,b){ return Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5); }
+/* the band the board showed each day you opened it, as it stood at the end of the day */
+function barTouch(){
+  var t=todayStr(), b=doseNow().band;
+  if(!state.bandLog) state.bandLog={};
+  var changed=state.bandLog[t]!==b;
+  state.bandLog[t]=b;
+  var keep=addDays(t,-30);
+  Object.keys(state.bandLog).forEach(function(d){ if(d<keep){ delete state.bandLog[d]; changed=true; } });
+  return changed;
+}
+/* consecutive opened days that were low, ending today; a gap of up to 3 days without opening does not break it */
+function barStreak(){
+  var t=todayStr(), log=state.bandLog||{}, days=Object.keys(log).sort().reverse(), n=0, prev=null, i;
+  if(log[t]!=="low") return 0;
+  for(i=0;i<days.length;i++){
+    var d=days[i]; if(d>t) continue;
+    if(log[d]!=="low") break;
+    if(prev && barDaysBetween(d,prev)>3) break;
+    n++; prev=d;
+  }
+  return n;
+}
+function barPending(){
+  var b=barState();
+  if(b.show) return false;
+  if(b.force) return true;
+  return barOn() && b.next<=todayStr() && barStreak()>=3;
+}
+function barRecent(days){ var from=addDays(todayStr(),-days); return barState().asked.filter(function(x){ return x.d>=from; }); }
+function barReply(why){
+  var W=BAR_WHY[why], hits=W.ids.map(libEntry).filter(function(e){ return e && LIB_USE[e.status]; });
+  var long=barStreak()>=5, again=barRecent(28).length>=2;
+  var text=W.lead+" "+hits.map(function(e,i){
+    return "["+e.id+"] "+e.claim+" Try: "+e.tryit.do+(i===0?" Limit: "+e.limits:"");
+  }).join(" ");
+  if(long||again)
+    text+=" If this has gone on for a while or keeps coming back, it is worth talking to someone you trust or a professional. I cannot tell you why it is happening.";
+  var tryId=null;
+  hits.forEach(function(e){ if(!tryId && libRunnable(e) && !(state.exp&&state.exp.active)) tryId=e.id; });
+  return {text:text, tryId:tryId};
+}
+function barAnswer(why){
+  if(!BAR_WHY[why]) throw new Error("No such answer.");
+  var b=barState(), st=barStreak();
+  var r=barReply(why);
+  b.asked.push({d:todayStr(), why:why, streak:st});
+  if(b.asked.length>30) b.asked.splice(0,b.asked.length-30);
+  b.next=addDays(todayStr(),14); b.force=false;
+  b.show={d:todayStr(), why:why, text:r.text, tryId:r.tryId};
+  evAdd({t:Date.now(),k:"barrier",why:why,streak:st});
+  save();
+  return b.show;
+}
+function barSnooze(){ var b=barState(); b.next=addDays(todayStr(),7); b.force=false; save(); }
+function barShow(){ return barState().show; }
+function barVisible(){ return barPending() || !!barShow(); }
+function barStatus(){
+  var b=barState();
+  return {pending:barPending(), low_days_in_a_row:barStreak(), asked_recently:barRecent(28).map(function(x){ return {date:x.d, answer:x.why}; }),
+    next_check:b.next||null, on:barOn()};
+}
+function renderBarrier(){
+  var box=$("#barrier-card"); if(!box) return;
+  if(barTouch()) save();
+  var show=barShow(), q=barPending();
+  var xs=state.exp&&state.exp.done&&state.exp.done.length&&state.exp.unseen;
+  if((!show && !q) || memProposed() || xs){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  if(show){
+    box.innerHTML='<div class="p-head"><div><div class="p-title">Thank you for saying</div></div></div>'+
+      '<p class="exp-do">'+esc(show.text)+'</p>'+
+      '<div class="now-acts">'+(show.tryId?'<button class="btn take" data-bar-try="'+esc(show.tryId)+'">Try '+esc(show.tryId)+'</button>':"")+
+      '<button class="btn'+(show.tryId?"":" take")+'" data-bar-ok>Got it</button></div>';
+    return;
+  }
+  box.innerHTML='<div class="p-head"><div><div class="p-title">Three low days in a row</div></div></div>'+
+    '<p class="exp-do">That is information, not a failure. What is closest to what is in the way?</p>'+
+    '<div class="now-acts">'+BAR_ORDER.map(function(k){
+      return '<button class="btn" data-bar="'+k+'">'+BAR_WHY[k].label+'</button>'; }).join("")+
+    '<button class="btn" data-bar-later>Not now</button></div>';
+}
+function barRoute(e){
+  var x=e.target.closest("[data-bar]");
+  if(x){ barAnswer(x.dataset.bar); renderAll(); return true; }
+  if(e.target.closest("[data-bar-later]")){ barSnooze(); renderAll(); return true; }
+  x=e.target.closest("[data-bar-try]");
+  if(x){ try{ expStart(x.dataset.barTry); }catch(er){ toast("Experiment",er.message); } barState().show=null; save(); renderAll(); return true; }
+  if(e.target.closest("[data-bar-ok]")){ barState().show=null; save(); renderAll(); return true; }
   return false;
 }
 
@@ -3634,7 +3752,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderExp(); renderLearn(); renderMemList(); renderHint(); renderHintPanel();
+  renderVerdict(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -3888,6 +4006,7 @@ document.addEventListener("click",function(e){
     return;
   }
   if(memRoute(e)) return;
+  if(barRoute(e)) return;
   if(hintRoute(e)) return;
   var xs=e.target.closest("[data-exp-stop]");
   if(xs){ if(!armGate("expstop",xs,"Stop it?")) return; expStopMsg(); return; }
@@ -4973,6 +5092,8 @@ var BOT_RULES=
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough data yet "+
 "and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with no events is a day "+
 "the board was not opened, not a failure. You have no web access and no other source. Do not diagnose.\n\n"+
+"After three low days in a row the board itself asks the person what is in the way. You do not ask that question. If they bring "+
+"it up, call barrier_status, talk about it kindly, and never say what is causing it.\n\n"+
 "Do not diagnose, and do not give medical or mental-health advice. If the person says they are in distress or unsafe, "+
 "reply with one calm sentence that you cannot help with that here, suggest a professional or their local emergency "+
 "number, and stop coaching.\n\n"+
@@ -5006,6 +5127,9 @@ function botTools(){
        note:hits.length ? (libAnyChecked(hits)?"":"Every result is practitioner opinion, not a trial. No peer-reviewed entry is in the library yet.")
                         : "The library has nothing on that."});
    }},
+  {name:"barrier_status",description:"Read-only. Whether the board is asking the person what is in the way after three low days in a row, how many low days in a row there are, and their recent answers. The board asks the question itself; you do not. If they bring it up, use it to talk about it kindly, and never say what is causing it.",
+   inputSchema:{type:"object",properties:{}},
+   execute:function(){ return JSON.stringify(barStatus()); }},
   {name:"get_hint",description:"Read-only. Today's hint, if there is one: its text, the evidence behind it, the library id it cites, and whether the person has answered it. Use it when they ask what to pay attention to; quote it, do not invent another.",
    inputSchema:{type:"object",properties:{}},
    execute:function(){ hintTick(); var h=state.hint; return JSON.stringify(hintOn()&&h&&h.d===todayStr()?{text:h.t,evidence:h.evid,cite:h.cite,kind:h.type,answered:h.ans}:{text:null}); }},
@@ -5260,6 +5384,14 @@ var EVERY={"day":"daily","daily":"daily","every day":"daily","weekday":"weekdays
   "month":"monthly","monthly":"monthly","every month":"monthly","never":"none","none":"none"};
 
 var BRAIN=[
+  /* --- the low-day question ---------------------------------------- */
+  [/^(?:ask me why|what is in the way|why am i stuck)$/, function(){
+    var b=barState(); b.force=true; save(); renderAll();
+    return "What is closest to what is in the way? Say one: can't, afraid, don't know how, don't want to, or rough patch."; }],
+  [/^(?:it'?s |i'?m |i )?(can'?t|afraid|don'?t know how|don'?t want to|a rough patch|rough patch)$/, function(m){
+    if(!barPending()) return null;
+    var w=m[1]; var k=/^can/.test(w)?"cant":/^afraid/.test(w)?"afraid":/know how/.test(w)?"how":/want/.test(w)?"want":"patch";
+    var r=barAnswer(k); renderAll(); return r.text; }],
   /* --- the daily hint ------------------------------------------------ */
   [/^(?:give me a hint|any hints?|hint|what should i know today|today'?s hint)$/, function(){ return hintSay(); }],
   [/^hint (?:was )?(helpful|not for me|later)$/, function(m){
@@ -5431,6 +5563,7 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, remind:checkRemind, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
+  bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
   mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},
   exp:{start:expStart, stop:expStopMsg, status:expStatus, test:expTest, say:expSay, tick:expTick, result:expResult}}; }catch(e){}
@@ -5753,6 +5886,7 @@ function memAddFromBox(){
   var i=$("#mem-new"), v=(i.value||"").trim(); if(!v) return;
   try{ memAdd(v,"you"); i.value=""; save(); renderAll(); }catch(er){ toast("Memory",er.message); }
 }
+$("#bar-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.barrier=!barOn(); save(); renderAll(); });
 $("#hint-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hints=!hintOn(); save(); renderAll(); });
 $("#hint-note").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hintNote=(state.me.hintNote===false); save(); renderAll(); });
 $("#hint-reset").addEventListener("click",function(e){
