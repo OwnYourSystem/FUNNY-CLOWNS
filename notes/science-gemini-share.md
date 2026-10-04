@@ -3,7 +3,15 @@
 Link the owner shared on 2026-10-04:
 https://share.gemini.google/hRYrayGKoXI3
 
-## Status
+## Update 2026-10-04
+
+The owner then shared a Google Doc with the research report. It is saved word for
+word in `science-individual-recovery.md`, and its claims are mapped to candidate
+sources in `science-source-map.md`. It is probably the same content as this
+conversation, but I cannot confirm that, because this link still cannot be opened.
+If this conversation has a reference list, please paste it.
+
+## Status of this link
 
 Not read. The session that holds this repository cannot open share.gemini.google
 (the network proxy blocks it), so nothing from the page is saved here. No text of

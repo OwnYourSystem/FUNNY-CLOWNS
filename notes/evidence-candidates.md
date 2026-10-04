@@ -49,3 +49,20 @@ That is a secondary summary, so it still counts as unchecked.
 A checked entry still says what it is: a meta-analysis, a trial, a survey. It
 shows the sample and its limits next to the claim, and the tutor may cite it
 only by its id.
+
+
+## Added 2026-10-04: candidates from the Gemini report
+
+Seven more studies came out of `science-source-map.md`. All are unchecked, and
+the same rules apply. Full details, links and what each search said are in that
+file; only the identifying records are listed here.
+
+| # | Citation (as the search results gave it) | What it could back on the board |
+|---|---|---|
+| 8 | Zacher, Brailsford & Parker (2014). Micro-breaks matter: a diary study on the effects of energy management strategies on occupational well-being. *Journal of Vocational Behavior*, 85(3), 287-297 | A hint about short breaks between tasks (one workday, 124 people) |
+| 9 | Sonnentag & Fritz (2015). Recovery from job stress: the stressor-detachment model as an integrative framework. *Journal of Organizational Behavior*, 36, S72-S103 | Stopping at "your day ends at" |
+| 10 | "Detach to Thrive: Psychological Detachment from Work and Employee Well-Being", *Journal of Happiness Studies*, 2025 (authors to confirm), doi 10.1007/s10902-025-00883-7 | The same, from panel data; the document calls it "causal", which needs checking |
+| 11 | Demerouti, Bakker, Nachreiner & Schaufeli (2001). The job demands-resources model of burnout. *Journal of Applied Psychology* | A framework for a "too much on the plate" signal |
+| 12 | "Mindfulness-Based Programs in the Workplace: a Meta-Analysis of Randomized Controlled Trials", *Mindfulness*, 2020 (authors to confirm), doi 10.1007/s12671-020-01328-3 | Out of the board's scope (treatment-like) unless the owner decides otherwise |
+| 13 | "The consequences of a compressed workweek: a systematic literature review", *Int Arch Occup Environ Health*, 2025 (authors to confirm), doi 10.1007/s00420-025-02153-8 | Not for the board; shows the document overstates this claim |
+| 14 | Smartphone-based stress management for hospital nurses in Vietnam and Thailand: JMIR 2024;26:e50071 and J Occup Health 2025;67(1):uiaf061 (authors to confirm) | Not for the board; shows the document omits that the effects were small and secondary |
