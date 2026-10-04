@@ -237,6 +237,14 @@ It becomes a reminder only when reminders are on and the board is open: a
 browser cannot wake a closed page. Do not claim background delivery; it needs a
 server (`notes/push-design.md`).
 
+**Distress is answered by a fixed message before anything else reads the sentence.**
+`botAsk()` checks `DISTRESS` first: a short list of plain phrases, answered with
+`SAFE_REPLY`, with no model call, no tool, no command and nothing logged or sent.
+It is a net with large holes, not a detector; subtler wording goes to the model,
+whose rules carry the same sentence as `api/tutor.js` (a test checks they match).
+Keep injuries and idioms out of it ("killing it", "cut myself some slack"), and
+never let the command guesser see a sentence like "I want to ...".
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
