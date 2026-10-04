@@ -171,7 +171,7 @@ weekly plan prompt with a look back; a "too much on the plate" signal; a break
 suggestion between steps; a weekly 1 to 5 "how in control did you feel" tap.
 
 **From the earlier product plan (`values-vs-board.md`):**
-- [ ] **A minimum-day strip (V3):** three anchors that count even when nothing else moves.
+- [x] **A minimum-day strip (V3).** *Built 2026-10-04:* up to four anchors in the person's own words, a tap each for today, a day is met when all are ticked, "Met on N of the last 14 days" counting only days it was opened, and "these are enough" on a low day. The first values note named four kinds, the later list said three; the person chooses how many, up to four.
 - [ ] **Weekly measures (V8):** energy, mood, anxiety, functioning, meaningful action.
   Sensitive: it must be the person's own optional tap, never inferred, and never passed to
   the tutor or the memory, which refuse mood and health text.
