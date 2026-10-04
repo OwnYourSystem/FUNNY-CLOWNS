@@ -256,6 +256,13 @@ library entries, never a cause. It asks again no sooner than 14 days (7 after
 Planner. The tutor does not ask it; `barrier_status` is read-only. Do not make a
 low day shrink the dose further without asking.
 
+**Nothing is sent after the day is meant to be over.** `pastDayEnd(me, mins)` is
+true from "your day ends at" until 04:00 (a day that ends after midnight is over
+only from that time to 04:00). `nowCtx().wound` and `checkRemind()` both use it, so
+the morning brief, the hint and the afternoon check stay quiet at night. A skipped
+reminder is not marked as sent. `checkRemind(at)` takes an optional `Date` so a
+test can set the hour.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
