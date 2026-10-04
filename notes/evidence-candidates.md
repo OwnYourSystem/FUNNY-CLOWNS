@@ -77,3 +77,15 @@ Unchecked. Details are in `science-source-map.md`, second report.
 | 16 | Uhlig et al. (2023). A field experiment on the effects of weekly planning behaviour on work engagement, unfinished tasks, rumination, and cognitive flexibility. *Journal of Occupational and Organizational Psychology*, doi 10.1111/joop.12430 (authors to confirm) | A weekly planning prompt (goals, steps, obstacles) |
 | 17 | Scullin et al. (2018), writing a to-do list at bedtime and how fast people fall asleep (title and journal to confirm) | An end-of-day "name tomorrow's first step" prompt |
 | 18 | Hagger et al. (2016). A multilab preregistered replication of the ego-depletion effect. *Perspectives on Psychological Science*, doi 10.1177/1745691616652873 | A caution only: it is why the board does not cite "decision fatigue" as a mechanism |
+
+## Added 2026-10-04: candidates from the completed time-management report
+
+Unchecked. Details are in `science-source-map.md` (#19 to #32).
+
+| # | Citation (as the search results gave it) | What it could back on the board |
+|---|---|---|
+| 19 | Aeon, Faber & Panaccio (2021). Does time management work? A meta-analysis. *PLoS ONE*, PMC7799745 (journal and volume to confirm) | The general link between planning and well-being; an honest "association, moderate" line |
+| 20 | Gollwitzer & Sheeran (2006). Implementation intentions and goal achievement: a meta-analysis of effects and processes. *Advances in Experimental Social Psychology* (details to confirm) | An optional "when X, I will do this step" line |
+| 21 | Buehler, Griffin & Ross (1994). Exploring the planning fallacy. *Journal of Personality and Social Psychology*, 67 (details to confirm) | A caution that plans run long; no "+50%" rule |
+| 22 | A 2025 review of Pomodoro and other break-taking techniques (32 studies, 3 RCTs; title and authors to confirm), and PMC12292963 (self-regulated, Pomodoro and Flowtime breaks in students) | Only to say that short breaks are worth trying; the board has no timer |
+| 23 | "Everyday planning: An analysis of daily time management" (authors given as Simons and Galotti in one result; to confirm), works-cited item 10 of report 2 | Only as background; student sample, correlational |

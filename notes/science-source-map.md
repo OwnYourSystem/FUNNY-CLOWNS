@@ -87,5 +87,44 @@ here is checked.
 - Not searched: Self-Determination Theory studies; "prefrontal cortex allocates
   resources", "metabolic resources" and other mechanism statements; the working
   memory "bandwidth" claim. These are presented as established; none was checked.
-- Missing from the Doc: the sections on segmenting and executing tasks, on
-  procrastination and intrinsic motivation, and on outcomes.
+- The Doc was cut off when I first read it. It was completed later the same day:
+  the rest is mapped in the next section.
+
+## Second report, completed Doc: the sections added later (#19 to #32)
+
+Written 2026-10-04, after the Doc was fixed. Same rules: model-written search
+summaries and links only, no paper opened, nothing checked. The Doc now has a
+works-cited list of 10 items. Most of the big numbers have no citation next to them.
+Item 5 in that list is a company blog ("Effective Daily Planning: 7 Science-Backed
+Techniques", align.day). I could not open it, but it is the likeliest origin of the
+43%, 50%, 40%, 300% and 80% figures, because that is what it is titled for. Treat that
+as a guess until someone reads it.
+
+| # | The document's claim | Candidate source (from the search results) | What the search said | The document says more than the sources found? |
+|---|---|---|---|---|
+| 19 | Time management is linked to job satisfaction, well-being and work-life balance ("Aeon et al., 2021"; "Yener et al., 2021"); works-cited item 2 is the Aeon meta-analysis | Aeon, Faber & Panaccio (2021). Does time management work? A meta-analysis. *PLoS ONE*. https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7799745/ | 158 primary studies. Time management is moderately related to job performance, academic achievement and well-being, and moderately negatively related to distress. It relates to well-being (especially life satisfaction) more than to performance. Perceived control of time goes with being a better time manager. Individual differences matter little, except conscientiousness | **Partly.** This is the strongest source in the list and it fits the direction. Two limits: the studies are mostly correlational, and the meta-analysis does not say that planning "causes" less burnout. Yener et al. (2021): not searched. |
+| 20 | Turning a task list into a visual timeline "improves task completion rates by 40%" | Not found. Search results that gave similar numbers (37%, 28%) came from non-scholarly sites | No study with a 40% figure turned up | **Yes.** Treat as unsourced. |
+| 21 | Working in step with circadian rhythm "can increase overall productivity by 300%" | Not found. Related and real: a large study of exam results at one UK university found peak performance around 1:30 pm (reported by a business news site; the paper was not named in my results) | No study with a 300% figure turned up | **Yes, clearly.** A 300% gain is not credible as a general claim. The wider idea (people differ in when they are sharp) is plausible, and the board already lets a person see their own hours (memory finding "hours"). |
+| 22 | Planning around the menstrual cycle (Mysoor, 2018) | Not found | n/a | Not confirmed. Also a sensitive topic: the board should not infer or ask about it. |
+| 23 | Pomodoro (25 on, 5 off) builds break habits, resets attention and prevents burnout | A 2025 review of 32 studies, 5,270 people, 3 RCTs, found about 20% lower fatigue in the RCTs compared with self-paced breaks (title and authors to confirm). An RCT-style comparison of self-regulated, Pomodoro and Flowtime breaks among students also turned up (PMC12292963) | Small, mostly student samples; outcomes were fatigue and distraction, not "burnout" | **Yes.** "Prevents burnout" and "empirical benefit" are stronger than the student studies. The board has no timer, and it is not obvious it should. |
+| 24 | Most people underestimate task time by "25% to 50%"; add 50% "buffer" to every estimate | Buehler, Griffin & Ross (1994), *Journal of Personality and Social Psychology*, "Exploring the planning fallacy" (real and well known). In the honours-thesis study the average best guess was 33.9 days and the average actual time 55.5 days; about 30% finished by their predicted date | The bias is well documented. The "25% to 50%" range and the "+50%" rule were not in what I found | **Yes on the numbers.** The planning fallacy itself is the best-supported idea in this report. A flat "+50%" is a rule of thumb, not a result. Our dose engine already does something better for one person: it uses their own past days. |
+| 25 | Schedule only about 75% of the day; keep 25% free; apply the 80/20 rule; keep a "could do" list | Not found as a study | n/a | **Yes.** Presented as "empirical guidelines" and "research-backed"; I found none. It matches design reasoning the board already follows (dose below the day's capacity), so it can stay as design (tag D). |
+| 26 | Implementation intentions ("If X, then I'll do Y") bridge the gap between intention and action | Gollwitzer & Sheeran (2006), meta-analysis of 94 tests, mean d = 0.65 on goal attainment (as the search reported it) | A real, replicated finding, with a medium-to-large average effect | **No, as stated.** The Doc gives no citation, but this is well supported. It is the one idea in the new sections with a clear paper behind it. Caveat: effects are averages across many goals, and smaller where goals are hard to start. |
+| 27 | Planning habit: link it to an existing habit, start with 5 to 10 minutes, cap sessions at 15 to 20 minutes, celebrate small wins ("release dopamine") | Not searched. Habit-stacking and implementation-intention research exist; the "dopamine" mechanism was not checked | n/a | Not checked. The dopamine wording is a mechanism claim presented as fact. |
+| 28 | Physical clutter harms well-being and focus (Roster, 2016) | Not found. Other clutter-and-well-being papers exist (home clutter and stress), not this one | The named paper did not turn up | Not confirmed. Not relevant to a software board. |
+| 29 | Dual-tasking is impossible; switching "devastates accuracy"; be unreachable during hard tasks | Not searched. Task-switching costs are well known in the literature; the strength of the wording ("neurologically incapable", "massive metabolic penalties") was not checked | n/a | Probably yes on the wording. |
+| 30 | A daily time log in 15-minute slots for 1 to 2 weeks exposes where time goes; people misjudge their own time | Not searched | n/a | Not checked. The board's event log already records what was done (not time spent). |
+| 31 | Structured checkpoints "improve plan adherence by up to 80%"; morning 5, mid-day 10, end-of-day 15, weekly 30 minutes | Not found. The review durations are advice, not results | No study with an 80% figure turned up | **Yes.** Treat as unsourced. |
+| 32 | College students (N=88) who prioritised daily activities completed more of them; Latham (2023), Wolters & Brady (2021), Chicoine et al. (2023), Singh et al. (2023) on goal-setting, team effects and healthcare or finance | "Everyday planning: An analysis of daily time management" (works-cited item 10): the search gave the authors as Simons and Galotti and a University of Illinois record; confirm. The N=88 and the findings were not in my results. The other four papers were not searched | A real record exists for the student study; its details were not visible | Not confirmed. A student sample, and "direct, significant correlation" is correlational. |
+
+## What to take from the completed report
+
+- Best supported (as far as I could see without reading papers): the planning fallacy
+  (#24, but not the numbers), implementation intentions (#26), the link between time
+  management and well-being (#19), and weekly planning in a field experiment (#13).
+- Unsourced or contradicted numbers: 43%, 50%, 40%, 300%, 80%, "25% to 50%", "+50%"
+  (#14, #15, #20, #21, #24, #31).
+- Good design advice with no research claimed by us: the 75% rule (#25), the could-do
+  list, the end-of-day and weekly reviews, buffers between tasks.
+- Out of scope for a personal board: meetings, delegation, decluttering, team and
+  sector findings, cycle-based planning.

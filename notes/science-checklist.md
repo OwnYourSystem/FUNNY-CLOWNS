@@ -1,8 +1,9 @@
 # Checklist: the useful points of both reports, for the board as it is today
 
 Written 2026-10-04. Sources: `science-individual-recovery.md` (report 1) and
-`science-time-management.md` (report 2, cut off partway). Numbers in brackets
-(#4, #13 and so on) point to the rows of `science-source-map.md`.
+`science-time-management.md` (report 2, complete since the Doc was fixed on
+2026-10-04 14:00 UTC). Numbers in brackets (#4, #13, #24 and so on) point to the rows
+of `science-source-map.md`. Updated the same day to cover the full report 2.
 
 ## How to read it
 
@@ -48,6 +49,15 @@ feature may exist, but the board must not say research backs it.
 - [x] **Claims stay inside the evidence.** Library statuses, the reply check, these
   source maps. Both reports state things more strongly than the sources found
   (section C).
+- [x] **Hard steps at your sharp time.** The "sharpest" setting (morning, afternoon,
+  evening) and the memory finding about your hours. Report 2 (chronobiology).
+  Evidence: **B/C** (#21: people do differ in when they are sharp; the "300%" figure
+  was not found). The board uses the idea for one person's own pattern only.
+- [x] **A could-do list.** The Backlog ("Something for a free hour") holds what is not
+  today's job, with no pressure to do it. Report 2 (#25). Evidence: **D**.
+- [x] **Plans sized from your own days, not from hope.** Dose sizing reads your last
+  planned days. Report 2 (planning fallacy, #24: the bias is well documented, the
+  "25% to 50%" and "+50%" are not). Evidence: **B** for the bias, **D** for our fix.
 - [x] **Your own numbers decide, not a rule of thumb.** Experiments compare your
   days before and after and say "not enough" when that is true. Report 2 (measure
   what works). Evidence: **D**.
@@ -66,10 +76,23 @@ feature may exist, but the board must not say research backs it.
 - [ ] **An optional morning "get it all out" capture.** Ten minutes into the Backlog.
   Report 2. Evidence: **C** (the 43% figure was not found). Small to medium. An
   experiment, with no number quoted.
-- [ ] **A weekly plan prompt.** Goals for the week, the steps, the obstacles and what
-  to do if they happen. Report 2 (#13). Evidence: **B** (fewer unfinished tasks and
-  less rumination in a field experiment; effect sizes not seen). Medium. A Monday
-  hint that opens the Planner.
+- [ ] **A weekly plan prompt, with a short weekly look back.** Goals for the week, the
+  steps, the obstacles and what to do if they happen; then, at the week's end, what
+  moved and what to drop. Report 2 (#13, #31: the "30 minute weekly session" is
+  advice, not a result). Evidence: **B** (fewer unfinished tasks and less rumination
+  in a field experiment; effect sizes not seen). Medium. A Monday hint that opens the
+  Planner, and the 14-day view as the look back.
+- [ ] **"When X, I will do this step."** An optional line on a today pick: when or
+  where the person will do it (an implementation intention). Report 2 (#26). Evidence:
+  **A/B** (a meta-analysis of 94 tests, mean d = 0.65, as the search reported it; not
+  read). The best-supported idea in report 2. Small. Offered as an experiment, with
+  no number quoted. A reminder at that time would stay off by default.
+- [ ] **Estimate against actual, in the person's own numbers (needs a decision).**
+  The board has no time estimates today. If it gets an optional "about how long",
+  it could say "your steps usually take about 1.6 times your guess", from the
+  person's own days, never from "+50%". Report 2 (#24). Evidence: **B** for the bias;
+  the buffer numbers are **C**. Large, and it adds a time field to a board that is
+  built around one next action. Probably not worth it unless you want it.
 - [ ] **A "too much on the plate" signal.** Open and overdue goals against the day's
   dose, suggesting that something comes off, not another coping tool. Report 1
   (responsibilization, JD-R). Evidence: **B/D** (#10 is mixed). Medium. A hint kind
@@ -95,16 +118,35 @@ feature may exist, but the board must not say research backs it.
   leadership training) are not for a personal board, and the evidence is mixed (#8, #9).
 - [ ] Who was studied: mostly students (#12), employees and nurses (#7). Not general
   planner users, and not people with a health problem.
-- [ ] Report 2 is incomplete: the methods, procrastination and outcomes sections are
-  missing from the Doc.
+- [ ] Do not quote "40% better completion with visual timelines", "300% more
+  productivity", "80% better plan adherence", "25% to 50% underestimate" or "add 50%"
+  (#20, #21, #31, #24: none found).
+- [ ] Pomodoro, time blocking, Kanban, GTD, RPM and "eat the frog" are methods people
+  use, not results. Only the Pomodoro review (student RCTs, about 20% less fatigue,
+  #23) had numbers, and they came from a model's summary. Out of scope: a timer.
+- [ ] Do not ask about, infer or plan around the menstrual cycle (#22). Sensitive, and
+  the named paper was not found.
+- [ ] "Dopamine rewards the habit" and "the prefrontal cortex allocates resources" are
+  mechanism claims stated as fact (#27, #14). Do not repeat them.
+- [ ] Meetings, delegation, decluttering and team-level findings (#28, #32) are not for
+  a personal board.
+- [ ] The strongest source in report 2 is the Aeon meta-analysis (#19), and it shows an
+  association with well-being, not that planning causes it. The report's conclusion
+  ("unequivocal", "empirical consensus") says more.
 
 ## D. For our talk
 
 1. Do we add the after-hours guard now? It is small and needs no research.
-2. Of the seven ideas in B, which do we want, and as plain features or as experiments?
-3. Which papers do we check first? My order: Uhlig 2023 (weekly planning), the 2025
-   planning review, the micro-breaks diary study, then the plan-making and
-   bedtime-list studies.
-4. Can you paste the rest of report 2, and the reference list from the Gemini chat?
-5. Until a paper is checked, does the board keep calling these ideas "practitioner
+2. Of the ideas in B (now 9), which do we want, and as plain features or as
+   experiments? My pick for the first one after the guard: "When X, I will do this
+   step", because it has the clearest paper behind it and is small.
+3. Do we want time estimates on steps at all? It is the only way to use the
+   planning-fallacy idea, and it moves the board away from "one next action".
+4. Which papers do we check first? My order: Aeon 2021 (the meta-analysis, open
+   access), Gollwitzer and Sheeran 2006, Uhlig 2023, the 2025 planning review, the
+   micro-breaks diary study. Scholarly sites are blocked from this session, so
+   someone needs to paste the abstracts, or we open them in your browser together.
+5. Can you paste the reference list from the Gemini chat? Report 2's own list has 10
+   items, and half of them are blogs and university web pages.
+6. Until a paper is checked, does the board keep calling these ideas "practitioner
    opinion" or "no evidence claimed"? I suggest the second.
