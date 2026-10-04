@@ -292,6 +292,17 @@ middle of actual over guess, and the board says so in the person's own numbers
 "+50%", no study cited, no claim about other people. The event log records that one
 was set or answered, never the words or the minutes.
 
+**The tutor can ask to remove a step or clear a dock, never do it.** `remove_subtask`
+and `clear_dock` are wrapped in `recordTools`: they call `pendStage`, which resolves the
+name now (an unknown or ambiguous name is an error, nothing staged), sets `PEND` and
+returns "Ready: ... Nothing has changed". `#bot-pend` in the chat shows what would
+happen with two buttons (Remove it / Clear it, Keep it); only `pendYes` runs it, through
+`toolRun`. A new sentence, Clear in the chat, or two minutes drops it. What you type is
+your own word and runs at once; a spoken sentence (`botAsk(said,{spoken:true})`) is staged
+too, because speech is misheard and names match loosely. The tool descriptions and
+`BOT_RULES` tell the model to say it is waiting, never that it is done. Do not add a
+destructive tool to the tutor without adding it to `PEND_TOOLS`.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

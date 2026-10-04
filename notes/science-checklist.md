@@ -175,9 +175,9 @@ suggestion between steps; a weekly 1 to 5 "how in control did you feel" tap.
 - [ ] **Weekly measures (V8):** energy, mood, anxiety, functioning, meaningful action.
   Sensitive: it must be the person's own optional tap, never inferred, and never passed to
   the tutor or the memory, which refuse mood and health text.
-- [ ] **Confirmation on the tutor's remove and clear tools.** The tutor cannot open a
-  dialog (a rule from today), so this needs either a "ready to confirm" answer that the
-  person completes with a button, or no destructive tools for the tutor.
+- [x] **Confirmation on the tutor's remove and clear tools.** *Built 2026-10-04.* The
+  tutor stages the request and the chat shows two buttons; only the person pressing
+  the first one does it. Typed commands run at once, spoken ones are staged.
 - [ ] **Dialogs not yet done:** the interview does not open by itself on first run
   (deliberate); the "No" rows (hints, memory findings, distress reply, tutor chat, the
   barrier question) stay as cards.
