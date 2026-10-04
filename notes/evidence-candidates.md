@@ -66,3 +66,14 @@ file; only the identifying records are listed here.
 | 12 | "Mindfulness-Based Programs in the Workplace: a Meta-Analysis of Randomized Controlled Trials", *Mindfulness*, 2020 (authors to confirm), doi 10.1007/s12671-020-01328-3 | Out of the board's scope (treatment-like) unless the owner decides otherwise |
 | 13 | "The consequences of a compressed workweek: a systematic literature review", *Int Arch Occup Environ Health*, 2025 (authors to confirm), doi 10.1007/s00420-025-02153-8 | Not for the board; shows the document overstates this claim |
 | 14 | Smartphone-based stress management for hospital nurses in Vietnam and Thailand: JMIR 2024;26:e50071 and J Occup Health 2025;67(1):uiaf061 (authors to confirm) | Not for the board; shows the document omits that the effects were small and secondary |
+
+## Added 2026-10-04: candidates from the time-management report
+
+Unchecked. Details are in `science-source-map.md`, second report.
+
+| # | Citation (as the search results gave it) | What it could back on the board |
+|---|---|---|
+| 15 | "Boosting productivity and wellbeing through time management: evidence-based strategies for higher education and workforce development", *Frontiers in Education*, 2025 (authors to confirm), doi 10.3389/feduc.2025.1623228 | Planning and prioritisation in general (mostly student samples) |
+| 16 | Uhlig et al. (2023). A field experiment on the effects of weekly planning behaviour on work engagement, unfinished tasks, rumination, and cognitive flexibility. *Journal of Occupational and Organizational Psychology*, doi 10.1111/joop.12430 (authors to confirm) | A weekly planning prompt (goals, steps, obstacles) |
+| 17 | Scullin et al. (2018), writing a to-do list at bedtime and how fast people fall asleep (title and journal to confirm) | An end-of-day "name tomorrow's first step" prompt |
+| 18 | Hagger et al. (2016). A multilab preregistered replication of the ego-depletion effect. *Perspectives on Psychological Science*, doi 10.1177/1745691616652873 | A caution only: it is why the board does not cite "decision fatigue" as a mechanism |

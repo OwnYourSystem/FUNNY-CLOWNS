@@ -60,3 +60,32 @@ Written 2026-10-04. Document: `science-individual-recovery.md` (saved word for w
 - Several of the document's strongest sentences (claims 1, 5, 7, 8, 9, 10) are
   stronger than the sources found. Anything taken from it should use the sources'
   wording, not the document's.
+
+---
+
+# Second report: "Empirical Foundations of Time Management"
+
+Written 2026-10-04. Document: `science-time-management.md` (saved word for word, and
+cut off partway: see the note at the top of that file). Same rules as above: the
+searches returned model-written summaries and links, I opened no paper, and nothing
+here is checked.
+
+| # | The document's claim | Candidate source (from the search results) | What the search said | The document says more than the sources found? |
+|---|---|---|---|---|
+| 12 | A systematic review of 107 empirical studies, "spanning both higher education and corporate workplace settings", shows deliberate planning improves performance and well-being | "Boosting productivity and wellbeing through time management: evidence-based strategies for higher education and workforce development", Frontiers in Education, 2025. https://www.frontiersin.org/articles/10.3389/feduc.2025.1623228/full | PRISMA review; 107 sources (86 articles, 21 dissertations); total sample 32,959, of whom 24,068 were higher-education students and 8,891 workforce professionals; 69 studies were in higher education, 36 in workplaces, 2 in both; goal-setting, prioritisation and short- and long-term planning "consistently predicted higher performance" | **On the mix.** The review is mostly about students (about two thirds of the studies and three quarters of the people). "Predicted" is a statement about association. A separate 2026 review asks whether time-management interventions support wellbeing at work (Young et al., Applied Psychology: Health and Well-Being, https://iaap-journals.onlinelibrary.wiley.com/doi/10.1111/aphw.70149); its findings were not read. |
+| 13 | A field experiment (208 people, 947 weekly diary entries) "demonstrated definitively" that time-management interventions give "immediate and measurable improvements in task execution and psychological health" | Uhlig et al. (2023). A field experiment on the effects of weekly planning behaviour on work engagement, unfinished tasks, rumination, and cognitive flexibility. Journal of Occupational and Organizational Psychology (authors to confirm). https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/joop.12430 ; open copy https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10952538/ | 208 people, 947 weekly entries; weekly planning (goal setting, planning steps, alternative plans) was manipulated; effects were negative on unfinished tasks and on weekly rumination, positive on weekly cognitive flexibility; participants had a brief training session first | **Yes.** "Definitively" and "task execution" are the document's words. The outcomes found were unfinished tasks, rumination and cognitive flexibility (and engagement, in the title), for a weekly plan, not a daily one. Effect sizes were not in the summary. |
+| 14 | A 10-minute "morning brain dump" can "reduce baseline anxiety by up to 43%" | Not found. Related: Masicampo & Baumeister (2011), plan-making and unfulfilled goals (already candidate 6; one blog summary named the wrong journal, so confirm it); Scullin et al. (2018) on writing a to-do list at bedtime and falling asleep (named in a search result; title and journal to confirm) | Writing a plan for an unfinished task reduced its intrusion in focus; writing a to-do list before bed was linked to falling asleep faster | **Yes.** The 43% figure was not found. The related studies are about plans for unfinished tasks and about bedtime lists, not a morning dump or anxiety scores. |
+| 15 | Daily planning lowers cortisol "by up to 50%" | Not found. The search traced the "up to 50%" figure to a blog post that cites an unnamed university study | No randomised trial on planning and cortisol turned up. Trials on relaxation, meditation and other things did | **Yes, clearly.** Treat the number as unsourced. |
+| 16 | "Decision fatigue" is a central mechanism: deciding what to do next drains a finite pool of executive energy | Ego-depletion replication: Hagger et al. (2016), a multilab preregistered replication, Perspectives on Psychological Science. https://journals.sagepub.com/doi/10.1177/1745691616652873 ; a second multilab replication (Dang et al., 2020) | 23 labs, 2,141 people: effect d = 0.04, not significant; the result was debated (critics said the task may have been too weak to test the idea) | **Yes.** The document states it as settled. The wider idea is contested. Whether "decisions" specifically drain a resource was not tested in what I found. |
+| 17 | Self-Determination Theory: time management supports autonomy and competence, which raises intrinsic motivation and job satisfaction | Not searched (SDT is Deci & Ryan; the specific "recent studies" were not named) | n/a | Not checked. |
+| 18 | "Perceived time control" is the core of Manzano & Ayala's (2021) model and strongly predicts productivity; Mihalca et al. (2021) show time-management self-efficacy helps prioritisation, distraction avoidance and deadlines | Manzano & Ayala (2021): not found. Mihalca et al. (2021): not found. Related: "Time Management: Test of a Process Model" (Macan, 1994, appeared in a result); "Time Management Training and Perceived Control of Time at Work" (appeared in a result) | The searches did not find either named paper. The related work links time-management behaviours to perceived control of time, and control to stress and satisfaction | **Not confirmed.** Both papers may exist; I could not find them. The relationship is correlational wherever I saw it described. |
+
+## Not found, or not searched, in this report
+
+- Not found: "up to 43%" anxiety; "up to 50%" cortisol; Manzano & Ayala (2021);
+  Mihalca et al. (2021).
+- Not searched: Self-Determination Theory studies; "prefrontal cortex allocates
+  resources", "metabolic resources" and other mechanism statements; the working
+  memory "bandwidth" claim. These are presented as established; none was checked.
+- Missing from the Doc: the sections on segmenting and executing tasks, on
+  procrastination and intrinsic motivation, and on outcomes.
