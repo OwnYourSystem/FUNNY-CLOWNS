@@ -302,6 +302,10 @@ body.flat #canvas{transform:none!important}
   #botsheet{bottom:calc(158px + env(safe-area-inset-bottom,0px))!important}
   #bottoast{left:10px!important; right:10px; max-width:none}
 }
+.bot-pend{margin-top:10px; padding:10px 12px; border:1px solid var(--rule); border-radius:12px; display:flex;
+  gap:10px; align-items:center; flex-wrap:wrap; font-size:13.5px; color:var(--ink-2); line-height:1.5}
+.bot-pend[hidden]{display:none}
+.bot-pend span{flex:1 1 200px; color:var(--ink)}
 .bot-log{margin-top:12px; flex:1 1 auto; min-height:0; max-height:46vh; overflow-y:auto; display:flex; flex-direction:column;
   gap:10px; padding-right:4px; cursor:auto}
 .bot-msg{max-width:74ch; font-size:13.5px; line-height:1.55; padding:10px 13px; border-radius:14px;
@@ -1419,6 +1423,7 @@ try{var _t=localStorage.getItem("oys-theme");
       </span>
     </div>
     <div class="bot-log" id="bot-log"></div>
+    <div class="bot-pend" id="bot-pend" role="status" aria-live="polite" hidden></div>
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
       <input class="f" id="bot-input" autocomplete="off" placeholder="Add a task, move one on, ask what is stuck" aria-label="Talk to the board">
@@ -2373,13 +2378,57 @@ function replyCheck(text,ctx){
   }
   return {ok:!why.length, why:why.join("; ")};
 }
+/* ---------------- removing and clearing wait for a button ----------------
+   The tutor can ask to remove a step or clear a dock, but it cannot do either.
+   It stages the request; the chat shows exactly what would happen with two
+   buttons; only the person pressing the first one does it. What you type
+   yourself ("remove X") is your own word and runs at once. A spoken sentence is
+   staged too, because speech is misheard and the board matches names loosely. */
+var PEND=null, PEND_MS=120000, PEND_TOOLS={remove_subtask:1, clear_dock:1}, SPOKEN=false;
+var DOCK_NAME={oftad:"One Task A Day", plan:"Today\u2019s Plan", done:"Done Today"};
+function pendStage(t,a){
+  var label, verb, args;
+  if(t.name==="remove_subtask"){
+    var sb=botFindSub(a.subtask);
+    label="Remove \u201c"+sb.name+"\u201d for good"; verb="Remove it"; args={subtask:sb.name};
+  } else {
+    var d=String(a.dock||"").toLowerCase(), z=d==="focus"?"oftad":d;
+    if(["oftad","plan","done"].indexOf(z)<0) throw new Error("Dock must be focus, plan or done.");
+    var n=(state[z]||[]).length;
+    if(!n) return "That dock is already empty.";
+    label="Clear "+n+" card"+(n===1?"":"s")+" from "+DOCK_NAME[z]; verb="Clear it"; args={dock:d};
+  }
+  PEND={name:t.name, args:args, label:label, verb:verb, at:Date.now()};
+  pendRender();
+  return "Ready: "+label+". Nothing has changed. The person has to press the button in the chat to confirm. Tell them it is waiting for them, and do not say it is done.";
+}
+function pendRender(){
+  var box=$("#bot-pend"); if(!box) return;
+  if(PEND && Date.now()-PEND.at>PEND_MS) PEND=null;
+  if(!PEND){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML="<span>"+esc(PEND.label)+"?</span>"+
+    '<button class="btn danger" data-pend-yes>'+esc(PEND.verb)+'</button><button class="btn" data-pend-no>Keep it</button>';
+}
+function pendYes(){
+  var p=PEND; PEND=null;
+  if(!p) { pendRender(); return; }
+  var msg;
+  if(Date.now()-p.at>PEND_MS) msg="That was a while ago, so I did not do it. Ask again if you still want it.";
+  else { try{ msg=toolRun(p.name,p.args); }catch(er){ msg=(er&&er.message)||"I could not do that."; } }
+  var last=botTurns[botTurns.length-1];
+  if(last && last.role==="assistant") last.content+="\n"+msg; else botTurns.push({role:"assistant",content:msg});
+  pendRender(); botRender();
+}
+function pendNo(){ PEND=null; pendRender(); }
 var TURN_OUT="", TURN_HIST=false;
 /* every tool result of one question, kept so the reply can be checked against it */
 function recordTools(tools){
   return tools.map(function(t){
     var c={}; Object.keys(t).forEach(function(k){ c[k]=t[k]; });
     c.execute=function(a){
-      var out=t.execute(a);
+      /* the tutor can ask for these, never do them: the person presses a button */
+      var out=PEND_TOOLS[t.name] ? pendStage(t,a||{}) : t.execute(a);
       TURN_OUT+=" "+String(out==null?"":out);
       if(/^(stats|compare|trend|events|find_evidence|experiment_status|get_hint|barrier_status)$/.test(t.name)) TURN_HIST=true;
       return out;
@@ -4952,7 +5001,7 @@ function listen(){
         var said=txt.trim();
         micUI(false);
         try{ rec.stop(); }catch(err){}
-        if(said) botAsk(said);
+        if(said) botAsk(said,{spoken:true});
       }
     };
     rec.onerror=function(e){
@@ -5460,7 +5509,7 @@ var BOT_RULES=
 "When the person asks for a change, MAKE it with the tools instead of describing how to do it by hand. "+
 "You can do everything the buttons can: set progress and status, add, rename, remove and move subtasks, "+
 "add main tasks, set how often a subtask repeats, and fill or clear the three docks. Never invent names, only use the ones below. If a name "+
-"is ambiguous the tool will tell you, so ask which one.\n\n"+
+"is ambiguous the tool will tell you, so ask which one. Removing a subtask and clearing a dock wait for the person to press a button in the chat: say it is waiting for them, never that it is done.\n\n"+
 "The board sizes each day: TODAY'S DOSE below. On a low day suggest only the smallest step and never add work. "+
 "If the person says they are worn out, call set_dose with rough; if they want more, call it with more. "+
 "Do not ask how they feel every day. The board already guessed.\n\n"+
@@ -5586,7 +5635,7 @@ function botTools(){
      var was=sb.name; sb.name=nm; mark(sb.id,"name");
      return done("\"" + was + "\" is now \"" + nm + "\".");
    }},
-  {name:"remove_subtask",description:"Delete one subtask from the board for good. Returns confirmation.",
+  {name:"remove_subtask",description:"Ask to delete one subtask from the board for good. This only stages the request: the person has to press a button in the chat to confirm, so never say it is done.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
    execute:function(a){
      var sb=botFindSub(a.subtask), nm=sb.name;
@@ -5635,7 +5684,7 @@ function botTools(){
      if(!state.done.some(function(c){ return c.id===sb.id; })) state.done.push({k:"sub",id:sb.id,done:true});
      return done("Logged "+sb.name+" as done today.");
    }},
-  {name:"clear_dock",description:"Empty one dock: focus (One Task A Day), plan (Today's Plan) or done (Done Today).",
+  {name:"clear_dock",description:"Ask to empty one dock: focus (One Task A Day), plan (Today's Plan) or done (Done Today). This only stages the request: the person has to press a button in the chat to confirm, so never say it is done.",
    inputSchema:{type:"object",properties:{dock:{type:"string",enum:["focus","plan","done"]}},required:["dock"]},
    execute:function(a){
      var d=String(a.dock||"").toLowerCase(), z=d==="focus"?"oftad":d;
@@ -5756,6 +5805,7 @@ function fuzGroup(q){
   }
 }
 function toolRun(name,args){
+  if(SPOKEN && PEND_TOOLS[name]) return pendStage({name:name},args||{});
   var all=botTools();
   for(var i=0;i<all.length;i++) if(all[i].name===name) return all[i].execute(args||{});
   throw new Error("No such command.");
@@ -5944,10 +5994,10 @@ var BRAIN=[
 ];
 
 /* one hook, so the command engine can be exercised without a microphone */
-try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
+try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, askSpoken:function(t){ return botAsk(t,{spoken:true}); }, openSheet:function(){ botOpen(true); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
+  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
   when:{set:whenSet, map:whenMap, tidy:whenTidy}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
@@ -6042,7 +6092,7 @@ function botBubble(cls,text){
   return d;
 }
 function botRender(){
-  var log=$("#bot-log"); log.innerHTML="";
+  var log=$("#bot-log"); log.innerHTML=""; pendRender();
   if(!botTurns.length){
     var e=document.createElement("p"); e.className="bot-empty";
     e.textContent="Ask it to move something along, pick your task for the day, or tell you what is stuck."+
@@ -6181,17 +6231,20 @@ var BOT_ERR={
    anywhere, logged, or kept beyond the chat on this screen.             */
 var DISTRESS=/\b(?:kill(?:ing)? myself|end(?:ing)? my (?:own )?life|take my own life|suicid\w*|want(?:ed)? to die|wanna die|better off dead|no reason to live|self[- ]?harm\w*|(?:end|ending) it all|can'?t go on (?:like this|anymore|any more|any longer)|(?:want|going|plan|planning|thinking|thought|feel like)\b[^.!?]{0,20}\b(?:hurt|harm|cut|kill)(?:ing)? myself(?!\s+(?:some\s+)?(?:slack|a\s+break|off)))\b/i;   /* "cut myself some slack" is the opposite of this */
 var SAFE_REPLY="I am sorry it feels this heavy. I cannot help with that here, and you should not have to carry it alone: please talk to a doctor, a crisis line or someone you trust. If you might act on it, call your local emergency number now (for example 112 in the EU or 911 in the US). I will stop the coaching for now.";
-async function botAsk(text){
+async function botAsk(text,opts){
   if(botBusy) return;
   var said=String(text||"").trim();
   if(!said) return;
+  PEND=null; pendRender();                         /* a new sentence replaces a waiting question */
   $("#bot-input").value="";
   if(!SR||!hearing) micUI(false);
   /* the board answers its own commands first: no model, no network, no wait */
   var reply=null, care=DISTRESS.test(said);
   if(care) reply=SAFE_REPLY;
-  else try{ reply=localBrain(said,modelThere()); }
-  catch(err){ reply=(err&&err.message)||"I could not do that."; }
+  else { SPOKEN=!!(opts&&opts.spoken);
+    try{ reply=localBrain(said,modelThere()); }
+    catch(err){ reply=(err&&err.message)||"I could not do that."; }
+    finally{ SPOKEN=false; } }
   if(reply===null && !botSample && !proxyReady())
     reply="I heard \u201c"+said+"\u201d, and found no command in it. "+
       "Try: add a task called "+said.split(/\s+/).slice(-2).join(" ")+". Or say help.";
@@ -6298,7 +6351,12 @@ $("#mem-erase").addEventListener("click",function(e){
     memErase(); save(); renderAll();
   });
 });
-$("#bot-clear").addEventListener("click",function(e){ e.stopPropagation(); botTurns=[]; wireClear(); botRender(); });
+$("#bot-clear").addEventListener("click",function(e){ e.stopPropagation(); botTurns=[]; PEND=null; wireClear(); botRender(); });
+$("#bot-pend").addEventListener("click",function(e){
+  e.stopPropagation();
+  if(e.target.closest("[data-pend-yes]")) pendYes();
+  else if(e.target.closest("[data-pend-no]")) pendNo();
+});
 
 /* ---------------- motion ---------------- */
 function flashIn(el){
