@@ -81,7 +81,17 @@ upstream = [];
 await ask("Tell me what you notice about my mornings");
 const turn1 = [...upstream];
 await ok("two upstream calls: question, then tool result", async () => { assert.equal(turn1.length, 2); });
-await ok("the answer quotes numbers the page computed locally", async () => { const l = (await log()).join("\n"); assert.match(l, /bot: In the last 30 days: 29 finished, morning 21/); });
+await ok("the answer quotes numbers the page computed locally (checked against an independent count, so it holds on any date)", async () => {
+  const exp = await page.evaluate((KEY) => {
+    const s = JSON.parse(localStorage.getItem(KEY)); const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - 29);
+    const seen = {}; let n = 0, morning = 0;
+    s.ev.forEach((e) => { if (e.k !== "done" || e.t < start.getTime()) return; const d = new Date(e.t), k = d.toDateString() + "|" + e.id; if (seen[k]) return; seen[k] = 1; n++; if (d.getHours() < 12) morning++; });
+    return { n, morning };
+  }, KEY);
+  const l = (await log()).join("\n");
+  assert.ok(exp.n >= 20 && exp.morning >= 15, JSON.stringify(exp));
+  assert.ok(l.includes("bot: In the last 30 days: " + exp.n + " finished, morning " + exp.morning + "."), l + " / expected " + JSON.stringify(exp));
+});
 await ok("the first request has the context tag and only allowed tools, no system from the page", async () => {
   const m0 = turn1[0].messages[0]; assert.match(m0.content, /^\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}; today's dose: normal\] Tell me what you notice/);
   assert.ok(turn1[0].tools.every((t) => !t.type) && turn1[0].tools.length >= 10);
@@ -176,6 +186,14 @@ await ok("a number no tool returned is held back", async () => { assert.match((a
 queue = [() => text("You may be dealing with depression.")]; upstream = [];
 await ask("Why do I feel so flat when I look at my list");
 await ok("a clinical word is held back", async () => { assert.match((await log()).slice(-1)[0], /I held that answer back: it used a clinical word/); });
+
+// 6d. distress never reaches the model
+queue = [() => text("This should never be called.")]; upstream = [];
+await ask("I want to end it all");
+await ok("a distress sentence gets the fixed message and makes no upstream call, even with the hosted tutor on", async () => {
+  assert.equal(upstream.length, 0); assert.match((await log()).slice(-1)[0], /^bot: I am sorry it feels this heavy\. I cannot help with that here/);
+});
+queue = [];
 
 // 7. signed out: no call, a plain message
 await page.evaluate((KEY) => localStorage.removeItem(KEY + ".account"), KEY);

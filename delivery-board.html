@@ -4973,6 +4973,9 @@ var BOT_RULES=
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough data yet "+
 "and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with no events is a day "+
 "the board was not opened, not a failure. You have no web access and no other source. Do not diagnose.\n\n"+
+"Do not diagnose, and do not give medical or mental-health advice. If the person says they are in distress or unsafe, "+
+"reply with one calm sentence that you cannot help with that here, suggest a professional or their local emergency "+
+"number, and stop coaching.\n\n"+
 "Teach rather than lecture. Ask one question at a time, never a list of them. Keep every answer under "+
 "50 words unless you are listing tasks. No preamble, no restating the question. After a change, say what "+
 "changed in one short line, then offer the single next step. When a streak is running, say so.\n\n"+
@@ -5427,7 +5430,7 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, remind:checkRemind,
+  toolRun:toolRun, remind:checkRemind, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
   mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},
   exp:{start:expStart, stop:expStopMsg, status:expStatus, test:expTest, say:expSay, tick:expTick, result:expResult}}; }catch(e){}
@@ -5648,6 +5651,17 @@ var BOT_ERR={
   empty_completion:"Nothing came back. Ask again.",
   invalid_request:"The assistant refused that request."
 };
+/* If someone says they may hurt themselves, no model, no tool and no command
+   reads that sentence first. The board once answered "I want to ..." by adding
+   a task, and a prompt alone cannot promise what a model will do. So a short
+   list of plain phrases is caught here and answered with one fixed, calm
+   message. It is a net with large holes, not a detector: anything subtler goes
+   to the model, whose rules carry the same instruction. Phrases about an
+   injury or a bad week ("killing it", "this is killing my week", "hurt my
+   back") are deliberately not in it. Nothing from that exchange is sent
+   anywhere, logged, or kept beyond the chat on this screen.             */
+var DISTRESS=/\b(?:kill(?:ing)? myself|end(?:ing)? my (?:own )?life|take my own life|suicid\w*|want(?:ed)? to die|wanna die|better off dead|no reason to live|self[- ]?harm\w*|(?:end|ending) it all|can'?t go on (?:like this|anymore|any more|any longer)|(?:want|going|plan|planning|thinking|thought|feel like)\b[^.!?]{0,20}\b(?:hurt|harm|cut|kill)(?:ing)? myself(?!\s+(?:some\s+)?(?:slack|a\s+break|off)))\b/i;   /* "cut myself some slack" is the opposite of this */
+var SAFE_REPLY="I am sorry it feels this heavy. I cannot help with that here, and you should not have to carry it alone: please talk to a doctor, a crisis line or someone you trust. If you might act on it, call your local emergency number now (for example 112 in the EU or 911 in the US). I will stop the coaching for now.";
 async function botAsk(text){
   if(botBusy) return;
   var said=String(text||"").trim();
@@ -5655,8 +5669,9 @@ async function botAsk(text){
   $("#bot-input").value="";
   if(!SR||!hearing) micUI(false);
   /* the board answers its own commands first: no model, no network, no wait */
-  var reply=null;
-  try{ reply=localBrain(said,modelThere()); }
+  var reply=null, care=DISTRESS.test(said);
+  if(care) reply=SAFE_REPLY;
+  else try{ reply=localBrain(said,modelThere()); }
   catch(err){ reply=(err&&err.message)||"I could not do that."; }
   if(reply===null && !botSample && !proxyReady())
     reply="I heard \u201c"+said+"\u201d, and found no command in it. "+
@@ -5666,7 +5681,7 @@ async function botAsk(text){
     botTurns.push({role:"assistant",content:reply});
     if(botTurns.length>14) botTurns=botTurns.slice(-14);
     botRender();
-    toast(said,reply);
+    toast(care?"A note":said,reply);
     if(!hearing&&!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
     return;
   }
