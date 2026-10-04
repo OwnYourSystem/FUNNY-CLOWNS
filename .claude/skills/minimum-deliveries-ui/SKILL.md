@@ -245,6 +245,17 @@ whose rules carry the same sentence as `api/tutor.js` (a test checks they match)
 Keep injuries and idioms out of it ("killing it", "cut myself some slack"), and
 never let the command guesser see a sentence like "I want to ...".
 
+**After three low days in a row the board asks what is in the way, once.**
+`barTouch()` records the band the board showed each day it was opened;
+`barStreak()` counts low days in a row ending today (a gap of up to 3 unopened
+days does not break it). The question has five plain answers (can't, afraid,
+don't know how, don't want to, a rough patch), and each answer offers different
+library entries, never a cause. It asks again no sooner than 14 days (7 after
+"Not now"), adds a line about talking to someone you trust when the run reaches
+5 days or it has been asked twice in 28 days, and can be turned off in the
+Planner. The tutor does not ask it; `barrier_status` is read-only. Do not make a
+low day shrink the dose further without asking.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
