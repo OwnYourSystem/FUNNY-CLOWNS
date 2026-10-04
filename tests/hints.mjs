@@ -96,7 +96,10 @@ await ok("stalled hint: names the goal, the days and the percent, cites the barr
 });
 await ok("Try it starts the experiment and counts as acting on the hint", async () => {
   const s0 = await st(); assert.equal(s0.hint.type, "stalled");
-  await card().waitFor({ state: "visible", timeout: 3000 }); await p.locator("[data-hint-try]").click(); await p.waitForTimeout(250);
+  await card().waitFor({ state: "visible", timeout: 3000 }); await p.locator("[data-hint-try]").click(); await p.locator("dialog.ask[open]").waitFor();
+  const dt = await p.locator("dialog.ask[open]").innerText(); assert.match(dt, /Start this experiment\?/); assert.match(dt, /days from today/); assert.match(dt, /practitioner opinion/);
+  await p.keyboard.press("Escape"); await p.waitForTimeout(200); assert.equal((await st()).exp.active, null, "Not now must not start it"); assert.equal(await card().isVisible(), true, "the hint stays so it can be answered");
+  await p.locator("[data-hint-try]").click(); await p.locator("dialog.ask[open] [data-aok]").waitFor(); await p.locator("dialog.ask[open] [data-aok]").click(); await p.waitForTimeout(250);
   const s = await st(); assert.equal(s.exp.active.ev, "E-STRETCH-01"); assert.equal(s.hint.acted, true); assert.equal(await card().isHidden(), true);
 });
 
@@ -152,9 +155,9 @@ await ok("hints off: no card and no hint notification", async () => {
 });
 await seed2(`function(s){ s.hintLog=[{d:"2026-09-01",type:"progress",key:"k1",ans:"helpful"},{d:"2026-09-02",type:"stalled",key:"k2",ans:"no"}]; }`);
 await p2.evaluate(() => { location.hash = "#/planner"; }); await p2.waitForTimeout(300);
-await ok("planner: what helps you is shown with counts, and Forget what helps takes two presses and clears it", async () => {
+await ok("planner: what helps you is shown with counts, and Forget what helps asks first and clears it", async () => {
   const t = await p2.locator("#hint-stats").innerText(); assert.match(t, /Evidence of your progress[\s\S]*1 helpful, 0 not for me/); assert.match(t, /A goal that stopped moving[\s\S]*0 helpful, 1 not for me/); assert.match(t, /An idea from the library[\s\S]*not tried yet/);
-  const btn = p2.locator("#hint-reset"); await btn.click(); assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 2); await btn.click(); await p2.waitForTimeout(200);
+  const btn = p2.locator("#hint-reset"); await btn.click(); await p2.locator("dialog.ask[open]").waitFor(); assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 2); await p2.locator("dialog.ask[open] [data-aok]").click(); await p2.waitForTimeout(200);
   assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 0);
 });
 await ok("the planner section and the card fit a phone", async () => {

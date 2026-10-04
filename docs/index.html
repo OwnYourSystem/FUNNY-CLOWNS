@@ -729,6 +729,36 @@ button.now-n:hover{color:var(--run)}
 #interview .card{width:min(520px,100%); background:var(--panel); border:1px solid var(--rule);
   border-radius:22px; padding:26px 26px 22px; box-shadow:0 40px 90px -30px rgba(0,0,0,.8);
   max-height:88vh; overflow-y:auto}
+/* ---------------- asking the person ----------------
+   A native dialog: the page behind goes inert, Tab stays inside, Escape cancels. */
+dialog.ask{padding:0; border:1px solid var(--rule); border-radius:22px; background:var(--panel);
+  color:var(--ink); width:min(480px,calc(100vw - 28px)); max-height:88vh; overflow:hidden;
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.8); font-family:var(--font)}
+dialog.ask::backdrop{background:rgba(0,0,0,.6); backdrop-filter:blur(7px)}
+dialog.ask[open]{animation:askIn .22s var(--ease)}
+@keyframes askIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){ dialog.ask[open]{animation:none} }
+.ask-in{padding:24px 24px 20px; max-height:88vh; overflow-y:auto}
+.ask-in h3{margin:0 0 10px; font-size:clamp(18px,2.2vw,22px); font-weight:400; letter-spacing:-.02em; line-height:1.25}
+.ask-in p{margin:0 0 12px; color:var(--ink-2); font-size:14px; line-height:1.6}
+.ask-fields{display:flex; flex-direction:column; gap:12px; margin:14px 0 4px}
+.ask-fields label{display:flex; flex-direction:column; gap:6px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.ask-fields textarea.f{min-height:140px; resize:vertical; font-family:var(--mono); font-size:12px}
+.ask-pick{display:flex; flex-direction:column; gap:8px}
+.ask-pick button{font:inherit; font-size:14.5px; text-align:left; color:var(--ink-2); background:transparent;
+  border:1px solid var(--hair); border-radius:12px; padding:12px 14px; cursor:pointer}
+.ask-pick button[aria-pressed="true"]{color:var(--ink); border-color:rgba(255,59,48,.5)}
+.ask-err{margin:10px 0 0; min-height:0; color:var(--accent-ink); font-size:13px}
+.ask-err:empty{display:none}
+.ask-acts{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; margin-top:18px}
+.ask-acts .btn.take{color:var(--ink); border-color:rgba(255,59,48,.5)}
+dialog.ask.danger .ask-acts .btn.take{color:var(--accent-ink); border-color:rgba(255,59,48,.6)}
+@media (max-width:820px){
+  dialog.ask{margin:auto auto 0; width:100%; max-width:none; border-radius:22px 22px 0 0; border-bottom:0}
+  .ask-in{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+  .ask-acts .btn{flex:1 1 140px}
+}
 .iv-top{display:flex; align-items:center; justify-content:space-between; gap:14px}
 .iv-k{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
   color:var(--muted)}
@@ -801,7 +831,9 @@ footer{color:var(--muted); font-size:12.5px; display:flex; flex-direction:column
 .drawer summary{cursor:pointer; font-family:var(--mono); font-size:11px; letter-spacing:.18em;
   text-transform:uppercase; color:var(--ink-2)}
 .drawer summary:hover{color:var(--ink)}
-.drawer .d-body{margin-top:14px; display:flex; flex-direction:column; gap:13px}
+.drawer .d-body, #backup .d-body{margin-top:14px; display:flex; flex-direction:column; gap:13px}
+#backup .d-body p{color:var(--ink-2); font-size:13.5px; line-height:1.6}
+#backup #io{width:100%; min-height:120px}
 textarea{width:100%; min-height:86px; font-family:var(--mono); font-size:12px; color:var(--ink);
   background:var(--inset); border:1px solid transparent; border-radius:12px; padding:11px; resize:vertical}
 textarea:focus{outline:none; border-color:rgba(255,59,48,.5)}
@@ -1341,9 +1373,11 @@ try{var _t=localStorage.getItem("oys-theme");
   </div>
 
   <footer>
-    <details class="drawer">
-      <summary>Backup, restore and reset</summary>
-      <div class="d-body">
+    <button class="btn" id="btn-backup" aria-haspopup="dialog">Backup, restore and reset</button>
+    <dialog class="ask" id="backup" aria-labelledby="backup-t">
+      <div class="ask-in">
+        <h3 id="backup-t">Backup, restore and reset</h3>
+        <div class="d-body">
         <p style="margin:0">Your board lives in this browser only, so the saved file and the web link each keep their own. Move one across by copying the text below, then pasting it in on the other device and loading it.</p>
         <textarea id="io" spellcheck="false" aria-label="Backup data"></textarea>
         <div class="row-btns">
@@ -1358,7 +1392,9 @@ try{var _t=localStorage.getItem("oys-theme");
           <span id="io-msg"></span>
         </div>
       </div>
-    </details>
+        <div class="ask-acts"><button type="button" class="btn" id="backup-close">Close</button></div>
+      </div>
+    </dialog>
     <p style="margin:0" id="where-note"></p>
   <p style="margin:0" id="revnote"></p>
   </footer>
@@ -2453,6 +2489,31 @@ function expSay(r){
     (r.verdict==="better"?"That looks better than before. ":r.verdict==="worse"?"That looks worse than before. ":"No clear difference. ")+
     "This compares two stretches of your own life, not a controlled trial, so anything else that changed is mixed in. Treat it as a hint.";
 }
+/* A button that starts an experiment asks first, in plain words. The tutor and the
+   typed command are the person's own words, so they do not ask again. */
+function expAsk(id){
+  var e=libEntry(id), M;
+  if(!e || !LIB_USE[e.status] || !libRunnable(e) || expState().active) return Promise.resolve(true);   /* expStart will say why not */
+  M=EXP_METRICS[e.tryit.outcome.metric];
+  return askUser({title:"Start this experiment?",
+    body:[e.tryit.do,
+      "It runs "+e.tryit.days+" days from today. At the end I compare "+M.label+" over those days with the "+e.tryit.days+
+      " days before, and tell you what I find, including if it is not enough.",
+      "Only one runs at a time. You can stop it whenever you like, and nothing is measured from a stopped one. Source: ["+id+
+      "], practitioner opinion."],
+    ok:"Start for "+e.tryit.days+" days", cancel:"Not now"});
+}
+function expShort(r){
+  return !r ? "" : r.verdict==="better" ? "It looks better than before." : r.verdict==="worse" ? "It looks worse than before." :
+    r.verdict==="unclear" ? "No clear difference." : "Not enough to say.";
+}
+function expRead(){
+  var st=expStatus(); if(st.state!=="finished") return;
+  var e=libEntry(st.id);
+  askUser({title:"Experiment finished: "+st.id, body:[e?e.tryit.do:"", st.says], ok:"Got it", cancel:"Keep it on the board"}).then(function(yes){
+    if(yes){ expState().unseen=false; save(); renderAll(); }
+  });
+}
 function expStart(id){
   var e=libEntry(id);
   if(!e || !LIB_USE[e.status]) throw new Error("The library has no entry "+id+".");
@@ -2519,9 +2580,9 @@ function renderExp(){
       '. Source: ['+esc(st.id)+'], practitioner opinion.</p>';
   } else {
     box.innerHTML='<div class="p-head"><div><div class="p-title">Experiment finished &mdash; '+esc(st.id)+'</div></div>'+
-      '<div class="p-tools"><button class="mini" data-exp-ack>Got it</button></div></div>'+
+      '<div class="p-tools"><button class="mini" data-exp-read>Read the result</button><button class="mini" data-exp-ack>Got it</button></div></div>'+
       '<p class="exp-do">'+esc((libEntry(st.id)||{tryit:{do:""}}).tryit.do)+'</p>'+
-      '<p class="exp-w">'+esc(st.says)+'</p>';
+      '<p class="exp-w">'+esc(expShort(st.result))+' The numbers are under Read the result.</p>';
   }
 }
 
@@ -2715,7 +2776,7 @@ function memRoute(e){
   if(x){ memDrop(x.dataset.memNo,true); save(); renderAll(); return true; }
   x=e.target.closest("[data-mem-try]");
   if(x){ var m=memList().filter(function(y){ return y.id===x.dataset.memTry; })[0];
-    if(m){ try{ expStart(m.suggest); }catch(er){ toast("Experiment",er.message); } memDrop(m.id,true); save(); renderAll(); } return true; }
+    if(m){ expAsk(m.suggest).then(function(yes){ if(!yes) return; try{ expStart(m.suggest); }catch(er){ toast("Experiment",er.message); } memDrop(m.id,true); save(); renderAll(); }); } return true; }
   x=e.target.closest("[data-mem-del]");
   if(x){ memDrop(x.dataset.memDel,false); save(); renderAll(); return true; }
   return false;
@@ -2867,7 +2928,9 @@ function hintRoute(e){
   var x=e.target.closest("[data-hint-a]");
   if(x){ hintAnswer(x.dataset.hintA); renderAll(); return true; }
   x=e.target.closest("[data-hint-try]");
-  if(x){ try{ expStart(x.dataset.hintTry); }catch(er){ toast("Experiment",er.message); } save(); renderAll(); return true; }
+  if(x){ var hid=x.dataset.hintTry;
+    expAsk(hid).then(function(yes){ if(!yes) return; try{ expStart(hid); }catch(er){ toast("Experiment",er.message); } save(); renderAll(); });
+    return true; }
   return false;
 }
 
@@ -2980,7 +3043,9 @@ function barRoute(e){
   if(x){ barAnswer(x.dataset.bar); renderAll(); return true; }
   if(e.target.closest("[data-bar-later]")){ barSnooze(); renderAll(); return true; }
   x=e.target.closest("[data-bar-try]");
-  if(x){ try{ expStart(x.dataset.barTry); }catch(er){ toast("Experiment",er.message); } barState().show=null; save(); renderAll(); return true; }
+  if(x){ var bid=x.dataset.barTry;
+    expAsk(bid).then(function(yes){ if(!yes) return; try{ expStart(bid); }catch(er){ toast("Experiment",er.message); } barState().show=null; save(); renderAll(); });
+    return true; }
   if(e.target.closest("[data-bar-ok]")){ barState().show=null; save(); renderAll(); return true; }
   return false;
 }
@@ -3754,6 +3819,131 @@ function armGate(key,btn,label){
   },4000);
   return false;
 }
+/* ---------------- asking the person ----------------
+   The one way to put a question that has to be answered before the board goes
+   on. It is a native <dialog>, so the page behind goes inert, Tab stays inside,
+   Escape cancels and focus goes back to what was pressed. It opens only from
+   the person's own action: never from the tutor, a hint, a timer or a
+   notification. There is always a way out (Not now, Escape, a click outside),
+   and a destructive question puts focus on that way out, not on the yes.
+
+   askUser({title, body, fields, ok, cancel, danger, check}) returns a promise
+   that resolves to false (or null when it has fields) if it was cancelled, and
+   to true (or an object of the field values) on yes. fields are
+   {k, label, kind:"text"|"textarea"|"number"|"time"|"pick", value, ph, min,
+   max, opts:[[value,label]]}. check(values) may return a sentence to show in
+   the dialog and keep it open. Questions queue and are shown one at a time. */
+/* Tab and Shift+Tab go round inside a box instead of out into the browser. */
+function trapTab(d){
+  if(d._trap) return; d._trap=true;
+  d.addEventListener("keydown",function(e){
+    if(e.key!=="Tab") return;
+    var f=Array.prototype.filter.call(d.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'),
+      function(x){ return !x.disabled && x.getClientRects().length>0; });
+    if(!f.length) return;
+    var i=f.indexOf(document.activeElement);
+    if(e.shiftKey && i<=0){ e.preventDefault(); f[f.length-1].focus(); }
+    else if(!e.shiftKey && i===f.length-1){ e.preventDefault(); f[0].focus(); }
+  });
+}
+var askQ=[], askCur=null;
+function askUser(o){
+  return new Promise(function(resolve){ askQ.push({o:o||{}, resolve:resolve}); if(!askCur) askNext(); });
+}
+function askNext(){
+  var job=askQ.shift(); if(!job){ askCur=null; return; }
+  askCur=job;
+  var o=job.o, opener=document.activeElement, fields=o.fields||[], hasF=fields.length>0;
+  var id="ask"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
+  var body=o.body||[]; if(typeof body==="string") body=body.split(/\n\n/);
+  var d=document.createElement("dialog");
+  d.className="ask"+(o.danger?" danger":"");
+  d.setAttribute("aria-labelledby",id+"t");
+  if(body.length) d.setAttribute("aria-describedby",id+"b");
+  var fh=fields.map(function(f,i){
+    var v=f.value==null?"":String(f.value), a='data-ak="'+esc(f.k)+'"';
+    if(f.kind==="pick")
+      return '<div class="ask-pick" role="group" aria-label="'+esc(f.label||"")+'" '+a+'>'+(f.opts||[]).map(function(op){
+        return '<button type="button" data-av="'+esc(op[0])+'" aria-pressed="'+(String(op[0])===v)+'">'+esc(op[1])+'</button>'; }).join("")+'</div>';
+    var inp = f.kind==="textarea"
+      ? '<textarea class="f" '+a+' spellcheck="false" placeholder="'+esc(f.ph||"")+'">'+esc(v)+'</textarea>'
+      : '<input class="f" '+a+' type="'+(f.kind||"text")+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||"")+'"'+
+        (f.min!=null?' min="'+esc(f.min)+'"':'')+(f.max!=null?' max="'+esc(f.max)+'"':'')+'>';
+    return '<label>'+esc(f.label||"")+inp+'</label>';
+  }).join("");
+  d.innerHTML='<div class="ask-in"><h3 id="'+id+'t">'+esc(o.title||"")+'</h3>'+
+    (body.length?'<div id="'+id+'b">'+body.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+'</div>':'')+
+    (hasF?'<div class="ask-fields">'+fh+'</div>':'')+
+    '<p class="ask-err" role="alert"></p>'+
+    '<div class="ask-acts"><button type="button" class="btn" data-acancel>'+esc(o.cancel||"Not now")+'</button>'+
+    (o.noOk?'':'<button type="button" class="btn take" data-aok>'+esc(o.ok||"Yes")+'</button>')+'</div></div>';
+  var picked={}, result=hasF?null:false;
+  function values(){
+    var out={};
+    fields.forEach(function(f){
+      if(f.kind==="pick"){ out[f.k]=picked.hasOwnProperty(f.k)?picked[f.k]:(f.value==null?"":String(f.value)); return; }
+      var el=d.querySelector('[data-ak="'+f.k+'"]'); out[f.k]=el?el.value:"";
+    });
+    return out;
+  }
+  function submit(){
+    var v=values();
+    if(typeof o.check==="function"){
+      var bad=o.check(v);
+      if(bad){ d.querySelector(".ask-err").textContent=bad; return; }
+    }
+    result=hasF?v:true; d.close("ok");
+  }
+  trapTab(d);
+  var downOnBackdrop=false;
+  d.addEventListener("pointerdown",function(e){ downOnBackdrop=(e.target===d); });
+  d.addEventListener("click",function(e){
+    if(e.target===d){ if(downOnBackdrop) d.close(""); return; }
+    if(e.target.closest("[data-acancel]")){ d.close(""); return; }
+    if(e.target.closest("[data-aok]")){ submit(); return; }
+    var pk=e.target.closest("[data-av]");
+    if(pk){
+      var g=pk.parentNode; picked[g.getAttribute("data-ak")]=pk.getAttribute("data-av");
+      Array.prototype.forEach.call(g.children,function(b){ b.setAttribute("aria-pressed",b===pk?"true":"false"); });
+    }
+  });
+  d.addEventListener("keydown",function(e){
+    if(e.key==="Enter" && e.target.tagName==="INPUT" && !o.noOk){ e.preventDefault(); submit(); }
+  });
+  d.addEventListener("close",function(){
+    var r=d.returnValue==="ok"?result:(hasF?null:false);
+    d.remove();
+    try{ if(opener && opener.focus && document.contains(opener)) opener.focus(); }catch(er){}
+    askCur=null; job.resolve(r); askNext();
+  });
+  document.body.appendChild(d);
+  if(d.showModal) d.showModal(); else d.setAttribute("open","");
+  var first = o.danger||!hasF ? d.querySelector("[data-acancel]") : d.querySelector("[data-ak]");
+  if(first && !o.danger && !hasF && !o.noOk) first=d.querySelector("[data-aok]");
+  if(first && first.focus) first.focus();
+}
+/* The two overlays that were built by hand (the interview and the account
+   box) get the same behaviour: the page behind is inert while they are open,
+   focus goes in, and goes back to what was pressed when they close. */
+var pageLock=null;
+function pageLockOn(el){
+  pageLockOff();
+  var opener=document.activeElement, held=[];
+  for(var n=el; n && n!==document.body; n=n.parentNode){
+    Array.prototype.forEach.call(n.parentNode.children,function(c){
+      if(c!==n && c.tagName!=="SCRIPT" && !c.inert){ c.inert=true; held.push(c); }
+    });
+  }
+  el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); trapTab(el);
+  pageLock={el:el, opener:opener, held:held};
+}
+function pageLockOff(){
+  if(!pageLock) return;
+  pageLock.held.forEach(function(c){ c.inert=false; });
+  pageLock.el.removeAttribute("aria-modal");
+  var op=pageLock.opener; pageLock=null;
+  try{ if(op && op.focus && document.contains(op)) op.focus(); }catch(er){}
+}
 function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t); m._t=setTimeout(function(){ m.textContent=""; },6000); } }
 
 function renderAll(){
@@ -4005,10 +4195,12 @@ document.addEventListener("click",function(e){
   }
   var sn=e.target.closest("[data-snap]");
   if(sn){
-    if(!armGate("snap:"+sn.dataset.snap, sn, "Replace today with "+sn.dataset.snap+"?")) return;
-    ioMsg(restoreSnapshot(sn.dataset.snap)
-      ? "The board is back as it was on "+sn.dataset.snap+". Today's copy is kept as well."
-      : "That day is no longer kept.");
+    var sd=sn.dataset.snap;
+    askUser({title:"Go back to "+sd+"?", body:["The board will be put back as it was on "+sd+".","Today's copy is kept as well, so you can come back to it."],
+      ok:"Go back to "+sd, cancel:"Stay on today", danger:true}).then(function(yes){
+      if(!yes) return;
+      ioMsg(restoreSnapshot(sd) ? "The board is back as it was on "+sd+". Today's copy is kept as well." : "That day is no longer kept.");
+    });
     return;
   }
   if(memRoute(e)) return;
@@ -4016,6 +4208,8 @@ document.addEventListener("click",function(e){
   if(hintRoute(e)) return;
   var xs=e.target.closest("[data-exp-stop]");
   if(xs){ if(!armGate("expstop",xs,"Stop it?")) return; expStopMsg(); return; }
+  var xr=e.target.closest("[data-exp-read]");
+  if(xr){ expRead(); return; }
   var xa=e.target.closest("[data-exp-ack]");
   if(xa){ expState().unseen=false; save(); renderAll(); return; }
   var swb=e.target.closest("[data-skipwhy]");
@@ -4418,11 +4612,31 @@ RB.addEventListener("click",function(){
     RB.setAttribute("aria-pressed","false"); RB.lastChild.textContent="Reminders off";
     state.told={d:todayStr(), am:true, pm:true, hint:true}; save(); return;
   }
-  Notification.requestPermission().then(remindState);
+  if(Notification.permission==="denied"){
+    askUser({title:"Reminders are blocked", body:"This browser is blocking notifications for the board. Allow them in the site settings for this page, then press the button again.", noOk:true, cancel:"Close"});
+    return;
+  }
+  var me=state.me||freshMe();
+  askUser({title:"Turn on reminders?",
+    body:["At most 3 a day: a morning brief at "+clockLabel(me.brief||"07:30")+", one hint, and a check on what is still open in the afternoon. Nothing is sent after your day ends at "+clockLabel(me.wind)+".",
+      "Your browser will ask you to allow notifications next. They arrive only while the board is open in a tab or on your home screen."],
+    ok:"Continue", cancel:"Not now"}).then(function(yes){
+    if(yes) Notification.requestPermission().then(remindState);
+  });
 });
 remindState();
 
 /* ---------------- backup ---------------- */
+(function(){
+  var d=$("#backup"), b=$("#btn-backup"), downOn=false, opener=null;
+  if(!d||!b) return;
+  trapTab(d);
+  b.addEventListener("click",function(){ opener=b; if(d.showModal) d.showModal(); else d.setAttribute("open",""); $("#backup-close").focus(); });
+  $("#backup-close").addEventListener("click",function(){ d.close(); });
+  d.addEventListener("pointerdown",function(e){ downOn=(e.target===d); });
+  d.addEventListener("click",function(e){ if(e.target===d && downOn) d.close(); });
+  d.addEventListener("close",function(){ try{ if(opener) opener.focus(); }catch(er){} });
+})();
 var IO=$("#io");
 var sandboxed=(function(){ try{ return window.self!==window.top; }catch(e){ return true; } })();
 if(sandboxed) $("#io-save").textContent="Copy backup text";
@@ -4452,9 +4666,12 @@ $("#io-file").addEventListener("change",function(e){
   var r=new FileReader(); r.onload=function(){ IO.value=r.result; $("#io-load").click(); }; r.readAsText(f);
 });
 $("#io-reset").addEventListener("click",function(){
-  if(!armGate("reset",this,"Throw everything away?")) return;
-  try{ localStorage.removeItem(KEY); }catch(e){}
-  location.reload();
+  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes and settings in this browser.","A backup file you saved earlier is not touched. This cannot be undone."],
+    ok:"Reset everything", cancel:"Keep my board", danger:true}).then(function(yes){
+    if(!yes) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    location.reload();
+  });
 });
 
 /* ---------------- movable panels ---------------- */
@@ -5571,7 +5788,7 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
+  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
   mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},
@@ -5900,8 +6117,11 @@ $("#hint-on").addEventListener("click",function(){ if(!state.me) state.me=freshM
 $("#hint-note").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hintNote=(state.me.hintNote===false); save(); renderAll(); });
 $("#hint-reset").addEventListener("click",function(e){
   e.stopPropagation();
-  if(!armGate("hint-reset",this,"Forget it all?")) return;
-  state.hintLog=[]; state.hint=null; state.hintAt=todayStr(); save(); renderAll();
+  askUser({title:"Forget which hints helped?", body:["The board will clear its record of the hints you answered, and start from nothing about which kind helps you.","Your goals, steps and notes are not touched."],
+    ok:"Forget it", cancel:"Keep it", danger:true}).then(function(yes){
+    if(!yes) return;
+    state.hintLog=[]; state.hint=null; state.hintAt=todayStr(); save(); renderAll();
+  });
 });
 $("#mem-add").addEventListener("click",memAddFromBox);
 $("#mem-new").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); memAddFromBox(); } });
@@ -5911,8 +6131,12 @@ $("#mem-learn").addEventListener("click",function(){
 });
 $("#mem-erase").addEventListener("click",function(e){
   e.stopPropagation();
-  if(!armGate("mem-erase",this,"Erase it all?")) return;
-  memErase(); save(); renderAll();
+  var n=memList().length;
+  askUser({title:"Erase everything the board has learned?", body:["This removes all "+n+" note"+(n===1?"":"s")+" it keeps about how you work, the ones you typed as well. A setting that a note changed goes back to what it was.","The board starts learning again from today unless learning is switched off."],
+    ok:"Erase it all", cancel:"Keep them", danger:true}).then(function(yes){
+    if(!yes) return;
+    memErase(); save(); renderAll();
+  });
 });
 $("#bot-clear").addEventListener("click",function(e){ e.stopPropagation(); botTurns=[]; wireClear(); botRender(); });
 
@@ -6258,10 +6482,11 @@ function acctOpen(on){
   var p=$("#account"); if(!p) return;
   p.hidden=!on;
   if(on){
+    pageLockOn(p);
     netProbe();
     paintAccount(); paintWhere();
-    var f=$("#acct-email"); if(f&&!acct) f.focus();
-  }
+    var f=$("#acct-email"); if(f&&!acct) f.focus(); else { var c=$("#acct-close"); if(c) c.focus(); }
+  } else pageLockOff();
 }
 function signIn(mode){
   var em=$("#acct-email").value.trim(), pw=$("#acct-pass").value;
@@ -6334,6 +6559,7 @@ function catchRedirect(){
   }
   $("#btn-account").addEventListener("click",function(){ acctOpen($("#account").hidden); });
   $("#acct-close").addEventListener("click",function(){ acctOpen(false); });
+  addEventListener("keydown",function(e){ if(e.key==="Escape" && pageLock && pageLock.el.id==="account") acctOpen(false); });
   $("#acct-google").addEventListener("click",signInGoogle);
   $("#acct-signin").addEventListener("click",function(){ signIn("in"); });
   $("#acct-signup").addEventListener("click",function(){ signIn("up"); });
@@ -6580,9 +6806,11 @@ function ivOpen(){
               feeds:(me.feeds||[]).slice(), where:{}}};
   state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
   $("#interview").hidden=false;
+  pageLockOn($("#interview"));
   ivPaint();
+  var f=$("#iv-next"); if(f) f.focus();
 }
-function ivClose(){ $("#interview").hidden=true; IV=null; }
+function ivClose(){ $("#interview").hidden=true; IV=null; pageLockOff(); }
 function ivPaint(){
   if(!IV) return;
   var q=IVQ[IV.i], a=IV.a;

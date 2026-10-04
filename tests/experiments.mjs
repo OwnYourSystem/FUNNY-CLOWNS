@@ -84,11 +84,14 @@ const seed = (cfg) => p.evaluate(([KEY, cfg]) => {
   localStorage.setItem(KEY, JSON.stringify(s));
 }, [KEY, cfg]).then(() => p.reload()).then(() => p.waitForSelector(".row.pick"));
 const last = () => st().then((x) => x.done[0]);
+/* the numbers are read in the dialog the card opens; Escape leaves the card where it is */
+const result = async () => { await p.locator("[data-exp-read]").click(); const d = p.locator("dialog.ask[open]"); await d.waitFor(); const t = await d.innerText(); await p.keyboard.press("Escape"); await p.waitForTimeout(150); return t; };
 
 await seed({ before: [0, 1, 0, 0, 1, 0, 0], during: [1, 1, 1, 1, 1, 1, 1] });
 await ok("a real rise: finished on its own, verdict better, range and sample size in the sentence", async () => {
   const d = await last(); assert.ok(d, "no result stored"); assert.equal(d.result.verdict, "better"); assert.equal(d.result.nBefore, 7); assert.equal(d.result.nDuring, 7);
-  const t = await p.locator("#exp-card").innerText();
+  const card = await p.locator("#exp-card").innerText(); assert.match(card, /Experiment finished/); assert.match(card, /It looks better than before/); assert.ok(!/90% range/.test(card), "the numbers belong in the dialog");
+  const t = await result(); assert.equal(await p.locator("#exp-card").isHidden(), false, "Escape must leave the card");
   assert.match(t, /Experiment finished/); assert.match(t, /100% during, 29% before/); assert.match(t, /90% range/); assert.match(t, /over 7 and 7 active days/); assert.match(t, /looks better than before/); assert.match(t, /not a controlled trial/);
 });
 await ok("Got it hides the card; status still reads the result", async () => {
@@ -96,13 +99,13 @@ await ok("Got it hides the card; status still reads the result", async () => {
   assert.match(await say("how is the experiment going"), /^E-CAP-01 finished\. Completion|^E-CAP-01 finished\. Days with at least one/);
 });
 await seed({ before: [1, 0, 1, 0, 1, 0, 1], during: [1, 0, 1, 0, 1, 0, 1] });
-await ok("no change: verdict unclear and it says no clear difference", async () => { const d = await last(); assert.equal(d.result.verdict, "unclear"); assert.match(await p.locator("#exp-card").innerText(), /No clear difference/); });
+await ok("no change: verdict unclear and it says no clear difference", async () => { const d = await last(); assert.equal(d.result.verdict, "unclear"); assert.match(await p.locator("#exp-card").innerText(), /No clear difference/); assert.match(await result(), /No clear difference/); });
 await seed({ before: [1, 1, 1, 1, 1, 1, 1], during: [0, 0, 1, 0, 0, 0, 0] });
-await ok("a real fall is called worse, not hidden", async () => { const d = await last(); assert.equal(d.result.verdict, "worse"); assert.match(await p.locator("#exp-card").innerText(), /looks worse than before/); });
+await ok("a real fall is called worse, not hidden", async () => { const d = await last(); assert.equal(d.result.verdict, "worse"); assert.match(await p.locator("#exp-card").innerText(), /It looks worse than before/); assert.match(await result(), /looks worse than before/); });
 await seed({ before: [1, null, null, 0, null, null, null], during: [1, 1, 1, 1, 1, 1, 1] });
 await ok("too few days before: not enough, with the counts, and no verdict of better", async () => {
   const d = await last(); assert.equal(d.result.verdict, "not_enough"); assert.equal(d.result.nBefore, 2);
-  const t = await p.locator("#exp-card").innerText(); assert.match(t, /Not enough to say/); assert.match(t, /active on 2 days before and 7 during/); assert.ok(!/looks better/.test(t));
+  assert.match(await p.locator("#exp-card").innerText(), /Not enough to say/); const t = await result(); assert.match(t, /Not enough to say/); assert.match(t, /active on 2 days before and 7 during/); assert.ok(!/looks better/.test(t));
 });
 await seed({ before: [0, 1, 0, 0, 1, 0, 0], during: [1, 1, 1, 1, 1, 1, 1], fill: true });
 await ok("a log that does not reach back far enough says so instead of guessing", async () => {

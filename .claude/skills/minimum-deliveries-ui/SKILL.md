@@ -263,6 +263,23 @@ the morning brief, the hint and the afternoon check stay quiet at night. A skipp
 reminder is not marked as sent. `checkRemind(at)` takes an optional `Date` so a
 test can set the hour.
 
+**A question that has to be answered is a native `<dialog>`, never a new window.**
+`askUser({title, body, fields, ok, cancel, danger, check})` returns a promise: `false`
+(or `null` with fields) on Not now, Escape or a click outside, `true` (or the field
+values) on yes. `showModal()` makes the page behind inert and gives Escape; `trapTab`
+keeps Tab inside; focus returns to what was pressed. Rules: it opens only from the
+person's own action (never from the tutor, a hint, a timer or a notification); a
+destructive question puts focus on the way out and Enter on it does nothing; questions
+queue; under 820px it is a bottom sheet; text is escaped. Use it for first-run setup,
+the notification explainer shown before the browser's own prompt, irreversible actions
+(reset, erase memory, forget hints, restore a day), starting an experiment, reading its
+result, and the backup box. Small undoable actions keep the two-press `armGate`. The
+hand-built overlays (interview, account) call `pageLockOn/Off` for the same inert
+background, focus and role. The board never calls `alert`, `confirm`, `prompt` or
+`window.open`: a test fails if it does. A literal second window would need
+`window.open` from a click, would not work in the artifact or an installed app, and
+would add a second writer to one `localStorage` blob.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
