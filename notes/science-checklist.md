@@ -64,7 +64,7 @@ feature may exist, but the board must not say research backs it.
 
 ## B. Worth adding (nothing here is built)
 
-- [ ] **Stop notifying after the day ends.** The reminders do not read "your day
+- [x] **Stop notifying after the day ends.** *Built 2026-10-04 (`25f1f99`).* The reminders do not read "your day
   ends at": the brief can fire at 23:00 if the board is first opened late, and the
   afternoon check fires at any hour after 15:00. Report 1 (after-hours availability
   and detachment, #9). Evidence: **B**. This is a small gap in our own code (one
@@ -82,12 +82,12 @@ feature may exist, but the board must not say research backs it.
   advice, not a result). Evidence: **B** (fewer unfinished tasks and less rumination
   in a field experiment; effect sizes not seen). Medium. A Monday hint that opens the
   Planner, and the 14-day view as the look back.
-- [ ] **"When X, I will do this step."** An optional line on a today pick: when or
+- [x] **"When X, I will do this step."** *Built 2026-10-04 (`9845a8b`), as a plain feature.* An optional line on a today pick: when or
   where the person will do it (an implementation intention). Report 2 (#26). Evidence:
   **A/B** (a meta-analysis of 94 tests, mean d = 0.65, as the search reported it; not
   read). The best-supported idea in report 2. Small. Offered as an experiment, with
   no number quoted. A reminder at that time would stay off by default.
-- [ ] **Estimate against actual, in the person's own numbers (needs a decision).**
+- [x] **Estimate against actual, in the person's own numbers.** *Built 2026-10-04 (`9845a8b`); the owner said yes.*
   The board has no time estimates today. If it gets an optional "about how long",
   it could say "your steps usually take about 1.6 times your guess", from the
   person's own days, never from "+50%". Report 2 (#24). Evidence: **B** for the bias;
@@ -163,3 +163,28 @@ feature may exist, but the board must not say research backs it.
    "sociological and academic databases", and the first source it opened was the Align
    blog.
 6. **Wording: "no evidence claimed"** until a paper is checked.
+
+## E. What is left (updated 2026-10-04, after the dialog work)
+
+**From section B, not built (6):** a "close the day" step; an optional morning capture; a
+weekly plan prompt with a look back; a "too much on the plate" signal; a break
+suggestion between steps; a weekly 1 to 5 "how in control did you feel" tap.
+
+**From the earlier product plan (`values-vs-board.md`):**
+- [ ] **A minimum-day strip (V3):** three anchors that count even when nothing else moves.
+- [ ] **Weekly measures (V8):** energy, mood, anxiety, functioning, meaningful action.
+  Sensitive: it must be the person's own optional tap, never inferred, and never passed to
+  the tutor or the memory, which refuse mood and health text.
+- [ ] **Confirmation on the tutor's remove and clear tools.** The tutor cannot open a
+  dialog (a rule from today), so this needs either a "ready to confirm" answer that the
+  person completes with a button, or no destructive tools for the tutor.
+- [ ] **Dialogs not yet done:** the interview does not open by itself on first run
+  (deliberate); the "No" rows (hints, memory findings, distress reply, tutor chat, the
+  barrier question) stay as cards.
+
+**Parked decisions, not started:**
+- [ ] A hosted or tuned model for the tutor: an API key and an evaluation set first.
+- [ ] Check the papers (Aeon 2021, Gollwitzer and Sheeran 2006, Uhlig 2023, the 2025
+  planning review): the abstracts have to be pasted in, since scholarly sites are blocked here.
+- [ ] Background push (needs a push server and a key per device).
+- [ ] Reliability, security, data governance and AI compliance.
