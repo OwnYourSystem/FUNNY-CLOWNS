@@ -280,6 +280,18 @@ background, focus and role. The board never calls `alert`, `confirm`, `prompt` o
 `window.open` from a click, would not work in the artifact or an installed app, and
 would add a second writer to one `localStorage` blob.
 
+**Two optional notes on a step: when, and about how long.** Both are asked in a
+dialog from buttons on the Today pick and the planner card ("When?", "How long?").
+`state.when[stepId]={t,d}` is a moment the person will notice (under 80 characters,
+shown beside the step, never a reminder; it lapses when the step is done or after 14
+days, and at most 12 are kept). `state.est={items,pairs,ask}` holds a guess in minutes
+per step; finishing a step that has a guess sets `ask`, and a quiet line under the pick
+asks how long it took (Tell the board, or Skip). From 5 pairs `estRatio()` gives the
+middle of actual over guess, and the board says so in the person's own numbers
+("about 1.5 times your guess, so a guess of 25 minutes has meant about 40"). No flat
+"+50%", no study cited, no claim about other people. The event log records that one
+was set or answered, never the words or the minutes.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

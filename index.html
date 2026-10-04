@@ -616,6 +616,9 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 button.now-n:hover{color:var(--run)}
 .now-from{font-size:13px; color:var(--muted)}
 .now-w{font-size:14.5px; color:var(--ink-2); line-height:1.6; max-width:68ch}
+.now-plan{margin-top:8px; font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; color:var(--muted); line-height:1.6}
+.now-plan i{font-style:normal; color:var(--ink-2)}
+.now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
 .now-not li::before{content:""; position:absolute; left:0; top:.6em; width:5px; height:5px;
@@ -1209,6 +1212,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
     <div id="oftad-pick" hidden></div>
+    <div class="now-follow" id="est-follow" hidden></div>
     <div class="drop" id="oftad"></div>
     <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
   </section>
@@ -2105,7 +2109,7 @@ function evCapture(){
     });
   });
   Object.keys(now.dock.done).forEach(function(id){
-    if(!p.dock.done[id]) evAdd({t:t,k:"done",id:id,g:evG(id)});
+    if(!p.dock.done[id]){ evAdd({t:t,k:"done",id:id,g:evG(id)}); estOnDone(id); }
   });
   Object.keys(p.dock.done).forEach(function(id){
     if(!now.dock.done[id]) evAdd({t:t,k:"undo",id:id,g:evG(id)});
@@ -3050,6 +3054,148 @@ function barRoute(e){
   return false;
 }
 
+/* ---------------- when I will do it, and about how long ----------------
+   Two optional notes on a step, both the person's own words and numbers.
+   "When" is a moment you will notice (after the coffee, when you sit down at
+   your desk); the board shows it beside the step and does not remind you, and
+   it lapses when the step is done or after 14 days. "How long" is a guess in
+   minutes. When a step with a guess is finished the board asks, once and
+   quietly, how long it really took. From 5 such pairs it can say how your
+   guesses compare with what happened, in your own numbers, and it says nothing
+   about anyone else's. No study is cited for either: they are plain features.
+   The event log records that one was set, never the words or the minutes.  */
+var WHEN_MAX=12, WHEN_KEEP=14, EST_PAIRS=30, EST_NEED=5;
+function whenMap(){ if(!state.when) state.when={}; return state.when; }
+function whenTidy(){
+  var m=whenMap(), floor=addDays(todayStr(),-WHEN_KEEP), ch=false;
+  Object.keys(m).forEach(function(id){
+    var sb=state.subs[id];
+    if(!sb || sb.pct>=100 || sb.status==="done" || m[id].d<floor){ delete m[id]; ch=true; }
+  });
+  return ch;
+}
+function whenSet(id,text){
+  var sb=state.subs[id]; if(!sb) throw new Error("That step is not on the board.");
+  var t=String(text||"").replace(/\s+/g," ").trim(), m=whenMap();
+  if(t.length>80) throw new Error("Keep it under 80 characters.");
+  if(!t){ if(m[id]){ delete m[id]; evAdd({t:Date.now(),k:"when",id:id,act:"clear"}); } return ""; }
+  var ids=Object.keys(m);
+  if(!m[id] && ids.length>=WHEN_MAX){
+    ids.sort(function(a,b){ return m[a].d<m[b].d?-1:1; }); delete m[ids[0]];
+  }
+  m[id]={t:t,d:todayStr()};
+  evAdd({t:Date.now(),k:"when",id:id,act:"set"});
+  return t;
+}
+function whenAsk(id){
+  var sb=state.subs[id]; if(!sb) return;
+  var cur=whenMap()[id];
+  askUser({title:cur?"Change when":"When will you do this step?",
+    body:["Step: "+sb.name,"Pick a moment you will notice, such as after your coffee or when you sit down at your desk."+(cur?" Leave it empty to remove it.":"")],
+    fields:[{k:"t",label:"When",kind:"text",value:cur?cur.t:"",ph:"After I pour my coffee"}],
+    ok:"Save", cancel:"Not now",
+    check:function(v){ return v.t.trim().length>80 ? "Keep it under 80 characters." : ""; }}).then(function(v){
+    if(!v) return;
+    try{ whenSet(id,v.t); }catch(er){ toast("When",er.message); }
+    save(); renderAll();
+  });
+}
+function estState(){
+  if(!state.est) state.est={items:{},pairs:[],ask:null};
+  if(!state.est.items) state.est.items={};
+  if(!state.est.pairs) state.est.pairs=[];
+  return state.est;
+}
+function estTidy(){
+  var x=estState(), floor=addDays(todayStr(),-30), ch=false;
+  Object.keys(x.items).forEach(function(id){
+    if(!state.subs[id] || x.items[id].d<floor){ delete x.items[id]; ch=true; }
+  });
+  if(x.ask && !state.subs[x.ask]){ x.ask=null; ch=true; }
+  return ch;
+}
+function estSet(id,minutes){
+  var sb=state.subs[id]; if(!sb) throw new Error("That step is not on the board.");
+  var n=Math.round(+minutes), x=estState();
+  if(!(n>=1 && n<=600)) throw new Error("Give a whole number of minutes from 1 to 600.");
+  x.items[id]={m:n,d:todayStr()};
+  evAdd({t:Date.now(),k:"est",id:id,act:"set"});
+  return n;
+}
+/* a step that has a guess was just finished: ask about it once, if nothing else is waiting */
+function estOnDone(id){
+  var x=estState();
+  if(x.items[id] && !x.ask) x.ask=id;
+}
+function estAnswer(minutes){
+  var x=estState(), id=x.ask, it=id&&x.items[id];
+  var n=Math.round(+minutes);
+  if(!it) throw new Error("There is nothing waiting for an answer.");
+  if(!(n>=1 && n<=1440)) throw new Error("Give a whole number of minutes from 1 to 1440.");
+  x.pairs.push({m:it.m, a:n, d:todayStr()});
+  if(x.pairs.length>EST_PAIRS) x.pairs.splice(0,x.pairs.length-EST_PAIRS);
+  delete x.items[id]; x.ask=null;
+  evAdd({t:Date.now(),k:"est",id:id,act:"actual"});
+}
+function estSkipAsk(){ var x=estState(); if(x.ask){ delete x.items[x.ask]; x.ask=null; } }
+/* the middle of the ratios between what happened and what you guessed */
+function estRatio(){
+  var p=estState().pairs, n=p.length;
+  if(n<EST_NEED) return {n:n, ratio:null};
+  var r=p.map(function(q){ return q.a/q.m; }).sort(function(a,b){ return a-b; });
+  var mid=n%2 ? r[(n-1)/2] : (r[n/2-1]+r[n/2])/2;
+  return {n:n, ratio:Math.round(mid*10)/10};
+}
+function estCompareLine(m){
+  var r=estRatio();
+  if(r.ratio===null)
+    return r.n ? "So far "+r.n+" finished step"+(r.n===1?"":"s")+" with a guess. At "+EST_NEED+" the board can tell you how your guesses compare with what happened."
+               : "After "+EST_NEED+" steps with a guess and a result, the board can tell you how your guesses compare with what happened.";
+  var like=Math.max(1,Math.round(m*r.ratio/5)*5);
+  return "Over your last "+r.n+" steps, what happened was about "+r.ratio+" times your guess"+(m?", so a guess of "+m+" minutes has meant about "+like:"")+". That is your own record, not anyone else's.";
+}
+function estAsk(id){
+  var sb=state.subs[id]; if(!sb) return;
+  var cur=estState().items[id];
+  askUser({title:cur?"Change your guess":"About how long?",
+    body:["Step: "+sb.name,"A guess is fine, in minutes.",estCompareLine(cur?cur.m:0)],
+    fields:[{k:"m",label:"Minutes",kind:"number",value:cur?cur.m:"",min:1,max:600,ph:"25"}],
+    ok:"Save", cancel:"Not now",
+    check:function(v){ var n=+v.m; return (v.m!=="" && !(n>=1&&n<=600&&Math.round(n)===n)) ? "Give a whole number of minutes from 1 to 600." : (v.m===""?"Give a number of minutes, or press Not now.":""); }}).then(function(v){
+    if(!v) return;
+    try{ estSet(id,v.m); }catch(er){ toast("How long",er.message); }
+    save(); renderAll();
+  });
+}
+function estLog(){
+  var x=estState(), id=x.ask, it=id&&x.items[id], sb=id&&state.subs[id]; if(!it||!sb) return;
+  askUser({title:"How long did it take?", body:["Step: "+sb.name,"You guessed "+it.m+" minutes."],
+    fields:[{k:"a",label:"Minutes",kind:"number",min:1,max:1440,ph:String(it.m)}],
+    ok:"Save", cancel:"Not now",
+    check:function(v){ var n=+v.a; return !(v.a!=="" && n>=1&&n<=1440&&Math.round(n)===n) ? "Give a whole number of minutes from 1 to 1440." : ""; }}).then(function(v){
+    if(!v) return;
+    try{ estAnswer(v.a); }catch(er){ toast("How long",er.message); }
+    save(); renderAll();
+  });
+}
+function planLineHTML(id){
+  var w=whenMap()[id], e=estState().items[id], bits=[];
+  if(w) bits.push("When: <i>"+esc(w.t)+"</i>");
+  if(e){
+    var r=estRatio(), like=r.ratio?Math.max(1,Math.round(e.m*r.ratio/5)*5):0;
+    bits.push("About <i>"+e.m+" min</i>"+(r.ratio&&like!==e.m?" (yours usually run "+r.ratio+" times the guess, so nearer "+like+")":""));
+  }
+  return bits.length?'<div class="now-plan">'+bits.join(" &middot; ")+'</div>':"";
+}
+function renderFollow(){
+  var box=$("#est-follow"); if(!box) return;
+  var x=estState(), id=x.ask, it=id&&x.items[id], sb=id&&state.subs[id];
+  if(!it||!sb){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML='You finished &ldquo;'+esc(sb.name)+'&rdquo;. About how long did it take? You guessed '+it.m+' min.'+
+    '<div class="row-btns"><button class="btn take" data-est-log>Tell the board</button><button class="btn" data-est-skip>Skip</button></div>';
+}
+
 /* ---------------- rollover ---------------- */
 var rollNote="";
 (function(){
@@ -3346,6 +3492,7 @@ function renderBadge(){
 function renderVerdict(){
   renderBadge();
   var box=$("#now-card-2"); if(!box) return;
+  whenTidy(); estTidy();
   var me=state.me||freshMe();
   if(!me.done){
     box.className="nowc ask";
@@ -3382,11 +3529,14 @@ function renderVerdict(){
     '<button class="now-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'">'+esc(v.s.name)+'</button>'+
     '<div class="now-from">in '+esc(v.g.name)+'</div>'+
     '<div class="now-w">'+esc(verdictWhy(v))+'</div>'+
+    planLineHTML(v.s.id)+
     (verdictNot(v).length?'<ul class="now-not">'+verdictNot(v).map(function(t){
       return "<li>"+esc(t)+"</li>"; }).join("")+"</ul>":"")+
     '<div class="now-acts">'+
       '<button class="btn take" data-pick-take="'+v.s.id+'">Take it</button>'+
       '<button class="btn" data-pick-skip="'+v.s.id+'">Not this</button>'+
+      '<button class="btn" data-when="'+v.s.id+'" title="Pick a moment you will notice, and tie this step to it">'+(whenMap()[v.s.id]?"Change when":"When?")+'</button>'+
+      '<button class="btn" data-est="'+v.s.id+'" title="A guess is fine. The board learns how your guesses compare">'+(estState().items[v.s.id]?"Change guess":"How long?")+'</button>'+
       '<button class="btn" data-goto-view="planner">Why</button>'+
       doseBtnHTML(dz)+
     '</div>'+skipWhyHTML();
@@ -3401,9 +3551,12 @@ function renderPick(){
     '<div class="pick-k">Today</div>'+
     '<div class="pick-n">'+esc(p.s.name)+'</div>'+
     '<div class="pick-w">'+esc(p.why)+'</div>'+
+    planLineHTML(p.s.id)+
     '<div class="row-btns">'+
       '<button class="btn take" data-pick-take="'+p.s.id+'">Take it</button>'+
       '<button class="btn" data-pick-skip="'+p.s.id+'">Something else</button>'+
+      '<button class="btn" data-when="'+p.s.id+'" title="Pick a moment you will notice, and tie this step to it">'+(whenMap()[p.s.id]?"Change when":"When?")+'</button>'+
+      '<button class="btn" data-est="'+p.s.id+'" title="A guess is fine. The board learns how your guesses compare">'+(estState().items[p.s.id]?"Change guess":"How long?")+'</button>'+
     '</div>'+skipWhyHTML();
 }
 function takePick(id){
@@ -3948,7 +4101,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
+  renderVerdict(); renderFollow(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -4216,6 +4369,12 @@ document.addEventListener("click",function(e){
   if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
   var dzb=e.target.closest("[data-dose]");
   if(dzb){ setDose(dzb.dataset.dose); return; }
+  var wh=e.target.closest("[data-when]");
+  if(wh){ whenAsk(wh.dataset.when); return; }
+  var es=e.target.closest("[data-est]");
+  if(es){ estAsk(es.dataset.est); return; }
+  if(e.target.closest("[data-est-log]")){ estLog(); return; }
+  if(e.target.closest("[data-est-skip]")){ estSkipAsk(); save(); renderAll(); return; }
   var tk=e.target.closest("[data-pick-take]");
   if(tk){ takePick(tk.dataset.pickTake); return; }
   var sk=e.target.closest("[data-pick-skip]");
@@ -5788,7 +5947,8 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
+  toolRun:toolRun, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
+  when:{set:whenSet, map:whenMap, tidy:whenTidy}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
   mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},
