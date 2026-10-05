@@ -115,7 +115,7 @@ await ok("erase memory and forget hints ask first, and change nothing on Not now
 });
 await ok("reminders: the explainer comes before the browser's prompt, and Not now never reaches it", async () => {
   await p.evaluate(() => { sessionStorage.setItem("perm", "default"); location.hash = "#/board"; }); await p.reload(); await p.waitForSelector(".row.pick");
-  await p.locator("#btn-remind").click(); await D().waitFor(); const t = await D().innerText(); assert.match(t, /Turn on reminders\?/); assert.match(t, /At most 3 a day/); assert.match(t, /day ends at \d\d:\d\d/);
+  await p.locator("#btn-remind").click(); await D().waitFor(); const t = await D().innerText(); assert.match(t, /Turn on reminders\?/); assert.match(t, /At most 2 a day/); assert.match(t, /day ends at \d\d:\d\d/);
   assert.equal(await p.evaluate(() => window.__rp), 0); await D().locator("[data-acancel]").click(); await settle(); assert.equal(await p.evaluate(() => window.__rp), 0);
   await p.locator("#btn-remind").click(); await D().waitFor(); await D().locator("[data-aok]").click(); await settle(); assert.equal(await p.evaluate(() => window.__rp), 1);
   await p.locator("#btn-remind").click(); await D().waitFor(); assert.match(await D().innerText(), /blocked/); assert.equal(await D().locator("[data-aok]").count(), 0); await p.keyboard.press("Escape"); await settle();

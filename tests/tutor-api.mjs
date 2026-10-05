@@ -115,7 +115,7 @@ await ok("an unreachable upstream maps to 502", () => { assert.ok([502, 429].inc
 await ok("logs never hold what anyone said", () => { const all = logs.join("\n"); assert.ok(!all.includes("PRIVATEWORDS") && !all.includes("SECRETWORDS") && !all.includes("when do I finish")); assert.ok(logs.length > 0); });
 
 const r7 = await call({ messages: [{ role: "user", content: "hi" }] });
-await ok("the per-minute limit stops a runaway loop", () => { assert.equal(r7.code, 429); assert.equal(r7.body.error.code, "rate_limited"); });
+await ok("the per-minute limit stops a runaway loop", () => { assert.equal(r7.code, 429, JSON.stringify(r7.body).slice(0,200)); assert.equal(r7.body.error.code, "rate_limited"); });
 
 // auth on
 process.env.TUTOR_REQUIRE_AUTH = "1";

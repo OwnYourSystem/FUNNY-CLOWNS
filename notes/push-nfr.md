@@ -27,7 +27,7 @@ stays a card on the board, and a reminder while the board is open.
 
 - N1. The browser permission question appears only after the person presses Reminders and says Continue. Never on page load.
 - N2. Turning Reminders off removes the subscription from the server within 5 seconds, or says plainly that it could not.
-- N3. The Reminders button always says the truth: "Reminders on (push)", "Reminders on (only while open)", or "Reminders off".
+- N3. The Reminders button always says the truth: "Reminders on (push)", "Reminders on (while open)", or "Reminders off".
 
 ### Privacy
 
@@ -59,7 +59,7 @@ stays a card on the board, and a reminder while the board is open.
 - N20. The server accepts a device address only from a known push service (Google, Mozilla, Apple, Microsoft) over https. It never calls any other address.
 - N21. Table access is denied to every browser role. Only the server function can read or write it. (Row-level security on, no policies, grants revoked.)
 - N22. The scheduled call carries a secret that only the database and the function know. A call without it is refused.
-- N23. A subscribe call is limited in size and rate; the table is capped at 5,000 rows.
+- N23. A subscribe call is limited in size (2 KB), a device can change its row at most once every 10 seconds, and the table is capped at 5,000 rows. There is no per-address rate limit beyond that; that is a known gap.
 - N24. Unsubscribing needs the device's own keys, so nobody can remove someone else's.
 
 ### Platforms
@@ -90,3 +90,15 @@ These need one real device and one day of watching. The write-up says so, and th
 ## Out of scope
 
 Hints by push. Email or SMS. Sending the person's tasks to a server. Notification actions (snooze, done). A different time per kind.
+
+## Status (2026-10-05)
+
+Built and deployed:
+- database: tables `push_subs` and `push_config` (closed to every browser role), and a job `push-tick` that calls the function every minute while at least one device is subscribed;
+- function `push` (public, with its own checks): `/config`, `/subscribe`, `/unsubscribe`, `/tick`;
+- page: the Reminders button, the subscription, a summary kept on the device, a sync when the brief time or day end changes;
+- service worker: `push` and `notificationclick`.
+
+Tested here: N6, N7, N9 to N12, N14, N16 logic, N20 to N24 checks, N28 length, the page flow and the worker with a pretend push service (36 checks).
+
+Not tested, and not claimed: delivery to a real phone, the timing in N15, iPhone, and the database job firing in production. The first real device that turns Reminders on is the test. Someone who already had Reminders on has to press the button off and on once, because the new server sharing needs their yes.
