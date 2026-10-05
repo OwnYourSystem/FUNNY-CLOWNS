@@ -638,6 +638,12 @@ button.now-n:hover{color:var(--run)}
 .floor-set{font:inherit; font-size:13px; color:var(--ink-2); background:transparent; border:1px dashed var(--hair);
   border-radius:12px; padding:10px 14px; cursor:pointer; text-align:left; width:100%; line-height:1.5}
 .floor-set:hover{color:var(--ink); border-color:var(--rule)}
+.wk-scroll{overflow-x:auto; margin-top:12px}
+.wk-table{border-collapse:collapse; width:100%; min-width:520px; font-size:13px; color:var(--ink-2)}
+.wk-table th{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:400;
+  color:var(--muted); text-align:left; padding:6px 10px 6px 0; white-space:nowrap}
+.wk-table td{padding:8px 10px 8px 0; border-top:1px solid var(--hair); font-variant-numeric:tabular-nums}
+.wk-note{margin:12px 0 0; font-size:13.5px; color:var(--ink-2); line-height:1.6; max-width:68ch}
 .now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
@@ -772,6 +778,10 @@ dialog.ask[open]{animation:askIn .22s var(--ease)}
 .ask-pick button{font:inherit; font-size:14.5px; text-align:left; color:var(--ink-2); background:transparent;
   border:1px solid var(--hair); border-radius:12px; padding:12px 14px; cursor:pointer}
 .ask-pick button[aria-pressed="true"]{color:var(--ink); border-color:rgba(255,59,48,.5)}
+.ask-lab{display:block; margin-bottom:6px; font-family:var(--mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted)}
+.ask-pick.row{flex-direction:row}
+.ask-pick.row button{flex:1 1 0; text-align:center; padding:10px 0; min-width:0}
 .ask-err{margin:10px 0 0; min-height:0; color:var(--accent-ink); font-size:13px}
 .ask-err:empty{display:none}
 .ask-acts{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; margin-top:18px}
@@ -1232,6 +1242,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
     <div class="floor" id="floor" role="group" aria-label="Minimum day" hidden></div>
+    <div id="week-nudge" hidden></div>
     <div id="oftad-pick" hidden></div>
     <div class="now-follow" id="est-follow" hidden></div>
     <div class="drop" id="oftad"></div>
@@ -1329,6 +1340,14 @@ try{var _t=localStorage.getItem("oys-theme");
         <button class="mini" id="bar-on" aria-pressed="true">Low-day check-in on</button></div></div>
       <div id="hint-stats"></div>
       <div class="dock-foot"><button class="mini" id="hint-reset">Forget what helps</button></div>
+    </section>
+
+    <section class="panel flat" aria-label="Weekly check-in" id="week-panel">
+      <div class="p-head"><div><div class="p-title">Weekly check-in</div>
+        <div class="p-note">Five taps, 1 (low) to 5 (high), once a week if you like. It stays on this device only: it is not synced, not in the backup text, and the tutor and the notes never see it. It is not a test and not advice.</div></div>
+        <div class="p-tools"><button class="mini" id="week-open" data-week-open>Check in</button></div></div>
+      <div id="week-body"></div>
+      <div class="dock-foot"><button class="mini" id="week-erase">Delete my check-ins</button></div>
     </section>
 
     <section class="panel flat" aria-label="What the board has learned about you" id="mem-panel">
@@ -3222,6 +3241,105 @@ function renderFloor(){
       '<button class="mini" data-floor-edit>Edit</button></div>';
 }
 
+/* ---------------- the weekly check-in ----------------
+   Five taps once a week, 1 (low) to 5 (high), all worded so that higher is
+   better: energy, mood, calm (the other side of anxious), getting through the
+   day, and something that mattered. They sit beside what you finished that
+   week, because output alone can rise while the rest falls and the scoreboard
+   cannot see that.
+
+   This is about as personal as the board gets, so it is kept apart on purpose.
+   It lives under its own storage key, never in the board's state. That keeps it
+   out of account sync, out of the backup text, out of the tutor's snapshot and
+   tools, out of the memory, and out of the hints. Nothing infers it, nothing
+   asks for it unprompted (a quiet line on the board shows when one is due, and
+   it opens only when you press it), and it can be deleted whole. The board says
+   what it sees in two plain cases and gives no advice beyond saying that
+   telling someone you trust is worth it.                                  */
+var WEEK_KEY=KEY+".week", WEEK_KEEP=26, WEEK_DATA=null;
+var WEEK_ITEMS=[["e","Energy"],["m","Mood"],["c","Calm"],["f","Getting through the day"],["w","Something that mattered to me"]];
+function weekData(){
+  if(WEEK_DATA) return WEEK_DATA;
+  try{ var x=JSON.parse(localStorage.getItem(WEEK_KEY)||"null"); WEEK_DATA=(x&&Array.isArray(x.log))?x:{v:1,log:[]}; }
+  catch(e){ WEEK_DATA={v:1,log:[]}; }
+  return WEEK_DATA;
+}
+function weekSave(){ try{ localStorage.setItem(WEEK_KEY,JSON.stringify(weekData())); }catch(e){} }
+function weekKeyOf(d){
+  var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())), dn=t.getUTCDay()||7;
+  t.setUTCDate(t.getUTCDate()+4-dn);
+  var y=t.getUTCFullYear(), w=Math.ceil(((t-Date.UTC(y,0,1))/864e5+1)/7);
+  return y+"-W"+pad2(w);
+}
+function weekLast(){ var l=weekData().log; return l.length?l[l.length-1]:null; }
+/* due when there is none, or the last one is a week old; never forced */
+function weekDue(){
+  var l=weekLast();
+  return !l || ageOf(l.d)>=7;
+}
+function weekSet(vals){
+  var e={k:weekKeyOf(new Date()), d:todayStr()};
+  WEEK_ITEMS.forEach(function(it){
+    var n=Math.round(+vals[it[0]]);
+    if(!(n>=1 && n<=5)) throw new Error("Pick 1 to 5 for each.");
+    e[it[0]]=n;
+  });
+  e.n=evSel("completions",evWin(7),Date.now()+1).length;     /* what you finished in the 7 days to now */
+  var log=weekData().log.filter(function(x){ return x.k!==e.k; });
+  log.push(e); log.sort(function(a,b){ return a.d<b.d?-1:a.d>b.d?1:0; });
+  if(log.length>WEEK_KEEP) log.splice(0,log.length-WEEK_KEEP);
+  weekData().log=log; weekSave();
+  evAdd({t:Date.now(),k:"week",act:"set"});
+  return e;
+}
+function weekClear(){
+  WEEK_DATA={v:1,log:[]};
+  try{ localStorage.removeItem(WEEK_KEY); }catch(e){}
+}
+/* two plain things, said only when they are true */
+function weekNote(){
+  var l=weekData().log, cur=l[l.length-1], prev=l[l.length-2], out=[];
+  if(!cur||!prev) return "";
+  var lower=[["e","energy"],["m","mood"],["c","calm"],["f","getting through the day"]].filter(function(q){ return cur[q[0]]<prev[q[0]]; }).map(function(q){ return q[1]; });
+  if(cur.n-prev.n>=2 && lower.length>=3)
+    out.push("You finished more in the week to "+cur.d+" than in the week before ("+cur.n+" against "+prev.n+"), and "+lower.join(", ")+
+      " are lower than at your last check-in. That can happen. It is worth noticing, and if it keeps going, worth telling someone you trust.");
+  if(cur.m<=2 && cur.c<=2 && prev.m<=2 && prev.c<=2)
+    out.push("Mood and calm have both been low at your last two check-ins. If it feels heavy, please talk to someone you trust or a doctor. I only handle the board, so I cannot help with that part.");
+  return out.join(" ");
+}
+function weekAsk(){
+  var last=weekLast(), cur=last&&last.k===weekKeyOf(new Date())?last:null, opts=[1,2,3,4,5].map(function(n){ return [String(n),String(n)]; });
+  askUser({title:"This week",
+    body:["Five taps, from 1 (low) to 5 (high). It stays on this device only: it is not synced, and the tutor never sees it.","It is not a test and not advice. It is there so you can see how your weeks compare."],
+    fields:WEEK_ITEMS.map(function(it){ return {k:it[0],label:it[1],kind:"pick",row:true,opts:opts,value:cur?cur[it[0]]:""}; }),
+    ok:"Save", cancel:"Not now",
+    check:function(v){ return WEEK_ITEMS.some(function(it){ return !v[it[0]]; }) ? "Pick a number for each, or press Not now." : ""; }}).then(function(v){
+    if(!v) return;
+    try{ weekSet(v); }catch(er){ toast("Check-in",er.message); }
+    renderAll();
+  });
+}
+function renderWeek(){
+  var box=$("#week-body"), nudge=$("#week-nudge"), l=weekData().log;
+  if(nudge){
+    if(state.me && state.me.done && weekDue()){
+      nudge.hidden=false; nudge.className="floor";
+      nudge.innerHTML='<button class="floor-set" data-week-open>Weekly check-in: five taps, kept on this device only</button>';
+    } else { nudge.hidden=true; nudge.innerHTML=""; }
+  }
+  if(!box) return;
+  if(!l.length){ box.innerHTML='<p class="wk-note">No check-ins yet.</p>'; return; }
+  var rows=l.slice(-8).reverse();
+  box.innerHTML='<div class="wk-scroll"><table class="wk-table"><thead><tr><th>Week</th>'+
+    WEEK_ITEMS.map(function(it){ return "<th>"+esc(it[1].replace("Something that mattered to me","Mattered").replace("Getting through the day","Got through"))+"</th>"; }).join("")+
+    '<th>Finished</th></tr></thead><tbody>'+
+    rows.map(function(x){
+      return "<tr><td>"+esc(x.k.slice(5))+" &middot; "+esc(x.d.slice(5))+"</td>"+WEEK_ITEMS.map(function(it){ return "<td>"+x[it[0]]+"</td>"; }).join("")+"<td>"+x.n+"</td></tr>";
+    }).join("")+'</tbody></table></div>'+
+    (weekNote()?'<p class="wk-note">'+esc(weekNote())+'</p>':"");
+}
+
 /* ---------------- when I will do it, and about how long ----------------
    Two optional notes on a step, both the person's own words and numbers.
    "When" is a moment you will notice (after the coffee, when you sit down at
@@ -4184,8 +4302,9 @@ function askNext(){
   var fh=fields.map(function(f,i){
     var v=f.value==null?"":String(f.value), a='data-ak="'+esc(f.k)+'"';
     if(f.kind==="pick")
-      return '<div class="ask-pick" role="group" aria-label="'+esc(f.label||"")+'" '+a+'>'+(f.opts||[]).map(function(op){
-        return '<button type="button" data-av="'+esc(op[0])+'" aria-pressed="'+(String(op[0])===v)+'">'+esc(op[1])+'</button>'; }).join("")+'</div>';
+      return '<div class="ask-grp">'+(f.label?'<span class="ask-lab">'+esc(f.label)+'</span>':'')+
+        '<div class="ask-pick'+(f.row?' row':'')+'" role="group" aria-label="'+esc(f.label||"")+'" '+a+'>'+(f.opts||[]).map(function(op){
+        return '<button type="button" data-av="'+esc(op[0])+'" aria-pressed="'+(String(op[0])===v)+'">'+esc(op[1])+'</button>'; }).join("")+'</div></div>';
     var inp = f.kind==="textarea"
       ? '<textarea class="f" '+a+' spellcheck="false" placeholder="'+esc(f.ph||"")+'">'+esc(v)+'</textarea>'
       : '<input class="f" '+a+' type="'+(f.kind||"text")+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||"")+'"'+
@@ -4269,7 +4388,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderFollow(); renderFloor(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
+  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -4537,6 +4656,7 @@ document.addEventListener("click",function(e){
   if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
   var dzb=e.target.closest("[data-dose]");
   if(dzb){ setDose(dzb.dataset.dose); return; }
+  if(e.target.closest("[data-week-open]")){ weekAsk(); return; }
   var fl=e.target.closest("[data-floor]");
   if(fl){ try{ floorToggle(fl.dataset.floor); }catch(er){ toast("Minimum day",er.message); } save(); renderAll(); return; }
   if(e.target.closest("[data-floor-edit]")){ floorAsk(); return; }
@@ -4996,10 +5116,10 @@ $("#io-file").addEventListener("change",function(e){
   var r=new FileReader(); r.onload=function(){ IO.value=r.result; $("#io-load").click(); }; r.readAsText(f);
 });
 $("#io-reset").addEventListener("click",function(){
-  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes and settings in this browser.","A backup file you saved earlier is not touched. This cannot be undone."],
+  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes, weekly check-ins and settings in this browser.","A backup file you saved earlier is not touched. This cannot be undone."],
     ok:"Reset everything", cancel:"Keep my board", danger:true}).then(function(yes){
     if(!yes) return;
-    try{ localStorage.removeItem(KEY); }catch(e){}
+    try{ localStorage.removeItem(KEY); localStorage.removeItem(WEEK_KEY); }catch(e){}
     location.reload();
   });
 });
@@ -6121,6 +6241,7 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
+  week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
@@ -6451,6 +6572,16 @@ function memAddFromBox(){
 $("#bar-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.barrier=!barOn(); save(); renderAll(); });
 $("#hint-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hints=!hintOn(); save(); renderAll(); });
 $("#hint-note").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hintNote=(state.me.hintNote===false); save(); renderAll(); });
+$("#week-erase").addEventListener("click",function(e){
+  e.stopPropagation();
+  var n=weekData().log.length;
+  if(!n){ toast("Check-in","There are no check-ins to delete."); return; }
+  askUser({title:"Delete your check-ins?", body:["This deletes all "+n+" weekly check-in"+(n===1?"":"s")+" on this device. There is no other copy."],
+    ok:"Delete them", cancel:"Keep them", danger:true}).then(function(yes){
+    if(!yes) return;
+    weekClear(); renderAll();
+  });
+});
 $("#hint-reset").addEventListener("click",function(e){
   e.stopPropagation();
   askUser({title:"Forget which hints helped?", body:["The board will clear its record of the hints you answered, and start from nothing about which kind helps you.","Your goals, steps and notes are not touched."],
