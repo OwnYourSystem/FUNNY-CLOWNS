@@ -3685,10 +3685,12 @@ function bestSub(g,taken,skip){ var o=subsOpen(g,taken,skip); return o.length?o[
 function verdict(){
   var c=nowCtx(), me=state.me||freshMe();
   var taken={}, skip=(state.skip&&state.skip.d===todayStr())?state.skip.ids:[];
-  state.oftad.forEach(function(x){ taken[x.id]=1; });
+  var covered={};
+  state.oftad.forEach(function(x){ taken[x.id]=1; covered[cardGid(x)]=1; });
   var best=null, blocked=[], soft=null;
   state.groups.forEach(function(g){
     if(!g.subs.length||groupPct(g)>=100) return;
+    if(covered[g.id]) return;               /* Today holds one step per goal, so suggest from another goal */
     var s2=bestSub(g,taken,skip);
     if(!s2) return;                          /* nothing left in it to do */
     var f=feasible(g,c), sc=goalScore(g,c,me);
