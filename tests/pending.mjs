@@ -13,7 +13,7 @@ const seed = () => p.evaluate((KEY) => {
   const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; s.plan = []; s.oftad = []; s.done = [];
   const ids = Object.keys(s.subs).slice(0, 3); s.plan = [{ k: "sub", id: ids[0], done: false }, { k: "sub", id: ids[1], done: false }]; s.botOpen = false;
   localStorage.setItem(KEY, JSON.stringify(s)); window.__ids = ids;
-}, KEY).then(() => p.reload()).then(() => p.waitForSelector(".row.pick")).then(() => p.evaluate(() => { document.querySelector("#bot-orb").hidden = false; window.__board.openSheet(); })).then(() => p.waitForTimeout(250));
+}, KEY).then(() => p.reload()).then(() => p.waitForSelector(".row.pick")).then(() => p.evaluate(() => { window.__board.openSheet(); })).then(() => p.waitForTimeout(250));
 const st = () => p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), KEY);
 const model = (name, args) => p.evaluate(([n, a]) => { try { return window.__board.modelTools().find((t) => t.name === n).execute(a); } catch (e) { return "ERR " + e.message; } }, [name, args]);
 const subName = (i) => p.evaluate((i) => { const s = JSON.parse(localStorage.getItem("oys-min-deliveries-v1")); return s.subs[Object.keys(s.subs)[i]].name; }, i);
@@ -58,11 +58,9 @@ await ok("what you type yourself still runs at once", async () => {
   await p.evaluate(() => window.__board.brain("clear plan")); assert.equal((await st()).plan.length, 0);
 });
 await seed();
-await ok("a spoken sentence is staged, not run", async () => {
-  const name = await subName(0), n0 = Object.keys((await st()).subs).length;
-  const r = await p.evaluate((n) => { const B = window.__board; return B.askSpoken ? B.askSpoken("remove " + n) : "NO HOOK"; }, name); assert.notEqual(r, "NO HOOK");
-  await p.waitForTimeout(150); assert.equal(Object.keys((await st()).subs).length, n0, "a spoken remove must not run"); await pend.waitFor({ state: "visible" });
-  await p.evaluate(() => { const B = window.__board; return B.askSpoken("clear plan"); }); await p.waitForTimeout(150); assert.equal((await st()).plan.length, 2); assert.match(await pend.innerText(), /Clear 2 cards/);
+await ok("a clear request is staged with exactly what it would do", async () => {
+  await model("clear_dock", { dock: "plan" }); await pend.waitFor({ state: "visible" });
+  assert.equal((await st()).plan.length, 2); assert.match(await pend.innerText(), /Clear 2 cards from Waiting/);
 });
 await ok("Clear (start over) drops a waiting question, and an old one expires", async () => {
   await p.locator("#bot-clear").click(); assert.equal(await pend.isHidden(), true);

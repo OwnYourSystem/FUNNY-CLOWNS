@@ -107,7 +107,7 @@ await ok("remember: a note you type is kept, listed and never lapses", async () 
 await ok("forget removes one; forget everything needs saying twice", async () => {
   assert.match(await say("remember that I prefer short steps"), /^Kept/);
   assert.match(await say("forget 1"), /^Forgotten: I train at six/);
-  assert.match(await say("forget everything"), /Say it again within 20 seconds/); assert.equal((await st()).mem.length, 1);
+  assert.match(await say("forget everything"), /Type it again within 20 seconds/); assert.equal((await st()).mem.length, 1);
   assert.match(await say("forget everything"), /^Erased/); assert.equal((await st()).mem.length, 0);
 });
 await ok("the note limit holds", async () => {
