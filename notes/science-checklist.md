@@ -172,9 +172,10 @@ suggestion between steps; a weekly 1 to 5 "how in control did you feel" tap.
 
 **From the earlier product plan (`values-vs-board.md`):**
 - [x] **A minimum-day strip (V3).** *Built 2026-10-04:* up to four anchors in the person's own words, a tap each for today, a day is met when all are ticked, "Met on N of the last 14 days" counting only days it was opened, and "these are enough" on a low day. The first values note named four kinds, the later list said three; the person chooses how many, up to four.
-- [ ] **Weekly measures (V8):** energy, mood, anxiety, functioning, meaningful action.
-  Sensitive: it must be the person's own optional tap, never inferred, and never passed to
-  the tutor or the memory, which refuse mood and health text.
+- [x] **Weekly measures (V8).** *Built 2026-10-05:* five taps (energy, mood, calm, getting
+  through the day, something that mattered), 1 to 5, beside what was finished that week.
+  Kept under its own storage key: not synced, not in the backup text, never seen by the
+  tutor, notes or hints; deletable whole; opens only when pressed.
 - [x] **Confirmation on the tutor's remove and clear tools.** *Built 2026-10-04.* The
   tutor stages the request and the chat shows two buttons; only the person pressing
   the first one does it. Typed commands run at once, spoken ones are staged.
@@ -188,3 +189,7 @@ suggestion between steps; a weekly 1 to 5 "how in control did you feel" tap.
   planning review): the abstracts have to be pasted in, since scholarly sites are blocked here.
 - [ ] Background push (needs a push server and a key per device).
 - [ ] Reliability, security, data governance and AI compliance.
+
+**Not built, because not agreed (2026-10-05):** a "close the day" step, an optional morning
+capture, a weekly plan prompt, a "too much on the plate" signal, a break suggestion, a weekly
+1 to 5 control tap, and a first-run welcome dialog. Each waits for a yes.
