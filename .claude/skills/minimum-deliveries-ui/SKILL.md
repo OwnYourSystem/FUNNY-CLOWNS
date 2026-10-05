@@ -425,18 +425,26 @@ cannot make every day look like a low one.
 and it goes quiet on a low day: the KPI shows "paused on a low day" and no
 siren plays. A rough day is not a day to be shown a pile of overdue things.
 
-## One notification a day, carrying the decision
+## Two reminders a day, carrying the decision
 
 The morning brief fires at a time the person sets, once, with the task, why
 it and not the next one, and what is held back until later. An afternoon one
 says what is still open.
 
-State the limit rather than implying otherwise: this fires while the board
-is running, tab or home screen. Nothing here wakes a phone with the app
-fully closed, because that needs a push server holding a key per device and
-this board keeps everything in the person's own browser.
+Two kinds only, at most 2 a day: the brief at the person's time and a check
+at 15:00. Nothing after the day end.
 
-
+**Push reaches a closed page, and says what it can and cannot promise.** A
+small server (Supabase function `push`, a once-a-minute database job) sends
+the single word `am` or `pm`. It holds a device address, a time zone and two
+clock times, never a task or the words of a notification. The service worker
+writes the words from a short summary the page leaves in the device cache
+(`board-digest`), and shows a plain line, never old numbers, if the summary
+is not from today. The Reminders button says the truth: "(push)" only after
+the server confirmed this device, "(while open)" otherwise. Pressing it for
+the first time asks first and names what the server keeps. Requirements and
+the list of what is not tested are in `notes/push-nfr.md`. Delivery to a real
+phone cannot be tested from the build machine; say so.
 
 ## Motion
 
