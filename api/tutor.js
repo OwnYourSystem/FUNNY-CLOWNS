@@ -92,7 +92,9 @@ export const TOOLS = [
   "board_state", "stats", "compare", "trend", "events", "find_evidence", "start_experiment", "stop_experiment",
   "experiment_status", "get_hint", "barrier_status", "get_memory", "propose_memory", "forget_memory", "set_dose", "set_progress", "set_status",
   "add_subtask", "rename_subtask", "remove_subtask", "move_subtask", "add_main_task", "focus_today",
-  "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task"
+  "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task",
+  "undo_done_today", "set_subtask_field", "set_goal_field", "archive_goal", "backlog_goal", "restore_goal", "remove_main_task",
+  "set_setting", "set_minimum_day", "tick_minimum_day", "set_when", "set_estimate", "log_actual", "go_to", "search_board"
 ];
 
 const LIMITS = { messages: 60, bytes: 250000, text: 8000, result: 20000, tools: 40, toolBytes: 4000, desc: 1500 };
