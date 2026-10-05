@@ -20,7 +20,7 @@ await p.goto(URL); await p.waitForSelector(".row.pick");
 /* a clean day: nothing told yet, brief at 07:30, the day ends at `wind` */
 const setup = (wind) => p.evaluate(([KEY, wind]) => {
   const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; s.me.brief = "07:30"; s.me.wind = wind; s.me.hintNote = false;
-  const id = Object.keys(s.subs)[0]; s.plan = [{ k: "sub", id, done: false }]; s.oftad = [];
+  const id = Object.keys(s.subs)[0]; s.oftad = [{ k: "sub", id, done: false }]; s.plan = [];
   s.told = null; localStorage.setItem(KEY, JSON.stringify(s)); sessionStorage.setItem("perm", "default");
 }, [KEY, wind]).then(() => p.reload()).then(() => p.waitForSelector(".row.pick")).then(() => p.evaluate(() => { window.__perm = "granted"; window.__notes.length = 0; }));
 const at = (h, m) => p.evaluate(([h, m]) => { const d = new Date(); d.setHours(h, m, 0, 0); window.__board.remind(d); }, [h, m]).then(() => p.waitForTimeout(200));
@@ -51,7 +51,7 @@ await ok("it still fires in the day: the brief at 08:00", async () => {
   await setup("22:30"); await at(8, 0); const n = await notes(); assert.equal(n.length, 1); assert.equal(n[0].tag, "oys-brief");
 });
 await ok("it still fires in the day: the afternoon check at 16:00, after the brief, when something is open", async () => {
-  const s0 = await open(); const openN = (s0.oftad || []).length + (s0.plan || []).length; assert.ok(openN > 0, "the seed has open work");
+  const s0 = await open(); const openN = (s0.oftad || []).length; assert.ok(openN > 0, "the seed has open work");
   await at(16, 0); const n = await notes(); assert.ok(n.some((x) => x.tag === "oys-today"), JSON.stringify(n));
 });
 await ok("a day ending at 00:30 does not silence the afternoon", async () => {

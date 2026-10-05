@@ -45,7 +45,7 @@ await ok("an unknown or ambiguous name is an error from the tool, with nothing s
 });
 await seed();
 await ok("clear_dock stages with the card count and the dock's name; confirming clears it", async () => {
-  const out = await model("clear_dock", { dock: "plan" }); assert.match(out, /^Ready: Clear 2 cards from Today.s Plan/); assert.equal((await st()).plan.length, 2);
+  const out = await model("clear_dock", { dock: "plan" }); assert.match(out, /^Ready: Clear 2 cards from Waiting/); assert.equal((await st()).plan.length, 2);
   await pend.waitFor({ state: "visible" }); assert.equal(await pend.locator("[data-pend-yes]").innerText(), "Clear it");
   await pend.locator("[data-pend-yes]").click(); await p.waitForTimeout(150); assert.equal((await st()).plan.length, 0); assert.match(await p.locator("#bot-log").innerText(), /Cleared 2 cards/);
 });

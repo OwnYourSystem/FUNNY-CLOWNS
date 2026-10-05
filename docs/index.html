@@ -843,6 +843,8 @@ dialog.ask.danger .ask-acts .btn.take{color:var(--accent-ink); border-color:rgba
   color:var(--muted); overflow-wrap:anywhere}
 .chip .c-name{font-size:14px; font-weight:450; overflow-wrap:anywhere; line-height:1.35; letter-spacing:-.01em}
 .chip .c-prog{font-family:var(--mono); font-size:11px; color:var(--muted)}
+.chip .c-why{display:block; margin:5px 0 3px; font-size:12px; line-height:1.45; color:var(--ink-2)}
+.dock-foot .mini{margin:0 8px}
 .chip.carried{border-style:dashed}
 .done-zone .chip .c-name{color:var(--ink-2)}
 .done-zone .chip::after{content:""; position:absolute}
@@ -1151,15 +1153,32 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="canvas">
   <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
 
+  <section class="panel oftad-panel" data-panel="oftad">
+    <div class="p-head">
+      <div>
+        <div class="p-title">Today</div>
+        <div class="p-note" id="oftad-note">What you are doing today, sized to today&rsquo;s dose. Each card says why it is here.</div>
+      </div>
+      <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
+    </div>
+    <div class="floor" id="floor" role="group" aria-label="Minimum day" hidden></div>
+    <div id="week-nudge" hidden></div>
+    <div id="oftad-pick" hidden></div>
+    <div class="now-follow" id="est-follow" hidden></div>
+    <div class="drop" id="oftad"></div>
+    <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
+  </section>
+
   <div class="panel" data-panel="plan">
       <div class="p-head">
         <div>
-          <div class="p-title">Today&rsquo;s plan &mdash; <span id="plan-date"></span></div>
+          <div class="p-title">Waiting &mdash; <span id="plan-date"></span></div>
+          <div class="p-note">Queued, and carried over from earlier days. None of it is today&rsquo;s job unless you pull it into Today.</div>
         </div>
         <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
       </div>
       <div class="drop" id="plan"></div>
-      <div class="dock-foot"><span id="plan-count"></span><span id="plan-roll"></span></div>
+      <div class="dock-foot"><span id="plan-count"></span><button class="mini" id="plan-more" hidden></button><span id="plan-roll"></span></div>
   </div>
 
   <section class="panel exp-panel" data-panel="exp" id="exp-card" aria-label="Experiment" hidden></section>
@@ -1183,9 +1202,9 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="k-sub" id="kpi-done-sub">of 0</div>
     </div>
     <div class="kpi">
-      <div class="k-label">Alarm</div>
+      <div class="k-label">Needs attention</div>
       <div class="k-val" id="kpi-alert">0</div>
-      <div class="k-sub" id="kpi-alert-sub">blocked or stalled</div>
+      <div class="k-sub" id="kpi-alert-sub">past or near a deadline</div>
     </div>
     <div class="kpi">
       <div class="k-label">Done today</div>
@@ -1234,20 +1253,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <div id="sub-table" hidden></div>
   </div>
 
-  <section class="panel oftad-panel" data-panel="oftad">
-    <div class="p-head">
-      <div>
-        <div class="p-title">One Task A Day</div>
-      </div>
-      <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
-    </div>
-    <div class="floor" id="floor" role="group" aria-label="Minimum day" hidden></div>
-    <div id="week-nudge" hidden></div>
-    <div id="oftad-pick" hidden></div>
-    <div class="now-follow" id="est-follow" hidden></div>
-    <div class="drop" id="oftad"></div>
-    <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
-  </section>
+
 
   <div class="panel" data-panel="done">
       <div class="p-head">
@@ -1264,7 +1270,8 @@ try{var _t=localStorage.getItem("oys-theme");
   <section class="panel" data-panel="alerts">
     <div class="p-head">
       <div>
-        <div class="p-title">Needs a look</div>
+        <div class="p-title">Needs attention</div>
+        <div class="p-note">Deadlines that are close or past. Quiet on a low day.</div>
       </div>
     </div>
     <div class="alerts" id="alerts"></div>
@@ -2421,7 +2428,7 @@ function replyCheck(text,ctx){
    yourself ("remove X") is your own word and runs at once. A spoken sentence is
    staged too, because speech is misheard and the board matches names loosely. */
 var PEND=null, PEND_MS=120000, PEND_TOOLS={remove_subtask:1, clear_dock:1}, SPOKEN=false;
-var DOCK_NAME={oftad:"One Task A Day", plan:"Today\u2019s Plan", done:"Done Today"};
+var DOCK_NAME={oftad:"Today", plan:"Waiting", done:"Done today"};
 function pendStage(t,a){
   var label, verb, args;
   if(t.name==="remove_subtask"){
@@ -3486,17 +3493,26 @@ function renderFollow(){
 var rollNote="";
 (function(){
   var t=todayStr(); if(state.day===t) return;
-  if(state.done.length||state.plan.length||state.oftad.length){
+  /* "planned" is what you committed to for the day (Today and what you finished),
+     never the Waiting pile: a pile that only grows would make every day look like a failure */
+  if(state.done.length||state.oftad.length){
     state.dayLog.unshift({d:state.day,done:state.done.length,
-      planned:state.done.length+state.plan.length+state.oftad.length,
+      planned:state.done.length+state.oftad.length,
       items:state.done.map(function(c){ return cardName(c); }).slice(0,6)});
     if(state.dayLog.length>30) state.dayLog.pop();
   }
-  var carried=state.plan.length+state.oftad.length;
-  state.oftad.forEach(function(c){ c.carried=true; });
-  state.plan.forEach(function(c){ c.carried=true; });
+  /* what was not finished goes to Waiting, not into the new day's Today */
+  var prevDay=state.day, wasToday=state.oftad.length;
+  state.plan.forEach(function(c){ c.carried=true; if(!c.from) c.from=prevDay; delete c.why; });
+  state.oftad.forEach(function(c){ c.carried=true; c.from=prevDay; delete c.why; delete c.src; });
+  var seen={}, merged=[];
+  state.oftad.concat(state.plan).forEach(function(c){
+    var k=c.k+":"+c.id; if(seen[k]) return; seen[k]=1; merged.push(c);
+  });
+  var carried=merged.length;
+  state.plan=merged; state.oftad=[];
   state.done=[];
-  rollNote = carried ? carried+" carried over from "+state.day : "";
+  rollNote = carried ? carried+" waiting from earlier days" : "";
   state.day=t; state.notified=""; state.told=null;
   keepSnapshot(state.day);
   touchHist(); save();
@@ -3669,10 +3685,12 @@ function bestSub(g,taken,skip){ var o=subsOpen(g,taken,skip); return o.length?o[
 function verdict(){
   var c=nowCtx(), me=state.me||freshMe();
   var taken={}, skip=(state.skip&&state.skip.d===todayStr())?state.skip.ids:[];
-  state.oftad.forEach(function(x){ taken[x.id]=1; });
+  var covered={};
+  state.oftad.forEach(function(x){ taken[x.id]=1; covered[cardGid(x)]=1; });
   var best=null, blocked=[], soft=null;
   state.groups.forEach(function(g){
     if(!g.subs.length||groupPct(g)>=100) return;
+    if(covered[g.id]) return;               /* Today holds one step per goal, so suggest from another goal */
     var s2=bestSub(g,taken,skip);
     if(!s2) return;                          /* nothing left in it to do */
     var f=feasible(g,c), sc=goalScore(g,c,me);
@@ -3829,12 +3847,13 @@ function renderVerdict(){
 }
 function renderPick(){
   var box=$("#oftad-pick"); if(!box) return;
-  if(state.oftad.length){ box.hidden=true; box.innerHTML=""; return; }
+  /* offer the next one until Today holds what today's dose allows */
+  if(state.oftad.length+state.done.length>=doseNow().n){ box.hidden=true; box.innerHTML=""; return; }
   var p=pickToday();
   if(!p){ box.hidden=true; box.innerHTML=""; return; }
   box.hidden=false;
   box.innerHTML=
-    '<div class="pick-k">Today</div>'+
+    '<div class="pick-k">Suggested next</div>'+
     '<div class="pick-n">'+esc(p.s.name)+'</div>'+
     '<div class="pick-w">'+esc(p.why)+'</div>'+
     planLineHTML(p.s.id)+
@@ -3849,7 +3868,10 @@ function takePick(id){
   var s=state.subs[id]; if(!s) return;
   var gid=s.gid;
   state.oftad=state.oftad.filter(function(c){ return cardGid(c)!==gid; });
-  state.oftad.push({k:"sub",id:s.id,done:false});
+  var why="";
+  try{ var v=verdict(); if(v && v.s && v.s.id===id) why=verdictWhy(v); }catch(e){}
+  if(why.length>220) why=why.slice(0,217).replace(/\s+\S*$/,"")+"...";
+  state.oftad.push({k:"sub",id:s.id,done:false,why:why,src:"pick"});
   touchHist(); save(); renderAll();
 }
 function skipPick(id){
@@ -4053,9 +4075,15 @@ function renderKpis(){
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
   var al=alerts();
   var hot=al.filter(function(a){ return a.score>=150; }).length;
-  ease($("#kpi-alert"),hot,0,"");
-  $("#kpi-alert-sub").textContent=hot?"past or near a deadline you called important":"nothing is shouting";
-  var planned=state.oftad.length+state.plan.length+state.done.length;
+  /* on a low day the board does not push, so it does not count what it would push on */
+  if(doseNow().band==="low"){
+    $("#kpi-alert").textContent="\u2013";
+    $("#kpi-alert-sub").textContent="paused on a low day";
+  } else {
+    ease($("#kpi-alert"),hot,0,"");
+    $("#kpi-alert-sub").textContent=hot?"past or near a deadline you called important":"nothing needs attention";
+  }
+  var planned=state.oftad.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";
   /* no delta until there is something real to compare against */
@@ -4170,8 +4198,8 @@ function renderAlerts(){
   var q=searchQ();
   var al=alerts().filter(function(a){ return hit(a.t+" "+a.w,q); });
   var box=$("#alerts"), panel=$('[data-panel="alerts"]');
-  if(panel) panel.classList.toggle("siren", screaming()>0 && !q);
-  if(!al.length){ box.innerHTML='<p class="calm">Nothing is close enough to shout about.</p>'; return; }
+  if(panel) panel.classList.toggle("siren", screaming()>0 && !q && doseNow().band!=="low");
+  if(!al.length){ box.innerHTML='<p class="calm">Nothing needs attention.</p>'; return; }
   box.innerHTML=al.slice(0,8).map(function(a){
     return '<button class="alert'+(a.score>=150?" hot":"")+'" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
       '<span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
@@ -4185,10 +4213,21 @@ function cardGid(c){ var s=cardSub(c); return s?s.gid:c.id; }
 function cardFrom(c){ var g=gById(cardGid(c)); return c.k==="sub"?(g?g.name:"") : "Main task"; }
 function cardPct(c){ var s=cardSub(c); if(s) return s.pct; var g=gById(c.id); return g?groupPct(g):0; }
 function cardValid(c){ return c.k==="sub" ? !!state.subs[c.id] : !!gById(c.id); }
+/* why a card is in this list, in plain words: the board's reason when it
+   suggested it and you took it, where it came from when it was carried, or
+   that you put it there. Done cards need none. */
+function chipWhy(c,zone){
+  if(zone==="done") return "";
+  if(c.carried) return "Carried over"+(c.from?" from "+c.from.slice(5):"");
+  if(c.why) return "Why: "+c.why;
+  return zone==="oftad" ? "You chose this for today" : "You queued this";
+}
 function chipHTML(c,i,zone){
+  var w=chipWhy(c,zone);
   return '<div class="chip'+(c.carried?" carried":"")+'" data-card="'+zone+":"+i+'">'+
     '<span class="c-from">'+esc(cardFrom(c))+(c.carried?" · carried":"")+'</span>'+
     '<span class="c-name">'+esc(cardName(c))+'</span>'+
+    (w?'<span class="c-why">'+esc(w)+'</span>':"")+
     '<span class="c-prog">'+cardPct(c)+"% complete</span></div>";
 }
 function prune(){
@@ -4213,20 +4252,22 @@ function renderDocks(){
   $("#oftad").innerHTML = state.oftad.length
     ? state.oftad.map(function(c,i){ return chipHTML(c,i,"oftad"); }).join("")
     : '<p class="hint">Empty</p>';
+  /* Waiting can be long; show the first few and let the rest be asked for */
+  var WAIT_SHOW=4, waitMore=state.plan.length>WAIT_SHOW;
   $("#plan").innerHTML = state.plan.length
-    ? state.plan.map(function(c,i){ return chipHTML(c,i,"plan"); }).join("")
+    ? state.plan.map(function(c,i){ return (waitAll||i<WAIT_SHOW) ? chipHTML(c,i,"plan") : ""; }).join("")
     : '<p class="hint">Empty</p>';
+  var wm=$("#plan-more");
+  if(wm){ wm.hidden=!waitMore; wm.textContent=waitAll?"Show fewer":"Show all "+state.plan.length; }
   $("#done").innerHTML = state.done.length
     ? state.done.map(function(c,i){ return chipHTML(c,i,"done"); }).join("")
     : '<p class="hint">Empty</p>';
   renderPick();
-  $("#oftad-count").textContent=state.oftad.length+" of "+state.groups.length+" goals covered";
+  var dz0=doseNow(), todayN=state.oftad.length+state.done.length;
+  $("#oftad-count").textContent=todayN+" of today\u2019s dose of "+dz0.n+(dz0.band==="low"?" (low day)":"")+
+    (todayN>dz0.n?" \u00b7 over the dose, your call":"");
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
-  var dz=doseNow(), pc=state.plan.length?state.plan.length+" queued":"Nothing queued";
-  if(dz.band!=="normal"){
-    pc+=" \u00b7 "+(dz.band==="low"?"low day":"more")+", dose "+dz.n;
-    if(dz.band==="low" && state.plan.length+state.oftad.length>dz.n) pc+=" \u00b7 more than a low day carries";
-  }
+  var pc=state.plan.length?state.plan.length+" waiting":"Nothing waiting";
   $("#plan-count").textContent=pc;
   $("#plan-roll").textContent=rollNote;
   $("#done-count").textContent=state.done.length?state.done.length+" finished today":"Nothing finished yet today";
@@ -4237,6 +4278,8 @@ function renderDocks(){
         return "<b>"+d.d.slice(5)+"</b> "+d.done+"/"+d.planned; }).join(" · ")
     : "No earlier days recorded yet.";
 }
+var waitAll=false;
+$("#plan-more").addEventListener("click",function(e){ e.stopPropagation(); waitAll=!waitAll; renderDocks(); });
 function saysFlash(msg){ flash=msg; flashT=Date.now()+4600; setTimeout(renderDocks,4700); }
 /* The artifact frame silently refuses native modal dialogs, so every
    destructive action arms on its own button and fires on a second click. */
@@ -4889,7 +4932,7 @@ document.addEventListener("pointermove",function(e){
 });
 function addCard(zone,c,at){
   if(zone==="oftad"){
-    if(c.k!=="sub"){ saysFlash("One subtask at a time in here. Whole main tasks go in the plan."); return false; }
+    if(c.k!=="sub"){ saysFlash("One subtask at a time in here. Whole main tasks go in Waiting."); return false; }
     var gid=cardGid(c), replaced=null;
     state.oftad=state.oftad.filter(function(x){
       if(cardGid(x)===gid && x.id!==c.id){ replaced=cardName(x); return false; } return true; });
@@ -5049,7 +5092,7 @@ function checkRemind(at){
     return;
   }
   /* and the afternoon check on what was actually taken on */
-  var open=state.oftad.concat(state.plan);
+  var open=state.oftad;                              /* Today only: Waiting is not today's job */
   if(!state.told.pm && now.getHours()>=15 && open.length){
     state.told.pm=true; save();
     fire("Still open", open.length+" still open: "+open.slice(0,3).map(cardName).join(", "), "oys-today");
@@ -5731,8 +5774,8 @@ function botSnapshot(){
   });
   function dock(n,a){ return n+": "+(a.length?a.map(function(c){ return cardName(c); }).join("; "):"empty"); }
   out.push("");
-  out.push(dock("ONE TASK A DAY (max one subtask per main task)",state.oftad));
-  out.push(dock("TODAY'S PLAN",state.plan));
+  out.push(dock("TODAY (what the person is doing today; max one subtask per main task)",state.oftad));
+  out.push(dock("WAITING (queued or carried over; not today's job unless pulled into Today)",state.plan));
   out.push(dock("DONE TODAY",state.done));
   var dzs=doseNow();
   var kept=memKept();
@@ -5745,7 +5788,7 @@ function botSnapshot(){
 var BOT_RULES=
 "You are the tutor built into this Minimum Deliveries board: patient, concrete, and on the person's side. "+
 "You speak only about this board: "+
-"its main tasks, subtasks, progress, status, the three docks (One Task A Day, Today's Plan, Done Today), "+
+"its main tasks, subtasks, progress, status, the three lists (Today, Waiting, Done today), "+
 "and what to work on next. If asked about anything else, say in one line that you only handle this board, "+
 "and stop.\n\n"+
 "When the person asks for a change, MAKE it with the tools instead of describing how to do it by hand. "+
@@ -5901,22 +5944,23 @@ function botTools(){
      state.groups.push(g); state.sel=g.id;
      return done("Added main task \"" + nm + "\".");
    }},
-  {name:"focus_today",description:"Put one subtask into One Task A Day. Only one subtask per main task is allowed there, so this replaces any card already held by that main task.",
+  {name:"focus_today",description:"Put one subtask into Today, the list of what the person is doing today. Only one subtask per main task is allowed there, so this replaces any card already held by that main task.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
    execute:function(a){
      var sb=botFindSub(a.subtask), gid=sb.gid, out=null;
      state.oftad=state.oftad.filter(function(c){
        if(cardGid(c)===gid && c.id!==sb.id){ out=cardName(c); return false; } return true; });
-     if(!state.oftad.some(function(c){ return c.id===sb.id; })) state.oftad.push({k:"sub",id:sb.id,done:false});
-     return done(sb.name+" is the one task for today"+(out?", swapping out \""+out+"\"":"")+".");
+     state.plan=state.plan.filter(function(c){ return c.id!==sb.id; });
+     if(!state.oftad.some(function(c){ return c.id===sb.id; })) state.oftad.push({k:"sub",id:sb.id,done:false,src:"you"});
+     return done(sb.name+" is in Today"+(out?", swapping out \""+out+"\"":"")+".");
    }},
-  {name:"plan_today",description:"Put one subtask into Today's Plan, the unlimited queue. Returns confirmation.",
+  {name:"plan_today",description:"Put one subtask into Waiting, the queue of things that are not today's job unless pulled into Today. Returns confirmation.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
    execute:function(a){
      var sb=botFindSub(a.subtask);
-     if(state.plan.some(function(c){ return c.id===sb.id; })) return sb.name+" is already in the plan.";
+     if(state.plan.some(function(c){ return c.id===sb.id; })) return sb.name+" is already waiting.";
      state.plan.push({k:"sub",id:sb.id,done:false});
-     return done("Queued "+sb.name+" for today.");
+     return done("Put "+sb.name+" in Waiting. It is not part of today until you pull it into Today.");
    }},
   {name:"mark_done_today",description:"Move one subtask into Done Today. This records it for today only and does not change its percent complete.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"}},required:["subtask"]},
@@ -5926,7 +5970,7 @@ function botTools(){
      if(!state.done.some(function(c){ return c.id===sb.id; })) state.done.push({k:"sub",id:sb.id,done:true});
      return done("Logged "+sb.name+" as done today.");
    }},
-  {name:"clear_dock",description:"Ask to empty one dock: focus (One Task A Day), plan (Today's Plan) or done (Done Today). This only stages the request: the person has to press a button in the chat to confirm, so never say it is done.",
+  {name:"clear_dock",description:"Ask to empty one dock: focus (Today), plan (Waiting) or done (Done today). This only stages the request: the person has to press a button in the chat to confirm, so never say it is done.",
    inputSchema:{type:"object",properties:{dock:{type:"string",enum:["focus","plan","done"]}},required:["dock"]},
    execute:function(a){
      var d=String(a.dock||"").toLowerCase(), z=d==="focus"?"oftad":d;
@@ -6209,7 +6253,7 @@ var BRAIN=[
    function(){
      var f=nameList(state.oftad), p=nameList(state.plan.filter(function(c){ return !c.done; }));
      if(!f&&!p) return "Nothing is set for today. Say: focus on, then a task name.";
-     return ((f?"One task a day: "+f+". ":"")+(p?"Also queued: "+p+".":"")).trim();
+     return ((f?"Today: "+f+". ":"Nothing is in Today yet. ")+(p?"Waiting: "+p+".":"")).trim();
    }],
   [/^(?:what did i do today|what(?:'s| is|'ve i| have i) done(?: today)?|done today)$/,
    function(){ var d=nameList(state.done);
@@ -6236,7 +6280,7 @@ var BRAIN=[
 ];
 
 /* one hook, so the command engine can be exercised without a microphone */
-try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, askSpoken:function(t){ return botAsk(t,{spoken:true}); }, openSheet:function(){ botOpen(true); },
+try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, askSpoken:function(t){ return botAsk(t,{spoken:true}); }, openSheet:function(){ botOpen(true); }, dose:function(){ return doseNow(); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
