@@ -6247,7 +6247,7 @@ act({id:"sharpest",group:"Settings",ex:"I am sharpest in the morning",kw:["sharp
   re:[/\b(?:sharpest|most focused|most alert|focus(?:ed)? best|work best|best time)\b.*?\b(morning|afternoon|evening)\b/,/\bi(?:'m| am) (?:a |an )?(morning|afternoon|evening) (?:person|type)\b/],take:[["sharp",1]],ask:{sharp:"Morning, afternoon or evening?"},
   run:function(v){ return toolRun("set_setting",{key:"sharpest",value:v.sharp}); }});
 act({id:"training",group:"Settings",ex:"I train after work",kw:["train","gym","exercise","workout"],
-  re:[/\b(?:i )?(?:train|work out|exercise|go to the gym)\b(?: (?:at|in|during))? ?(.*)$/],take:[["gym",1]],ask:{gym:"When do you train? Before work, at lunch, after work, weekends only, or not at the moment."},
+  re:[/^(?:i |i'm |i am )?(?:train|training|work out|exercise|go to the gym)\b(?: (?:at|in|during))? ?(.*)$/],take:[["gym",1]],ask:{gym:"When do you train? Before work, at lunch, after work, weekends only, or not at the moment."},
   run:function(v){ return toolRun("set_setting",{key:"training",value:v.gym}); }});
 act({id:"brief_time",group:"Settings",ex:"Send my morning brief at 8am",kw:["brief","morning","briefing"],
   re:[/\b(?:morning )?(?:brief|briefing)(?: time)?\b(?: (?:at|to|is|for))? ?(\d.*|noon|midnight)$/,/^(?:set )?(?:my )?(?:morning )?brief(?:ing)?(?: time)?(?: to| at| is)? ?(.*)$/],take:[["time",1]],ask:{time:"What time should the morning brief come? For example 07:30."},
@@ -6361,7 +6361,10 @@ function assistMatch(q,strict){
   }
   return null;
 }
+/* these belong to memory, evidence and experiments, which read them first */
+var NOT_MINE=/^(?:remember|forget|try|stop experiment|start experiment|what do you know|any evidence|is there (?:any )?(?:evidence|research)|what does the (?:evidence|science|research)|what should i try)\b/;
 function assist(q,strict){
+  if(NOT_MINE.test(q)) return undefined;
   if(FLOW){
     var f=FLOW;
     if(/^(?:cancel|never ?mind|forget it|stop|no|leave it)$/.test(q)){ FLOW=null; return "Okay, I stopped."; }

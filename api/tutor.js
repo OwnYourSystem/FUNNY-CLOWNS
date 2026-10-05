@@ -97,7 +97,7 @@ export const TOOLS = [
   "set_setting", "set_minimum_day", "tick_minimum_day", "set_when", "set_estimate", "log_actual", "go_to", "search_board"
 ];
 
-const LIMITS = { messages: 60, bytes: 250000, text: 8000, result: 20000, tools: 40, toolBytes: 4000, desc: 1500 };
+const LIMITS = { messages: 60, bytes: 250000, text: 8000, result: 20000, tools: 60, toolBytes: 4000, desc: 1500 };
 const SB_URL = process.env.SUPABASE_URL || "https://phicqgnzqnuwugzbgxxw.supabase.co";
 const SB_KEY = process.env.SUPABASE_KEY || "sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
 const REQUIRE_AUTH = process.env.TUTOR_REQUIRE_AUTH !== "0";
