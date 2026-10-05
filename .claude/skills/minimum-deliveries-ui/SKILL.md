@@ -1,6 +1,6 @@
 ---
 name: minimum-deliveries-ui
-description: Build a page in the Minimum Deliveries interface — a dark-first, single-file dashboard with movable panels, drag-and-drop docks, a press-and-talk voice tutor and depth on scroll. Use when asked to build, extend or restyle anything in this house style, when a request names "the board", "the deliveries interface", "OYS style" or points at delivery-board.html,
+description: Build a page in the Minimum Deliveries interface — a dark-first, single-file dashboard with movable panels, drag-and-drop docks, a plain typed assistant and depth on scroll. Use when asked to build, extend or restyle anything in this house style, when a request names "the board", "the deliveries interface", "OYS style" or points at delivery-board.html,
 ---
 
 # The Minimum Deliveries interface
@@ -79,7 +79,7 @@ Radius 20px for a panel, 14-16px for a card, 999px for a pill or a button.
 Panels are `color-mix(in srgb, var(--panel) 82%, transparent)` with
 `backdrop-filter: blur(22px) saturate(1.3)` and a `--hair` border. Dividers
 are hairlines, never boxes. Nothing has a drop shadow unless it is lifted
-off the page: a dragged card, a floating sheet, the orb.
+off the page: a dragged card, a floating sheet.
 
 ## The phone shell is moulded, not drawn
 
@@ -102,7 +102,7 @@ go. Three rules keep it from turning to mush.
 2. **Type keeps its contrast.** A soft surface is no excuse for soft text.
    `--ink`, `--ink-2` and the five progress bands do not change.
 3. **The red stays flat.** The one thing allowed to shout is not moulded into
-   the background: the alarm badge and the assistant orb keep a solid fill.
+   the background: the needs-attention badge and the assistant panel keep a solid fill.
 
 **The moulded block goes last in the stylesheet.** It sits after the phone
 strip block, which is also `max-width:820px`. Placed before it, the strip's
@@ -411,6 +411,20 @@ the same alarms in the same order the panel puts them.
   one set of topics for another. News items are spans, not buttons: the
   board's own items are the ones worth pressing.
 
+## Today and Waiting, and what needs attention
+
+**There are two lists, not three.** Today is the top panel, sized to the
+day's dose (1 on a low day, 3 normal, 5 high) and filled from the board's
+picks. Every card says why it is there, or "Carried over from MM-DD".
+Waiting is the carry-over queue: it shows the first 4 and a "more" line.
+Done today is the third dock. At the end of a day what is unfinished in Today
+moves to Waiting, and Waiting never counts as planned, so a long carried pile
+cannot make every day look like a low one.
+
+**"Needs attention" is the old Alarm.** It lists what is late or due soon,
+and it goes quiet on a low day: the KPI shows "paused on a low day" and no
+siren plays. A rough day is not a day to be shown a pile of overdue things.
+
 ## One notification a day, carrying the decision
 
 The morning brief fires at a time the person sets, once, with the task, why
@@ -504,40 +518,57 @@ within 80px of the top or bottom.
 drop pushes whatever was landed on out below, and the panel just moved
 keeps its place.
 
-## The voice tutor
+## The assistant
 
-**Its mark names the thing, not the input.** The orb wore a dictation
-microphone, which said "voice input" when the thing is the board's tutor. It
-is a speech bubble with the board's own rising bars inside it, the same three
-bars the Board tab uses, so the family reads as one system. The sheet header
-carries it too.
+**There is no microphone anywhere.** No orb, no dictation, no
+`SpeechRecognition`, no `getUserMedia`, and the `Permissions-Policy` header
+says `microphone=()`. A test fails if any of them comes back. Voice was a
+fancy way in that failed often (permissions, mishearing, the browser) and
+the person asked for a plain one.
 
-**One mark for every state.** Whether the microphone is available is said by
-the orb's fill, solid when it can hear and outlined when it cannot, and by
-its label. A second glyph would be a second thing to learn for something the
-colour already says.
+**It is a chat, opened by a button in the header.** The "Assistant" button
+(`aria-expanded`, `aria-controls="botsheet"`) opens a fixed panel at the
+bottom right (full width above the tab bar on a phone). Escape closes it.
+It never opens by itself. Notices that used to be a toast are a quiet
+`role="status"` line (`#flashnote`).
 
-One orb, `position:fixed`, draggable, 66px (62 on a phone). **Press it and
-it listens. That is all it does.** It never throws a panel over the board.
+**It can change everything a person can change by hand.** Every list and
+setting has a tool and a plain-words command: Today and Waiting, step
+priority, deadline, tag, When and How long, goal name, priority, deadline,
+place, tags, archive, backlog, restore and remove, hours, work days,
+commute, sharpest time, training, day end, brief time, what matters most,
+hints, hint reminders, the low-day question, learning, theme, animation,
+the minimum day and its ticks, pages and search. The one thing it cannot see
+or change is the weekly check-in, which is private. It opens the check-in
+dialog and says so.
 
-- What it heard and what it did appear on a small strip beside the orb,
-  two lines, gone by itself.
-- Press the strip, or hold the orb for 450ms, to open the full thread.
-- The thread only opens itself when the microphone cannot be had, because
-  then typing is the way through.
+**The parts, in order of reading a sentence:**
 
-**Ask `getUserMedia({audio:true})` before `SpeechRecognition.start()`.**
-Recognition can be refused with no dialog at all; `getUserMedia` is the call
-that raises the permission prompt. Read
-`document.featurePolicy.allowsFeature("microphone")` to say which refusal
-it was, and never send a desktop user looking for a keyboard mic key that
-does not exist.
+1. Distress words get the one fixed calm reply, before anything else.
+2. `assist()`: a table of actions (`ACT`), each with trigger patterns, the
+   details it needs (`take`), a question for each (`ask`), and what it runs.
+   A sentence that names the change but not the value gets a question back
+   ("What time does your day end?"), and the next message is read as the
+   answer. `cancel` stops. Memory, evidence and experiment sentences are
+   left to their own readers (`NOT_MINE`).
+3. The older command table (`BRAIN`), then the guesser, which is skipped
+   when a model is there to talk.
+4. A sentence nothing could place gets the closest things it can do
+   (`suggestFor`), never a guess and never a change. A name that matches
+   nothing gets the nearest real names.
 
-**The page understands its own commands**, with no model behind it: a table
-of regexes over a normalised sentence, a table of the mishearings speech
-keeps producing (`test` → `task`), name matching by word overlap because
-speech never returns a name exactly, and `it` meaning the thing just named.
-A model, where one is reachable, only gets the sentences the table missed.
+**Typed words keep their capitals** (`asTyped`) and `Type ...` is the verb in
+every message, not `Say ...`.
+
+**The tools are the model's API too.** `botTools()` is the list a hosted
+model is handed, and `api/tutor.js` carries an allowlist that a test compares
+with it, name for name. Removing a step, removing a goal and clearing a list
+are staged: the chat shows what would happen and two buttons, and nothing
+changes until the person presses the first.
+
+**A model is optional.** Where Claude is reachable it takes only the
+sentences the board could not place. The hosted proxy is parked
+(`TUTOR_PROXY=false`).
 
 ## Writing
 
@@ -565,6 +596,6 @@ a nav as a stub.
 ## What to verify before saying it works
 
 Drive it with a real browser, not a claim. Drag a card between docks, drag a
-panel and check nothing overlaps, press the orb and check it listens, load
+panel and check nothing overlaps, type a command to the assistant and check the board changed, load
 it at 412px wide, and read the console. Every bug in this app's history was
 found by pressing it and lost by assuming.
