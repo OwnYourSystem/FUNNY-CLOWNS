@@ -314,6 +314,20 @@ only days it was opened, and on a low day says "these are enough". The event log
 a tick by anchor id, never the words. It stays hidden until the planner has met the
 person, and an empty strip is one quiet line. Do not turn it into a streak or a score.
 
+**The weekly check-in is kept apart from everything else on purpose.** Five taps, 1 to
+5, all worded so higher is better (energy, mood, calm, getting through the day,
+something that mattered), once a week if the person likes. It lives under its own key
+`oys-min-deliveries-v1.week`, never in `state`, so it stays out of account sync, the
+backup text, `botSnapshot`, every tutor tool, the memory and the hints. Keep it that
+way: do not add it to `state`, a tool, a hint candidate or a memory finding. It opens
+only when pressed (a quiet line on the board shows when one is due, 7 days after the
+last), it is deleted whole from the Planner, and Reset removes it. The event log
+records that one was set, never the numbers. The board says only two things, only when
+true: output rose by 2 or more while at least three of energy, mood, calm and getting
+through the day fell; and mood and calm both at 2 or below at two check-ins in a row,
+which points to someone you trust or a doctor and says the board can only help with the
+board. No score, no streak, no diagnosis, no advice beyond that.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 
