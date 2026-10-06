@@ -29,7 +29,7 @@ Why it stands apart: conventional planners measure finished tasks and assume a p
 | ID | Task | Why | Depends on | Size | Status |
 |---|---|---|---|---|---|
 | F1 | Write the v2 brief: summit sentence, principles, ideas accepted or rejected | One source of truth before building | none | S | Done and confirmed: `v2-brief.md` |
-| F2 | Split the single file into a shared engine (day size, picks, reasons, stats, tools) and two screen shells | Two designs on one brain | F1 | L | Blocked |
+| F2 | Split the single file into a shared engine (day size, picks, reasons, stats, tools) and two screen shells | Two designs on one brain | F1 | L | In progress, parked 2026-10-06: steps 1 and 2 done for parts 010 to 200, see `f2-engine-split.md` |
 | F3 | Sync item by item, with a rule for edits on both devices | Today the last device to save wins; two devices will lose edits | F2 | L | Blocked |
 | F4 | Shared design tokens: colours, type, spacing, component names | Web and phone look like one product | F1 | M | Blocked |
 | F5 | Versioned stored data with safe migrations | Every update must read last month's data | F2 | M | Blocked |
