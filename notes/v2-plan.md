@@ -74,7 +74,7 @@ Why it stands apart: conventional planners measure finished tasks and assume a p
 | P8 | Small celebration on done; "days that count" as "5 of the last 7", with the minimum day counting | Satisfying without streak guilt | P2 | S | Blocked |
 | P9 | Prove push on a real phone | Built, not yet proven | Your test | S | Ready |
 | P10 | A cue after a calendar meeting ends | Contextual cue that works | F10, P9 | M | Blocked |
-| P11 | Play Store listing through a web-app wrapper | Easy to find and install | F9, P2; a Google Play developer account in your name | M | Blocked (agreed) |
+| P11 | Play Store listing through a web-app wrapper | Easy to find and install | F9, P2; a Google Play developer account in your name | M | Deferred by owner (agreed, not soon) |
 | P12 | Decide on a native shell for iPhone haptics, widgets and the App Store, after 3 to 4 weeks of use | Native only when the design is proven | P2 to P8 in use | S | Blocked |
 | P13 | Home-screen widget: today's one thing | The strongest daily cue a phone offers | P12 = yes | L | Blocked |
 
@@ -100,5 +100,5 @@ W1 to W3 and P9 can start now, before the foundation, because they touch only th
 4. **Life areas** for W9: work, health, people, learning, rest. They can be renamed later.
 
 Notes on two of them:
-- F9: we draft the texts; a legal professional should review them before publishing.
-- P11: needs a Google Play developer account in your name (a one-time fee) and a store review.
+- F9: we draft the texts; a legal professional reviews them before publishing. The owner confirmed on 2026-10-06: full compliance is required.
+- P11: deferred by the owner on 2026-10-06, "not that soon". When it starts, it needs a Google Play developer account in the owner's name (a one-time fee) and a store review.
