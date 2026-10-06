@@ -5,6 +5,17 @@ Written 2026-10-06. A starting plan, not a commitment. Nothing here is built.
 **Sizes** are rough, for one developer working with AI help: S = up to 2 days, M = 3 to 7 days, L = 1 to 3 weeks.
 **Status:** Ready = can start. Needs yes = waits for your decision. Blocked = waits for another task.
 
+## The summit (decided 2026-10-06)
+
+> **When life does not go to plan, people still know their next step and every day still counts; over months, they grow in what matters to them without losing their rest, health or people.**
+
+How it is checked, each with the person's consent and on the device:
+1. **Next step on hard days:** how often people come back and act after a low day or a sudden change.
+2. **Every day counts:** days met through the day's size or the minimum day, never a streak that resets.
+3. **Growth without loss:** the weekly check-in trend (energy, calm, getting through the day) beside output, and balance across life areas once W9 exists.
+
+Why it stands apart: conventional planners measure finished tasks and assume a predictable day. This measures whether a person stays steady and keeps growing when the day is not predictable.
+
 **The principles every task must pass:**
 1. One decision on screen. The reason is one tap away.
 2. Attentive: it remembers, notices, follows up once.
@@ -17,7 +28,7 @@ Written 2026-10-06. A starting plan, not a commitment. Nothing here is built.
 
 | ID | Task | Why | Depends on | Size | Status |
 |---|---|---|---|---|---|
-| F1 | Write the v2 brief: summit sentence, principles, ideas accepted or rejected | One source of truth before building | Your summit sentence, "care and attention" wording | S | Needs yes |
+| F1 | Write the v2 brief: summit sentence, principles, ideas accepted or rejected | One source of truth before building | "Care and attention" wording (summit decided) | S | Needs yes |
 | F2 | Split the single file into a shared engine (day size, picks, reasons, stats, tools) and two screen shells | Two designs on one brain | F1 | L | Blocked |
 | F3 | Sync item by item, with a rule for edits on both devices | Today the last device to save wins; two devices will lose edits | F2 | L | Blocked |
 | F4 | Shared design tokens: colours, type, spacing, component names | Web and phone look like one product | F1 | M | Blocked |
@@ -83,7 +94,7 @@ W1 to W3 and P9 can start now, before the foundation, because they touch only th
 
 ## Open decisions
 
-1. The summit sentence.
+1. ~~The summit sentence.~~ Decided, see above.
 2. "Care and attention" in place of "love and intimacy".
 3. Yes or no: undo (F6), delete my data (F7), monitoring (F8), legal pages (F9), Play Store (P11).
 4. Which life areas (W9).
