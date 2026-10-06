@@ -129,3 +129,14 @@ Live in the production database and functions:
 - Alert mail is **not active yet**: it waits for the owner to create the mail account and store the key, recipient and sender in `push_config`. Until then, alerts are recorded in `push_alerts` and show in `push_status_now`, but no mail is sent.
 
 Not yet done: F8-B (error reports from the app, delivery count), and all of F7. They change the app and wait until the owner finishes testing.
+
+### Mail alerts: parked by the owner (2026-10-06)
+
+The owner chose to set up mail later. A sample of the alert wording was sent to the owner's connected Gmail and received. To finish later:
+1. Create a mail account (Resend is the suggested one; check its current rules for the test sender).
+2. Run in the Supabase SQL editor, with real values, without pasting the key in chat:
+   `insert into public.push_config (key, value) values ('mail_key','...'), ('mail_to','...'), ('mail_from','Board alerts <onboarding@resend.dev>') on conflict (key) do update set value = excluded.value;`
+3. Check the three names exist: `select key from public.push_config where key in ('mail_key','mail_to','mail_from');`
+4. Ask the assistant to send the real test alert through the server.
+
+Until then alerts are recorded in `push_alerts` and show in `push_status_now`. No mail is sent.
