@@ -1,0 +1,15 @@
+</script>
+<!--ARTIFACT-END-->
+<script>
+/* Installed to the home screen it runs from its own cache, with no network.
+   This block lives outside the artifact markers, so the artifact never sees it. */
+if("serviceWorker" in navigator && location.protocol.indexOf("http")===0){
+  addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").catch(function(e){
+      try{ console.warn("offline cache unavailable:",e&&e.message||e); }catch(_){}
+    });
+  });
+}
+</script>
+</body>
+</html>

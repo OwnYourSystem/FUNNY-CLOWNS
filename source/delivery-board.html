@@ -1593,8 +1593,6 @@ function rollRecurring(){
   return due;
 }
 
-/* ---------------- helpers ---------------- */
-function $(s){ return document.querySelector(s); }
 function pad2(n){ return (n<10?"0":"")+n; }
 function dstr(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
 function todayStr(){ return dstr(new Date()); }
@@ -1604,6 +1602,8 @@ function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,
 function clamp(n,a,b){ return n<a?a:(n>b?b:n); }
 function uid(p){ return p+Math.random().toString(36).slice(2,8); }
 
+/* ---------------- helpers ---------------- */
+function $(s){ return document.querySelector(s); }
 /* ---------------- state ---------------- */
 /* Everything below runs before the first boot, because boot migrates the
    saved board against these lists and a var assigned later is undefined
@@ -1746,29 +1746,6 @@ function band(p){
   if(p>0)    return "b25";
   return "b0";
 }
-function boot(){
-  var s=null;
-  try{ var raw=localStorage.getItem(KEY); if(raw) s=JSON.parse(raw); }catch(e){ s=null; }
-  if(s && s.v===1) s=migrate1(s);
-  if(!s || s.v!==2 || !s.groups) { s=blankState(); }
-  if(!s.ue) s.ue={}; if(!s.killed) s.killed=[]; if(!s.oftad) s.oftad=[];
-  if(!s.plan) s.plan=[]; if(!s.done) s.done=[]; if(!s.dayLog) s.dayLog=[];
-  if(!s.capLog) s.capLog=[];
-  if(!s.ev) s.ev=[];
-  /* the tutor no longer speaks its replies; a flag an older build saved goes */
-  delete s.speak;
-  /* the grid is the only layout now; anything a older build saved goes */
-  delete s.free; delete s.layout;
-  /* sync adds any goal the seed grew since last time, and those arrive
-     without the fields toGoals fills in, so it runs on both sides of it */
-  state=s; toGoals(); sync(); toGoals();
-  if(!state.hist.length) seedHist();
-  if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
-  rollRecurring();          /* bring every habit into today before the first draw */
-  evPrev=evSnap();          /* what changes from here on is what the person did */
-  if(!state.exp) state.exp={active:null,done:[],unseen:false};
-  return state;
-}
 function migrate1(old){
   var s=blankState();
   state=s; sync();
@@ -1794,16 +1771,6 @@ function syncMode(){
   if(ACCOUNT_ON && typeof acct!=="undefined" && acct && acct.uid) return "account";
   if(typeof boardDb!=="undefined" && boardDb) return "artifact";
   return "local";
-}
-function save(){
-  try{ evCapture(); }catch(e){}
-  state.savedAt=Date.now();
-  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
-  var m=syncMode();
-  if(m==="account" && typeof syncSoon==="function") syncSoon();
-  else if(m==="artifact" && typeof pushBoard==="function") pushBoard();
-  if(typeof paintWhere==="function") paintWhere();
-  if(typeof pushSoon==="function") pushSoon();
 }
 
 /* Search: every word you typed has to appear somewhere in the thing, in
@@ -1914,6 +1881,39 @@ function seedHist(){
   state.hist=[{d:todayStr(), v:overall(), first:1}];
 }
 
+function boot(){
+  var s=null;
+  try{ var raw=localStorage.getItem(KEY); if(raw) s=JSON.parse(raw); }catch(e){ s=null; }
+  if(s && s.v===1) s=migrate1(s);
+  if(!s || s.v!==2 || !s.groups) { s=blankState(); }
+  if(!s.ue) s.ue={}; if(!s.killed) s.killed=[]; if(!s.oftad) s.oftad=[];
+  if(!s.plan) s.plan=[]; if(!s.done) s.done=[]; if(!s.dayLog) s.dayLog=[];
+  if(!s.capLog) s.capLog=[];
+  if(!s.ev) s.ev=[];
+  /* the tutor no longer speaks its replies; a flag an older build saved goes */
+  delete s.speak;
+  /* the grid is the only layout now; anything a older build saved goes */
+  delete s.free; delete s.layout;
+  /* sync adds any goal the seed grew since last time, and those arrive
+     without the fields toGoals fills in, so it runs on both sides of it */
+  state=s; toGoals(); sync(); toGoals();
+  if(!state.hist.length) seedHist();
+  if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
+  rollRecurring();          /* bring every habit into today before the first draw */
+  evPrev=evSnap();          /* what changes from here on is what the person did */
+  if(!state.exp) state.exp={active:null,done:[],unseen:false};
+  return state;
+}
+function save(){
+  try{ evCapture(); }catch(e){}
+  state.savedAt=Date.now();
+  try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+  var m=syncMode();
+  if(m==="account" && typeof syncSoon==="function") syncSoon();
+  else if(m==="artifact" && typeof pushBoard==="function") pushBoard();
+  if(typeof paintWhere==="function") paintWhere();
+  if(typeof pushSoon==="function") pushSoon();
+}
 /* ---------------- derived ---------------- */
 function allSubs(){ var a=[]; state.groups.forEach(function(g){ g.subs.forEach(function(id){ if(state.subs[id]) a.push(state.subs[id]); }); }); return a; }
 function overall(){ var a=allSubs(); if(!a.length) return 0; var t=0; a.forEach(function(s){ t+=s.pct; }); return Math.round(t/a.length*10)/10; }
@@ -2056,6 +2056,15 @@ function screaming(){ return alerts().filter(function(a){ return a.score>=150; }
 /* A copy of the whole board, once a day, for the last 7 days. It does not
    survive this browser being wiped, but it does survive a bad afternoon. */
 var SNAP_KEY=KEY+".snaps";
+function restoreSnapshot(day){
+  var hit=readSnaps().filter(function(x){ return x.d===day; })[0];
+  if(!hit) return false;
+  keepSnapshot("before-restore-"+todayStr());
+  state=hit.data;
+  boot2();
+  return true;
+}
+
 function readSnaps(){
   try{ return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]"); }catch(e){ return []; }
 }
@@ -2067,15 +2076,6 @@ function keepSnapshot(day){
     localStorage.setItem(SNAP_KEY, JSON.stringify(all));
   }catch(e){ /* a full quota is not worth losing the board over */ }
 }
-function restoreSnapshot(day){
-  var hit=readSnaps().filter(function(x){ return x.d===day; })[0];
-  if(!hit) return false;
-  keepSnapshot("before-restore-"+todayStr());
-  state=hit.data;
-  boot2();
-  return true;
-}
-
 /* ---------------- what happened, and the questions you can put to it ----------------
    Every change to the board passes through save(), so that is where it is
    noticed: the percent that moved, the card that went into a dock or into
@@ -2416,14 +2416,6 @@ function pendStage(t,a){
   pendRender();
   return "Ready: "+label+". Nothing has changed. The person has to press the button in the chat to confirm. Tell them it is waiting for them, and do not say it is done.";
 }
-function pendRender(){
-  var box=$("#bot-pend"); if(!box) return;
-  if(PEND && Date.now()-PEND.at>PEND_MS) PEND=null;
-  if(!PEND){ box.hidden=true; box.innerHTML=""; return; }
-  box.hidden=false;
-  box.innerHTML="<span>"+esc(PEND.label)+"?</span>"+
-    '<button class="btn danger" data-pend-yes>'+esc(PEND.verb)+'</button><button class="btn" data-pend-no>Keep it</button>';
-}
 function pendYes(){
   var p=PEND; PEND=null;
   if(!p) { pendRender(); return; }
@@ -2452,6 +2444,14 @@ function recordTools(tools){
 }
 
 
+function pendRender(){
+  var box=$("#bot-pend"); if(!box) return;
+  if(PEND && Date.now()-PEND.at>PEND_MS) PEND=null;
+  if(!PEND){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML="<span>"+esc(PEND.label)+"?</span>"+
+    '<button class="btn danger" data-pend-yes>'+esc(PEND.verb)+'</button><button class="btn" data-pend-no>Keep it</button>';
+}
 /* ---------------- experiments: try one thing, measure it, say what it showed ----------------
    An entry in the library can be run. The person starts it; the board never
    does. One at a time, so that whatever changes can be put down to it. The
@@ -2633,6 +2633,8 @@ function expStatusMsg(){
   if(st.state==="running") return "Day "+st.day+" of "+st.days+" of "+st.id+": "+st.do+" I am measuring "+st.measures+" and will tell you on "+st.ends+".";
   return st.id+" finished. "+st.says;
 }
+
+
 function renderExp(){
   var box=$("#exp-card"); if(!box) return;
   expTick();
@@ -2652,8 +2654,6 @@ function renderExp(){
       '<p class="exp-w">'+esc(expShort(st.result))+' The numbers are under Read the result.</p>';
   }
 }
-
-
 /* ---------------- what the board has learned, and only what you kept ----------------
    It watches what you do and, when a pattern is clear enough to bet on, it
    shows you the pattern and the numbers behind it and asks. Nothing it
@@ -2806,6 +2806,8 @@ function memSay(){
   return "What I know, all of it kept by you: "+k.map(memLine).join(" ")+" Type forget and a number to remove one.";
 }
 var MEM_ARM=0;
+
+
 function renderLearn(){
   var box=$("#learn-card"); if(!box) return;
   memTick(false);
@@ -2848,8 +2850,6 @@ function memRoute(e){
   if(x){ memDrop(x.dataset.memDel,false); save(); renderAll(); return true; }
   return false;
 }
-
-
 /* ---------------- one hint a day, and learning which kind helps you ----------------
    Not advice generated from nowhere: each hint is built from something the
    board can see in your own numbers (days you finished something, a goal
@@ -2925,6 +2925,26 @@ function hintChoose(cands,log,today){
   });
   return best?best.c:null;
 }
+function hintDone(h){ return !h || h.ans!==null || h.acted; }
+function hintActed(id){
+  var h=state.hint, floor=addDays(todayStr(),-3);
+  if(h && h.suggest===id && h.d>=floor) h.acted=true;
+  hintLog().forEach(function(l){ if(l.suggest===id && l.d>=floor) l.acted=true; });
+}
+function hintAnswer(ans){
+  var h=state.hint; if(!h||h.d!==todayStr()) return false;
+  h.ans=ans; evAdd({t:Date.now(),k:"hint",type:h.type,ans:ans}); save(); return true;
+}
+function hintSay(){
+  if(!hintOn()) return "Hints are off. Type start hints to turn them on.";
+  hintTick();
+  var h=state.hint;
+  if(!h) return "No hint today: nothing in your numbers is worth your attention yet.";
+  return h.t+" ("+h.evid+")";
+}
+function hintPlain(t){ return String(t).replace(/\[E-[A-Z0-9-]+\]/g,"").replace(/\s+/g," ").replace(/ \./g,".").trim(); }
+
+
 function hintTick(){
   var today=todayStr();
   if(state.hintAt===today) return;
@@ -2945,24 +2965,6 @@ function hintTick(){
   }
   save();
 }
-function hintDone(h){ return !h || h.ans!==null || h.acted; }
-function hintActed(id){
-  var h=state.hint, floor=addDays(todayStr(),-3);
-  if(h && h.suggest===id && h.d>=floor) h.acted=true;
-  hintLog().forEach(function(l){ if(l.suggest===id && l.d>=floor) l.acted=true; });
-}
-function hintAnswer(ans){
-  var h=state.hint; if(!h||h.d!==todayStr()) return false;
-  h.ans=ans; evAdd({t:Date.now(),k:"hint",type:h.type,ans:ans}); save(); return true;
-}
-function hintSay(){
-  if(!hintOn()) return "Hints are off. Type start hints to turn them on.";
-  hintTick();
-  var h=state.hint;
-  if(!h) return "No hint today: nothing in your numbers is worth your attention yet.";
-  return h.t+" ("+h.evid+")";
-}
-function hintPlain(t){ return String(t).replace(/\[E-[A-Z0-9-]+\]/g,"").replace(/\s+/g," ").replace(/ \./g,".").trim(); }
 function renderHint(){
   var box=$("#hint-card"); if(!box) return;
   hintTick();
@@ -3000,8 +3002,6 @@ function hintRoute(e){
     return true; }
   return false;
 }
-
-
 /* ---------------- after three low days: what is in the way? ----------------
    A low day is allowed, and the board makes room for it. But a low day that
    repeats can be rest, or it can be a way of not looking at something, and the
@@ -3085,6 +3085,7 @@ function barStatus(){
   return {pending:barPending(), low_days_in_a_row:barStreak(), asked_recently:barRecent(28).map(function(x){ return {date:x.d, answer:x.why}; }),
     next_check:b.next||null, on:barOn()};
 }
+
 function renderBarrier(){
   var box=$("#barrier-card"); if(!box) return;
   if(barTouch()) save();
@@ -3116,7 +3117,6 @@ function barRoute(e){
   if(e.target.closest("[data-bar-ok]")){ barState().show=null; save(); renderAll(); return true; }
   return false;
 }
-
 /* ---------------- the minimum day ----------------
    A few things, in the person's own words, that count even when nothing else
    moves: the floor under a low day. Up to four, because the note that asked for
@@ -3199,6 +3199,7 @@ function floorAsk(){
     save(); renderAll();
   });
 }
+
 function renderFloor(){
   var box=$("#floor"); if(!box) return;
   var f=floorState();
@@ -3218,7 +3219,6 @@ function renderFloor(){
       (days.seen ? '<span>Met on '+days.met+' of the last 14 days.</span>' : '')+
       '<button class="mini" data-floor-edit>Edit</button></div>';
 }
-
 /* ---------------- the weekly check-in ----------------
    Five taps once a week, 1 (low) to 5 (high), all worded so that higher is
    better: energy, mood, calm (the other side of anxious), getting through the
@@ -3236,13 +3236,6 @@ function renderFloor(){
    telling someone you trust is worth it.                                  */
 var WEEK_KEY=KEY+".week", WEEK_KEEP=26, WEEK_DATA=null;
 var WEEK_ITEMS=[["e","Energy"],["m","Mood"],["c","Calm"],["f","Getting through the day"],["w","Something that mattered to me"]];
-function weekData(){
-  if(WEEK_DATA) return WEEK_DATA;
-  try{ var x=JSON.parse(localStorage.getItem(WEEK_KEY)||"null"); WEEK_DATA=(x&&Array.isArray(x.log))?x:{v:1,log:[]}; }
-  catch(e){ WEEK_DATA={v:1,log:[]}; }
-  return WEEK_DATA;
-}
-function weekSave(){ try{ localStorage.setItem(WEEK_KEY,JSON.stringify(weekData())); }catch(e){} }
 function weekKeyOf(d){
   var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())), dn=t.getUTCDay()||7;
   t.setUTCDate(t.getUTCDate()+4-dn);
@@ -3270,10 +3263,6 @@ function weekSet(vals){
   evAdd({t:Date.now(),k:"week",act:"set"});
   return e;
 }
-function weekClear(){
-  WEEK_DATA={v:1,log:[]};
-  try{ localStorage.removeItem(WEEK_KEY); }catch(e){}
-}
 /* two plain things, said only when they are true */
 function weekNote(){
   var l=weekData().log, cur=l[l.length-1], prev=l[l.length-2], out=[];
@@ -3298,6 +3287,7 @@ function weekAsk(){
     renderAll();
   });
 }
+
 function renderWeek(){
   var box=$("#week-body"), nudge=$("#week-nudge"), l=weekData().log;
   if(nudge){
@@ -3317,7 +3307,17 @@ function renderWeek(){
     }).join("")+'</tbody></table></div>'+
     (weekNote()?'<p class="wk-note">'+esc(weekNote())+'</p>':"");
 }
-
+function weekData(){
+  if(WEEK_DATA) return WEEK_DATA;
+  try{ var x=JSON.parse(localStorage.getItem(WEEK_KEY)||"null"); WEEK_DATA=(x&&Array.isArray(x.log))?x:{v:1,log:[]}; }
+  catch(e){ WEEK_DATA={v:1,log:[]}; }
+  return WEEK_DATA;
+}
+function weekSave(){ try{ localStorage.setItem(WEEK_KEY,JSON.stringify(weekData())); }catch(e){} }
+function weekClear(){
+  WEEK_DATA={v:1,log:[]};
+  try{ localStorage.removeItem(WEEK_KEY); }catch(e){}
+}
 /* ---------------- when I will do it, and about how long ----------------
    Two optional notes on a step, both the person's own words and numbers.
    "When" is a moment you will notice (after the coffee, when you sit down at
@@ -3451,6 +3451,7 @@ function planLineHTML(id){
   }
   return bits.length?'<div class="now-plan">'+bits.join(" &middot; ")+'</div>':"";
 }
+
 function renderFollow(){
   var box=$("#est-follow"); if(!box) return;
   var x=estState(), id=x.ask, it=id&&x.items[id], sb=id&&state.subs[id];
@@ -3459,7 +3460,6 @@ function renderFollow(){
   box.innerHTML='You finished &ldquo;'+esc(sb.name)+'&rdquo;. About how long did it take? You guessed '+it.m+' min.'+
     '<div class="row-btns"><button class="btn take" data-est-log>Tell the board</button><button class="btn" data-est-skip>Skip</button></div>';
 }
-
 /* ---------------- rollover ---------------- */
 var rollNote="";
 (function(){
@@ -3725,6 +3725,30 @@ function plannerIcon(){
   var u=(state.me&&state.me.icon)||"";
   return u ? '<img src="'+esc(u)+'" alt="">' : I_PLANNER;
 }
+function takePick(id){
+  var s=state.subs[id]; if(!s) return;
+  var gid=s.gid;
+  state.oftad=state.oftad.filter(function(c){ return cardGid(c)!==gid; });
+  var why="";
+  try{ var v=verdict(); if(v && v.s && v.s.id===id) why=verdictWhy(v); }catch(e){}
+  if(why.length>220) why=why.slice(0,217).replace(/\s+\S*$/,"")+"...";
+  state.oftad.push({k:"sub",id:s.id,done:false,why:why,src:"pick"});
+  touchHist(); save(); renderAll();
+}
+function skipPick(id){
+  var t=todayStr();
+  if(!state.skip||state.skip.d!==t) state.skip={d:t,ids:[]};
+  if(state.skip.ids.indexOf(id)<0) state.skip.ids.push(id);
+  var tk=Date.now();
+  evAdd({t:tk,k:"skip",id:id,g:evG(id)});
+  state.lastSkip={t:tk,id:id};
+  save(); renderAll();
+}
+function touchHist(){
+  var t=todayStr(), o=overall(), last=state.hist[state.hist.length-1];
+  if(last&&last.d===t) last.v=o; else { state.hist.push({d:t,v:o}); if(state.hist.length>90) state.hist.shift(); }
+}
+
 /* the one line, on one line */
 function renderBadge(){
   var bar=$("#now-badge"); if(!bar) return;
@@ -3835,34 +3859,12 @@ function renderPick(){
       '<button class="btn" data-est="'+p.s.id+'" title="A guess is fine. The board learns how your guesses compare">'+(estState().items[p.s.id]?"Change guess":"How long?")+'</button>'+
     '</div>'+skipWhyHTML();
 }
-function takePick(id){
-  var s=state.subs[id]; if(!s) return;
-  var gid=s.gid;
-  state.oftad=state.oftad.filter(function(c){ return cardGid(c)!==gid; });
-  var why="";
-  try{ var v=verdict(); if(v && v.s && v.s.id===id) why=verdictWhy(v); }catch(e){}
-  if(why.length>220) why=why.slice(0,217).replace(/\s+\S*$/,"")+"...";
-  state.oftad.push({k:"sub",id:s.id,done:false,why:why,src:"pick"});
-  touchHist(); save(); renderAll();
-}
-function skipPick(id){
-  var t=todayStr();
-  if(!state.skip||state.skip.d!==t) state.skip={d:t,ids:[]};
-  if(state.skip.ids.indexOf(id)<0) state.skip.ids.push(id);
-  var tk=Date.now();
-  evAdd({t:tk,k:"skip",id:id,g:evG(id)});
-  state.lastSkip={t:tk,id:id};
-  save(); renderAll();
-}
-function touchHist(){
-  var t=todayStr(), o=overall(), last=state.hist[state.hist.length-1];
-  if(last&&last.d===t) last.v=o; else { state.hist.push({d:t,v:o}); if(state.hist.length>90) state.hist.shift(); }
-}
-
 /* ---------------- clock ---------------- */
 function weekNo(d){ var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   var dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn);
   return Math.ceil(((t-Date.UTC(t.getUTCFullYear(),0,1))/864e5+1)/7); }
+
+var lastMin=-1;
 function tick(){
   var d=new Date();
   $("#dateline").textContent=d.toLocaleDateString(undefined, window.innerWidth<520
@@ -3879,9 +3881,7 @@ function tick(){
   }
   if(state.day!==todayStr()) location.reload();
 }
-var lastMin=-1;
 tick(); setInterval(tick,1000);
-
 /* ---------------- render ---------------- */
 var GRIP='<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2.5" cy="4" r="1.3"/><circle cx="7.5" cy="4" r="1.3"/><circle cx="2.5" cy="8" r="1.3"/><circle cx="7.5" cy="8" r="1.3"/><circle cx="2.5" cy="12" r="1.3"/><circle cx="7.5" cy="12" r="1.3"/></svg>';
 var PEN='<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3z"/></svg>';
