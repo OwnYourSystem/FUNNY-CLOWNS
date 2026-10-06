@@ -72,7 +72,7 @@ Why it stands apart: conventional planners measure finished tasks and assume a p
 | P6 | Weekly check-in and a short weekly report | Growth in your pocket | F14 | M | Blocked |
 | P7 | First use in one tap, measured under 3 seconds | Make it easy | F2 | M | Blocked |
 | P8 | Small celebration on done; "days that count" as "5 of the last 7", with the minimum day counting | Satisfying without streak guilt | P2 | S | Blocked |
-| P9 | Prove push on a real phone | Built, not yet proven | Your test | S | Ready |
+| P9 | Prove push on a real phone | Built, not yet proven | Your test | S | Done 2026-10-06: the 07:30 brief arrived on the owner's device. Afternoon check, iPhone and other devices still unproven |
 | P10 | A cue after a calendar meeting ends | Contextual cue that works | F10, P9 | M | Blocked |
 | P11 | Play Store listing through a web-app wrapper | Easy to find and install | F9, P2; a Google Play developer account in your name | M | Deferred by owner (agreed, not soon) |
 | P12 | Decide on a native shell for iPhone haptics, widgets and the App Store, after 3 to 4 weeks of use | Native only when the design is proven | P2 to P8 in use | S | Blocked |

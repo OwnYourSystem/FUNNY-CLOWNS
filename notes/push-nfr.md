@@ -102,3 +102,7 @@ Built and deployed:
 Tested here: N6, N7, N9 to N12, N14, N16 logic, N20 to N24 checks, N28 length, the page flow and the worker with a pretend push service (36 checks).
 
 Not tested, and not claimed: delivery to a real phone, the timing in N15, iPhone, and the database job firing in production. The first real device that turns Reminders on is the test. Someone who already had Reminders on has to press the button off and on once, because the new server sharing needs their yes.
+
+## Proven (2026-10-06)
+
+The 07:30 morning brief arrived on the owner's device. This covers the whole path once: subscription, the stored schedule, the once-a-minute job, the push service and the notification text made on the device. Still unproven: the 15:00 check on a real device, iPhone, and N15 (arrival within 5 minutes on 95% of days), which needs several weeks of data and the delivery count in F8.
