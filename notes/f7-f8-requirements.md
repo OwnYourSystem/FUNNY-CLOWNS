@@ -21,7 +21,7 @@ Written 2026-10-06. Requirements only. Nothing here is built. The `app` branch s
 
 Two findings that shape the requirements:
 1. Push rows are **not tied to an account.** Deleting an account would leave them behind.
-2. The job logs **grow without limit** (about 1,440 rows a day). Nothing cleans them.
+2. The job's own log (`cron.job_run_details`) **grows without limit** (about 1,440 rows a day). Nothing cleans it. The database's HTTP response log looks self-cleaning (360 rows, about 6 hours), but the cleanup job also trims it to be safe.
 
 ## F7: Delete my data
 
@@ -71,7 +71,7 @@ Two findings that shape the requirements:
 |---|---|
 | M1 | A health record for push, with no addresses: last successful run, due, sent, gone and failed counts per day. |
 | M2 | An alert when the job has not run successfully for 15 minutes while any device is subscribed. |
-| M3 | An alert when sends fail for more than 20% of due devices in a day, or when nothing was sent for 36 hours while devices are subscribed. |
+| M3 | An alert when more than 20% of due devices failed in the last 24 hours (at least 5 due), or when every due send failed, or when nothing was sent for 36 hours while devices are subscribed. Dead addresses (404 or 410) are normal churn and do not count as failures. |
 | M4 | Retention for the job logs: delete rows older than 7 days, by a small scheduled job. |
 | M5 | Server errors carry a code only. No device address, no keys, no text in any log. |
 | M6 | A private status view for the owner: today's numbers and the last 14 days. |

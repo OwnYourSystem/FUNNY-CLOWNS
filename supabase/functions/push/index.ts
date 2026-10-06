@@ -85,6 +85,8 @@ Deno.serve(async (req: Request) => {
           }
         }));
       }
+      /* health record: counts only. It must never stop or slow a send, so a failure here is ignored. */
+      try { await db.rpc("push_record", { p_due: due.length, p_sent: sent, p_gone: gone, p_failed: due.length - sent - gone }); } catch (_e) { /* ignored */ }
       return json({ ok: true, due: due.length, sent, gone });
     }
     return json({ error: "not_found" }, 404);
