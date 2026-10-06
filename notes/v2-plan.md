@@ -34,8 +34,8 @@ Why it stands apart: conventional planners measure finished tasks and assume a p
 | F4 | Shared design tokens: colours, type, spacing, component names | Web and phone look like one product | F1 | M | Blocked |
 | F5 | Versioned stored data with safe migrations | Every update must read last month's data | F2 | M | Blocked |
 | F6 | Undo for any change, including the assistant's | Biggest trust gap | F2 | M | Blocked (agreed) |
-| F7 | Delete my data on the server | EU right to erasure | none | S | Ready (agreed) |
-| F8 | Error reporting from real devices, and monitoring of the push job | Failures are invisible today | none | S | Ready (agreed) |
+| F7 | Delete my data on the server | EU right to erasure | none | M | Requirements written: `f7-f8-requirements.md` |
+| F8 | Error reporting from real devices, and monitoring of the push job | Failures are invisible today | none | M | Requirements written: `f7-f8-requirements.md` |
 | F9 | Privacy policy, terms, imprint | Required before publishing in the EU | Drafts by us, legal review by a professional | S | Ready (agreed) |
 | F10 | Calendar, read-only, Google first | Judgment is wrong without it | F3; Google app verification | L | Blocked |
 | F11 | AI requirements and a test set of about 50 conversations, weighted toward unusual events | Write before build | F1 | M | Blocked |
