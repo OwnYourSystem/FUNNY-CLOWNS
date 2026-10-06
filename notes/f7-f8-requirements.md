@@ -117,3 +117,15 @@ Not part of the requirements, but it matters:
 | F8-B | Report function, app setting, version, delivery count | M | Legal decision on the default |
 
 F8-A can be built on the server before the owner's test ends, because it changes nothing the owner is testing. F7 and F8-B change the app and wait until the owner finishes testing.
+
+## Status of F8-A (2026-10-06)
+
+Live in the production database and functions:
+- The migration `20261006_push_health.sql` was run by the owner in the SQL editor. The tool call for it was cancelled four times, so the owner's run is the one that applied.
+- The rollback test `push_watch.test.sql` ended with `ALL PASS (rolled back)`: healthy state raises nothing, the job-stopped alert opens once and clears, send failures count only real failures (dead addresses do not), silence for 36 hours opens and clears, and no devices means no alert.
+- The push function (version 2) reports counts after each run. The new `alert` function (version 1) is deployed.
+- Checked after deploy: the status updates every minute, no alert is open, and no subscribed device has failures.
+- Cleanup of the job log runs daily at 03:10 UTC (7 days kept).
+- Alert mail is **not active yet**: it waits for the owner to create the mail account and store the key, recipient and sender in `push_config`. Until then, alerts are recorded in `push_alerts` and show in `push_status_now`, but no mail is sent.
+
+Not yet done: F8-B (error reports from the app, delivery count), and all of F7. They change the app and wait until the owner finishes testing.
