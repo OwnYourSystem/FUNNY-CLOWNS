@@ -55,7 +55,7 @@ The phone is designed from scratch. It is not a squeezed web page.
 | Publish with frequent updates | **Yes** | After the release basics. Play Store deferred by the owner. |
 | New phone design | **Yes** | Fix sync first. Native shell only after weeks of use. |
 
-Marked "proposed" until the owner confirms: email parked, news off by default, no leaderboards, no unlocks.
+Confirmed by the owner on 2026-10-06: every row above, including email parked, news off by default, no leaderboards and no unlocks.
 
 ## 5. Technical direction
 
@@ -102,10 +102,10 @@ Marked "proposed" until the owner confirms: email parked, news off by default, n
 
 - The `app` branch is frozen until the owner finishes testing the current version.
 - Notes go to the dashboard branch. Each task gets its requirements written before its code, as with push.
-- **Coding with the TypeSafe skill** (to save tokens): suited to small judgment steps such as routing a sentence to a tool or classifying an event. It is not needed for the rest. **Open point:** it relies on a different AI vendor than the one chosen for the tutor. Before using it, decide what data would reach that vendor, whether it can be covered by the data-processing record, and whether the extra provider is worth the extra legal surface. Until then it stays unused.
+- **Coding with the TypeSafe skill** (to save tokens): the owner agreed on 2026-10-06 that it is used when appropriate. It suits small judgment steps such as routing a sentence to a tool or classifying an event. It is not needed for the rest. **Working rule:** it uses a different AI vendor than the tutor. Use it first where no personal data is involved (code-time work, generic text). Before any person's data reaches it, record the vendor and the data in the data-processing record. Each use that touches personal data needs that entry first.
 
-## 11. To confirm
+## 11. Confirmed (2026-10-06)
 
-1. The "proposed" rows in section 4: email parked, news off by default, no leaderboards, no unlocks.
-2. That v2 starts from the foundation (F2), not from the screens.
-3. Whether the TypeSafe skill may be used, once its data question is answered.
+1. The four "proposed" rows in section 4.
+2. v2 starts from the foundation (F2), not from the screens.
+3. The TypeSafe skill may be used when appropriate, under the working rule in section 10.
