@@ -19,14 +19,17 @@ function briefText(){
   };
 }
 function fire(title,body,tag){
+  /* a reminder stays until the person closes it; the morning brief and the afternoon
+     check also hold the board still (see "a reminder waits until you close it") */
+  if(NOTICE_TAGS[tag]) noticeWrite({d:todayStr(),t:title,b:body,tag:tag,at:Date.now()}).then(noticePoll);
   try{
     if(navigator.serviceWorker && navigator.serviceWorker.ready && navigator.serviceWorker.controller){
       navigator.serviceWorker.ready.then(function(reg){
-        reg.showNotification(title,{body:body,tag:tag,icon:"icon-192.png",badge:"icon-192.png"});
-      }).catch(function(){ new Notification(title,{body:body,tag:tag}); });
+        reg.showNotification(title,{body:body,tag:tag,icon:"icon-192.png",badge:"icon-192.png",requireInteraction:true});
+      }).catch(function(){ new Notification(title,{body:body,tag:tag,requireInteraction:true}); });
       return;
     }
-    new Notification(title,{body:body,tag:tag});
+    new Notification(title,{body:body,tag:tag,requireInteraction:true});
   }catch(e){}
 }
 function checkRemind(at){

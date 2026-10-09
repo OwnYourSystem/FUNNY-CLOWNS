@@ -2,8 +2,10 @@
    The one way to put a question that has to be answered before the board goes
    on. It is a native <dialog>, so the page behind goes inert, Tab stays inside,
    Escape cancels and focus goes back to what was pressed. It opens only from
-   the person's own action: never from the tutor, a hint, a timer or a
-   notification. There is always a way out (Not now, Escape, a click outside),
+   the person's own action: never from the tutor, a hint or a timer. The one
+   exception is the reminder the person turned on, which waits until it is
+   closed (see "a reminder waits until you close it"). There is always a way
+   out (Not now, Escape, a click outside),
    and a destructive question puts focus on that way out, not on the yes.
 
    askUser({title, body, fields, ok, cancel, danger, check}) returns a promise

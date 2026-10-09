@@ -268,7 +268,10 @@ test can set the hour.
 (or `null` with fields) on Not now, Escape or a click outside, `true` (or the field
 values) on yes. `showModal()` makes the page behind inert and gives Escape; `trapTab`
 keeps Tab inside; focus returns to what was pressed. Rules: it opens only from the
-person's own action (never from the tutor, a hint, a timer or a notification); a
+person's own action (never from the tutor, a hint or a timer). One exception, added
+2026-10-09 at the owner's request: on a phone the morning brief and the afternoon check
+hold the board until the person presses Got it or Close (`noticePoll`, tags `oys-brief`
+and `oys-today` only, never after the day end, never on a computer); a
 destructive question puts focus on the way out and Enter on it does nothing; questions
 queue; under 820px it is a bottom sheet; text is escaped. Use it for first-run setup,
 the notification explainer shown before the browser's own prompt, irreversible actions
