@@ -57,3 +57,8 @@ The full regression (about 330 checks) must stay green. It was green on the new 
 
 - Two tests failed once each in a full run (`memory` "Erase everything asks first", `hints` "Forget what helps asks first") and once `tutor-api` "per-minute limit". Each passed on rerun, twice, alone. They look like timing flakes when the machine is busy. They are real test debt, not a product bug I can show. I will make them wait for the dialog instead of the clock.
 - The purity test finds screen code by name (`document`, `$`, `localStorage`, timers and a list of element properties). Code that gets a page object passed in from outside would slip through. Step 3 closes that gap by giving the engine no page object at all.
+
+## Note on the flaky tests (2026-10-09)
+
+`modals` fails in some full runs and some single runs, on the old build as well as the new one (4 of 6 runs on the old build, 1 of 6 on the new one, measured side by side). It is a test timing problem (fixed 150 ms waits), not a product fault. It still needs fixing: wait for the dialog, not the clock.
+

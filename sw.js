@@ -1,6 +1,6 @@
 /* The board is one file, so the cache is one file plus its icons. It opens
    offline from the home screen, and picks up a new build in the background. */
-var CACHE = "board-v5";
+var CACHE = "board-v6";
 var DIGEST = "board-digest";   /* the page leaves a short summary here for the push handler; it is never cleaned away */
 var SHELL = ["./", "./index.html", "./manifest.webmanifest",
              "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
@@ -70,13 +70,39 @@ function compose(kind, dg){
   }
   return {tag:"oys-brief", t:"Reminder", b:"Open the board to see today."};
 }
+/* A reminder stays until the person closes it (requireInteraction). The two scheduled ones are also written
+   to the cache as a notice, so the page can hold itself still until the person says Got it, even if they
+   open the board by its icon rather than by pressing the notification.                                      */
+var NOTICE_TAGS = {"oys-brief": 1, "oys-today": 1};
+function noticeUrl(){ return new URL("notice.json", self.registration.scope).href; }
+function writeNotice(m){
+  return caches.open(DIGEST).then(function(c){
+    return c.put(noticeUrl(), new Response(JSON.stringify({d: localDay(), t: m.t, b: m.b, tag: m.tag, at: Date.now()}), {headers: {"content-type": "application/json"}}));
+  }).catch(function(){});
+}
+function tellPages(){
+  return self.clients.matchAll({type: "window", includeUncontrolled: true}).then(function(list){
+    list.forEach(function(c){ try{ c.postMessage({type: "oys-notice"}); }catch(_e){} });
+  }).catch(function(){});
+}
 self.addEventListener("push", function(e){
   var kind = "x";
   try{ var j = e.data && e.data.json(); if(j && (j.k === "am" || j.k === "pm")) kind = j.k; }catch(_e){}
   e.waitUntil(readDigest().then(function(dg){
     var m = compose(kind, dg);
-    return self.registration.showNotification(m.t, {body:m.b, tag:m.tag, icon:"icon-192.png", badge:"icon-192.png", data:{url:"./"}});
+    var kept = NOTICE_TAGS[m.tag] && kind !== "x" ? writeNotice(m) : Promise.resolve();
+    return kept.then(function(){
+      return self.registration.showNotification(m.t, {body:m.b, tag:m.tag, icon:"icon-192.png", badge:"icon-192.png", requireInteraction:true, data:{url:"./"}});
+    }).then(tellPages);
   }));
+});
+/* Swiping a reminder away is closing it: the board does not hold the person to it afterwards. */
+self.addEventListener("notificationclose", function(e){
+  var tag = e.notification && e.notification.tag;
+  if(!NOTICE_TAGS[tag]) return;
+  e.waitUntil(caches.open(DIGEST).then(function(c){
+    return c.match(noticeUrl()).then(function(r){ return r ? r.json() : null; }).then(function(n){ if(n && n.tag === tag) return c.delete(noticeUrl()); });
+  }).catch(function(){}));
 });
 self.addEventListener("notificationclick", function(e){
   e.notification.close();

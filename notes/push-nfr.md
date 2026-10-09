@@ -106,3 +106,25 @@ Not tested, and not claimed: delivery to a real phone, the timing in N15, iPhone
 ## Proven (2026-10-06)
 
 The 07:30 morning brief arrived on the owner's device. This covers the whole path once: subscription, the stored schedule, the once-a-minute job, the push service and the notification text made on the device. Still unproven: the 15:00 check on a real device, iPhone, and N15 (arrival within 5 minutes on 95% of days), which needs several weeks of data and the delivery count in F8.
+
+## Change of 2026-10-09: a reminder stays, and on a phone it holds the board
+
+The owner asked for two changes after seeing a reminder vanish within seconds.
+
+- N29. A reminder stays until the person closes it (`requireInteraction` on every notification the board or the service worker shows).
+- N30. On a phone, the morning brief and the afternoon check hold the board still until the person presses Got it or Close. The board behind is inert (a native modal dialog). Swiping the notification away counts as closing it.
+- N31. The hold is narrow: only the two scheduled reminders, at most 2 a day (N9), never after the day end (N10), never for a hint, never on a computer, and never for a notice from an earlier day. The hold looks at the device only (pointer is touch, or the board runs from the home screen).
+- N32. The notice the hold reads lives in the device cache beside the summary (`notice.json`: date, title, text, tag, time). It holds nothing the notification does not already say. The server is not involved and holds nothing new.
+
+What the owner asked for that a web page cannot do, and what was done instead:
+
+| Asked | Not possible | Done |
+|---|---|---|
+| Block everything on the phone until acknowledged | A web page cannot block the phone, the lock screen or other apps. Only the board's own page can be held | The board holds its own page; the notification stays in the list until closed |
+| The notification never fades | Android shows a banner for a few seconds whatever the page asks, and iOS ignores the stay flag | The notification stays in the notification list on both; desktop Chrome and Edge keep it on screen. The in-board dialog does not fade at all |
+
+This changes an earlier rule: a dialog used to open only from the person's own action. That rule now has this one exception (decided by the owner). Everything else still follows it.
+
+Tested here (`notices.mjs`, 22 checks): the stay flag, the notice written by a push, swipe-away clears it, press keeps it, the dialog on a phone, the inert board, it stays 15 seconds and never stacks, Got it, Close and Escape, yesterday's notice, hints, after the day end, a notice waiting at load, reminders fired while the board is open, a phone-sized fit, and no hold on a computer.
+
+Not tested, and not claimed: how Android, iPhone and the Home Screen app show the notification on real devices (banner time, the stay flag). The first real test is the next 07:30 brief.
