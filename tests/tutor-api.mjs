@@ -25,7 +25,7 @@ process.env.TUTOR_REQUIRE_AUTH = "0";
 process.env.TUTOR_PER_MIN = "5";
 
 const logs = []; const realLog = console.log; console.log = (...a) => logs.push(a.join(" "));
-const mod = await import("/home/user/FUNNY-CLOWNS/api/tutor.js?t=" + Date.now());
+const mod = await import((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js?t=" + Date.now());
 const { default: handler, clean, SYSTEM, TOOLS } = mod;
 
 const mk = (method, body, headers = {}) => ({ method, body, headers });
@@ -51,7 +51,7 @@ await ok("clean keeps thinking and tool blocks, drops extra keys, sorts tools", 
 });
 
 await ok("the page's tool names are exactly the allowed list", () => {
-  const src = fs.readFileSync("/home/user/FUNNY-CLOWNS/source/delivery-board.html", "utf8");
+  const src = fs.readFileSync((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/source/delivery-board.html", "utf8");
   const i = src.indexOf("function botTools(){"), j = src.indexOf("function toolRun(");
   const names = [...src.slice(i, j).matchAll(/\n  \{name:"([a-z_]+)"/g)].map((m) => m[1]);
   assert.deepEqual([...names].sort(), [...TOOLS].sort());
@@ -119,11 +119,11 @@ await ok("the per-minute limit stops a runaway loop", () => { assert.equal(r7.co
 
 // auth on
 process.env.TUTOR_REQUIRE_AUTH = "1";
-const mod2 = await import("/home/user/FUNNY-CLOWNS/api/tutor.js?t=auth" + Date.now());
+const mod2 = await import((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js?t=auth" + Date.now());
 const r8 = out(); await mod2.default(mk("POST", { messages: [{ role: "user", content: "hi" }] }, {}), r8);
 await ok("no token, no answer (401 auth_required)", () => { assert.equal(r8.code, 401); assert.equal(r8.body.error.code, "auth_required"); });
 delete process.env.ANTHROPIC_API_KEY;
-const mod3 = await import("/home/user/FUNNY-CLOWNS/api/tutor.js?t=nokey" + Date.now());
+const mod3 = await import((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js?t=nokey" + Date.now());
 const r9 = out(); await mod3.default(mk("POST", { messages: [{ role: "user", content: "hi" }] }, {}), r9);
 await ok("no API key configured says not_configured", () => { assert.equal(r9.code, 503); assert.equal(r9.body.error.code, "not_configured"); });
 

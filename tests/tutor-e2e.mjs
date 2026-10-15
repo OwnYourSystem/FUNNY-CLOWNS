@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { chromium } = require("/opt/node22/lib/node_modules/playwright");
 const KEY = "oys-min-deliveries-v1";
-const ROOT = "/home/user/FUNNY-CLOWNS";
+const ROOT = (process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS");
 
 // ---- scripted "Anthropic" ------------------------------------------------
 let queue = [], upstream = [];

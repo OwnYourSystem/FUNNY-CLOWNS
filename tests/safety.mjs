@@ -9,6 +9,8 @@ const ROOT = process.env.BOARD_ROOT || path.join(HERE, "..");
 const KEY = "oys-min-deliveries-v1";
 const results = []; const ok = async (n, f) => { try { await f(); results.push("PASS " + n); } catch (e) { results.push("FAIL " + n + ": " + e.message); } };
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+/* these suites test the classic board, which a phone-width page now shows only in Classic view */
+const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem("oys-classic", "1"); } catch (e) {} }); return c; };
 const p = await (await b.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
 const errs = []; p.on("pageerror", (e) => errs.push(e.message));
 let proxyCalls = 0; await p.route("**/api/tutor", (r) => { proxyCalls++; r.fulfill({ status: 503, body: "{}" }); });

@@ -2,6 +2,8 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const KEY='oys-min-deliveries-v1';
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  /* the classic board, which a phone-width page now shows only in Classic view */
+  const _nc = browser.newContext.bind(browser); browser.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem('oys-classic', '1'); } catch (e) {} }); return c; };
   const errs=[]; 
   // A. rollover must not emit a storm of undo events
   let ctx=await browser.newContext({viewport:{width:390,height:900}}); let page=await ctx.newPage();

@@ -2,7 +2,7 @@
    It must run with no page. This test reads the source parts and fails if an engine part reaches for the page,
    for browser storage, or for a timer. It also fails if index.html is not what the parts build.            */
 const fs=require("fs"), path=require("path"), cp=require("child_process");
-const ROOT="/home/user/FUNNY-CLOWNS/source", PARTS=path.join(ROOT,"parts");
+const ROOT=(process.env.APP_ROOT||"/home/user/FUNNY-CLOWNS")+"/source", PARTS=path.join(ROOT,"parts");
 const {parse,kindOf,walk}=require(__dirname+"/engine-classify.cjs");
 const files=fs.readdirSync(PARTS).sort();
 const ENGINE_LAST=+process.env.ENGINE_LAST||200;      /* parts numbered up to this are the engine region */

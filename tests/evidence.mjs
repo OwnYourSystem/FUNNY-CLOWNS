@@ -56,6 +56,8 @@ await ok("a checked entry must carry its abstract, doi, who and when, and its nu
 
 // ---- in the page: retrieval, the offline answers, and the reply check
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+/* these suites test the classic board, which a phone-width page now shows only in Classic view */
+const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem("oys-classic", "1"); } catch (e) {} }); return c; };
 const p = await b.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message));
 await p.goto("file://" + path.join(ROOT, "index.html")); await p.waitForSelector(".row.pick");
 const ev = (fn, a) => p.evaluate(fn, a);

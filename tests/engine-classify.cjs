@@ -1,4 +1,5 @@
-const _p=require('module').createRequire('/opt/node22/lib/node_modules/eslint/package.json');
+/* acorn ships with eslint on some machines and on its own on others: take whichever is there */
+const _p=(n)=>{ const M=require('module'); for(const b of ['/opt/node22/lib/node_modules/eslint/package.json','/opt/node-tools/package.json','/opt/node-tools/node_modules/acorn/package.json']){ try{ return M.createRequire(b)(n); }catch(e){} } return require(n); };
 /* Shared by the split tool and the purity test. Finds the top-level functions of the board's IIFE and says what each one touches. */
 const acorn=_p('acorn');
 const SCREEN_IDS=new Set("document window navigator location history setTimeout setInterval clearTimeout clearInterval requestAnimationFrame fetch alert confirm prompt matchMedia Notification caches getComputedStyle XMLHttpRequest addEventListener removeEventListener Image Audio innerWidth innerHeight scrollTo".split(" "));
