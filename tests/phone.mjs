@@ -115,9 +115,69 @@ await ok("Goals lists every goal with its progress and next step; a goal opens i
   await tap('#ph-main a[href="#/goals"]'); await p.waitForTimeout(250);
   const n = (await st()).groups.length; assert.equal(await p.locator(".ph-goal").count(), n);
   assert.match(await p.locator(".ph-goal").first().innerText(), /%/);
-  await p.locator(".ph-goal").first().click(); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Close" }).click(); await p.waitForTimeout(150);
   await tap("[data-ph=newgoal]"); await D().waitFor({ state: "visible" }); await D().locator('[data-ak="g"]').fill("Read more"); await D().getByRole("button", { name: "Add it" }).click(); await p.waitForTimeout(300);
   assert.equal(await p.locator(".ph-goal").count(), n + 1); assert.equal(await sideways(), false);
+});
+const sub = async (name) => Object.values((await st()).subs).find((x) => x.name === name);
+await ok("a goal opens its own page with its steps and an Add box", async () => {
+  await p.locator(".ph-goal", { hasText: "Garden Shed" }).click(); await p.waitForTimeout(250);
+  assert.equal(await p.evaluate(() => location.hash), "#/goal");
+  assert.match(await p.locator("#ph-main h1").innerText(), /Garden Shed/);
+  assert.equal(await p.locator("#ph-newstep").isVisible(), true); assert.equal(await p.locator('[data-ph=mic][data-for="ph-newstep"]').isVisible(), true);
+  assert.match(await p.locator("section[aria-label=Steps]").innerText(), /Buy the timber/);
+  assert.equal(await p.locator('#ph-tabs [data-tab="you"]').getAttribute("aria-current"), "page");
+});
+await ok("a step is added with the Add button and with Enter; an empty box says why", async () => {
+  await tap("[data-ph=addstep]"); await p.waitForTimeout(150); assert.match(await p.locator("#ph-onb-hint").innerText(), /first/);
+  await p.fill("#ph-newstep", "Lay the base"); await tap("[data-ph=addstep]"); await p.waitForTimeout(300);
+  await p.fill("#ph-newstep", "Fit the roof"); await p.press("#ph-newstep", "Enter"); await p.waitForTimeout(300);
+  assert.ok(await sub("Lay the base")); assert.ok(await sub("Fit the roof"));
+  const t = await p.locator("section[aria-label=Steps]").innerText(); assert.match(t, /Lay the base/); assert.match(t, /Fit the roof/);
+  assert.equal(await p.locator("#ph-newstep").inputValue(), ""); assert.equal(await sideways(), false);
+  await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
+});
+await ok("a step opens its sheet: the name and the percent are saved", async () => {
+  await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await D().waitFor({ state: "visible" });
+  await p.waitForTimeout(400); const hb = await D().getByRole("button", { name: "Put it in Today" }).boundingBox(); assert.ok(hb.height < 70, "the choice buttons are " + hb.height + "px tall");
+  await p.screenshot({ path: "/tmp/claude-0/ph-test-step.png" });
+  await D().locator('[data-ak="n"]').fill("Lay the concrete base"); await D().locator('[data-ak="p"]').fill("40");
+  await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  const s = await sub("Lay the concrete base"); assert.ok(s, "not renamed"); assert.equal(s.pct, 40);
+  assert.match(await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).innerText(), /40%/);
+});
+await ok("a percent out of range is refused", async () => {
+  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
+  await D().locator('[data-ak="p"]').fill("150"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(150);
+  assert.equal(await D().isVisible(), true); assert.match(await D().innerText(), /0 to 100/);
+  await D().getByRole("button", { name: "Close" }).click(); await p.waitForTimeout(150); assert.equal((await sub("Fit the roof")).pct, 0);
+});
+await ok("Put it in Today, then Mark it done, from the step sheet", async () => {
+  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
+  await D().getByRole("button", { name: "Put it in Today" }).click(); await p.waitForTimeout(300);
+  const id = (await sub("Fit the roof")).id; assert.ok((await st()).oftad.some((c) => c.id === id), "not in Today");
+  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
+  await D().getByRole("button", { name: "Mark it done" }).click(); await p.waitForTimeout(300);
+  assert.equal((await sub("Fit the roof")).status, "done");
+  assert.match(await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).innerText(), /Done/i);
+});
+await ok("Remove this step asks first; Keep it keeps it; Remove it removes it", async () => {
+  const pick = async () => { await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).click(); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove this step" }).click(); await p.waitForTimeout(250); };
+  await pick(); assert.match(await D().innerText(), /Remove this step\?/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(250);
+  assert.ok(await sub("Lay the concrete base"));
+  await pick(); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(300);
+  assert.equal(await sub("Lay the concrete base"), undefined); assert.equal(await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).count(), 0);
+});
+await ok("Edit changes the goal's name, priority and deadline", async () => {
+  await tap("[data-ph=gedit]"); await D().waitFor({ state: "visible" });
+  await D().locator('[data-ak="n"]').fill("Garden Shed 2027"); await D().getByRole("button", { name: "High" }).click();
+  await D().locator('[data-ak="d"]').fill("2027-03-01"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  const g = (await st()).groups.find((x) => x.name === "Garden Shed 2027"); assert.ok(g, "not renamed"); assert.equal(g.prio, "high"); assert.equal(g.due, "2027-03-01");
+  assert.match(await p.locator("#ph-main h1").innerText(), /Garden Shed 2027/); assert.match(await p.locator("#ph-main").innerText(), /high/i);
+});
+await ok("a Today item on Now opens the same step sheet", async () => {
+  await go("now"); const it = p.locator(".ph-item-b").first(); const nm = await it.innerText();
+  await it.click(); await D().waitFor({ state: "visible" }); assert.equal(await D().locator('[data-ak="n"]').inputValue(), nm.trim());
+  await D().getByRole("button", { name: "Close" }).click(); await p.waitForTimeout(150); await go("goals");
 });
 await ok("Backlog opens the old page under a Back bar, and Back returns to You", async () => {
   await go("backlog"); assert.equal(await p.locator("#ph-back").isVisible(), true); assert.equal(await p.locator("#ph-back-t").innerText(), "Backlog");
