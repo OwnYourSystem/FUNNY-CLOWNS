@@ -65,4 +65,20 @@ ok("bad bodies are refused with a reason", () => {
   assert.equal(cleanSub({ ...good, brief: "25:00" }).err, "bad_time");
   assert.equal(cleanSub({ ...good, wind: "x" }).err, "bad_time");
 });
+ok("the afternoon check comes at the person's own time; a row without one keeps 15:00", () => {
+  const done = { last_am: "2026-10-05" };
+  assert.equal(dueKind(sub({ ...done }), at("2026-10-05T13:00:00Z")), "pm");                     // 15:00 local, no time set
+  assert.equal(dueKind(sub({ ...done, pmt: "16:30" }), at("2026-10-05T13:00:00Z")), null);       // 15:00, set to 16:30
+  assert.equal(dueKind(sub({ ...done, pmt: "16:30" }), at("2026-10-05T14:30:00Z")), "pm");       // 16:30
+  assert.equal(dueKind(sub({ ...done, pmt: "16:30" }), at("2026-10-05T16:01:00Z")), null);       // 18:01, more than 90 minutes late
+  assert.equal(dueKind(sub({ ...done, pm: false, pmt: "16:30" }), at("2026-10-05T14:30:00Z")), null);
+  assert.equal(dueKind(sub({ am: false }), at("2026-10-05T05:30:00Z")), null);                   // the morning brief switched off
+});
+ok("a subscribe call keeps the afternoon time, defaults it, and refuses a bad one", () => {
+  assert.equal(cleanSub({ ...good, pmt: "16:30" }).row.pmt, "16:30");
+  assert.equal(cleanSub({ ...good }).row.pmt, "15:00");
+  assert.equal(cleanSub({ ...good, pmt: "9:05" }).row.pmt, "09:05");
+  assert.equal(cleanSub({ ...good, pmt: "25:00" }).err, "bad_time");
+  assert.equal(cleanSub({ ...good, am: false, pm: false }).row.am, false);
+});
 console.log(r.join("\n"));

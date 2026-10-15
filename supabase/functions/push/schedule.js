@@ -9,7 +9,7 @@ export const PUSH_HOSTS = [
   /^[a-z0-9.-]+\.notify\.windows\.com$/,
   /^[a-z0-9.-]+\.push\.services\.mozilla\.com$/,
 ];
-export const PM_AT = 15 * 60;       /* the afternoon check */
+export const PM_AT = 15 * 60;       /* the afternoon check, unless the person set another time */
 export const LATE_MIN = 90;         /* a push later than this after its time is dropped, not sent late */
 export const MAX_ROWS = 5000;
 
@@ -39,7 +39,8 @@ export function dueKind(sub, now) {
   if (pastDayEnd(sub.wind, l.mins)) return null;
   const b = hm(sub.brief);
   if (sub.am && sub.last_am !== l.date && !isNaN(b) && l.mins >= b && l.mins <= b + LATE_MIN) return "am";
-  if (sub.pm && sub.last_pm !== l.date && l.mins >= PM_AT && l.mins <= PM_AT + LATE_MIN) return "pm";
+  const pt = hm(sub.pmt), pmAt = isNaN(pt) ? PM_AT : pt;     /* the person's own time; 15:00 for a row from before it could be set */
+  if (sub.pm && sub.last_pm !== l.date && l.mins >= pmAt && l.mins <= pmAt + LATE_MIN) return "pm";
   return null;
 }
 export function b64url(s, min, max) { return typeof s === "string" && /^[A-Za-z0-9_-]+$/.test(s) && s.length >= min && s.length <= max; }
@@ -56,5 +57,7 @@ export function cleanSub(b) {
   if (!b64url(k.p256dh, 80, 100) || !b64url(k.auth, 16, 40)) return { err: "bad_keys" };
   if (!validZone(b.tz)) return { err: "bad_zone" };
   if (isNaN(hm(b.brief)) || isNaN(hm(b.wind))) return { err: "bad_time" };
-  return { row: { endpoint: s.endpoint, p256dh: k.p256dh, auth: k.auth, tz: b.tz, brief: b.brief, wind: b.wind, am: b.am !== false, pm: b.pm !== false } };
+  if (b.pmt !== undefined && isNaN(hm(b.pmt))) return { err: "bad_time" };
+  const pmt = b.pmt === undefined ? "15:00" : String(b.pmt).padStart(5, "0");
+  return { row: { endpoint: s.endpoint, p256dh: k.p256dh, auth: k.auth, tz: b.tz, brief: b.brief, wind: b.wind, am: b.am !== false, pm: b.pm !== false, pmt } };
 }

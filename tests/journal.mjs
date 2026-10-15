@@ -62,21 +62,19 @@ await ok("'journal my morning' asks the start-of-day questions and saves a start
 await ok("it is kept apart: not in the board's state, so not in sync or the backup text", async () => {
   const s = JSON.stringify(await st()); assert.equal(s.includes("Bronze report"), false); assert.equal(s.includes("Anna"), false);
 });
-await ok("the first open of the next day shows where you left off, once", async () => {
+await ok("the next day the note is the first thing on Today, and nothing opens over the board", async () => {
   await setJr({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "21:40", kind: "end", a: "Shipped the release", b: "Write the changelog" }] });
-  await reload(); await D().waitFor({ state: "visible", timeout: 3000 });
-  const t = await D().innerText(); assert.match(t, /Where you left off/); assert.match(t, /Yesterday, 21:40/); assert.match(t, /Done: Shipped the release/); assert.match(t, /Tomorrow: Write the changelog/);
-  await D().getByRole("button", { name: "Got it" }).click(); await p.waitForTimeout(200);
-  assert.equal((await jr()).seen, TODAY); await reload(); assert.equal(await p.locator("dialog.ask[open]").count(), 0);
+  await reload(); await p.waitForTimeout(400); assert.equal(await p.locator("dialog.ask[open]").count(), 0);
+  const t = await p.locator("#jr-check").innerText(); assert.match(t, /Yesterday, 21:40/i); assert.match(t, /Done: Shipped the release/); assert.match(t, /Tomorrow: Write the changelog/);
 });
 await ok("the note also stays at the top of Today until hidden or until today has its own start", async () => {
   const c = p.locator("#jr-check"); assert.equal(await c.isVisible(), true); assert.match(await c.innerText(), /Write the changelog/);
   await c.getByRole("button", { name: "Hide" }).click(); await p.waitForTimeout(150); assert.equal(await c.isVisible(), false);
   await reload(); assert.equal(await c.isVisible(), false);
 });
-await ok("Write today's start from the first-open note saves a start entry, and the strip goes", async () => {
+await ok("Write today's start on the note saves a start entry, and the note goes", async () => {
   await setJr({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "21:40", kind: "end", a: "Shipped", b: "Changelog" }] });
-  await reload(); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Write today\u2019s start" }).click();
+  await reload(); await p.locator("#jr-check").getByRole("button", { name: "Write today\u2019s start" }).click();
   await p.waitForTimeout(250); await D().waitFor({ state: "visible" }); assert.match(await D().innerText(), /Start of day/);
   assert.equal(await D().locator('[data-ak="kind"] [data-av="start"]').getAttribute("aria-pressed"), "true");
   await D().locator('[data-ak="a"]').fill("Fresh, coffee done"); await D().locator('[data-ak="b"]').fill("The changelog first");
@@ -119,10 +117,9 @@ await ctx.close();
   await q.evaluate(([KEY, JKEY, YEST]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; localStorage.setItem(KEY, JSON.stringify(s));
     localStorage.setItem(JKEY, JSON.stringify({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "22:05", kind: "end", a: "A long day of meetings with the whole team about the plan for next quarter", b: "Start with the budget sheet before any email" }] })); }, [KEY, JKEY, YEST]);
   await q.reload(); await q.waitForSelector(".row.pick");
-  await ok("on a phone the note comes first, fits the screen, and the page does not scroll sideways", async () => {
-    const d = q.locator("dialog.ask[open]"); await d.waitFor({ state: "visible", timeout: 3000 });
-    const bx = await d.boundingBox(); assert.ok(bx.x >= 0 && bx.x + bx.width <= 391, JSON.stringify(bx));
-    await d.screenshot({ path: "/tmp/claude-0/shot-journal.png" }); await d.getByRole("button", { name: "Got it" }).click(); await q.waitForTimeout(200);
+  await ok("on a phone the note sits on Today, fits the screen, opens nothing, and the page does not scroll sideways", async () => {
+    await q.waitForTimeout(500); assert.equal(await q.locator("dialog.ask[open]").count(), 0);
+    const bx = await q.locator("#jr-check").boundingBox(); assert.ok(bx && bx.x >= 0 && bx.x + bx.width <= 391, JSON.stringify(bx));
     assert.equal(await q.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
     await q.locator("#jr-check").screenshot({ path: "/tmp/claude-0/shot-journal-card.png" });
   });

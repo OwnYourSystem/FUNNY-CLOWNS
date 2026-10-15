@@ -128,3 +128,19 @@ This changes an earlier rule: a dialog used to open only from the person's own a
 Tested here (`notices.mjs`, 22 checks): the stay flag, the notice written by a push, swipe-away clears it, press keeps it, the dialog on a phone, the inert board, it stays 15 seconds and never stacks, Got it, Close and Escape, yesterday's notice, hints, after the day end, a notice waiting at load, reminders fired while the board is open, a phone-sized fit, and no hold on a computer.
 
 Not tested, and not claimed: how Android, iPhone and the Home Screen app show the notification on real devices (banner time, the stay flag). The first real test is the next 07:30 brief.
+
+## Change of 2026-10-15: the person sets the reminders, and nothing holds the board
+
+The owner tried the phone hold (N30 to N32) and asked for it to go: a reminder should wait, not interrupt. The owner also asked that reminders are set by the person.
+
+- N29 stays: every notification asks to stay until it is closed.
+- N30, N31, N32 are withdrawn. No notice is written, and nothing opens over the board.
+- N33. The person chooses each reminder: the morning brief on or off and its time, the afternoon check on or off and its time. Defaults: both on, 07:30 and 15:00. The Reminders button opens this choice; both Off turns reminders off on this device and at the server.
+- N34. A time after the day end, or an afternoon check before the morning brief, is refused in the dialog and in the chat.
+- N35. The server keeps the afternoon time as `pmt` (a clock time, nothing else). A row from before keeps 15:00. N9 and N10 are unchanged.
+- N36. The board does not speak up on its own: the floating "Today: ..." note shown on arrival is removed.
+
+Deploy order: the column first (`supabase/migrations/20261015_push_pm_time.sql`), then the `push` function. Until both are live, a closed-board afternoon push still comes at 15:00; on/off and the morning time already work with the live server.
+
+Tested here: `notices.mjs` (11 checks: the stay flag, nothing over the board, each reminder off, the afternoon at its own time, no note on arrival, the chat commands, the backlog on a phone), `push.mjs` (the dialog, the server body with `pmt`, refusals, off and on again), `push-schedule.mjs` (the afternoon time on the server, 15 checks).
+

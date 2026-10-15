@@ -104,6 +104,16 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
   await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; s.me.brief = "08:15"; s.me.wind = "21:45"; localStorage.setItem(KEY, JSON.stringify(s)); localStorage.removeItem("oys-push"); localStorage.removeItem("oys-remind"); sessionStorage.setItem("perm", "default"); }, [KEY]);
   await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => navigator.serviceWorker.ready);
   const label = () => p.locator("#btn-remind").innerText();
+  /* the reminders dialog: which come, and when */
+  const rem = async (o, okName) => {
+    await p.locator("#btn-remind").click(); const d = p.locator("dialog[open]"); await d.waitFor({ state: "visible" });
+    if (o.am) await d.locator('[data-ak="am"] [data-av="' + o.am + '"]').click();
+    if (o.pm) await d.locator('[data-ak="pm"] [data-av="' + o.pm + '"]').click();
+    if (o.amAt) await d.locator('[data-ak="amAt"]').fill(o.amAt);
+    if (o.pmAt) await d.locator('[data-ak="pmAt"]').fill(o.pmAt);
+    await d.getByRole("button", { name: okName }).click(); await p.waitForTimeout(300);
+    return d;
+  };
 
   await ok("nothing is asked, and nothing is sent, on load", async () => {
     assert.equal(await label(), "Reminders off"); assert.equal(await p.evaluate(() => window.__asked || 0), 0); assert.equal(calls.length, 0);
@@ -121,7 +131,8 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
     assert.deepEqual(calls.map((c) => c.path), ["config", "subscribe"]);
     const sb = calls[1].body; assert.equal(sb.sub.endpoint, "https://fcm.googleapis.com/fcm/send/TESTDEVICE"); assert.equal(sb.brief, "08:15"); assert.equal(sb.wind, "21:45");
     assert.equal(sb.am, true); assert.equal(sb.pm, true); assert.ok(sb.tz.length > 2);
-    assert.deepEqual(Object.keys(sb).sort(), ["am", "brief", "pm", "sub", "tz", "wind"]);
+    assert.equal(sb.pmt, "15:00");
+    assert.deepEqual(Object.keys(sb).sort(), ["am", "brief", "pm", "pmt", "sub", "tz", "wind"]);
     const s = JSON.stringify(sb); const board = await p.evaluate((KEY) => localStorage.getItem(KEY), KEY);
     for (const sub of JSON.parse(board).subs ? Object.values(JSON.parse(board).subs).slice(0, 5) : []) assert.ok(!s.includes(sub.name), "a task name reached the server");
     assert.deepEqual(await p.evaluate(() => window.__subOpts), { uvo: true, keyLen: 65 });
@@ -139,21 +150,36 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
     const n = calls.length; await p.reload(); await p.waitForSelector(".row.pick"); await p.waitForTimeout(800);
     assert.equal(await label(), "Reminders on (push)"); assert.equal(calls.slice(n).filter((c) => c.path === "subscribe").length, 0);
   });
+  await ok("pressing Reminders when they are on opens your choices; a new afternoon time reaches the server", async () => {
+    const n = calls.length; await rem({ pmAt: "16:30" }, "Save"); await p.waitForTimeout(3500);
+    const sub = calls.slice(n).filter((c) => c.path === "subscribe"); assert.ok(sub.length >= 1); assert.equal(sub[sub.length - 1].body.pmt, "16:30");
+    assert.equal((await p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).me.pmAt, KEY)), "16:30");
+  });
+  await ok("a time after the day ends, or an afternoon before the morning, is refused in the dialog", async () => {
+    let d = await rem({ pmAt: "22:30" }, "Save"); assert.match(await d.innerText(), /after your day ends/);
+    await d.locator('[data-ak="pmAt"]').fill("07:00"); await d.getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(200);
+    assert.match(await d.innerText(), /later than the morning brief/); await d.getByRole("button", { name: "Not now" }).click(); await p.waitForTimeout(200);
+  });
+  await ok("switching the afternoon check off tells the server; the morning brief stays", async () => {
+    const n = calls.length; await rem({ pm: "off" }, "Save"); await p.waitForTimeout(3500);
+    const sub = calls.slice(n).filter((c) => c.path === "subscribe"); assert.ok(sub.length >= 1); assert.equal(sub[sub.length - 1].body.pm, false); assert.equal(sub[sub.length - 1].body.am, true);
+    assert.equal(await label(), "Reminders on (push)");
+  });
   await ok("turning off unsubscribes at the server and in the browser, and the choice survives a reload", async () => {
-    const n = calls.length; await p.locator("#btn-remind").click(); await p.waitForTimeout(500);
+    const n = calls.length; await rem({ am: "off", pm: "off" }, "Save"); await p.waitForTimeout(500);
     const un = calls.slice(n).filter((c) => c.path === "unsubscribe"); assert.equal(un.length, 1);
     assert.deepEqual(Object.keys(un[0].body).sort(), ["auth", "endpoint"]); assert.equal(await p.evaluate(() => window.__unsub), 1);
     assert.equal(await label(), "Reminders off"); await p.reload(); await p.waitForSelector(".row.pick"); await p.waitForTimeout(400); assert.equal(await label(), "Reminders off");
   });
   await ok("turning on again subscribes again", async () => {
-    const n = calls.length; await p.locator("#btn-remind").click(); await p.waitForFunction(() => window.__board.push.state().on === true, null, { timeout: 5000 });
+    const n = calls.length; await rem({ am: "on", pm: "on" }, "Continue"); await p.waitForFunction(() => window.__board.push.state().on === true, null, { timeout: 5000 });
     assert.ok(calls.slice(n).some((c) => c.path === "subscribe")); assert.equal(await label(), "Reminders on (push)");
   });
   await ok("if the server refuses, the button does not claim push", async () => {
-    await p.locator("#btn-remind").click(); await p.waitForTimeout(400); failSub = true;
+    await rem({ am: "off", pm: "off" }, "Save"); await p.waitForTimeout(400); failSub = true;
     await p.evaluate(() => { localStorage.removeItem("oys-push"); }); await p.reload(); await p.waitForSelector(".row.pick"); await p.waitForTimeout(300);
     assert.equal(await label(), "Reminders off");
-    await p.locator("#btn-remind").click(); await p.waitForTimeout(900);
+    await rem({ am: "on", pm: "on" }, "Continue"); await p.waitForTimeout(900);
     assert.equal(await label(), "Reminders on (while open)"); assert.equal(await p.evaluate(() => window.__board.push.state().on), false);
   });
   await ok("no page errors (page section)", async () => { assert.deepEqual(errs, []); });
