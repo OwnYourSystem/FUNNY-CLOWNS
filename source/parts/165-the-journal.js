@@ -86,3 +86,17 @@ function jrAsk(kind){
     return e;
   });
 }
+/* every entry, newest first, grouped by day, each with its time */
+function jrListHtml(){
+  var l=jrData().log.slice().reverse();
+  if(!l.length) return '<p class="wk-note">No entries yet. Press Write, or type &ldquo;journal my day&rdquo; to the assistant.</p>';
+  var days=[], by={};
+  l.forEach(function(e){ if(!by[e.d]){ by[e.d]=[]; days.push(e.d); } by[e.d].push(e); });
+  return days.map(function(d){
+    return '<div class="jr-day"><div class="jr-date">'+esc(jrDateLabel(d))+'</div>'+by[d].map(function(e){
+      var K=JR_KINDS[e.kind]||JR_KINDS.end;
+      return '<div class="jr-e"><div class="jr-meta">'+esc(e.tm)+' &middot; '+esc(K.name)+'</div>'+
+        (e.a?'<p><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+'</div>';
+    }).join("")+'</div>';
+  }).join("");
+}

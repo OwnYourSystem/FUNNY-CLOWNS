@@ -81,6 +81,24 @@ Panels are `color-mix(in srgb, var(--panel) 82%, transparent)` with
 are hairlines, never boxes. Nothing has a drop shadow unless it is lifted
 off the page: a dragged card, a floating sheet.
 
+## The phone is its own app (2026-10-15)
+
+Below 820px the page is not the board in one column any more. `595-the-phone.js`
+draws four tabs, **Now, Talk, Journal, You**, on the same engine and data
+(`html.ph`), from the agreed wireframes. Now holds one decision: the first open
+step in Today, else `pickToday()`, with the reason, Done or Start it, and Not now
+or Something else; then Today as a plain list (tap the ring for done, no drag on a
+phone); then one line of days finished. Talk is the chat sheet as a full page.
+Journal is the checkpoint, Start of day and End of day, and every entry. You holds
+the account, Goals (`#/goals`), the old Backlog, Tags, Archive and Planner pages
+under a Back bar (`html.ph-old`), the day and reminder settings, backup, theme,
+and **Classic view**, which sets `oys-classic` and brings the old phone board
+back (a "Phone view" button in its header returns). A first open shows three
+onboarding screens: welcome, your day (day end and the two reminders), first
+goal and step. Flat on purpose: one card, plain rows, no moulding, no motion, no
+carousel, no pop-up that opens by itself. The moulded rules below apply to
+Classic view only. The desktop is unchanged.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is

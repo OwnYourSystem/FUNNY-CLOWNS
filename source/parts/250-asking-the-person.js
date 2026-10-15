@@ -8,7 +8,8 @@
 
    askUser({title, body, fields, ok, cancel, danger, check}) returns a promise
    that resolves to false (or null when it has fields) if it was cancelled, and
-   to true (or an object of the field values) on yes. fields are
+   to true (or an object of the field values) on yes. more:[[value,label]]
+   adds choices that resolve to their value. fields are
    {k, label, kind:"text"|"textarea"|"number"|"time"|"pick", value, ph, min,
    max, opts:[[value,label]]}. A text box has a Speak button under it. check(values) may return a sentence to show in
    the dialog and keep it open. Questions queue and are shown one at a time. */
@@ -57,7 +58,9 @@ function askNext(){
     (body.length?'<div id="'+id+'b">'+body.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+'</div>':'')+
     (hasF?'<div class="ask-fields">'+fh+'</div>':'')+
     '<p class="ask-err" role="alert"></p><p class="ask-hint" aria-live="polite"></p>'+
-    '<div class="ask-acts"><button type="button" class="btn" data-acancel>'+esc(o.cancel||"Not now")+'</button>'+
+    '<div class="ask-acts'+(o.more&&o.more.length?' ask-more':'')+'">'+
+    (o.more||[]).map(function(m){ return '<button type="button" class="btn" data-amore="'+esc(m[0])+'">'+esc(m[1])+'</button>'; }).join("")+
+    '<button type="button" class="btn" data-acancel>'+esc(o.cancel||"Not now")+'</button>'+
     (o.noOk?'':'<button type="button" class="btn take" data-aok>'+esc(o.ok||"Yes")+'</button>')+'</div></div>';
   var picked={}, result=hasF?null:false;
   function values(){
@@ -82,6 +85,8 @@ function askNext(){
   d.addEventListener("click",function(e){
     if(e.target===d){ if(downOnBackdrop) d.close(""); return; }
     if(e.target.closest("[data-acancel]")){ d.close(""); return; }
+    var am=e.target.closest("[data-amore]");
+    if(am){ result=am.getAttribute("data-amore"); d.close("ok"); return; }
     var mk=e.target.closest("[data-mic-to]");
     if(mk){ micInto(d.querySelector('[data-ak="'+mk.getAttribute("data-mic-to")+'"]'),mk,function(t){ d.querySelector(".ask-hint").textContent=t; }); return; }
     if(e.target.closest("[data-aok]")){ submit(); return; }
@@ -133,7 +138,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel(); renderJournal();
+  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel(); renderJournal(); phRender();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
