@@ -36,7 +36,7 @@ await ok("an Assistant button in the header opens a plain chat and Escape closes
   await btn.click(); await p.locator("#botsheet").waitFor({ state: "visible" });
 });
 await ok("help lists what it can do, by group, and says check-ins are private", async () => {
-  const r = await say("help"); for (const g of ["TODAY", "STEPS", "GOALS", "SETTINGS", "MINIMUM DAY", "CHECK-IN", "GO TO"]) assert.ok(r.includes(g), g);
+  const r = await say("help"); for (const g of ["TODAY", "STEPS", "GOALS", "SETTINGS", "MINIMUM DAY", "CHECK-IN", "JOURNAL", "GO TO"]) assert.ok(r.includes(g), g);
   assert.match(r, /private/);
 });
 await ok("rough day and more change today's size", async () => {

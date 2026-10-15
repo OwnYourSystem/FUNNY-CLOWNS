@@ -59,7 +59,7 @@ const TODAY = ymd(new Date()); const YEST = ymd(new Date(Date.now() - 864e5));
 
 /* ---------- 2. the page on a phone: the board is held still until the person answers ---------- */
 const stub = () => {
-  window.__notes = []; window.__perm = "granted";
+  window.__notes = []; window.__perm = (function () { try { return sessionStorage.getItem("perm") || "granted"; } catch (e) { return "granted"; } })();
   function N(title, o) { window.__notes.push({ title, body: o && o.body, tag: o && o.tag, ri: o && o.requireInteraction }); }
   Object.defineProperty(N, "permission", { get() { return window.__perm; } }); N.requestPermission = () => Promise.resolve("granted");
   if (window.ServiceWorkerRegistration) ServiceWorkerRegistration.prototype.showNotification = function (t, o) { window.__notes.push({ title: t, body: o && o.body, tag: o && o.tag, ri: o && o.requireInteraction }); return Promise.resolve(); };
@@ -70,7 +70,7 @@ async function session(mobile) {
   await ctx.addInitScript(stub);
   const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message));
   await p.goto(URL); await p.waitForSelector("#btn-remind", { state: "attached" });
-  await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; s.me.brief = "07:30"; s.me.wind = "23:59"; s.me.hintNote = false; s.told = null; localStorage.setItem(KEY, JSON.stringify(s)); }, [KEY]);
+  await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.me = s.me || {}; s.me.done = true; s.me.brief = "07:30"; s.me.wind = "23:59"; s.me.hintNote = false; const n = new Date(), q2 = (x) => (x < 10 ? "0" : "") + x; s.told = { d: n.getFullYear() + "-" + q2(n.getMonth() + 1) + "-" + q2(n.getDate()), am: true, pm: true, hint: true }; localStorage.setItem(KEY, JSON.stringify(s)); }, [KEY]);
   await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => navigator.serviceWorker.ready);
   const put = (n) => p.evaluate(async (n) => { const c = await caches.open("board-digest"); const u = new URL("notice.json", document.baseURI).href; if (n === null) await c.delete(u); else await c.put(u, new Response(JSON.stringify(n))); }, n);
   const get = () => p.evaluate(async () => { const c = await caches.open("board-digest"); const r = await c.match(new URL("notice.json", document.baseURI).href); return r ? r.json() : null; });
@@ -125,16 +125,16 @@ async function session(mobile) {
     await dlg().getByRole("button", { name: "Got it" }).click(); await p.waitForTimeout(200);
   });
   await ok("a reminder that fires while the board is open asks to stay, and holds the board", async () => {
-    await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.told = null; s.oftad = [{ k: "sub", id: Object.keys(s.subs)[0], done: false }]; localStorage.setItem(KEY, JSON.stringify(s)); }, [KEY]);
-    await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => { window.__notes.length = 0; });
+    await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); s.told = null; s.oftad = [{ k: "sub", id: Object.keys(s.subs)[0], done: false }]; localStorage.setItem(KEY, JSON.stringify(s)); sessionStorage.setItem("perm", "default"); }, [KEY]);
+    await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => { sessionStorage.removeItem("perm"); window.__perm = "granted"; window.__notes.length = 0; });
     await p.evaluate(() => { const d = new Date(); d.setHours(8, 0, 0, 0); window.__board.remind(d); }); await p.waitForTimeout(600);
     const n = await p.evaluate(() => window.__notes.slice()); assert.equal(n.length, 1); assert.equal(n[0].ri, true); assert.equal(n[0].tag, "oys-brief");
     await dlg().waitFor({ state: "visible", timeout: 3000 }); assert.match(await dlg().innerText(), /^Today:/);
     await dlg().getByRole("button", { name: "Got it" }).click(); await p.waitForTimeout(300); assert.equal(await get(), null);
   });
   await ok("the afternoon check holds the board too", async () => {
-    await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); const d = new Date(), q = (n) => (n < 10 ? "0" : "") + n; s.told = { d: d.getFullYear() + "-" + q(d.getMonth() + 1) + "-" + q(d.getDate()), am: true, pm: false, hint: true }; localStorage.setItem(KEY, JSON.stringify(s)); }, [KEY]);
-    await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => { window.__notes.length = 0; });
+    await p.evaluate(([KEY]) => { const s = JSON.parse(localStorage.getItem(KEY)); const d = new Date(), q = (n) => (n < 10 ? "0" : "") + n; s.told = { d: d.getFullYear() + "-" + q(d.getMonth() + 1) + "-" + q(d.getDate()), am: true, pm: false, hint: true }; localStorage.setItem(KEY, JSON.stringify(s)); sessionStorage.setItem("perm", "default"); }, [KEY]);
+    await p.reload(); await p.waitForSelector(".row.pick"); await p.evaluate(() => { sessionStorage.removeItem("perm"); window.__perm = "granted"; window.__notes.length = 0; });
     await p.evaluate(() => { const d = new Date(); d.setHours(15, 30, 0, 0); window.__board.remind(d); }); await p.waitForTimeout(600);
     await dlg().waitFor({ state: "visible", timeout: 3000 }); assert.match(await dlg().innerText(), /Still open/);
     assert.equal((await p.evaluate(() => window.__notes.slice()))[0].ri, true);
