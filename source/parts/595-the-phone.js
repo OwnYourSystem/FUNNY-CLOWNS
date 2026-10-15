@@ -24,8 +24,16 @@ function phSet(){
     root.classList.toggle("ph",on);
     if(!on){ root.classList.remove("ph-old","ph-talk","ph-onb"); }
   }
-  phClassicBtn();
+  phClassicBtn(); phBarColour();
   phRender();
+}
+/* the browser bar takes the phone's ground colour, and gets its own back on the desktop */
+function phBarColour(){
+  var c=""; try{ c=getComputedStyle(document.documentElement).getPropertyValue("--ground").trim(); }catch(e){}
+  Array.prototype.forEach.call(document.querySelectorAll('meta[name="theme-color"]'),function(m){
+    if(!m.hasAttribute("data-was")) m.setAttribute("data-was",m.getAttribute("content")||"");
+    m.setAttribute("content",PH_ON&&c?c:m.getAttribute("data-was"));
+  });
 }
 /* on a phone in classic view, one quiet button in the header leads back */
 function phClassicBtn(){
@@ -56,7 +64,7 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||PH_OLD[r]?"you":r);
+    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -73,16 +81,21 @@ function phRender(){
   phTabsMark(r);
   var back=$("#ph-back-t"); if(back) back.textContent=PH_OLD[r]||"";
   /* the onboarding keeps what is typed: it is drawn again only when its step changes */
-  var key=onb?"onb"+PH_ONB:r;
-  if(onb && PH_DRAWN===key) return;
+  var key=onb?"onb"+PH_ONB:r==="step"?"step:"+phArg():r;
+  if((onb||r==="step") && PH_DRAWN===key) return;
+  if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
+  /* a redraw keeps a half-typed new step */
+  var nb=$("#ph-newstep"), keep=nb?nb.value:"", had=nb&&document.activeElement===nb;
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
     : r==="journal" ? phJournal()
     : r==="you" ? phYou()
     : r==="goals" ? phGoals()
     : r==="goal" ? phGoalPage()
+    : r==="step" ? phStepPage()
     : (talk||old) ? ""
     : phNow();
+  nb=$("#ph-newstep"); if(nb&&keep){ nb.value=keep; if(had) nb.focus(); }
 }
 
 /* ---- Now ---- */
@@ -225,27 +238,50 @@ function phGoals(){
   }
   return h.join("");
 }
-function phGoal(id){ PH_GOAL=id; phGo("goal"); }
-/* one goal: its steps, each one tap from editing, and a box to add the next */
+function phGoal(id){ PH_GOAL=id; location.hash="#/goal/"+encodeURIComponent(id); }
+function phStepGo(id){ var x=state.subs[id]; if(!x) return; PH_GOAL=x.gid; location.hash="#/step/"+encodeURIComponent(id); }
+/* the id after the route, as in #/step/s12, so a reload or Back lands on the same thing */
+function phArg(){ var m=String(location.hash||"").match(/^#\/[a-z]+\/(.+)$/); try{ return m?decodeURIComponent(m[1]):""; }catch(e){ return ""; } }
+/* the small facts the classic row shows as pills, as one quiet line */
+function phStepFacts(s){
+  var b=[], st=statusOf(s);
+  if(st.k!=="done") b.push(st.label);
+  if(s.prio&&s.prio!=="mid") b.push(s.prio==="high"?"High":"Low");
+  if(daysLeft(s)!==null) b.push(dueLabel(s));
+  if(s.rep) b.push(repLabel(s.rep)+(s.streak?" · "+s.streak+"×":""));
+  if(s.tag) b.push(s.tag);
+  return b.join(" · ");
+}
+function phOpts(list,cur){
+  return list.map(function(o){ return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(cur)?" selected":"")+'>'+esc(o[1])+'</option>'; }).join("");
+}
+function phSegb(k,list,cur,label){
+  return '<div class="ph-segb" role="group" aria-label="'+esc(label)+'" style="grid-template-columns:repeat('+list.length+',minmax(0,1fr))">'+
+    list.map(function(o){ return '<button type="button" data-ph="sset" data-k="'+k+'" data-v="'+esc(o[0])+'" aria-pressed="'+(String(o[0])===String(cur))+'">'+esc(o[1])+'</button>'; }).join("")+'</div>';
+}
+/* one goal: its steps, each one tap from its own page, and a box to add the next */
 function phGoalPage(){
   var g=gById(PH_GOAL); if(!g) return phGoals();
-  var p=groupPct(g), n=daysLeft(g), h=[], open=[], fin=[];
+  var p=groupPct(g), n=daysLeft(g), h=[], open=[], fin=[], meta=[];
   g.subs.forEach(function(id){ var s=state.subs[id]; if(!s) return; (s.pct>=100||s.status==="done"?fin:open).push(s); });
+  meta.push(n!==null?dueLabel(g):"no deadline");
+  if(g.prio==="high"||g.prio==="low") meta.push(g.prio);
+  if(g.where&&g.where!=="any") meta.push(whereLabel(g.where));
   h.push('<div class="ph-head"><div style="min-width:0"><a class="ph-backl" href="#/goals">Back to Goals</a><h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>'+
     '<button type="button" class="ph-chip" data-ph="gedit">Edit</button></div>');
-  h.push('<div><div class="ph-row-h" style="padding-bottom:4px"><span class="ph-k">'+p+'% done</span><span class="ph-k">'+
-    (n!==null?esc(dueLabel(g)):"no deadline")+(g.prio==="high"?" \u00b7 high":g.prio==="low"?" \u00b7 low":"")+'</span></div>'+
-    '<span class="ph-bar"><span style="width:'+p+'%"></span></span></div>');
+  h.push('<div><div class="ph-row-h" style="padding-bottom:4px"><span class="ph-k">'+p+'% done</span><span class="ph-k">'+esc(meta.join(" · "))+'</span></div>'+
+    '<span class="ph-bar"><span style="width:'+p+'%"></span></span>'+
+    ((g.tags||[]).length?'<p class="ph-note" style="margin-top:8px">'+esc(g.tags.map(function(t){ return "#"+t; }).join(" "))+'</p>':'')+'</div>');
   h.push('<section aria-label="Steps"><div class="ph-row-h"><h2 class="ph-h2">Steps</h2><span class="ph-k">'+fin.length+' of '+(open.length+fin.length)+' done</span></div>');
   if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Add the first one below.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
     open.concat(fin).forEach(function(s){
-      var dn=s.pct>=100||s.status==="done";
+      var dn=s.pct>=100||s.status==="done", fx=phStepFacts(s);
       h.push('<li><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
         '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span></span>'+
         (dn?'':'<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span>')+
-        (s.status==="blocked"?'<span class="ph-goal-x">Stuck</span>':'')+'</button></li>');
+        (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button></li>');
     });
     h.push('</ul>');
   }
@@ -253,68 +289,99 @@ function phGoalPage(){
   h.push('<section aria-label="Add a step" class="ph-add"><label class="ph-lab" for="ph-newstep">Add a step</label>'+
     '<input class="ph-in" id="ph-newstep" placeholder="Say it or type it" enterkeyhint="done">'+
     '<div class="ph-acts" style="margin-top:8px"><button type="button" class="ph-mic" data-ph="mic" data-for="ph-newstep" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
+    '<select class="ph-sel ph-sel-s" id="ph-newrep" aria-label="How often it repeats">'+phOpts(REPEATS,"")+'</select>'+
     '<button type="button" class="ph-btn ph-pri" data-ph="addstep">Add</button></div>'+
     '<p class="ph-note" id="ph-onb-hint" aria-live="polite"></p></section>');
   return h.join("");
 }
 function phAddStep(){
-  var g=gById(PH_GOAL), el=$("#ph-newstep"), v=el?String(el.value||"").trim():"";
+  var g=gById(PH_GOAL), el=$("#ph-newstep"), v=el?String(el.value||"").trim():"", rp=$("#ph-newrep");
   if(!g) return;
   if(!v){ var n=$("#ph-onb-hint"); if(n) n.textContent="Type or say the step first."; if(el) el.focus(); return; }
-  try{ toolRun("add_subtask",{main_task:g.name,name:v}); }catch(e){ toast("",e.message); return; }
+  addSub(g,v,rp?rp.value:"");
   PH_DRAWN=""; save(); renderAll();
-  var again=$("#ph-newstep"); if(again) again.focus();
+  var again=$("#ph-newstep"); if(again){ again.value=""; again.focus(); }
 }
-/* one step: rename it, set how far along it is, put it in Today, finish or remove it */
-function phStep(id){
-  var s=state.subs[id]; if(!s) return;
-  askUser({title:"Step", body:gById(s.gid)?["In "+gById(s.gid).name+"."]:[],
-    fields:[{k:"n",label:"Name",kind:"text",value:s.name},{k:"p",label:"How far along, in percent",kind:"number",min:0,max:100,value:s.pct}],
-    ok:"Save", cancel:"Close",
-    more:[["today","Put it in Today"],["done","Mark it done"],["remove","Remove this step"]],
-    check:function(v){
-      var n=Number(v.p); if(!String(v.n||"").trim()) return "Give the step a name.";
-      return (isNaN(n)||n<0||n>100)?"Use a number from 0 to 100.":"";
-    }}).then(function(v){
-    if(!v) return;
-    try{
-      if(v==="today") toolRun("focus_today",{subtask:s.name});
-      else if(v==="done") return phDone(id);
-      else if(v==="remove") return phRemoveStep(id);
-      else if(typeof v==="object"){
-        var nn=String(v.n).trim(), pp=Math.round(Number(v.p));
-        if(pp!==s.pct) toolRun("set_progress",{subtask:s.name,percent:pp});
-        if(nn!==s.name) toolRun("rename_subtask",{subtask:s.name,new_name:nn});
-      }
-    }catch(e){ toast("",e.message); }
-    PH_DRAWN=""; save(); renderAll();
-  });
+/* One step on its own page, with every field the classic editor has. Each
+   change is saved the moment it is made, as on the board. The page is drawn
+   once and then kept, so a background redraw never eats what is being typed;
+   phStepRedraw draws it again after a change that moves other fields.    */
+function phStepRedraw(){ PH_DRAWN=""; phRender(); }
+function phStepPage(){
+  var s=state.subs[phArg()]; if(!s) return PH_GOAL&&gById(PH_GOAL)?phGoalPage():phGoals();
+  var g=gById(s.gid), h=[], w=whenMap()[s.id], e=estState().items[s.id], inT=state.oftad.some(function(c){ return c.id===s.id; });
+  PH_GOAL=s.gid;
+  h.push('<div><a class="ph-backl" href="#/goal/'+esc(encodeURIComponent(s.gid))+'">Back to '+esc(g?phCut(g.name,28):"the goal")+'</a>'+
+    '<h1 class="ph-h1" id="ph-s-h" style="overflow-wrap:anywhere">'+esc(s.name)+'</h1></div>');
+  h.push('<div><div class="ph-row-h" style="padding-bottom:4px"><span class="ph-k">'+esc(statusOf(s).label)+'</span><span class="ph-k">'+s.pct+'%</span></div>'+
+    '<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span></div>');
+  h.push('<section class="ph-form" aria-label="This step">'+
+    '<label class="ph-lab" for="ph-s-name">Name</label><input class="ph-in" id="ph-s-name" data-phed="name" value="'+esc(s.name)+'" enterkeyhint="done">'+
+    '<span class="ph-lab">Status</span>'+phSegb("status",STATUSES,s.status==="done"||s.pct>=100?"done":s.status,"Status")+
+    '<label class="ph-lab" for="ph-s-pct">Done: <output id="ph-s-pv" for="ph-s-pct">'+s.pct+'%</output></label>'+
+    '<input class="ph-range" type="range" id="ph-s-pct" data-phed="pct" min="0" max="100" step="5" value="'+s.pct+'">'+
+    '<span class="ph-lab">Priority, inside this goal</span>'+phSegb("prio",PRIOS,s.prio||"mid","Priority")+
+    '<label class="ph-lab" for="ph-s-due">Deadline</label><div class="ph-inrow"><input class="ph-in" type="date" id="ph-s-due" data-phed="due" value="'+esc(s.due||"")+'">'+
+      (s.due?'<button type="button" class="ph-chip" data-ph="nodue">Clear</button>':'')+'</div>'+
+    '<label class="ph-lab" for="ph-s-rep">Repeats</label><select class="ph-sel" id="ph-s-rep" data-phed="rep">'+phOpts(REPEATS,s.rep||"")+'</select>'+
+    '<label class="ph-lab" for="ph-s-tag">Tag</label><input class="ph-in" id="ph-s-tag" data-phed="tag" value="'+esc(s.tag||"")+'" placeholder="Planning" enterkeyhint="done">'+
+    (state.groups.length>1?'<label class="ph-lab" for="ph-s-goal">Goal</label><select class="ph-sel" id="ph-s-goal" data-phmove="1">'+
+      phOpts(state.groups.map(function(x){ return [x.id,x.name]; }),s.gid)+'</select>':'')+
+    '<p class="ph-note" id="ph-s-msg" aria-live="polite">Changes are saved as you make them.</p></section>');
+  h.push('<section class="ph-grp" aria-label="More for this step">'+
+    '<button type="button" class="ph-rowb" data-ph="stoday"'+(inT?' disabled':'')+'><span>'+(inT?"In Today":"Put it in Today")+'</span></button>'+
+    '<button type="button" class="ph-rowb" data-ph="swhen"><span>'+(w?"When":"When will you do it?")+'</span><span class="ph-v">'+(w?esc(phCut(w.t,24)):"")+'</span></button>'+
+    '<button type="button" class="ph-rowb" data-ph="sest"><span>'+(e?"About how long":"How long will it take?")+'</span><span class="ph-v">'+(e?e.m+" min":"")+'</span></button>'+
+    (s.status==="done"||s.pct>=100?'':'<button type="button" class="ph-rowb" data-ph="sdone"><span>Mark it done</span></button>')+
+    '<button type="button" class="ph-rowb ph-danger" data-ph="sdel"><span>Remove this step</span></button></section>');
+  return h.join("");
+}
+/* a field on the step page changed */
+function phStepEdit(el){
+  var s=state.subs[phArg()]; if(!s) return;
+  if(el.getAttribute("data-phmove")){
+    if(moveSub(s.id,el.value)){ save(); renderAll(); phStepRedraw(); var m=$("#ph-s-msg"); if(m) m.textContent="Moved to "+gById(s.gid).name+"."; }
+    return;
+  }
+  var k=el.getAttribute("data-phed");
+  if(!editSub(s,k,el.value)){ el.value=s[k]||""; var m2=$("#ph-s-msg"); if(m2) m2.textContent="A step needs a name."; return; }
+  save(); renderAll();
+  /* typing stays where it is; anything that moves other fields redraws the page */
+  if(k==="name"){ var hd=$("#ph-s-h"); if(hd) hd.textContent=s.name; }
+  else if(k!=="tag") phStepRedraw();
+}
+function phStepSet(k,v){
+  var s=state.subs[phArg()]; if(!s) return;
+  if(editSub(s,k,v)){ save(); renderAll(); phStepRedraw(); var b=document.querySelector('#ph-main [data-ph="sset"][data-k="'+k+'"][data-v="'+v+'"]'); if(b) b.focus(); }
 }
 function phRemoveStep(id){
   var s=state.subs[id]; if(!s) return;
-  askUser({title:"Remove this step?", body:["\u201c"+s.name+"\u201d goes for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
+  askUser({title:"Remove this step?", body:["“"+s.name+"” goes for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
     if(!yes) return;
-    try{ toolRun("remove_subtask",{subtask:s.name}); }catch(e){ toast("",e.message); }
-    PH_DRAWN=""; save(); renderAll();
+    var gid=s.gid; removeSub(id); save(); renderAll();
+    if(phRoute()==="step") phGoal(gid);
   });
 }
+/* the goal: every field the classic goal editor has, and where it can go */
 function phGoalEdit(){
   var g=gById(PH_GOAL); if(!g) return;
   askUser({title:"Goal", fields:[{k:"n",label:"Name",kind:"text",value:g.name},
-      {k:"p",label:"Priority",kind:"pick",row:true,opts:[["high","High"],["mid","Middle"],["low","Low"]],value:g.prio||"mid"},
-      {k:"d",label:"Deadline (leave empty for none)",kind:"date",value:g.due||""}],
-    ok:"Save", cancel:"Close", more:[["archive","Archive this goal"],["remove","Remove this goal"]],
+      {k:"p",label:"Priority",kind:"pick",row:true,opts:PRIOS,value:g.prio||"mid"},
+      {k:"d",label:"Deadline (leave empty for none)",kind:"date",value:g.due||""},
+      {k:"w",label:"Where it can be done",kind:"select",opts:WHERES.map(function(x){ return [x[0],x[1]]; }),value:g.where||"any"},
+      {k:"t",label:"Tags, with commas between (up to 5)",kind:"text",value:(g.tags||[]).join(", ")}],
+    ok:"Save", cancel:"Close", more:[["backlog","Move it to the Backlog"],["archive","Archive this goal"],["remove","Remove this goal"]],
     check:function(v){ return String(v.n||"").trim()?"":"Give the goal a name."; }}).then(function(v){
     if(!v) return;
-    try{
-      if(v==="archive"){ toolRun("archive_goal",{main_task:g.name}); PH_DRAWN=""; save(); renderAll(); return phGo("goals"); }
-      if(v==="remove") return askUser({title:"Remove this goal?", body:["\u201c"+g.name+"\u201d and its "+g.subs.length+" steps go for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
-        if(!yes) return; try{ toolRun("remove_main_task",{main_task:g.name}); }catch(e){ toast("",e.message); } save(); renderAll(); phGo("goals"); });
-      var name=g.name;
-      if((v.p||"mid")!==(g.prio||"mid")) toolRun("set_goal_field",{main_task:name,field:"priority",value:v.p});
-      if((v.d||"")!==(g.due||"")) toolRun("set_goal_field",{main_task:name,field:"deadline",value:v.d||""});
-      if(String(v.n).trim()!==name) toolRun("set_goal_field",{main_task:name,field:"name",value:String(v.n).trim()});
-    }catch(e){ toast("",e.message); }
+    if(v==="archive"){ archiveGoal(g.id); return phGo("goals"); }
+    if(v==="backlog"){ backlogGoal(g.id); return phGo("goals"); }
+    if(v==="remove") return askUser({title:"Remove this goal?", body:["“"+g.name+"” and its "+g.subs.length+" steps go for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
+      if(!yes) return; try{ toolRun("remove_main_task",{main_task:g.name}); }catch(e){ toast("",e.message); } save(); renderAll(); phGo("goals"); });
+    if((v.p||"mid")!==(g.prio||"mid")) editGoal(g,"prio",v.p);
+    if((v.d||"")!==(g.due||"")) editGoal(g,"due",v.d);
+    if((v.w||"any")!==(g.where||"any")) editGoal(g,"where",v.w);
+    if(v.t!==(g.tags||[]).join(", ")) editGoal(g,"tags",v.t);
+    if(String(v.n).trim()!==g.name) editGoal(g,"name",v.n);
     PH_DRAWN=""; save(); renderAll();
   });
 }
@@ -425,10 +492,20 @@ function phOnbFinish(add){
     else if(k==="planner") phGo("planner");
     else if(k==="week") weekAsk();
     else if(k==="backup") $("#btn-backup").click();
-    else if(k==="theme"){ $("#btn-theme").click(); PH_DRAWN=""; phRender(); }
+    else if(k==="theme"){ $("#btn-theme").click(); PH_DRAWN=""; phRender(); phBarColour(); }
     else if(k==="classic"){ try{ localStorage.setItem(PH_KEY,"1"); }catch(er){} location.hash="#/board"; phSet(); }
     else if(k==="goal") phGoal(id);
-    else if(k==="step") phStep(id);
+    else if(k==="step") phStepGo(id);
+    else if(k==="sset") phStepSet(b.getAttribute("data-k"),b.getAttribute("data-v"));
+    else if(k==="nodue"){ var du=$("#ph-s-due"); if(du){ du.value=""; phStepEdit(du); } }
+    else if(k==="stoday"||k==="swhen"||k==="sest"||k==="sdone"||k==="sdel"){
+      var cs=state.subs[phArg()]; if(!cs) return;
+      if(k==="stoday"){ try{ toolRun("focus_today",{subtask:cs.name}); }catch(er){ toast("",er.message); } save(); renderAll(); phStepRedraw(); }
+      else if(k==="swhen") whenAsk(cs.id).then(phStepRedraw);
+      else if(k==="sest") estAsk(cs.id).then(phStepRedraw);
+      else if(k==="sdone"){ phDone(cs.id); phStepRedraw(); }
+      else phRemoveStep(cs.id);
+    }
     else if(k==="addstep") phAddStep();
     else if(k==="gedit") phGoalEdit();
     else if(k==="newgoal") phNewGoal();
@@ -440,7 +517,13 @@ function phOnbFinish(add){
     else if(k==="tog"){ phOnbRead(); PH_V[b.getAttribute("data-k")]=b.getAttribute("data-v"); PH_DRAWN=""; phRender(); }
     else if(k==="mic"){ var el=document.getElementById(b.getAttribute("data-for")); if(el) micInto(el,b,function(t){ var n=$("#ph-onb-hint"); if(n) n.textContent=t; }); }
   });
-  root.addEventListener("keydown",function(e){ if(e.key==="Enter" && e.target && e.target.id==="ph-newstep"){ e.preventDefault(); phAddStep(); } });
+  root.addEventListener("keydown",function(e){
+    if(e.key!=="Enter" || !e.target) return;
+    if(e.target.id==="ph-newstep"){ e.preventDefault(); phAddStep(); }
+    else if(e.target.getAttribute && e.target.getAttribute("data-phed")){ e.preventDefault(); e.target.blur(); }
+  });
+  root.addEventListener("change",function(e){ var t=e.target; if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
+  root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
   addEventListener("hashchange",function(){ if(PH_ON){ PH_DRAWN=""; phRender(); scrollTo(0,0); } });
   if(PH_MQ){ if(PH_MQ.addEventListener) PH_MQ.addEventListener("change",phSet); else if(PH_MQ.addListener) PH_MQ.addListener(phSet); }
   phSet();

@@ -1104,6 +1104,36 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
    purpose: one decision per screen, nothing moulded, nothing moving. The old
    page stays in the document for the desktop, for Classic view, and for the
    pages You opens under a Back bar.                                      */
+/* Moonlit Plum, #2C1332 (2026-10-15): the phone's own colour. Only html.ph
+   gets it, so the desktop keeps its look. Dark is the default, as on the
+   board: plum is the surface and a pale lilac does the pressing. In light,
+   plum does the pressing on a plum-tinted white. Red stays for danger.  */
+html.ph{
+  color-scheme:dark;
+  --ground:#140A17; --panel:#2C1332; --raised:#36193D; --inset:rgba(244,238,246,.06);
+  --ink:#F4EEF6; --ink-2:#C2B3C7; --muted:#A08EA6;
+  --hair:rgba(244,238,246,.09); --rule:rgba(244,238,246,.2);
+  --ph-pri:#D8C2E0; --ph-on-pri:#2C1332; --ph-wash:rgba(216,194,224,.14);
+  --nm-bg:#1D0E21; --nm-hi:rgba(244,238,246,.05); --nm-lo:rgba(0,0,0,.6);
+}
+@media (prefers-color-scheme: light){
+  html.ph:not([data-theme="dark"]){
+    color-scheme:light;
+    --ground:#F6F2F7; --panel:#FFFFFF; --raised:#ECE4EE; --inset:rgba(44,19,50,.06);
+    --ink:#1E0D22; --ink-2:#55465A; --muted:#6B5C70;
+    --hair:rgba(44,19,50,.1); --rule:rgba(44,19,50,.22);
+    --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(44,19,50,.07);
+    --nm-bg:#EFE8F1; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(120,96,128,.35);
+  }
+}
+html.ph[data-theme="light"]{
+  color-scheme:light;
+  --ground:#F6F2F7; --panel:#FFFFFF; --raised:#ECE4EE; --inset:rgba(44,19,50,.06);
+  --ink:#1E0D22; --ink-2:#55465A; --muted:#6B5C70;
+  --hair:rgba(44,19,50,.1); --rule:rgba(44,19,50,.22);
+  --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(44,19,50,.07);
+  --nm-bg:#EFE8F1; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(120,96,128,.35);
+}
 #ph{display:none}
 html.ph body{background:var(--ground)}
 html.ph #ph{display:block; font-family:var(--font); color:var(--ink)}
@@ -1127,8 +1157,8 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
   padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px)); background:var(--panel); border-top:1px solid var(--hair)}
 #ph-tabs a{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:54px;
   font-size:12px; color:var(--muted); text-decoration:none; border-radius:14px}
-#ph-tabs a[aria-current="page"]{color:var(--ink); font-weight:600}
-#ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+#ph-tabs a[aria-current="page"]{color:var(--ink); font-weight:600; background:var(--ph-wash)}
+#ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
 .ph-k{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
 .ph-hot{color:var(--run)}
 .ph-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px}
@@ -1137,7 +1167,7 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
 .ph-sub{margin:4px 0 0; font-size:14px; color:var(--ink-2); line-height:1.45}
 .ph-chip{font:inherit; font-size:14px; min-height:44px; padding:0 16px; border-radius:22px; border:1px solid var(--rule);
   background:var(--panel); color:var(--ink); flex:0 0 auto}
-.ph-chip.ph-pri,.ph-btn.ph-pri{background:var(--ink); color:var(--ground); border-color:var(--ink); font-weight:600}
+.ph-chip.ph-pri,.ph-btn.ph-pri{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri); font-weight:600}
 .ph-strip{display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; border-radius:14px; background:var(--raised);
   color:var(--ink); text-decoration:none}
 .ph-strip-t{flex:1 1 auto; min-width:0; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -1161,13 +1191,13 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
 .ph-ring{flex:0 0 auto; width:28px; height:28px; border-radius:14px; border:2px solid var(--ink-2); background:transparent; padding:0;
   box-sizing:border-box; position:relative}
 button.ph-ring::after{content:""; position:absolute; inset:-9px}
-.ph-ring.on{background:var(--ink); border-color:var(--ink)}
+.ph-ring.on{background:var(--ph-pri); border-color:var(--ph-pri)}
 .ph-note{margin:0; padding:0 4px; font-size:13px; line-height:1.5; color:var(--muted)}
 .ph-empty{margin:0; padding:16px; border-radius:18px; background:var(--raised); font-size:14px; line-height:1.5; color:var(--ink-2)}
 .ph-days{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:2px 4px; font-size:14px; color:var(--ink-2)}
 .ph-dots{display:flex; gap:6px; flex:0 0 auto}
 .ph-dot{width:10px; height:10px; border-radius:5px; background:var(--rule)}
-.ph-dot.on{background:var(--ink)}
+.ph-dot.on{background:var(--ph-pri)}
 .ph-two,.ph-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ph-tile{display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; min-height:68px; padding:12px 14px;
   border-radius:18px; border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:16px; font-weight:600; color:var(--ink);
@@ -1191,7 +1221,7 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-goal-top{display:flex; align-items:baseline; gap:10px}
 .ph-goal-n{flex:1 1 auto; min-width:0; font-size:16px; font-weight:600; overflow-wrap:anywhere}
 .ph-bar{display:block; margin-top:8px; height:6px; border-radius:3px; background:var(--hair); overflow:hidden}
-.ph-bar span{display:block; height:6px; background:var(--ink)}
+.ph-bar span{display:block; height:6px; background:var(--ph-pri)}
 .ph-goal-x{display:block; margin-top:6px; font-size:13px; color:var(--muted); overflow-wrap:anywhere}
 .ph-goal.is-done .ph-goal-n{color:var(--muted); text-decoration:line-through}
 .ph-item-b{background:none; border:0; font:inherit; font-size:15px; color:var(--ink); text-align:left; cursor:pointer}
@@ -1203,18 +1233,33 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-fill{flex:1 1 auto; min-height:24px}
 .ph-steps{display:flex; gap:8px; justify-content:center; margin-bottom:8px}
 .ph-step{width:6px; height:6px; border-radius:3px; background:var(--rule)}
-.ph-step.on{width:24px; background:var(--ink)}
+.ph-step.on{width:24px; background:var(--ph-pri)}
 .ph-time{font:inherit; font-size:17px; width:136px; min-height:44px; box-sizing:border-box; border:1px solid var(--rule); border-radius:12px;
   padding:0 10px; background:var(--ground); color:var(--ink)}
 .ph-sw{display:inline-flex; border:1px solid var(--rule); border-radius:22px; overflow:hidden; flex:0 0 auto}
 .ph-sw button{font:inherit; font-size:14px; min-height:40px; min-width:56px; border:0; background:var(--panel); color:var(--ink-2)}
-.ph-sw button[aria-pressed="true"]{background:var(--ink); color:var(--ground); font-weight:600}
+.ph-sw button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
 .ph-lab{margin-top:8px; font-size:15px; font-weight:500}
 .ph-in{font:inherit; font-size:17px; width:100%; box-sizing:border-box; min-height:52px; border:1px solid var(--rule); border-radius:14px;
   padding:0 14px; background:var(--panel); color:var(--ink)}
 .ph-mic{display:inline-flex; align-items:center; gap:8px; align-self:flex-start; min-height:44px; padding:0 16px; border-radius:22px;
   border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:15px; color:var(--ink)}
-.ph-mic.on{border-color:var(--accent); color:var(--accent)}
+.ph-mic.on{border-color:var(--ph-pri); background:var(--ph-wash)}
+.ph-form{display:flex; flex-direction:column; gap:6px}
+.ph-form .ph-lab{margin-top:10px}
+.ph-segb{display:grid; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
+.ph-segb button{font:inherit; font-size:14px; min-height:40px; min-width:0; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
+.ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
+.ph-sel{font:inherit; font-size:17px; width:100%; min-height:52px; box-sizing:border-box; border:1px solid var(--rule); border-radius:14px;
+  padding:0 12px; background:var(--panel); color:var(--ink)}
+.ph-sel-s{flex:0 1 auto; width:auto; min-width:0; min-height:44px; font-size:15px; border-radius:22px}
+.ph-inrow{display:flex; gap:8px; align-items:center}
+.ph-inrow .ph-in{flex:1 1 auto; min-width:0}
+.ph-range{width:100%; min-height:40px; accent-color:var(--ph-pri)}
+.ph-rowb:disabled{color:var(--muted)}
+.ph-rowb.ph-danger{color:var(--accent-ink)}
+html.ph .ask-pick button[aria-pressed="true"]{border-color:var(--ph-pri); background:var(--ph-wash); color:var(--ink)}
+html.ph dialog.ask:not(.danger) .ask-acts .btn.take{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri)}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}

@@ -34,7 +34,7 @@ function whenSet(id,text){
 function whenAsk(id){
   var sb=state.subs[id]; if(!sb) return;
   var cur=whenMap()[id];
-  askUser({title:cur?"Change when":"When will you do this step?",
+  return askUser({title:cur?"Change when":"When will you do this step?",
     body:["Step: "+sb.name,"Pick a moment you will notice, such as after your coffee or when you sit down at your desk."+(cur?" Leave it empty to remove it.":"")],
     fields:[{k:"t",label:"When",kind:"text",value:cur?cur.t:"",ph:"After I pour my coffee"}],
     ok:"Save", cancel:"Not now",
@@ -101,7 +101,7 @@ function estCompareLine(m){
 function estAsk(id){
   var sb=state.subs[id]; if(!sb) return;
   var cur=estState().items[id];
-  askUser({title:cur?"Change your guess":"About how long?",
+  return askUser({title:cur?"Change your guess":"About how long?",
     body:["Step: "+sb.name,"A guess is fine, in minutes.",estCompareLine(cur?cur.m:0)],
     fields:[{k:"m",label:"Minutes",kind:"number",value:cur?cur.m:"",min:1,max:600,ph:"25"}],
     ok:"Save", cancel:"Not now",

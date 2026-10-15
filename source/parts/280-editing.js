@@ -1,5 +1,59 @@
 /* ---------------- editing ---------------- */
 function mark(id,field){ state.ue[id+"|"+field]=1; }
+/* One change to a subtask or a goal. The classic editor and the phone both
+   come through here, so the two can never drift apart. false means the value
+   was refused (an empty name) and nothing changed.                       */
+function editSub(s,k,v){
+  v=v==null?"":String(v);
+  if(k==="name"){ if(!v.trim()) return false; s.name=v.trim(); mark(s.id,"name"); }
+  else if(k==="status"){ s.status=v; if(v==="done") s.pct=100; else if(s.pct>=100) s.pct=95; s.upd=todayStr(); }
+  else if(k==="pct"){ s.pct=clamp(Math.round(+v/5)*5,0,100); s.upd=todayStr();
+    s.status = s.pct>=100?"done":(s.pct>0&&s.status==="todo"?"doing":s.status); }
+  else if(k==="rep"){
+    s.rep=v; s.period=v?periodKey(v):""; s.streak=s.streak||0;
+    if(v){ s.pct=0; s.status="todo"; s.upd=todayStr(); }
+  }
+  else if(k==="tag") s.tag=v.trim();
+  else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
+  else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
+  else return false;
+  touchHist(); return true;
+}
+function editGoal(g,k,v){
+  v=v==null?"":String(v);
+  if(k==="name"){ if(!v.trim()) return false; g.name=v.trim(); mark(g.id,"name"); }
+  else if(k==="due"){ g.due=v||""; mark(g.id,"due"); }
+  else if(k==="prio"){ g.prio=v||"mid"; mark(g.id,"prio"); }
+  else if(k==="where"){ g.where=v||"any"; mark(g.id,"where"); }
+  else if(k==="tags"){
+    g.tags=v.split(",").map(function(t){ return t.trim().toLowerCase(); })
+      .filter(function(t,i,a){ return t && a.indexOf(t)===i; }).slice(0,5);
+    mark(g.id,"tags");
+  }
+  else return false;
+  return true;
+}
+/* a new subtask, and removing one for good: the same from both views */
+function addSub(g,name,rep){
+  var n=String(name||"").trim(); if(!g||!n) return null;
+  var id=uid("s"), rp=rep||"";
+  state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id,
+                  rep:rp,period:rp?periodKey(rp):"",streak:0,best:0,prio:"mid"};
+  g.subs.push(id); touchHist();
+  return state.subs[id];
+}
+function removeSub(id){
+  if(!state.subs[id]) return false;
+  detach(id); delete state.subs[id]; state.killed.push(id); touchHist();
+  return true;
+}
+/* a subtask goes under another goal: the drag on the board, the Goal box on the phone */
+function moveSub(sid,gid){
+  var sb=state.subs[sid], g=gById(gid);
+  if(!sb||!g||sb.gid===g.id) return false;
+  detach(sb.id); g.subs.push(sb.id); sb.gid=g.id; mark(sb.id,"group");
+  return true;
+}
 $("#main-bars").addEventListener("click",function(e){
   if(e.target.closest("[data-grip]")) return;
   var pen=e.target.closest("[data-gedit]");
@@ -111,8 +165,7 @@ document.addEventListener("click",function(e){
   if(d){
     var s=state.subs[d.dataset.del]; if(!s) return;
     if(!armGate("del:"+s.id,d,"Remove for good?")) return;
-    detach(s.id); delete state.subs[s.id]; state.killed.push(s.id);
-    openEd=""; touchHist(); save(); renderAll(); return;
+    removeSub(s.id); openEd=""; save(); renderAll(); return;
   }
   var gd=e.target.closest("[data-gdel]");
   if(gd){
@@ -129,32 +182,12 @@ document.addEventListener("change",function(e){
   var ed=f.closest("[data-ed-for]");
   if(ed && f.dataset.ed){
     var s=state.subs[ed.dataset.edFor]; if(!s) return;
-    var k=f.dataset.ed, v=f.value;
-    if(k==="name"){ if(!v.trim()) { renderSubs(); return; } s.name=v.trim(); mark(s.id,"name"); }
-    else if(k==="status"){ s.status=v; if(v==="done") s.pct=100; else if(s.pct>=100) s.pct=95; s.upd=todayStr(); }
-    else if(k==="pct"){ s.pct=clamp(Math.round(+v/5)*5,0,100); s.upd=todayStr();
-      s.status = s.pct>=100?"done":(s.pct>0&&s.status==="todo"?"doing":s.status); }
-    else if(k==="rep"){
-      s.rep=v; s.period=v?periodKey(v):""; s.streak=s.streak||0;
-      if(v){ s.pct=0; s.status="todo"; s.upd=todayStr(); }
-    }
-    else if(k==="tag") s.tag=v.trim();
-    else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
-    else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
-    touchHist(); save(); renderAll(); return;
+    if(!editSub(s,f.dataset.ed,f.value)){ renderSubs(); return; }
+    save(); renderAll(); return;
   }
   if(f.dataset.ged){
     var g=gById(state.sel); if(!g) return;
-    var gk=f.dataset.ged;
-    if(gk==="name"){ if(!f.value.trim()){ renderAll(); return; } g.name=f.value.trim(); mark(g.id,"name"); }
-    else if(gk==="due"){ g.due=f.value||""; mark(g.id,"due"); }
-    else if(gk==="prio"){ g.prio=f.value||"mid"; mark(g.id,"prio"); }
-    else if(gk==="where"){ g.where=f.value||"any"; mark(g.id,"where"); }
-    else if(gk==="tags"){
-      g.tags=f.value.split(",").map(function(t){ return t.trim().toLowerCase(); })
-        .filter(function(t,i,a){ return t && a.indexOf(t)===i; }).slice(0,5);
-      mark(g.id,"tags");
-    }
+    if(!editGoal(g,f.dataset.ged,f.value)){ renderAll(); return; }
     save(); renderAll();
   }
 });
@@ -175,13 +208,9 @@ $("#ng-back").addEventListener("click",function(){
 $("#ns-add").addEventListener("click",function(){
   var g=gById(state.sel); if(!g){ return; }
   var n=$("#ns-name").value.trim(); if(!n){ $("#ns-name").focus(); return; }
-  var id=uid("s");
-  var rp=$("#ns-rep").value||"";
-  state.subs[id]={id:id,name:n,pct:0,status:"todo",tag:"",upd:todayStr(),gid:g.id,
-                  rep:rp,period:rp?periodKey(rp):"",streak:0,best:0,prio:"mid"};
-  g.subs.push(id);
+  addSub(g,n,$("#ns-rep").value||"");
   $("#ns-name").value="";
-  touchHist(); save(); renderAll();
+  save(); renderAll();
 });
 [["#ng-name","#ng-add"],["#ns-name","#ns-add"]].forEach(function(p){
   $(p[0]).addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); $(p[1]).click(); } });

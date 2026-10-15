@@ -10,7 +10,7 @@
    that resolves to false (or null when it has fields) if it was cancelled, and
    to true (or an object of the field values) on yes. more:[[value,label]]
    adds choices that resolve to their value. fields are
-   {k, label, kind:"text"|"textarea"|"number"|"time"|"pick", value, ph, min,
+   {k, label, kind:"text"|"textarea"|"number"|"time"|"date"|"pick"|"select", value, ph, min,
    max, opts:[[value,label]]}. A text box has a Speak button under it. check(values) may return a sentence to show in
    the dialog and keep it open. Questions queue and are shown one at a time. */
 /* Tab and Shift+Tab go round inside a box instead of out into the browser. */
@@ -46,6 +46,9 @@ function askNext(){
       return '<div class="ask-grp">'+(f.label?'<span class="ask-lab">'+esc(f.label)+'</span>':'')+
         '<div class="ask-pick'+(f.row?' row':'')+'" role="group" aria-label="'+esc(f.label||"")+'" '+a+'>'+(f.opts||[]).map(function(op){
         return '<button type="button" data-av="'+esc(op[0])+'" aria-pressed="'+(String(op[0])===v)+'">'+esc(op[1])+'</button>'; }).join("")+'</div></div>';
+    if(f.kind==="select")
+      return '<label>'+esc(f.label||"")+'<select class="f" '+a+'>'+(f.opts||[]).map(function(op){
+        return '<option value="'+esc(op[0])+'"'+(String(op[0])===v?" selected":"")+'>'+esc(op[1])+'</option>'; }).join("")+'</select></label>';
     var inp = f.kind==="textarea"
       ? '<textarea class="f" '+a+' spellcheck="false" placeholder="'+esc(f.ph||"")+'">'+esc(v)+'</textarea>'+
         '<button type="button" class="mini mic ask-mic" data-mic-to="'+esc(f.k)+'" aria-pressed="false" aria-label="Speak into this box">'+

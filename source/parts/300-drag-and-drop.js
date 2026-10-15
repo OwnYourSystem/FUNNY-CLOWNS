@@ -143,7 +143,7 @@ document.addEventListener("pointerup",function(e){
   if(!row) return;
   if(c.k==="sub"&&row.dataset.group){
     var sb=state.subs[c.id], g=gById(row.dataset.group);
-    if(sb&&g&&sb.gid!==g.id){ detach(sb.id); g.subs.push(sb.id); sb.gid=g.id; mark(sb.id,"group"); save(); renderAll(); }
+    if(sb&&g&&moveSub(sb.id,g.id)){ save(); renderAll(); }
     return;
   }
   if(c.k==="task"&&row.dataset.group){

@@ -99,6 +99,21 @@ goal and step. Flat on purpose: one card, plain rows, no moulding, no motion, no
 carousel, no pop-up that opens by itself. The moulded rules below apply to
 Classic view only. The desktop is unchanged.
 
+A goal opens `#/goal/<id>`, a step opens `#/step/<id>`. **The phone edits a step
+with every field the classic editor has**, and both views call the same
+`editSub`, `editGoal`, `moveSub`, `addSub` and `removeSub` in `280-editing.js`.
+A new subtask or goal field goes into those functions first, then into both
+views; never into one view alone. The step page is drawn once per step and
+keeps what is typed; redraw it (`phStepRedraw`) only after a change that moves
+other fields.
+
+**Phone colour: Moonlit Plum `#2C1332`.** It is set as tokens on `html.ph` only
+(`--ground`, `--panel`, `--raised`, `--ink`, `--ph-pri`, `--ph-on-pri`,
+`--ph-wash`). Use `--ph-pri` for anything pressed, primary, or filled (buttons,
+bars, the active tab, rings). Dark: plum surfaces, lilac `#D8C2E0` presses.
+Light: plum presses on `#F6F2F7`. Red is for danger only. Keep text at 4.5:1 on
+every surface.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is
