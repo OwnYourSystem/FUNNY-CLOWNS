@@ -32,7 +32,7 @@
       "headers": [
         {
           "key": "Permissions-Policy",
-          "value": "microphone=()"
+          "value": "microphone=(self)"
         },
         {
           "key": "Content-Security-Policy",

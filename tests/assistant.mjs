@@ -18,13 +18,13 @@ const say = async (t) => { await p.fill("#bot-input", t); await p.press("#bot-in
 const names = () => p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); return { subs: Object.values(s.subs).map((x) => x.name), groups: s.groups.map((g) => g.name) }; }, KEY);
 const html = await (await fetch(URL)).text();
 
-await ok("no microphone anywhere: no orb, no mic button, no speech or capture code in the served page", async () => {
-  for (const w of ["SpeechRecognition", "webkitSpeechRecognition", "getUserMedia", "bot-orb", "bot-mic", "bottoast", "askSpoken"]) assert.equal(html.includes(w), false, w);
-  assert.equal(await p.locator("#bot-orb, #bot-mic, #bottoast").count(), 0);
+await ok("voice is one Speak button that fills the box: no orb, no audio capture, nothing listens on load", async () => {
+  for (const w of ["getUserMedia", "bot-orb", "bottoast", "askSpoken"]) assert.equal(html.includes(w), false, w);
+  assert.equal(await p.locator("#bot-orb, #bottoast").count(), 0); assert.equal(await p.locator("#bot-mic").count(), 1);
 });
-await ok("the permissions header refuses the microphone", async () => {
+await ok("the permissions header allows the microphone for this page only", async () => {
   const v = JSON.parse(fs.readFileSync(new globalThis.URL("../vercel.json", import.meta.url), "utf8")); const s = JSON.stringify(v);
-  assert.match(s, /microphone=\(\)/); assert.doesNotMatch(s, /microphone=\(self\)/);
+  assert.match(s, /microphone=\(self\)/); assert.doesNotMatch(s, /microphone=\(\)/); assert.doesNotMatch(s, /microphone=\*/);
 });
 await ok("an Assistant button in the header opens a plain chat and Escape closes it", async () => {
   const btn = p.locator("#btn-assistant"); assert.equal(await btn.innerText(), "Assistant");

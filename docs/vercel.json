@@ -19,6 +19,15 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -31,5 +40,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/tutor.js": {
+      "maxDuration": 60
+    }
+  }
 }
