@@ -1193,6 +1193,9 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-bar{display:block; margin-top:8px; height:6px; border-radius:3px; background:var(--hair); overflow:hidden}
 .ph-bar span{display:block; height:6px; background:var(--ink)}
 .ph-goal-x{display:block; margin-top:6px; font-size:13px; color:var(--muted); overflow-wrap:anywhere}
+.ph-goal.is-done .ph-goal-n{color:var(--muted); text-decoration:line-through}
+.ph-item-b{background:none; border:0; font:inherit; font-size:15px; color:var(--ink); text-align:left; cursor:pointer}
+.ph-add{display:flex; flex-direction:column; gap:6px}
 .ph-onb{display:flex; flex-direction:column; gap:12px; min-height:calc(100vh - 56px)}
 .ph-big{margin:48px 0 0; font-size:34px; line-height:1.12; font-weight:600; letter-spacing:-.02em}
 .ph-lede{margin:0; font-size:17px; line-height:1.5; color:var(--ink-2)}
@@ -1213,7 +1216,7 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
   border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:15px; color:var(--ink)}
 .ph-mic.on{border-color:var(--accent); color:var(--accent)}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
-html.ph .ask-acts.ask-more .btn{width:100%; justify-content:center; min-height:48px}
+html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
 </style>
 <!--ARTIFACT-HEAD-END-->
