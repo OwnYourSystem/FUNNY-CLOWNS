@@ -301,6 +301,11 @@ body.flat #canvas{transform:none!important}
   .bot-size{display:none}
 }
 .bot-ask .f{flex:1 1 auto; width:auto}
+.btn.mic{display:inline-flex; align-items:center; gap:6px}
+.btn.mic.on,.mini.mic.on{color:var(--accent); border-color:var(--accent)}
+.ask-mic{display:inline-flex; align-items:center; gap:6px; margin-top:6px}
+.ask-hint{margin:6px 0 0; font-size:12px; color:var(--muted); line-height:1.5}
+.ask-hint:empty{display:none}
 [data-panel]{position:relative}
 @media (min-width:901px){
   [data-panel] .row.pick{cursor:pointer}
@@ -1466,6 +1471,7 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
       <input class="f" id="bot-input" autocomplete="off" placeholder="Tell me what to change, or ask a question" aria-label="Message the assistant">
+      <button class="btn mic" id="bot-mic" type="button" aria-pressed="false" aria-label="Speak instead of typing"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>
       <button class="btn" id="bot-send">Send</button>
       <button class="btn" id="bot-stop" hidden>Stop</button>
     </div>

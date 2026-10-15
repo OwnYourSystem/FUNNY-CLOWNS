@@ -9,7 +9,7 @@ This branch is the deployable app. The root of it is what a host serves.
     manifest.webmanifest    what makes it installable to a home screen
     sw.js                   the offline cache, and the push reminders
     icon-*.png              the home screen icons
-    vercel.json             cache headers, and microphone=() (the board has none)
+    vercel.json             cache headers, and the microphone for this page only (Speak)
     api/tutor.js            the hosted tutor (parked, not called)
     supabase/               the push server: function and migrations
     source/                 the board in parts, and build.sh
@@ -40,5 +40,6 @@ then deploy `supabase/functions/push`.
 The board lives in `localStorage` on the device. The weekly check-in and the
 journal live under their own keys on the device only: not synced, not in the
 backup text. An optional account carries the board (not those two) between
-devices. The push server holds a device address, a time zone and the
+devices. Speak turns the voice into text with the browser's own speech
+service; the board keeps only the text. The push server holds a device address, a time zone and the
 reminder times the person set, never a task or any words.

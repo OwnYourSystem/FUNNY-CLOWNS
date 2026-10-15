@@ -552,11 +552,17 @@ keeps its place.
 
 ## The assistant
 
-**There is no microphone anywhere.** No orb, no dictation, no
-`SpeechRecognition`, no `getUserMedia`, and the `Permissions-Policy` header
-says `microphone=()`. A test fails if any of them comes back. Voice was a
-fancy way in that failed often (permissions, mishearing, the browser) and
-the person asked for a plain one.
+**Voice is one Speak button that fills the box.** Put back on 2026-10-15 at the
+owner's request ("it is easier to say than write"). `micInto(el, btn, say)` uses the
+browser's own `SpeechRecognition` (English, interim results): the words land in the
+chat box, or in any text box of a dialog (each has a Speak button under it), and
+nothing is sent, saved or changed until the person presses Send or Save. A misheard
+word is seen first, so voice never changes the board by itself. Nothing listens on
+load; pressing Speak again, Send, or closing the dialog stops it. The first time, the
+note line says the browser's speech service turns the voice into text and the board
+keeps only the text. No orb, no `getUserMedia`, no audio stored. Where the browser has
+no speech service, the button points to the keyboard's own microphone. The header is
+`microphone=(self)`.
 
 **It is a chat, opened by a button in the header.** The "Assistant" button
 (`aria-expanded`, `aria-controls="botsheet"`) opens a fixed panel at the
@@ -590,7 +596,7 @@ dialog and says so.
    nothing gets the nearest real names.
 
 **Typed words keep their capitals** (`asTyped`) and `Type ...` is the verb in
-every message, not `Say ...`.
+every message, not `Say ...` (a spoken sentence arrives as typed text in the box).
 
 **The tools are the model's API too.** `botTools()` is the list a hosted
 model is handed, and `api/tutor.js` carries an allowlist that a test compares

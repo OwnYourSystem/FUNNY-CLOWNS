@@ -131,6 +131,7 @@ async function botAsk(text,opts){
   var said=String(text||"").trim();
   if(!said) return;
   PEND=null; pendRender();                         /* a new sentence replaces a waiting question */
+  micStop();
   $("#bot-input").value="";
   /* the board answers its own commands first: no model, no network, no wait */
   var reply=null, care=DISTRESS.test(said);

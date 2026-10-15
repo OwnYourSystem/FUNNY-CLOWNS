@@ -4,7 +4,8 @@
    but not the value gets a question back ("What time does your day end?"), and
    your next message is read as the answer. A sentence it cannot place gets the
    closest things it can do, never a guess. Your weekly check-ins are the one
-   thing it cannot see or change: they are private.                          */
+   thing it cannot see or change: they are private. Speak fills the box; what
+   was said is read only after the person presses Send.                      */
 var DAYNAMES=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
 var MONTHNAMES=["january","february","march","april","may","june","july","august","september","october","november","december"];
 function dayIdx(w){ w=String(w||"").toLowerCase(); if(w.length<3) return -1; for(var i=0;i<7;i++) if(DAYNAMES[i].indexOf(w)===0||w===DAYNAMES[i].slice(0,3)) return i; return -1; }

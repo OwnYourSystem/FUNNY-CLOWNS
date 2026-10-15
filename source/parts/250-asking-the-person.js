@@ -10,7 +10,7 @@
    that resolves to false (or null when it has fields) if it was cancelled, and
    to true (or an object of the field values) on yes. fields are
    {k, label, kind:"text"|"textarea"|"number"|"time"|"pick", value, ph, min,
-   max, opts:[[value,label]]}. check(values) may return a sentence to show in
+   max, opts:[[value,label]]}. A text box has a Speak button under it. check(values) may return a sentence to show in
    the dialog and keep it open. Questions queue and are shown one at a time. */
 /* Tab and Shift+Tab go round inside a box instead of out into the browser. */
 function trapTab(d){
@@ -46,7 +46,9 @@ function askNext(){
         '<div class="ask-pick'+(f.row?' row':'')+'" role="group" aria-label="'+esc(f.label||"")+'" '+a+'>'+(f.opts||[]).map(function(op){
         return '<button type="button" data-av="'+esc(op[0])+'" aria-pressed="'+(String(op[0])===v)+'">'+esc(op[1])+'</button>'; }).join("")+'</div></div>';
     var inp = f.kind==="textarea"
-      ? '<textarea class="f" '+a+' spellcheck="false" placeholder="'+esc(f.ph||"")+'">'+esc(v)+'</textarea>'
+      ? '<textarea class="f" '+a+' spellcheck="false" placeholder="'+esc(f.ph||"")+'">'+esc(v)+'</textarea>'+
+        '<button type="button" class="mini mic ask-mic" data-mic-to="'+esc(f.k)+'" aria-pressed="false" aria-label="Speak into this box">'+
+        '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>'
       : '<input class="f" '+a+' type="'+(f.kind||"text")+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||"")+'"'+
         (f.min!=null?' min="'+esc(f.min)+'"':'')+(f.max!=null?' max="'+esc(f.max)+'"':'')+'>';
     return '<label>'+esc(f.label||"")+inp+'</label>';
@@ -54,7 +56,7 @@ function askNext(){
   d.innerHTML='<div class="ask-in"><h3 id="'+id+'t">'+esc(o.title||"")+'</h3>'+
     (body.length?'<div id="'+id+'b">'+body.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+'</div>':'')+
     (hasF?'<div class="ask-fields">'+fh+'</div>':'')+
-    '<p class="ask-err" role="alert"></p>'+
+    '<p class="ask-err" role="alert"></p><p class="ask-hint" aria-live="polite"></p>'+
     '<div class="ask-acts"><button type="button" class="btn" data-acancel>'+esc(o.cancel||"Not now")+'</button>'+
     (o.noOk?'':'<button type="button" class="btn take" data-aok>'+esc(o.ok||"Yes")+'</button>')+'</div></div>';
   var picked={}, result=hasF?null:false;
@@ -80,6 +82,8 @@ function askNext(){
   d.addEventListener("click",function(e){
     if(e.target===d){ if(downOnBackdrop) d.close(""); return; }
     if(e.target.closest("[data-acancel]")){ d.close(""); return; }
+    var mk=e.target.closest("[data-mic-to]");
+    if(mk){ micInto(d.querySelector('[data-ak="'+mk.getAttribute("data-mic-to")+'"]'),mk,function(t){ d.querySelector(".ask-hint").textContent=t; }); return; }
     if(e.target.closest("[data-aok]")){ submit(); return; }
     var pk=e.target.closest("[data-av]");
     if(pk){
@@ -91,6 +95,7 @@ function askNext(){
     if(e.key==="Enter" && e.target.tagName==="INPUT" && !o.noOk){ e.preventDefault(); submit(); }
   });
   d.addEventListener("close",function(){
+    micStop();
     var r=d.returnValue==="ok"?result:(hasF?null:false);
     d.remove();
     try{ if(opener && opener.focus && document.contains(opener)) opener.focus(); }catch(er){}
