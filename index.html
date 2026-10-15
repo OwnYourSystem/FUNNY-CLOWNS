@@ -910,6 +910,11 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   border-radius:16px; background:var(--panel)}
 .gcard .gname{flex:1 1 auto; min-width:0; font-size:14.5px; overflow-wrap:anywhere}
 .gcard .gmeta{font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap}
+/* on a phone the name gets its own line: beside a date and two buttons it was squeezed to one letter a line */
+@media (max-width:820px){
+  .gcard{flex-wrap:wrap; gap:8px 12px}
+  .gcard .gname{flex:1 1 100%; order:-1}
+}
 @media (max-width:820px){
   .rail{position:fixed; left:0; right:0; bottom:0; z-index:120; width:auto; max-width:none;
     border:0; border-top:1px solid var(--hair); border-radius:0; padding:6px 4px;
@@ -3540,12 +3545,6 @@ function jrCheckpoint(now){
   return {d:d, e:ends.length?ends[ends.length-1]:day[day.length-1], n:day.length, today:today};
 }
 function jrToday(now){ var t=jrDay(now); return jrData().log.filter(function(e){ return e.d===t; }); }
-/* shown once, on the first open of a day that has nothing written yet */
-function jrDue(now){
-  var c=jrCheckpoint(now); if(!c) return false;
-  return jrData().seen!==c.today && !jrToday(now).length;
-}
-function jrSeen(now){ jrData().seen=jrDay(now); jrSave(); }
 function jrHide(now){ jrData().hid=jrDay(now); jrSave(); }
 /* the strip at the top of Today: the checkpoint, until today has its own start */
 function jrCardOn(now){
@@ -3572,16 +3571,6 @@ function jrAsk(kind){
     try{ e=jrAdd({kind:v.kind,a:v.a,b:v.b}); }catch(er){ toast("Journal",er.message); }
     renderAll();
     return e;
-  });
-}
-/* the first open of a day that has nothing written yet shows the last note, once */
-function jrFirst(){
-  if(!state.me || !state.me.done || !jrDue()) return;
-  var c=jrCheckpoint(), s=jrSays(c);
-  jrSeen();
-  askUser({title:"Where you left off", body:[s.head+"."].concat(s.lines),
-    ok:"Write today’s start", cancel:"Got it"}).then(function(yes){
-    if(yes) jrAsk("start"); else renderAll();
   });
 }
 function renderJournal(){
@@ -4443,10 +4432,8 @@ function armGate(key,btn,label){
    The one way to put a question that has to be answered before the board goes
    on. It is a native <dialog>, so the page behind goes inert, Tab stays inside,
    Escape cancels and focus goes back to what was pressed. It opens only from
-   the person's own action: never from the tutor, a hint or a timer. The one
-   exception is the reminder the person turned on, which waits until it is
-   closed (see "a reminder waits until you close it"). There is always a way
-   out (Not now, Escape, a click outside),
+   the person's own action: never from the tutor, a hint, a timer or a
+   notification. There is always a way out (Not now, Escape, a click outside),
    and a destructive question puts focus on that way out, not on the yes.
 
    askUser({title, body, fields, ok, cancel, danger, check}) returns a promise
@@ -5171,62 +5158,6 @@ $("#tv-sub").addEventListener("click",function(){ toggleView(this,"#sub-bars","#
 
 /* ---------------- reminders ---------------- */
 var RB=$("#btn-remind"), timer=null;
-/* ---------------- a reminder waits until you close it ----------------
-   Added 2026-10-09 at the owner's request. Two rules:
-   1. A reminder stays on the screen until the person closes it. It does not
-      fade after a few seconds.
-   2. On a phone, the morning brief and the afternoon check hold the board
-      still until the person presses Got it or closes them.
-   The honest limit: a web page can hold its own page and nothing else. It
-   cannot block the phone, the lock screen or another app, and iOS ignores the
-   "stay" flag on a notification (the text stays in the notification list
-   instead). This is the one place a dialog opens without the person pressing
-   something first, so it is narrow: only the two reminders the person turned
-   on, at most 2 a day, never after the day end, never for a hint, and never
-   on a computer. Swiping the notification away counts as closing it.
-   The notice lives in the device cache beside the summary, so it survives a
-   closed page and holds nothing the notification does not already say.
-   This part comes before the reminders part on purpose: that part checks for
-   a reminder as soon as it loads, and the check needs NOTICE_TAGS by then. */
-var NOTICE_TAGS={"oys-brief":1, "oys-today":1}, noticeUp=false;
-function noticeUrl(){ return new URL("notice.json",document.baseURI).href; }
-function noticeBlocks(){
-  try{
-    return !!((window.matchMedia && (matchMedia("(pointer: coarse)").matches || matchMedia("(display-mode: standalone)").matches)) || navigator.standalone);
-  }catch(e){ return false; }
-}
-function noticeWrite(n){
-  if(!("caches" in window)) return Promise.resolve();
-  return caches.open("board-digest").then(function(c){
-    return c.put(noticeUrl(),new Response(JSON.stringify(n),{headers:{"content-type":"application/json"}}));
-  }).catch(function(){});
-}
-function noticeRead(){
-  if(!("caches" in window)) return Promise.resolve(null);
-  return caches.open("board-digest").then(function(c){ return c.match(noticeUrl()); })
-    .then(function(r){ return r ? r.json() : null; }).catch(function(){ return null; });
-}
-/* forget the notice and take the matching notification off the phone */
-function noticeClear(tag){
-  var gone=("caches" in window) ? caches.open("board-digest").then(function(c){ return c.delete(noticeUrl()); }).catch(function(){}) : Promise.resolve();
-  var shut=("serviceWorker" in navigator) ? navigator.serviceWorker.ready.then(function(reg){ return reg.getNotifications({tag:tag}); })
-    .then(function(list){ list.forEach(function(n){ n.close(); }); }).catch(function(){}) : Promise.resolve();
-  return Promise.all([gone,shut]);
-}
-function noticePoll(){
-  if(noticeUp || document.hidden) return Promise.resolve();
-  return noticeRead().then(function(n){
-    if(!n || !NOTICE_TAGS[n.tag] || noticeUp) return;
-    var me=state.me||freshMe(), now=new Date();
-    if(n.d!==todayStr() || pastDayEnd(me,now.getHours()*60+now.getMinutes())) return noticeClear(n.tag);
-    if(!me.done || !noticeBlocks()) return;
-    noticeUp=true;
-    askUser({title:n.t, body:n.b, ok:"Got it", cancel:"Close"}).then(function(){ noticeUp=false; noticeClear(n.tag); });
-  });
-}
-addEventListener("visibilitychange",function(){ if(!document.hidden) noticePoll(); });
-if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",function(e){ if(e.data && e.data.type==="oys-notice") noticePoll(); });
-noticePoll();
 /* ---------------- reminders that reach a closed page ----------------
    A page cannot wake itself, so a small server sends a push at the person's
    brief time and in the afternoon. It holds a device address, a time zone and
@@ -5247,10 +5178,10 @@ function pushCan(){
 }
 function pushZone(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"; }catch(e){ return "UTC"; } }
 function pushBody(sub){
-  var me=state.me||freshMe(), j=sub.toJSON();
-  return {sub:{endpoint:j.endpoint,keys:j.keys},tz:pushZone(),brief:me.brief||"07:30",wind:me.wind||"22:30",am:true,pm:true};
+  var me=state.me||freshMe(), j=sub.toJSON(), c=remCfg();
+  return {sub:{endpoint:j.endpoint,keys:j.keys},tz:pushZone(),brief:c.amAt,wind:me.wind||"22:30",am:c.am,pm:c.pm,pmt:c.pmAt};
 }
-function pushHash(b){ return [b.tz,b.brief,b.wind,b.sub.endpoint].join("|"); }
+function pushHash(b){ return [b.tz,b.brief,b.wind,b.am,b.pm,b.pmt,b.sub.endpoint].join("|"); }
 function pushCall(path,body){
   return fetch(pushUrl()+"/"+path,{method:body?"POST":"GET",headers:body?{"content-type":"application/json"}:{},body:body?JSON.stringify(body):undefined})
     .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error((j&&j.error)||("http "+r.status)); return j; }); });
@@ -5345,9 +5276,7 @@ function briefText(){
   };
 }
 function fire(title,body,tag){
-  /* a reminder stays until the person closes it; the morning brief and the afternoon
-     check also hold the board still (see "a reminder waits until you close it") */
-  if(NOTICE_TAGS[tag]) noticeWrite({d:todayStr(),t:title,b:body,tag:tag,at:Date.now()}).then(noticePoll);
+  /* a reminder stays until the person closes it, and never holds the board */
   try{
     if(navigator.serviceWorker && navigator.serviceWorker.ready && navigator.serviceWorker.controller){
       navigator.serviceWorker.ready.then(function(reg){
@@ -5360,57 +5289,94 @@ function fire(title,body,tag){
 }
 function checkRemind(at){
   if(!("Notification" in window)||Notification.permission!=="granted") return;
-  var me=state.me||freshMe(), now=at instanceof Date ? at : new Date(), mins=now.getHours()*60+now.getMinutes();
+  var me=state.me||freshMe(), c=remCfg(), now=at instanceof Date ? at : new Date(), mins=now.getHours()*60+now.getMinutes();
   /* Nothing is sent after the day is meant to be over. The board says the day
      has an end, so its notifications respect it too. */
   if(pastDayEnd(me, mins)) return;
   var today=todayStr();
   if(!state.told||state.told.d!==today) state.told={d:today, am:false, pm:false, hint:false};
 
-  /* the morning one, any time from the set time onwards, once */
-  if(!state.told.am && me.done && mins>=hm(me.brief||"07:30")){
+  /* the morning one, if the person turned it on, any time from their time onwards, once */
+  if(c.am && !state.told.am && me.done && mins>=hm(c.amAt)){
     state.told.am=true; save();
     var br=briefText();
     fire("Today: "+br.t, br.b, "oys-brief");
     return;
   }
   /* then the hint, on the next tick, so it does not replace the brief. Only if the card has not already been answered. */
-  if(!state.told.hint && state.told.am && me.done && hintOn() && me.hintNote!==false){
+  if(!state.told.hint && (state.told.am||!c.am) && me.done && hintOn() && me.hintNote!==false){
     state.told.hint=true; hintTick(); save();
     var h=state.hint;
     if(h && h.d===today && !hintDone(h)) fire("Today\u2019s hint", hintPlain(h.t), "oys-hint");
     return;
   }
-  /* and the afternoon check on what was actually taken on */
+  /* and the afternoon check on what was actually taken on, at the person's time */
   var open=state.oftad;                              /* Today only: Waiting is not today's job */
-  if(!state.told.pm && now.getHours()>=15 && open.length){
+  if(c.pm && !state.told.pm && mins>=hm(c.pmAt) && open.length){
     state.told.pm=true; save();
     fire("Still open", open.length+" still open: "+open.slice(0,3).map(cardName).join(", "), "oys-today");
   }
 }
+/* ---- the person sets the reminders ----
+   Which of the two come, and when, is the person's choice (owner, 2026-10-15).
+   Both start on, at 07:30 and 15:00, until the person changes them; neither
+   comes before Reminders is turned on in the browser.                       */
+function remCfg(){
+  var me=state.me||freshMe();
+  return {am:me.remAm!==false, pm:me.remPm!==false, amAt:me.brief||"07:30", pmAt:me.pmAt||"15:00"};
+}
+function remCheck(v){
+  var me=state.me||freshMe(), a=hm(v.amAt), p=hm(v.pmAt);
+  if(v.am==="on" && isNaN(a)) return "Set a time for the morning brief.";
+  if(v.pm==="on" && isNaN(p)) return "Set a time for the afternoon check.";
+  if(v.am==="on" && pastDayEnd(me,a)) return "The morning brief would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
+  if(v.pm==="on" && pastDayEnd(me,p)) return "The afternoon check would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
+  if(v.am==="on" && v.pm==="on" && p<=a) return "Set the afternoon check later than the morning brief.";
+  return "";
+}
+function remAsk(first){
+  var me=state.me||freshMe(), c=remCfg(), oo=[["on","On"],["off","Off"]];
+  return askUser({title:first?"Set your reminders":"Your reminders",
+    body:["You choose which reminders come and when. At most 2 a day, and nothing after your day ends at "+clockLabel(me.wind)+". A reminder stays on your phone until you close it. It never covers the board.",
+      "Where it can, they also arrive when the board is closed. For that, a server keeps this device's address, your time zone and the times you set here. It never gets a task, a goal or any of your words."+(first?" Your browser will ask you to allow notifications next.":" To stop them all, set both to Off.")],
+    fields:[{k:"am",label:"Morning brief: today's one task and why",kind:"pick",row:true,opts:oo,value:c.am?"on":"off"},
+            {k:"amAt",label:"Morning brief at",kind:"time",value:c.amAt},
+            {k:"pm",label:"Afternoon check: what is still open in Today",kind:"pick",row:true,opts:oo,value:c.pm?"on":"off"},
+            {k:"pmAt",label:"Afternoon check at",kind:"time",value:c.pmAt}],
+    ok:first?"Continue":"Save", cancel:"Not now", check:remCheck});
+}
+function remApply(v){
+  var me=state.me||(state.me=freshMe());
+  me.remAm=v.am==="on"; me.remPm=v.pm==="on";
+  if(!isNaN(hm(v.amAt))) me.brief=v.amAt;
+  if(!isNaN(hm(v.pmAt))) me.pmAt=v.pmAt;
+  save();
+}
+function remOff(){
+  remindSet(false);
+  state.told={d:todayStr(), am:true, pm:true, hint:true}; save(); remindState();
+  return pushDisable().then(function(ok){
+    if(!ok) saysFlash("Reminders are off here. I could not reach the server to remove this device, so it will drop it on its next try.");
+    return ok;
+  });
+}
 RB.addEventListener("click",function(){
   if(!("Notification" in window)){ saysFlash("This browser will not show reminders for a local file. Open the board from its web link instead."); return; }
-  if(Notification.permission==="granted"){
-    if(remindPref()){
-      remindSet(false);
-      state.told={d:todayStr(), am:true, pm:true, hint:true}; save(); remindState();
-      pushDisable().then(function(ok){
-        if(!ok) saysFlash("Reminders are off here. I could not reach the server to remove this device, so it will drop it on its next try.");
-      });
-      return;
-    }
-    remindSet(true); remindState(); pushStart(); return;
-  }
   if(Notification.permission==="denied"){
     askUser({title:"Reminders are blocked", body:"This browser is blocking notifications for the board. Allow them in the site settings for this page, then press the button again.", noOk:true, cancel:"Close"});
     return;
   }
-  var me=state.me||freshMe();
-  askUser({title:"Turn on reminders?",
-    body:["At most 2 a day: a morning brief at "+clockLabel(me.brief||"07:30")+" and a check on what is still open at 15:00. Nothing is sent after your day ends at "+clockLabel(me.wind)+".",
-      "Your browser will ask you to allow notifications next. Where it can, they also arrive when the board is closed. For that, a server keeps this device's address, your time zone, your brief time and your day end. It never gets a task, a goal or a note."],
-    ok:"Continue", cancel:"Not now"}).then(function(yes){
-    if(yes) Notification.requestPermission().then(function(r){ if(r==="granted"){ remindSet(true); pushStart(); } remindState(); });
+  var on=Notification.permission==="granted"&&remindPref();
+  remAsk(!on).then(function(v){
+    if(!v) return;
+    remApply(v);
+    if(v.am!=="on" && v.pm!=="on"){ if(on) remOff(); else remindState(); return; }
+    if(Notification.permission==="granted"){
+      var was=on; remindSet(true); remindState();
+      if(!was||!PUSH.on) pushStart(); else pushSync();
+      return;
+    }
+    Notification.requestPermission().then(function(r){ if(r==="granted"){ remindSet(true); pushStart(); } remindState(); });
   });
 });
 remindState();
@@ -6116,8 +6082,8 @@ function botTools(){
      if(state.sel===g.id) state.sel=state.groups.length?state.groups[0].id:"";
      return done("Removed "+g.name+" and its "+n+" step"+(n===1?"":"s")+".");
    }},
-  {name:"set_setting",description:"Change one of the person's settings. key: day_end (a time), work_hours (like 8 to 4:30), work_days (like monday to friday), commute (minutes each way), sharpest (morning, afternoon or evening), training (before work, at lunch, after work, weekends only, or not at the moment), brief_time (a time), north_star (one line), hints, hint_reminders, low_day_question, learning, animation (on or off), theme (dark, light or system).",
-   inputSchema:{type:"object",properties:{key:{type:"string",enum:["day_end","work_hours","work_days","commute","sharpest","training","brief_time","north_star","hints","hint_reminders","low_day_question","learning","animation","theme"]},value:{type:"string"}},required:["key","value"]},
+  {name:"set_setting",description:"Change one of the person's settings. key: day_end (a time), work_hours (like 8 to 4:30), work_days (like monday to friday), commute (minutes each way), sharpest (morning, afternoon or evening), training (before work, at lunch, after work, weekends only, or not at the moment), brief_time (a time), afternoon_time (a time), morning_brief (on or off), afternoon_check (on or off), north_star (one line), hints, hint_reminders, low_day_question, learning, animation (on or off), theme (dark, light or system).",
+   inputSchema:{type:"object",properties:{key:{type:"string",enum:["day_end","work_hours","work_days","commute","sharpest","training","brief_time","afternoon_time","morning_brief","afternoon_check","north_star","hints","hint_reminders","low_day_question","learning","animation","theme"]},value:{type:"string"}},required:["key","value"]},
    execute:function(a){ var msg=applySetting(String(a.key||""),a.value); return done(msg); }},
   {name:"set_minimum_day",description:"Set the person's minimum day: up to 4 small things that count even when nothing else moves. Replaces the current list. An empty list switches it off.",
    inputSchema:{type:"object",properties:{items:{type:"array",items:{type:"string"}}},required:["items"]},
@@ -6442,7 +6408,19 @@ function applySetting(key,val){
       me.gym=t; return "Training: "+GYMWIN.filter(function(o){ return o[0]===t; })[0][1].toLowerCase()+".";
     case "brief_time":
       t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 07:30 or 8am.");
+      if(remCheck({am:"on",amAt:t,pm:"off"})) throw new Error(remCheck({am:"on",amAt:t,pm:"off"}));
       me.brief=t; return "Your morning brief is now at "+t+".";
+    case "afternoon_time":
+      t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 15:00 or 4pm.");
+      if(remCheck({am:"off",pm:"on",pmAt:t})) throw new Error(remCheck({am:"off",pm:"on",pmAt:t}));
+      me.pmAt=t; return "Your afternoon check is now at "+t+".";
+    case "morning_brief":
+    case "afternoon_check":
+      b=onOff(v); if(b===null) throw new Error("Type on or off.");
+      if(key==="morning_brief") me.remAm=b; else me.remPm=b;
+      x=key==="morning_brief"?"The morning brief":"The afternoon check";
+      if(me.remAm===false && me.remPm===false) return x+" is off. Both reminders are off now, so none will come. Type turn reminders off to stop them on this device too.";
+      return x+" is "+(b?"on":"off")+".";
     case "north_star":
       if(!v) throw new Error("Type what matters most, in one line.");
       me.north=v.slice(0,140); return "Noted. What matters most: "+me.north;
@@ -6577,6 +6555,14 @@ act({id:"sharpest",group:"Settings",ex:"I am sharpest in the morning",kw:["sharp
 act({id:"training",group:"Settings",ex:"I train after work",kw:["train","gym","exercise","workout"],
   re:[/^(?:i |i'm |i am )?(?:train|training|work out|exercise|go to the gym)\b(?: (?:at|in|during))? ?(.*)$/],take:[["gym",1]],ask:{gym:"When do you train? Before work, at lunch, after work, weekends only, or not at the moment."},
   run:function(v){ return toolRun("set_setting",{key:"training",value:v.gym}); }});
+act({id:"rem_kind",group:"Settings",ex:"Turn the afternoon check off",kw:["brief","afternoon","check","reminder"],
+  re:[/^(?:turn|switch|set) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/,/^(?:turn|switch) (on|off) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder)$/,/^(?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/],
+  run:function(v,m){
+    var a=/^(?:on|off)$/.test(m[1])?m[2]:m[1], o=/^(?:on|off)$/.test(m[1])?m[1]:m[2];
+    return toolRun("set_setting",{key:/morning/.test(a)?"morning_brief":"afternoon_check",value:o}); }});
+act({id:"pm_time",group:"Settings",ex:"Afternoon check at 4pm",kw:["afternoon","check","reminder"],
+  re:[/\bafternoon (?:check|reminder)(?: time)?\b(?: (?:at|to|is|for))? ?(\d.*|noon)$/,/^(?:set )?(?:my |the )?afternoon (?:check|reminder)(?: time)?(?: to| at| is)? ?(.*)$/],take:[["time",1]],ask:{time:"What time should the afternoon check come? For example 16:00."},
+  run:function(v){ return toolRun("set_setting",{key:"afternoon_time",value:v.time}); }});
 act({id:"brief_time",group:"Settings",ex:"Send my morning brief at 8am",kw:["brief","morning","briefing"],
   re:[/\b(?:morning )?(?:brief|briefing)(?: time)?\b(?: (?:at|to|is|for))? ?(\d.*|noon|midnight)$/,/^(?:set )?(?:my )?(?:morning )?brief(?:ing)?(?: time)?(?: to| at| is)? ?(.*)$/],take:[["time",1]],ask:{time:"What time should the morning brief come? For example 07:30."},
   run:function(v){ return toolRun("set_setting",{key:"brief_time",value:v.time}); }});
@@ -6587,13 +6573,13 @@ act({id:"reminders_on",group:"Settings",ex:"Turn reminders on",kw:["reminders","
   re:[/^(?:turn on|enable|allow|switch on|start) (?:the )?(?:reminders?|notifications?)$/,/^(?:turn |switch )?reminders? on$/],
   run:function(){
     if(!("Notification" in window)) return "This browser cannot show reminders.";
-    if(Notification.permission==="granted"&&$("#btn-remind").getAttribute("aria-pressed")==="true") return "Reminders are already on.";
-    $("#btn-remind").click(); return "I opened the reminder question. Your browser will ask you to allow notifications next."; }});
+    if(Notification.permission==="granted"&&$("#btn-remind").getAttribute("aria-pressed")==="true") return "Reminders are already on. Type afternoon check at 4pm, or press Reminders to change them.";
+    $("#btn-remind").click(); return "I opened your reminders. Choose which come and when; your browser will ask you to allow notifications next."; }});
 act({id:"reminders_off",group:"Settings",ex:"Turn reminders off",kw:["reminders","notifications"],
   re:[/^(?:turn off|disable|stop|switch off) (?:the )?(?:reminders?|notifications?)$/,/^(?:turn |switch )?reminders? off$/],
   run:function(){
     if($("#btn-remind").getAttribute("aria-pressed")!=="true") return "Reminders are already off.";
-    $("#btn-remind").click(); return "Reminders are off."; }});
+    remOff(); return "Reminders are off."; }});
 act({id:"hint_reminders",group:"Settings",ex:"Turn hint reminders off",kw:["hint","reminder"],
   re:[/^(?:turn |switch )?(?:the )?hint (?:reminders?|notifications?) (on|off)$/,/^(?:turn |switch )?(on|off) (?:the )?hint (?:reminders?|notifications?)$/],take:[["onoff",1]],
   run:function(v){ return toolRun("set_setting",{key:"hint_reminders",value:v.onoff?"on":"off"}); }});
@@ -6913,10 +6899,9 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
   push:{state:function(){ return PUSH; }, digest:digestWrite, sync:pushSync, brief:briefText},
-  notice:{poll:noticePoll, read:noticeRead, write:noticeWrite, blocks:noticeBlocks},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
-  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, due:jrDue, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear, first:jrFirst},
+  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
@@ -7070,7 +7055,6 @@ act({id:"jr_view",group:"Journal",ex:"Show my journal",kw:["journal","diary","en
     var n=jrData().log.length; location.hash="#/planner";
     setTimeout(function(){ var p=$("#jr-panel"); if(p&&p.scrollIntoView) p.scrollIntoView({block:"start"}); },60);
     return n ? "Your journal is open on the Planner: "+n+" entr"+(n===1?"y":"ies")+", newest first." : "Your journal is empty. Type journal my day to start it."; }});
-jrFirst();
 /* ---------------- the tutor where there is no Claude in the page ----------------
    The artifact can ask Claude directly. Anywhere else the board asks its own
    /api/tutor, which holds the key, the rules and the model, and refuses any
@@ -8180,9 +8164,11 @@ $("#bl-add").addEventListener("click",function(){
 $("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl-add").click(); });
 
 /* ---------------- the brain speaks up ----------------
-   It already knows what is on fire and what to do next. This is it saying so
-   without being asked, once when you arrive and then only when the answer
-   changes.                                                             */
+   It already knows what is on fire and what to do next. It used to say so in
+   a note that floated over the board a moment after it opened. That note
+   covered the buttons of the very card that said the same thing, and the owner
+   wants only the reminders they set to come to them (2026-10-15), so now only
+   the bell count changes. The words stay in the cards on the board.       */
 var saidWhat="";
 function nudge(){
   var hot=alerts().filter(function(a){ return a.score>=150; });
@@ -8198,7 +8184,6 @@ function nudge(){
   }
   if(!msg||key===saidWhat) return;
   saidWhat=key;
-  if(typeof toast==="function") toast("",msg);
   var bell=$("#rail-bell");
   if(bell){ bell.hidden=!hot.length; bell.textContent=hot.length||""; }
 }

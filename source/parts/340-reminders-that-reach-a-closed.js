@@ -18,10 +18,10 @@ function pushCan(){
 }
 function pushZone(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"; }catch(e){ return "UTC"; } }
 function pushBody(sub){
-  var me=state.me||freshMe(), j=sub.toJSON();
-  return {sub:{endpoint:j.endpoint,keys:j.keys},tz:pushZone(),brief:me.brief||"07:30",wind:me.wind||"22:30",am:true,pm:true};
+  var me=state.me||freshMe(), j=sub.toJSON(), c=remCfg();
+  return {sub:{endpoint:j.endpoint,keys:j.keys},tz:pushZone(),brief:c.amAt,wind:me.wind||"22:30",am:c.am,pm:c.pm,pmt:c.pmAt};
 }
-function pushHash(b){ return [b.tz,b.brief,b.wind,b.sub.endpoint].join("|"); }
+function pushHash(b){ return [b.tz,b.brief,b.wind,b.am,b.pm,b.pmt,b.sub.endpoint].join("|"); }
 function pushCall(path,body){
   return fetch(pushUrl()+"/"+path,{method:body?"POST":"GET",headers:body?{"content-type":"application/json"}:{},body:body?JSON.stringify(body):undefined})
     .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error((j&&j.error)||("http "+r.status)); return j; }); });

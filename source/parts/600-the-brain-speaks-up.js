@@ -1,7 +1,9 @@
 /* ---------------- the brain speaks up ----------------
-   It already knows what is on fire and what to do next. This is it saying so
-   without being asked, once when you arrive and then only when the answer
-   changes.                                                             */
+   It already knows what is on fire and what to do next. It used to say so in
+   a note that floated over the board a moment after it opened. That note
+   covered the buttons of the very card that said the same thing, and the owner
+   wants only the reminders they set to come to them (2026-10-15), so now only
+   the bell count changes. The words stay in the cards on the board.       */
 var saidWhat="";
 function nudge(){
   var hot=alerts().filter(function(a){ return a.score>=150; });
@@ -17,7 +19,6 @@ function nudge(){
   }
   if(!msg||key===saidWhat) return;
   saidWhat=key;
-  if(typeof toast==="function") toast("",msg);
   var bell=$("#rail-bell");
   if(bell){ bell.hidden=!hot.length; bell.textContent=hot.length||""; }
 }

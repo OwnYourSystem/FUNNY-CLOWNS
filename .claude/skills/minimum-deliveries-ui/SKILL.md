@@ -268,10 +268,9 @@ test can set the hour.
 (or `null` with fields) on Not now, Escape or a click outside, `true` (or the field
 values) on yes. `showModal()` makes the page behind inert and gives Escape; `trapTab`
 keeps Tab inside; focus returns to what was pressed. Rules: it opens only from the
-person's own action (never from the tutor, a hint or a timer). One exception, added
-2026-10-09 at the owner's request: on a phone the morning brief and the afternoon check
-hold the board until the person presses Got it or Close (`noticePoll`, tags `oys-brief`
-and `oys-today` only, never after the day end, never on a computer); a
+person's own action (never from the tutor, a hint, a timer or a notification; a phone
+hold for reminders was tried on 2026-10-09 and removed on 2026-10-15 at the owner's
+request: a reminder waits, it does not interrupt); a
 destructive question puts focus on the way out and Enter on it does nothing; questions
 queue; under 820px it is a bottom sheet; text is escaped. Use it for first-run setup,
 the notification explainer shown before the browser's own prompt, irreversible actions
@@ -335,15 +334,14 @@ board. No score, no streak, no diagnosis, no advice beyond that.
 Added 2026-10-15. An entry is `{id, at, d, tm, kind:"end"|"start", a, b}`: what got done (or
 where you stand) and what comes next, with the ISO time it was written, the board day it
 belongs to (a note at 00:30 belongs to the evening before, as `jrDay` runs to 04:00) and the
-clock time. It lives under `oys-min-deliveries-v1.journal`, never in `state`: out of sync,
+clock time. It never opens over the board. It lives under `oys-min-deliveries-v1.journal`, never in `state`: out of sync,
 the backup text, `botSnapshot`, every tool, the memory and the hints, and a Reset keeps it.
 In the chat, "I would like to journal my day" asks one question and the next message is saved
 as typed (`free:true` on the action: the answer is never read as a command, a memory or an
 experiment; only cancel stops it). "Journal: ..." saves at once. "Where did I leave off?" and
-"show my journal" read it back to the person. The first open of a day that has nothing written
-shows the last note from an earlier day once ("Where you left off", Got it or Write today's
-start), and it stays as a strip at the top of Today until hidden or until today has a start
-entry. Speaking is the phone keyboard's own microphone; the page still has none. When a hosted
+"show my journal" read it back to the person. The next day the last note sits as a strip at
+the top of Today ("Where you left off", Write today's start, Hide) until hidden or until today
+has a start entry. Speaking is the phone keyboard's own microphone; the page still has none. When a hosted
 model is switched on, journal text in the chat must stay out of what is sent to it unless the
 person agrees.
 
@@ -450,8 +448,15 @@ The morning brief fires at a time the person sets, once, with the task, why
 it and not the next one, and what is held back until later. An afternoon one
 says what is still open.
 
-Two kinds only, at most 2 a day: the brief at the person's time and a check
-at 15:00. Nothing after the day end.
+Two kinds only, at most 2 a day, and **the person sets them**: each is on or
+off, each has its own time (`me.remAm`, `me.brief`, `me.remPm`, `me.pmAt`,
+defaults on, 07:30 and 15:00). The Reminders button opens that choice every
+time; both Off is the same as turning reminders off. A time after the day end,
+or an afternoon before the morning, is refused in the dialog. Nothing after the
+day end. A notification asks to stay until it is closed (`requireInteraction`)
+and never opens anything over the board. The board does not speak up on its
+own either: the floating "Today: ..." note on arrival was removed (2026-10-15);
+the cards already say it.
 
 **Push reaches a closed page, and says what it can and cannot promise.** A
 small server (Supabase function `push`, a once-a-minute database job) sends

@@ -58,12 +58,6 @@ function jrCheckpoint(now){
   return {d:d, e:ends.length?ends[ends.length-1]:day[day.length-1], n:day.length, today:today};
 }
 function jrToday(now){ var t=jrDay(now); return jrData().log.filter(function(e){ return e.d===t; }); }
-/* shown once, on the first open of a day that has nothing written yet */
-function jrDue(now){
-  var c=jrCheckpoint(now); if(!c) return false;
-  return jrData().seen!==c.today && !jrToday(now).length;
-}
-function jrSeen(now){ jrData().seen=jrDay(now); jrSave(); }
 function jrHide(now){ jrData().hid=jrDay(now); jrSave(); }
 /* the strip at the top of Today: the checkpoint, until today has its own start */
 function jrCardOn(now){
@@ -90,15 +84,5 @@ function jrAsk(kind){
     try{ e=jrAdd({kind:v.kind,a:v.a,b:v.b}); }catch(er){ toast("Journal",er.message); }
     renderAll();
     return e;
-  });
-}
-/* the first open of a day that has nothing written yet shows the last note, once */
-function jrFirst(){
-  if(!state.me || !state.me.done || !jrDue()) return;
-  var c=jrCheckpoint(), s=jrSays(c);
-  jrSeen();
-  askUser({title:"Where you left off", body:[s.head+"."].concat(s.lines),
-    ok:"Write today’s start", cancel:"Got it"}).then(function(yes){
-    if(yes) jrAsk("start"); else renderAll();
   });
 }

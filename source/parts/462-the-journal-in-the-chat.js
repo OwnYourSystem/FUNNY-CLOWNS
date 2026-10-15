@@ -37,4 +37,3 @@ act({id:"jr_view",group:"Journal",ex:"Show my journal",kw:["journal","diary","en
     var n=jrData().log.length; location.hash="#/planner";
     setTimeout(function(){ var p=$("#jr-panel"); if(p&&p.scrollIntoView) p.scrollIntoView({block:"start"}); },60);
     return n ? "Your journal is open on the Planner: "+n+" entr"+(n===1?"y":"ies")+", newest first." : "Your journal is empty. Type journal my day to start it."; }});
-jrFirst();

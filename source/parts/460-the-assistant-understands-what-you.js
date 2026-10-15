@@ -185,7 +185,19 @@ function applySetting(key,val){
       me.gym=t; return "Training: "+GYMWIN.filter(function(o){ return o[0]===t; })[0][1].toLowerCase()+".";
     case "brief_time":
       t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 07:30 or 8am.");
+      if(remCheck({am:"on",amAt:t,pm:"off"})) throw new Error(remCheck({am:"on",amAt:t,pm:"off"}));
       me.brief=t; return "Your morning brief is now at "+t+".";
+    case "afternoon_time":
+      t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 15:00 or 4pm.");
+      if(remCheck({am:"off",pm:"on",pmAt:t})) throw new Error(remCheck({am:"off",pm:"on",pmAt:t}));
+      me.pmAt=t; return "Your afternoon check is now at "+t+".";
+    case "morning_brief":
+    case "afternoon_check":
+      b=onOff(v); if(b===null) throw new Error("Type on or off.");
+      if(key==="morning_brief") me.remAm=b; else me.remPm=b;
+      x=key==="morning_brief"?"The morning brief":"The afternoon check";
+      if(me.remAm===false && me.remPm===false) return x+" is off. Both reminders are off now, so none will come. Type turn reminders off to stop them on this device too.";
+      return x+" is "+(b?"on":"off")+".";
     case "north_star":
       if(!v) throw new Error("Type what matters most, in one line.");
       me.north=v.slice(0,140); return "Noted. What matters most: "+me.north;
@@ -320,6 +332,14 @@ act({id:"sharpest",group:"Settings",ex:"I am sharpest in the morning",kw:["sharp
 act({id:"training",group:"Settings",ex:"I train after work",kw:["train","gym","exercise","workout"],
   re:[/^(?:i |i'm |i am )?(?:train|training|work out|exercise|go to the gym)\b(?: (?:at|in|during))? ?(.*)$/],take:[["gym",1]],ask:{gym:"When do you train? Before work, at lunch, after work, weekends only, or not at the moment."},
   run:function(v){ return toolRun("set_setting",{key:"training",value:v.gym}); }});
+act({id:"rem_kind",group:"Settings",ex:"Turn the afternoon check off",kw:["brief","afternoon","check","reminder"],
+  re:[/^(?:turn|switch|set) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/,/^(?:turn|switch) (on|off) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder)$/,/^(?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/],
+  run:function(v,m){
+    var a=/^(?:on|off)$/.test(m[1])?m[2]:m[1], o=/^(?:on|off)$/.test(m[1])?m[1]:m[2];
+    return toolRun("set_setting",{key:/morning/.test(a)?"morning_brief":"afternoon_check",value:o}); }});
+act({id:"pm_time",group:"Settings",ex:"Afternoon check at 4pm",kw:["afternoon","check","reminder"],
+  re:[/\bafternoon (?:check|reminder)(?: time)?\b(?: (?:at|to|is|for))? ?(\d.*|noon)$/,/^(?:set )?(?:my |the )?afternoon (?:check|reminder)(?: time)?(?: to| at| is)? ?(.*)$/],take:[["time",1]],ask:{time:"What time should the afternoon check come? For example 16:00."},
+  run:function(v){ return toolRun("set_setting",{key:"afternoon_time",value:v.time}); }});
 act({id:"brief_time",group:"Settings",ex:"Send my morning brief at 8am",kw:["brief","morning","briefing"],
   re:[/\b(?:morning )?(?:brief|briefing)(?: time)?\b(?: (?:at|to|is|for))? ?(\d.*|noon|midnight)$/,/^(?:set )?(?:my )?(?:morning )?brief(?:ing)?(?: time)?(?: to| at| is)? ?(.*)$/],take:[["time",1]],ask:{time:"What time should the morning brief come? For example 07:30."},
   run:function(v){ return toolRun("set_setting",{key:"brief_time",value:v.time}); }});
@@ -330,13 +350,13 @@ act({id:"reminders_on",group:"Settings",ex:"Turn reminders on",kw:["reminders","
   re:[/^(?:turn on|enable|allow|switch on|start) (?:the )?(?:reminders?|notifications?)$/,/^(?:turn |switch )?reminders? on$/],
   run:function(){
     if(!("Notification" in window)) return "This browser cannot show reminders.";
-    if(Notification.permission==="granted"&&$("#btn-remind").getAttribute("aria-pressed")==="true") return "Reminders are already on.";
-    $("#btn-remind").click(); return "I opened the reminder question. Your browser will ask you to allow notifications next."; }});
+    if(Notification.permission==="granted"&&$("#btn-remind").getAttribute("aria-pressed")==="true") return "Reminders are already on. Type afternoon check at 4pm, or press Reminders to change them.";
+    $("#btn-remind").click(); return "I opened your reminders. Choose which come and when; your browser will ask you to allow notifications next."; }});
 act({id:"reminders_off",group:"Settings",ex:"Turn reminders off",kw:["reminders","notifications"],
   re:[/^(?:turn off|disable|stop|switch off) (?:the )?(?:reminders?|notifications?)$/,/^(?:turn |switch )?reminders? off$/],
   run:function(){
     if($("#btn-remind").getAttribute("aria-pressed")!=="true") return "Reminders are already off.";
-    $("#btn-remind").click(); return "Reminders are off."; }});
+    remOff(); return "Reminders are off."; }});
 act({id:"hint_reminders",group:"Settings",ex:"Turn hint reminders off",kw:["hint","reminder"],
   re:[/^(?:turn |switch )?(?:the )?hint (?:reminders?|notifications?) (on|off)$/,/^(?:turn |switch )?(on|off) (?:the )?hint (?:reminders?|notifications?)$/],take:[["onoff",1]],
   run:function(v){ return toolRun("set_setting",{key:"hint_reminders",value:v.onoff?"on":"off"}); }});
@@ -656,10 +676,9 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
   push:{state:function(){ return PUSH; }, digest:digestWrite, sync:pushSync, brief:briefText},
-  notice:{poll:noticePoll, read:noticeRead, write:noticeWrite, blocks:noticeBlocks},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
-  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, due:jrDue, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear, first:jrFirst},
+  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
