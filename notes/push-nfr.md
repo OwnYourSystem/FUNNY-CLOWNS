@@ -142,5 +142,7 @@ The owner tried the phone hold (N30 to N32) and asked for it to go: a reminder s
 
 Deploy order: the column first (`supabase/migrations/20261015_push_pm_time.sql`), then the `push` function. Until both are live, a closed-board afternoon push still comes at 15:00; on/off and the morning time already work with the live server.
 
+Deployed 2026-10-15 at 12:12 UTC: the column `pmt` (default 15:00) is in `push_subs`, and `push` is at version 3. The first tick after it answered 200. Existing rows keep 15:00 until the person saves a new time.
+
 Tested here: `notices.mjs` (11 checks: the stay flag, nothing over the board, each reminder off, the afternoon at its own time, no note on arrival, the chat commands, the backlog on a phone), `push.mjs` (the dialog, the server body with `pmt`, refusals, off and on again), `push-schedule.mjs` (the afternoon time on the server, 15 checks).
 
