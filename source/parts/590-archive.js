@@ -9,7 +9,7 @@ function renderArchive(){
       '<span class="gname">'+esc(g.name)+'</span>'+
       '<span class="gmeta">'+g.subs.length+' subtasks</span>'+
       '<span class="gmeta '+band(p)+'" style="color:var(--'+band(p)+')">'+p+'%</span>'+
-      '<button class="btn" data-unarch="'+g.id+'">Put it back</button></div>';
+      '<span class="gacts"><button class="btn" data-unarch="'+g.id+'">Put it back</button></span></div>';
   }).join("") : '<p class="calm">'+(state.archive.length?"Nothing matches.":"Nothing archived yet. Finish a goal and archive it from its pen.")+'</p>';
 }
 

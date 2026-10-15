@@ -12,8 +12,8 @@ function renderBacklog(){
       (g?'<span class="gmeta">'+g.subs.length+' subtasks</span>'+
          (n!==null?'<span class="gmeta">'+esc(dueLabel(g))+'</span>':"")+
          '<span class="gmeta '+band(p)+'" style="color:var(--'+band(p)+')">'+p+'%</span>':"")+
-      '<button class="btn" data-bl-goal="'+i+'">'+(g?"Make it active":"Make it a goal")+'</button>'+
-      '<button class="btn danger" data-bl-del="'+i+'">Remove</button></div>';
+      '<span class="gacts"><button class="btn" data-bl-goal="'+i+'">'+(g?"Make it active":"Make it a goal")+'</button>'+
+      '<button class="btn danger" data-bl-del="'+i+'">Remove</button></span></div>';
   }).join("") : '<p class="calm">'+(state.backlog.length?"Nothing matches.":"Nothing waiting. Add the next idea above.")+'</p>';
 }
 
