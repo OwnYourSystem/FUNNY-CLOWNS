@@ -152,6 +152,7 @@ var PARSE={
   time:pTime, range:pRange, days:pDays, minutes:pMinutes, date:pDate, prio:pPrio, where:pWhere, gym:pGym, sharp:pSharp,
   onoff:onOff, theme:pTheme,
   text:function(t){ t=String(t||"").trim(); return t?t:null; },
+  entry:function(t){ t=String(t||"").trim(); return t?t:null; },
   step:function(t){ var s=stepFrom(t); return s?s.name:null; },
   goal:function(t){ var g=goalFrom(t); return g?g.name:null; },
   anchor:function(t){ var a=anchorFrom(t); return a?a.t:null; },
@@ -389,8 +390,8 @@ function helpText(){
     "Settings":[],"Minimum day":[],"Check-in":[],"Go to":[],"Help":[]
   };
   return "I can change what you can change by hand, and answer from your own numbers. Type it in plain words. If I need a detail, I will ask.\n\n"+
-    groups.map(function(g){ return g.toUpperCase()+"\n"+extra[g||""].concat(by[g]).map(function(x){ return "- "+x; }).join("\n"); }).join("\n\n")+
-    "\n\nYour weekly check-ins are private: I cannot see or change them. To stop what I am asking, type cancel.";
+    groups.map(function(g){ return g.toUpperCase()+"\n"+(extra[g]||[]).concat(by[g]).map(function(x){ return "- "+x; }).join("\n"); }).join("\n\n")+
+    "\n\nYour weekly check-ins are private: I cannot see or change them. Your journal stays on this device, and I read it back only when you ask. To stop what I am asking, type cancel.";
 }
 /* the closest things it can do, for a sentence it could not place */
 function suggestFor(s){
@@ -433,7 +434,17 @@ function assistMatch(q,strict){
 }
 /* these belong to memory, evidence and experiments, which read them first */
 var NOT_MINE=/^(?:remember|forget|try|stop experiment|start experiment|what do you know|any evidence|is there (?:any )?(?:evidence|research)|what does the (?:evidence|science|research)|what should i try)\b/;
+/* a question may depend on what was matched ("journal my morning") */
+function askOf(a,slot,vals,m){ var x=a.ask&&a.ask[slot]; return typeof x==="function"?x(vals,m):x; }
 function assist(q,strict){
+  /* an answer to a free question (the journal) is the person's own words: saved as typed, never read as a command */
+  if(FLOW && FLOW.a.free){
+    var ff=FLOW;
+    if(/^(?:cancel|never ?mind|forget it|stop|leave it)$/.test(q)){ FLOW=null; return "Okay, I stopped. Nothing was saved."; }
+    FLOW=null;
+    var raw=(SPOKE&&SPOKE.raw)||q;
+    try{ ff.vals[ff.need[0]]=PARSE[ff.need[0]](raw); return ff.a.run(ff.vals,ff.m); }catch(e){ return e.message||"I could not save that."; }
+  }
   if(NOT_MINE.test(q)) return undefined;
   if(FLOW){
     var f=FLOW;
@@ -445,10 +456,10 @@ function assist(q,strict){
       if(val===null||val===undefined){
         f.tries++;
         if(f.tries>=3){ FLOW=null; return "I could not read that, so I stopped. Type help to see what I can do."; }
-        return f.a.ask[slot]+" (Type cancel to stop.)";
+        return askOf(f.a,slot,f.vals,f.m)+" (Type cancel to stop.)";
       }
       f.vals[slot]=val; f.need.shift();
-      if(f.need.length) return f.a.ask[f.need[0]];
+      if(f.need.length) return askOf(f.a,f.need[0],f.vals,f.m);
       FLOW=null;
       try{ return f.a.run(f.vals,f.m); }catch(e){ return e.message||"I could not do that."; }
     }
@@ -459,7 +470,7 @@ function assist(q,strict){
     var first=hit.need[0];
     if(!hit.a.ask||!hit.a.ask[first]) return undefined;
     FLOW={a:hit.a,m:hit.m,vals:hit.vals,need:hit.need,tries:0};
-    return hit.a.ask[first];
+    return askOf(hit.a,first,hit.vals,hit.m);
   }
   return hit.a.run(hit.vals,hit.m);
 }
@@ -648,6 +659,7 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   notice:{poll:noticePoll, read:noticeRead, write:noticeWrite, blocks:noticeBlocks},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
+  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, due:jrDue, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear, first:jrFirst},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},

@@ -614,6 +614,16 @@ button.now-n:hover{color:var(--run)}
   color:var(--muted); text-align:left; padding:6px 10px 6px 0; white-space:nowrap}
 .wk-table td{padding:8px 10px 8px 0; border-top:1px solid var(--hair); font-variant-numeric:tabular-nums}
 .wk-note{margin:12px 0 0; font-size:13.5px; color:var(--ink-2); line-height:1.6; max-width:68ch}
+.jr-check{margin:0 0 14px; padding:12px 14px; border:1px solid var(--hair); border-radius:14px; font-size:13.5px; color:var(--ink); line-height:1.55}
+.jr-check p{margin:6px 0 0; white-space:pre-wrap; max-width:68ch}
+.jr-k,.jr-meta,.jr-date{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted)}
+.jr-acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+#jr-body{max-height:560px; overflow:auto}
+.jr-day{padding:12px 0; border-top:1px solid var(--hair)}
+.jr-day:first-child{border-top:0}
+.jr-e{margin-top:8px}
+.jr-e p{margin:4px 0 0; font-size:13.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; max-width:68ch}
+.jr-e b{font-weight:500; color:var(--ink-2)}
 .now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
@@ -1001,6 +1011,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .f:focus,.seek:focus-within{box-shadow:var(--nm-in-sm),0 0 0 1.5px var(--accent); background:var(--nm-bg)}
   .track{background:var(--nm-bg); box-shadow:var(--nm-in-sm); border:0; overflow:hidden}
   .xsel-menu{background:var(--nm-bg); border:0; box-shadow:var(--nm-out)}
+  .jr-check{background:var(--nm-bg); border:0; box-shadow:var(--nm-out-sm); border-radius:16px}
   .xsel-opt.on{background:var(--accent); color:#fff}
 
   /* pressable: a button sits proud until it is on, then it sits in */
@@ -1129,8 +1140,9 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="p-title">Today</div>
         <div class="p-note" id="oftad-note">What you are doing today, sized to today&rsquo;s dose. Each card says why it is here.</div>
       </div>
-      <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
+      <div class="p-tools"><button class="mini" data-jr-write="">Journal</button><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
+    <div class="jr-check" id="jr-check" role="note" aria-label="Where you left off" hidden></div>
     <div class="floor" id="floor" role="group" aria-label="Minimum day" hidden></div>
     <div id="week-nudge" hidden></div>
     <div id="oftad-pick" hidden></div>
@@ -1325,6 +1337,14 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="p-tools"><button class="mini" id="week-open" data-week-open>Check in</button></div></div>
       <div id="week-body"></div>
       <div class="dock-foot"><button class="mini" id="week-erase">Delete my check-ins</button></div>
+    </section>
+
+    <section class="panel flat" aria-label="Journal" id="jr-panel">
+      <div class="p-head"><div><div class="p-title">Journal</div>
+        <div class="p-note">What you got done and what comes next, written at the end of a day or the start of one. Each entry keeps its date and time. It stays on this device only: it is not synced, not in the backup text, and a reset keeps it.</div></div>
+        <div class="p-tools"><button class="mini" data-jr-write="">Write</button></div></div>
+      <div id="jr-body"></div>
+      <div class="dock-foot"><button class="mini" id="jr-erase">Delete my journal</button></div>
     </section>
 
     <section class="panel flat" aria-label="What the board has learned about you" id="mem-panel">

@@ -22,7 +22,7 @@ function spoken(s){
   d=d.replace(/\s+/g," ");
   for(var k=0;k<3;k++) d=d.replace(new RegExp(FILLER.source,"i"),"");
   d=d.trim();
-  return {q:d.toLowerCase(), d:d};
+  return {q:d.toLowerCase(), d:d, raw:String(s||"").trim()};
 }
 /* a name the person has just invented keeps the capitals they said it with */
 var SPOKE={q:"",d:""};

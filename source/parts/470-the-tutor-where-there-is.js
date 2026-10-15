@@ -226,6 +226,16 @@ $("#week-erase").addEventListener("click",function(e){
     weekClear(); renderAll();
   });
 });
+$("#jr-erase").addEventListener("click",function(e){
+  e.stopPropagation();
+  var n=jrData().log.length;
+  if(!n){ toast("Journal","There are no journal entries to delete."); return; }
+  askUser({title:"Delete your journal?", body:["This deletes all "+n+" journal entr"+(n===1?"y":"ies")+" on this device. There is no other copy."],
+    ok:"Delete them", cancel:"Keep them", danger:true}).then(function(yes){
+    if(!yes) return;
+    jrClear(); renderAll();
+  });
+});
 $("#hint-reset").addEventListener("click",function(e){
   e.stopPropagation();
   askUser({title:"Forget which hints helped?", body:["The board will clear its record of the hints you answered, and start from nothing about which kind helps you.","Your goals, steps and notes are not touched."],

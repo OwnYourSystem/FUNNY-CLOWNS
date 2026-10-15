@@ -614,6 +614,16 @@ button.now-n:hover{color:var(--run)}
   color:var(--muted); text-align:left; padding:6px 10px 6px 0; white-space:nowrap}
 .wk-table td{padding:8px 10px 8px 0; border-top:1px solid var(--hair); font-variant-numeric:tabular-nums}
 .wk-note{margin:12px 0 0; font-size:13.5px; color:var(--ink-2); line-height:1.6; max-width:68ch}
+.jr-check{margin:0 0 14px; padding:12px 14px; border:1px solid var(--hair); border-radius:14px; font-size:13.5px; color:var(--ink); line-height:1.55}
+.jr-check p{margin:6px 0 0; white-space:pre-wrap; max-width:68ch}
+.jr-k,.jr-meta,.jr-date{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted)}
+.jr-acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+#jr-body{max-height:560px; overflow:auto}
+.jr-day{padding:12px 0; border-top:1px solid var(--hair)}
+.jr-day:first-child{border-top:0}
+.jr-e{margin-top:8px}
+.jr-e p{margin:4px 0 0; font-size:13.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; max-width:68ch}
+.jr-e b{font-weight:500; color:var(--ink-2)}
 .now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
@@ -1001,6 +1011,7 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
   .f:focus,.seek:focus-within{box-shadow:var(--nm-in-sm),0 0 0 1.5px var(--accent); background:var(--nm-bg)}
   .track{background:var(--nm-bg); box-shadow:var(--nm-in-sm); border:0; overflow:hidden}
   .xsel-menu{background:var(--nm-bg); border:0; box-shadow:var(--nm-out)}
+  .jr-check{background:var(--nm-bg); border:0; box-shadow:var(--nm-out-sm); border-radius:16px}
   .xsel-opt.on{background:var(--accent); color:#fff}
 
   /* pressable: a button sits proud until it is on, then it sits in */
@@ -1129,8 +1140,9 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="p-title">Today</div>
         <div class="p-note" id="oftad-note">What you are doing today, sized to today&rsquo;s dose. Each card says why it is here.</div>
       </div>
-      <div class="p-tools"><button class="mini" id="oftad-clear">Clear</button></div>
+      <div class="p-tools"><button class="mini" data-jr-write="">Journal</button><button class="mini" id="oftad-clear">Clear</button></div>
     </div>
+    <div class="jr-check" id="jr-check" role="note" aria-label="Where you left off" hidden></div>
     <div class="floor" id="floor" role="group" aria-label="Minimum day" hidden></div>
     <div id="week-nudge" hidden></div>
     <div id="oftad-pick" hidden></div>
@@ -1325,6 +1337,14 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="p-tools"><button class="mini" id="week-open" data-week-open>Check in</button></div></div>
       <div id="week-body"></div>
       <div class="dock-foot"><button class="mini" id="week-erase">Delete my check-ins</button></div>
+    </section>
+
+    <section class="panel flat" aria-label="Journal" id="jr-panel">
+      <div class="p-head"><div><div class="p-title">Journal</div>
+        <div class="p-note">What you got done and what comes next, written at the end of a day or the start of one. Each entry keeps its date and time. It stays on this device only: it is not synced, not in the backup text, and a reset keeps it.</div></div>
+        <div class="p-tools"><button class="mini" data-jr-write="">Write</button></div></div>
+      <div id="jr-body"></div>
+      <div class="dock-foot"><button class="mini" id="jr-erase">Delete my journal</button></div>
     </section>
 
     <section class="panel flat" aria-label="What the board has learned about you" id="mem-panel">
@@ -3460,6 +3480,153 @@ function renderFollow(){
   box.innerHTML='You finished &ldquo;'+esc(sb.name)+'&rdquo;. About how long did it take? You guessed '+it.m+' min.'+
     '<div class="row-btns"><button class="btn take" data-est-log>Tell the board</button><button class="btn" data-est-skip>Skip</button></div>';
 }
+/* ---------------- the journal ----------------
+   Added 2026-10-15 at the owner's request: a checkpoint between days. At the
+   end of a day the person writes what got done and what comes next; at the
+   start of the next one, the board shows that note first, so the day starts
+   from where the last one stopped. Every entry keeps the date and the time it
+   was written.
+
+   It is as personal as the weekly check-in and kept apart the same way: its
+   own storage key, never in the board's state, so it stays out of account
+   sync, the backup text, a reset, the tutor's snapshot and tools, the memory
+   and the hints. The chat can open it, save into it and read the last note
+   back to the person who wrote it. It is deleted only from its own panel.
+   A day here runs to 04:00, like the board's day: a note written at 00:30
+   belongs to the evening before.                                          */
+var JR_KEY=KEY+".journal", JR_KEEP=1000, JR_MAX=2000, JR_DATA=null;
+var JR_KINDS={
+  end:  {name:"End of day",   a:"Done",          b:"Tomorrow", qa:"What did you get done today?",  qb:"What should you do tomorrow?"},
+  start:{name:"Start of day", a:"Where I stand", b:"First",    qa:"Where are you standing today?", qb:"What comes first today?"}
+};
+var JR_DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], JR_MONS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function jrDay(now){ var d=new Date((now||new Date()).getTime()); if(d.getHours()<4) d.setDate(d.getDate()-1); return dstr(d); }
+function jrKindNow(now){ var h=(now||new Date()).getHours(); return (h>=4 && h<12) ? "start" : "end"; }
+function jrClip(t){ t=String(t==null?"":t).replace(/\r\n?/g,"\n").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim(); return t.length>JR_MAX?t.slice(0,JR_MAX):t; }
+/* one message, two parts: what got done, and what comes next */
+function jrSplit(t,kind){
+  t=jrClip(t); if(!t) return {a:"",b:""};
+  /* in the morning "first" is how the next step is said; at night it is too often part of what got done */
+  var key=kind==="start"?"tomorrow|next|first|then|today i (?:will|want to|need to)":"tomorrow|next|first thing";
+  var re=new RegExp("^([\\s\\S]*?)(?:[.;!]\\s+|,?\\s+and\\s+|,\\s+|\\s+(?:then|but)\\s+|\\n+)((?:(?:and |so |then |but )?(?:"+key+"|i (?:should|will|need to|must|have to|want to|plan to)|i'll|i'd like to))\\b[\\s\\S]*)$","i");
+  var m=t.match(re);
+  if(m && m[1].trim() && m[2].trim()) return {a:m[1].trim(), b:m[2].trim()};
+  return {a:t, b:""};
+}
+function jrAdd(o,now){
+  now=now||new Date(); o=o||{};
+  var kind=JR_KINDS[o.kind]?o.kind:jrKindNow(now), a=jrClip(o.a), b=jrClip(o.b);
+  if(!a && !b) throw new Error("There is nothing to save yet. Write what got done, or what comes next.");
+  var e={id:uid("j"), at:now.toISOString(), d:jrDay(now), tm:pad2(now.getHours())+":"+pad2(now.getMinutes()), kind:kind, a:a, b:b};
+  var D=jrData(); D.log.push(e);
+  if(D.log.length>JR_KEEP) D.log.splice(0,D.log.length-JR_KEEP);
+  jrSave();
+  return e;
+}
+function jrDateLabel(d){ var p=String(d).split("-"), x=new Date(+p[0],+p[1]-1,+p[2]); return JR_DAYS[x.getDay()]+" "+(+p[2])+" "+JR_MONS[+p[1]-1]+" "+p[0]; }
+function jrWhen(e){ return jrDateLabel(e.d)+", "+e.tm; }
+function jrLines(e){
+  var k=JR_KINDS[e.kind]||JR_KINDS.end, out=[];
+  if(e.a) out.push(k.a+": "+e.a);
+  if(e.b) out.push(k.b+": "+e.b);
+  return out;
+}
+/* the last note from an earlier day: the end of that day if there is one */
+function jrCheckpoint(now){
+  var today=jrDay(now), l=jrData().log, d=null, i;
+  for(i=l.length-1;i>=0;i--) if(l[i].d<today){ d=l[i].d; break; }
+  if(!d) return null;
+  var day=l.filter(function(e){ return e.d===d; }), ends=day.filter(function(e){ return e.kind==="end"; });
+  return {d:d, e:ends.length?ends[ends.length-1]:day[day.length-1], n:day.length, today:today};
+}
+function jrToday(now){ var t=jrDay(now); return jrData().log.filter(function(e){ return e.d===t; }); }
+/* shown once, on the first open of a day that has nothing written yet */
+function jrDue(now){
+  var c=jrCheckpoint(now); if(!c) return false;
+  return jrData().seen!==c.today && !jrToday(now).length;
+}
+function jrSeen(now){ jrData().seen=jrDay(now); jrSave(); }
+function jrHide(now){ jrData().hid=jrDay(now); jrSave(); }
+/* the strip at the top of Today: the checkpoint, until today has its own start */
+function jrCardOn(now){
+  var c=jrCheckpoint(now); if(!c) return null;
+  if(jrData().hid===c.today) return null;
+  if(jrToday(now).some(function(e){ return e.kind==="start"; })) return null;
+  return c;
+}
+function jrSays(c){
+  var ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
+  var head=(ago===1?"Yesterday":ago+" days ago")+", "+c.e.tm+" ("+(JR_KINDS[c.e.kind]||JR_KINDS.end).name.toLowerCase()+")";
+  return {head:head, lines:jrLines(c.e)};
+}
+function jrAsk(kind){
+  var k=JR_KINDS[kind]?kind:jrKindNow(), K=JR_KINDS[k];
+  return askUser({title:K.name+", "+jrDateLabel(jrDay()),
+    body:["Kept on this device only, with today's date and time. To speak instead of typing, use the microphone on your phone's keyboard."],
+    fields:[{k:"kind",label:"Which",kind:"pick",row:true,opts:[["end","End of day"],["start","Start of day"]],value:k},
+            {k:"a",label:K.qa,kind:"textarea"},{k:"b",label:K.qb,kind:"textarea"}],
+    ok:"Save", cancel:"Not now",
+    check:function(v){ return (!String(v.a||"").trim() && !String(v.b||"").trim()) ? "Write something first, or press Not now." : ""; }}).then(function(v){
+    if(!v) return null;
+    var e=null;
+    try{ e=jrAdd({kind:v.kind,a:v.a,b:v.b}); }catch(er){ toast("Journal",er.message); }
+    renderAll();
+    return e;
+  });
+}
+/* the first open of a day that has nothing written yet shows the last note, once */
+function jrFirst(){
+  if(!state.me || !state.me.done || !jrDue()) return;
+  var c=jrCheckpoint(), s=jrSays(c);
+  jrSeen();
+  askUser({title:"Where you left off", body:[s.head+"."].concat(s.lines),
+    ok:"Write today’s start", cancel:"Got it"}).then(function(yes){
+    if(yes) jrAsk("start"); else renderAll();
+  });
+}
+function renderJournal(){
+  var card=$("#jr-check"), body=$("#jr-body");
+  if(card){
+    var c=(state.me&&state.me.done)?jrCardOn():null;
+    if(!c){ card.hidden=true; card.innerHTML=""; }
+    else {
+      var s=jrSays(c);
+      card.hidden=false;
+      card.innerHTML='<div class="jr-k">Where you left off &middot; '+esc(s.head)+'</div>'+
+        s.lines.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+
+        '<div class="jr-acts"><button class="mini" data-jr-write="start">Write today&rsquo;s start</button><button class="mini" data-jr-hide>Hide</button></div>';
+    }
+  }
+  if(body){
+    var l=jrData().log.slice().reverse();
+    if(!l.length){ body.innerHTML='<p class="wk-note">No entries yet. Press Write, or type &ldquo;journal my day&rdquo; to the assistant.</p>'; return; }
+    var days=[], by={};
+    l.forEach(function(e){ if(!by[e.d]){ by[e.d]=[]; days.push(e.d); } by[e.d].push(e); });
+    body.innerHTML=days.map(function(d){
+      return '<div class="jr-day"><div class="jr-date">'+esc(jrDateLabel(d))+'</div>'+by[d].map(function(e){
+        var K=JR_KINDS[e.kind]||JR_KINDS.end;
+        return '<div class="jr-e"><div class="jr-meta">'+esc(e.tm)+' &middot; '+esc(K.name)+'</div>'+
+          (e.a?'<p><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+'</div>';
+      }).join("")+'</div>';
+    }).join("");
+  }
+}
+document.addEventListener("click",function(e){
+  var w=e.target.closest&&e.target.closest("[data-jr-write]");
+  if(w){ e.stopPropagation(); jrAsk(w.getAttribute("data-jr-write")||""); return; }
+  if(e.target.closest&&e.target.closest("[data-jr-hide]")){ jrHide(); renderAll(); }
+});
+function jrData(){
+  if(JR_DATA) return JR_DATA;
+  try{ var x=JSON.parse(localStorage.getItem(JR_KEY)||"null"); JR_DATA=(x&&Array.isArray(x.log))?x:{v:1,log:[]}; }
+  catch(e){ JR_DATA={v:1,log:[]}; }
+  return JR_DATA;
+}
+function jrSave(){ try{ localStorage.setItem(JR_KEY,JSON.stringify(jrData())); }catch(e){} }
+function jrClear(){
+  JR_DATA={v:1,log:[]};
+  try{ localStorage.removeItem(JR_KEY); }catch(e){}
+}
 /* ---------------- rollover ---------------- */
 var rollNote="";
 (function(){
@@ -4404,7 +4571,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel();
+  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel(); renderJournal();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -5289,7 +5456,7 @@ $("#io-file").addEventListener("change",function(e){
   var r=new FileReader(); r.onload=function(){ IO.value=r.result; $("#io-load").click(); }; r.readAsText(f);
 });
 $("#io-reset").addEventListener("click",function(){
-  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes, weekly check-ins and settings in this browser.","A backup file you saved earlier is not touched. This cannot be undone."],
+  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes, weekly check-ins and settings in this browser.","A backup file you saved earlier is not touched, and your journal is kept (delete it from the Journal panel). This cannot be undone."],
     ok:"Reset everything", cancel:"Keep my board", danger:true}).then(function(yes){
     if(!yes) return;
     try{ localStorage.removeItem(KEY); localStorage.removeItem(WEEK_KEY); }catch(e){}
@@ -6015,7 +6182,7 @@ function spoken(s){
   d=d.replace(/\s+/g," ");
   for(var k=0;k<3;k++) d=d.replace(new RegExp(FILLER.source,"i"),"");
   d=d.trim();
-  return {q:d.toLowerCase(), d:d};
+  return {q:d.toLowerCase(), d:d, raw:String(s||"").trim()};
 }
 /* a name the person has just invented keeps the capitals they said it with */
 var SPOKE={q:"",d:""};
@@ -6242,6 +6409,7 @@ var PARSE={
   time:pTime, range:pRange, days:pDays, minutes:pMinutes, date:pDate, prio:pPrio, where:pWhere, gym:pGym, sharp:pSharp,
   onoff:onOff, theme:pTheme,
   text:function(t){ t=String(t||"").trim(); return t?t:null; },
+  entry:function(t){ t=String(t||"").trim(); return t?t:null; },
   step:function(t){ var s=stepFrom(t); return s?s.name:null; },
   goal:function(t){ var g=goalFrom(t); return g?g.name:null; },
   anchor:function(t){ var a=anchorFrom(t); return a?a.t:null; },
@@ -6479,8 +6647,8 @@ function helpText(){
     "Settings":[],"Minimum day":[],"Check-in":[],"Go to":[],"Help":[]
   };
   return "I can change what you can change by hand, and answer from your own numbers. Type it in plain words. If I need a detail, I will ask.\n\n"+
-    groups.map(function(g){ return g.toUpperCase()+"\n"+extra[g||""].concat(by[g]).map(function(x){ return "- "+x; }).join("\n"); }).join("\n\n")+
-    "\n\nYour weekly check-ins are private: I cannot see or change them. To stop what I am asking, type cancel.";
+    groups.map(function(g){ return g.toUpperCase()+"\n"+(extra[g]||[]).concat(by[g]).map(function(x){ return "- "+x; }).join("\n"); }).join("\n\n")+
+    "\n\nYour weekly check-ins are private: I cannot see or change them. Your journal stays on this device, and I read it back only when you ask. To stop what I am asking, type cancel.";
 }
 /* the closest things it can do, for a sentence it could not place */
 function suggestFor(s){
@@ -6523,7 +6691,17 @@ function assistMatch(q,strict){
 }
 /* these belong to memory, evidence and experiments, which read them first */
 var NOT_MINE=/^(?:remember|forget|try|stop experiment|start experiment|what do you know|any evidence|is there (?:any )?(?:evidence|research)|what does the (?:evidence|science|research)|what should i try)\b/;
+/* a question may depend on what was matched ("journal my morning") */
+function askOf(a,slot,vals,m){ var x=a.ask&&a.ask[slot]; return typeof x==="function"?x(vals,m):x; }
 function assist(q,strict){
+  /* an answer to a free question (the journal) is the person's own words: saved as typed, never read as a command */
+  if(FLOW && FLOW.a.free){
+    var ff=FLOW;
+    if(/^(?:cancel|never ?mind|forget it|stop|leave it)$/.test(q)){ FLOW=null; return "Okay, I stopped. Nothing was saved."; }
+    FLOW=null;
+    var raw=(SPOKE&&SPOKE.raw)||q;
+    try{ ff.vals[ff.need[0]]=PARSE[ff.need[0]](raw); return ff.a.run(ff.vals,ff.m); }catch(e){ return e.message||"I could not save that."; }
+  }
   if(NOT_MINE.test(q)) return undefined;
   if(FLOW){
     var f=FLOW;
@@ -6535,10 +6713,10 @@ function assist(q,strict){
       if(val===null||val===undefined){
         f.tries++;
         if(f.tries>=3){ FLOW=null; return "I could not read that, so I stopped. Type help to see what I can do."; }
-        return f.a.ask[slot]+" (Type cancel to stop.)";
+        return askOf(f.a,slot,f.vals,f.m)+" (Type cancel to stop.)";
       }
       f.vals[slot]=val; f.need.shift();
-      if(f.need.length) return f.a.ask[f.need[0]];
+      if(f.need.length) return askOf(f.a,f.need[0],f.vals,f.m);
       FLOW=null;
       try{ return f.a.run(f.vals,f.m); }catch(e){ return e.message||"I could not do that."; }
     }
@@ -6549,7 +6727,7 @@ function assist(q,strict){
     var first=hit.need[0];
     if(!hit.a.ask||!hit.a.ask[first]) return undefined;
     FLOW={a:hit.a,m:hit.m,vals:hit.vals,need:hit.need,tries:0};
-    return hit.a.ask[first];
+    return askOf(hit.a,first,hit.vals,hit.m);
   }
   return hit.a.run(hit.vals,hit.m);
 }
@@ -6738,6 +6916,7 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   notice:{poll:noticePoll, read:noticeRead, write:noticeWrite, blocks:noticeBlocks},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
+  journal:{add:jrAdd, data:jrData, check:jrCheckpoint, due:jrDue, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear, first:jrFirst},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
   bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
   hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
@@ -6852,6 +7031,46 @@ function botRender(){
   botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
   log.scrollTop=log.scrollHeight;
 }
+/* ---------------- the journal, in the chat ----------------
+   "I would like to journal my day" asks one question; the next message is
+   saved as it was typed, split into what got done and what comes next. That
+   answer is never read as a command, a memory or an experiment. "Journal:"
+   with the text after it saves at once. The chat can read the last note back
+   ("where did I leave off?"). The check-in stays out of the chat; the journal
+   is the person's own note to themselves, read back only when they ask.
+   When a hosted model is switched on (F12), these replies must be kept out of
+   what is sent to it unless the person agrees.                            */
+function jrKindWord(w){ w=String(w||"").toLowerCase(); return /morning|start/.test(w)?"start":/evening|night|end/.test(w)?"end":jrKindNow(); }
+function jrSaveChat(text,kind){
+  var p=jrSplit(text,kind), e=jrAdd({kind:kind,a:p.a,b:p.b}), K=JR_KINDS[e.kind];
+  renderAll();
+  return "Saved to your journal: "+K.name.toLowerCase()+", "+jrWhen(e)+".\n"+jrLines(e).join("\n")+
+    (e.kind==="end"?"\nI will show it to you first thing tomorrow.":"");
+}
+var JR_OPEN=/^(?:i(?:'d| would) like to |i want to |i wanna |i need to |let me |let's |can i |could i |please )?(?:(?:write|make|add|do|start|begin) (?:in |into |an? |my |the )*(?:new )?journal(?: entry)?|journal(?:ing)?(?: about)?(?: for)?(?: (?:my|the|this))? ?(day|today|morning|evening|night|start of (?:the |my )?day|end of (?:the |my )?day)?)(?: now| please| for today)?$/;
+act({id:"jr_write",group:"Journal",ex:"I would like to journal my day",kw:["journal","diary","log my day","end of day","checkpoint"],
+  re:[JR_OPEN],take:[["entry",99]],free:true,
+  ask:{entry:function(v,m){ var k=jrKindWord(m&&m[1]), K=JR_KINDS[k];
+    return (k==="start"?"Good morning. ":"Go ahead. ")+K.qa+" And "+K.qb.charAt(0).toLowerCase()+K.qb.slice(1)+
+      " One message is enough. It stays on this device only."; }},
+  run:function(v,m){ return jrSaveChat(v.entry,jrKindWord(m&&m[1])); }});
+act({id:"jr_now",group:"Journal",ex:"Journal: finished the report, tomorrow call the bank",kw:["journal"],
+  re:[/^(?:my )?journal(?: (?:my|the) (day|morning|evening))?: ?\S/],
+  run:function(v,m){ var r=SPOKE.raw||SPOKE.d, i=r.indexOf(":"); return jrSaveChat(r.slice(i+1),jrKindWord(m&&m[1])); }});
+act({id:"jr_check",group:"Journal",ex:"Where did I leave off?",kw:["left","checkpoint","yesterday","journal"],
+  re:[/^where (?:did i|was i|i) (?:leave off|left off|left it|leave it|stop|stopped|end|ended)(?: yesterday)?$/,/^where was i$/,/^(?:my |the )?checkpoint$/,/^what did i (?:write|say|journal|note)(?: down)? yesterday$/],
+  run:function(){
+    var c=jrCheckpoint();
+    if(!c){ var t=jrToday(); if(!t.length) return "Your journal is empty. Type journal my day to start it.";
+      return "Today so far ("+jrWhen(t[t.length-1])+"):\n"+jrLines(t[t.length-1]).join("\n"); }
+    var s=jrSays(c); return "Where you left off. "+s.head+":\n"+s.lines.join("\n"); }});
+act({id:"jr_view",group:"Journal",ex:"Show my journal",kw:["journal","diary","entries"],
+  re:[/^(?:show|open|read|see|view|list)(?: me)?(?: all)? (?:my |the )?(?:journal|diary)(?: entries| notes)?$/,/^(?:my )?journal entries$/],
+  run:function(){
+    var n=jrData().log.length; location.hash="#/planner";
+    setTimeout(function(){ var p=$("#jr-panel"); if(p&&p.scrollIntoView) p.scrollIntoView({block:"start"}); },60);
+    return n ? "Your journal is open on the Planner: "+n+" entr"+(n===1?"y":"ies")+", newest first." : "Your journal is empty. Type journal my day to start it."; }});
+jrFirst();
 /* ---------------- the tutor where there is no Claude in the page ----------------
    The artifact can ask Claude directly. Anywhere else the board asks its own
    /api/tutor, which holds the key, the rules and the model, and refuses any
@@ -7078,6 +7297,16 @@ $("#week-erase").addEventListener("click",function(e){
     ok:"Delete them", cancel:"Keep them", danger:true}).then(function(yes){
     if(!yes) return;
     weekClear(); renderAll();
+  });
+});
+$("#jr-erase").addEventListener("click",function(e){
+  e.stopPropagation();
+  var n=jrData().log.length;
+  if(!n){ toast("Journal","There are no journal entries to delete."); return; }
+  askUser({title:"Delete your journal?", body:["This deletes all "+n+" journal entr"+(n===1?"y":"ies")+" on this device. There is no other copy."],
+    ok:"Delete them", cancel:"Keep them", danger:true}).then(function(yes){
+    if(!yes) return;
+    jrClear(); renderAll();
   });
 });
 $("#hint-reset").addEventListener("click",function(e){

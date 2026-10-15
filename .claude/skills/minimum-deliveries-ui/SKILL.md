@@ -331,6 +331,22 @@ through the day fell; and mood and calm both at 2 or below at two check-ins in a
 which points to someone you trust or a doctor and says the board can only help with the
 board. No score, no streak, no diagnosis, no advice beyond that.
 
+**The journal is the checkpoint between days, and it is kept apart like the check-in.**
+Added 2026-10-15. An entry is `{id, at, d, tm, kind:"end"|"start", a, b}`: what got done (or
+where you stand) and what comes next, with the ISO time it was written, the board day it
+belongs to (a note at 00:30 belongs to the evening before, as `jrDay` runs to 04:00) and the
+clock time. It lives under `oys-min-deliveries-v1.journal`, never in `state`: out of sync,
+the backup text, `botSnapshot`, every tool, the memory and the hints, and a Reset keeps it.
+In the chat, "I would like to journal my day" asks one question and the next message is saved
+as typed (`free:true` on the action: the answer is never read as a command, a memory or an
+experiment; only cancel stops it). "Journal: ..." saves at once. "Where did I leave off?" and
+"show my journal" read it back to the person. The first open of a day that has nothing written
+shows the last note from an earlier day once ("Where you left off", Got it or Write today's
+start), and it stays as a strip at the top of Today until hidden or until today has a start
+entry. Speaking is the phone keyboard's own microphone; the page still has none. When a hosted
+model is switched on, journal text in the chat must stay out of what is sent to it unless the
+person agrees.
+
 **A subtask's priority pill only shows when it is not the middle.** A board
 of defaults should stay quiet; a row with four badges reads as noise.
 

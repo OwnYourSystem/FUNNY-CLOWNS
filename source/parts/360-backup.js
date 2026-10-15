@@ -38,7 +38,7 @@ $("#io-file").addEventListener("change",function(e){
   var r=new FileReader(); r.onload=function(){ IO.value=r.result; $("#io-load").click(); }; r.readAsText(f);
 });
 $("#io-reset").addEventListener("click",function(){
-  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes, weekly check-ins and settings in this browser.","A backup file you saved earlier is not touched. This cannot be undone."],
+  askUser({title:"Reset the board?", body:["This puts the shipped list back and throws away your goals, steps, history, notes, weekly check-ins and settings in this browser.","A backup file you saved earlier is not touched, and your journal is kept (delete it from the Journal panel). This cannot be undone."],
     ok:"Reset everything", cancel:"Keep my board", danger:true}).then(function(yes){
     if(!yes) return;
     try{ localStorage.removeItem(KEY); localStorage.removeItem(WEEK_KEY); }catch(e){}
