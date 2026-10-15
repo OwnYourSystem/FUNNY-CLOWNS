@@ -20,6 +20,9 @@ const YEST = jday(new Date(Date.now() - 864e5));
     assert.equal(await p.locator("#ph").isVisible(), false); assert.equal(await p.locator(".masthead").isVisible(), true);
     assert.equal(await p.evaluate(() => document.documentElement.classList.contains("ph")), false);
   });
+  await ok("the desktop does not take the phone's plum", async () => {
+    assert.equal(await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ph-pri").trim()), "");
+  });
   await ok("no page errors (computer)", async () => { assert.deepEqual(errs, []); });
   await ctx.close();
 }
@@ -119,65 +122,116 @@ await ok("Goals lists every goal with its progress and next step; a goal opens i
   assert.equal(await p.locator(".ph-goal").count(), n + 1); assert.equal(await sideways(), false);
 });
 const sub = async (name) => Object.values((await st()).subs).find((x) => x.name === name);
-await ok("a goal opens its own page with its steps and an Add box", async () => {
+const msg = () => p.locator("#ph-s-msg").innerText();
+const openStep = async (name) => { await go("goal/" + (await st()).groups.find((g) => g.name.startsWith("Garden Shed")).id); await p.locator("[data-ph=step]", { hasText: name }).click(); await p.waitForTimeout(300); };
+await ok("a goal opens its own page, with its id in the address", async () => {
   await p.locator(".ph-goal", { hasText: "Garden Shed" }).click(); await p.waitForTimeout(250);
-  assert.equal(await p.evaluate(() => location.hash), "#/goal");
+  assert.match(await p.evaluate(() => location.hash), /^#\/goal\/.+/);
   assert.match(await p.locator("#ph-main h1").innerText(), /Garden Shed/);
   assert.equal(await p.locator("#ph-newstep").isVisible(), true); assert.equal(await p.locator('[data-ph=mic][data-for="ph-newstep"]').isVisible(), true);
-  assert.match(await p.locator("section[aria-label=Steps]").innerText(), /Buy the timber/);
   assert.equal(await p.locator('#ph-tabs [data-tab="you"]').getAttribute("aria-current"), "page");
 });
-await ok("a step is added with the Add button and with Enter; an empty box says why", async () => {
+await ok("Add works with the button, with Enter, and with a repeat, and makes the same step as the classic Add", async () => {
   await tap("[data-ph=addstep]"); await p.waitForTimeout(150); assert.match(await p.locator("#ph-onb-hint").innerText(), /first/);
   await p.fill("#ph-newstep", "Lay the base"); await tap("[data-ph=addstep]"); await p.waitForTimeout(300);
   await p.fill("#ph-newstep", "Fit the roof"); await p.press("#ph-newstep", "Enter"); await p.waitForTimeout(300);
-  assert.ok(await sub("Lay the base")); assert.ok(await sub("Fit the roof"));
-  const t = await p.locator("section[aria-label=Steps]").innerText(); assert.match(t, /Lay the base/); assert.match(t, /Fit the roof/);
+  await p.fill("#ph-newstep", "Oil the hinges"); await p.selectOption("#ph-newrep", "monthly"); await tap("[data-ph=addstep]"); await p.waitForTimeout(300);
+  const s = await sub("Lay the base"); assert.ok(s); assert.equal(s.prio, "mid"); assert.equal(s.streak, 0); assert.equal(s.rep, "");
+  assert.ok(await sub("Fit the roof")); const o = await sub("Oil the hinges"); assert.equal(o.rep, "monthly"); assert.ok(o.period);
+  assert.match(await p.locator("[data-ph=step]", { hasText: "Oil the hinges" }).innerText(), /Monthly/);
   assert.equal(await p.locator("#ph-newstep").inputValue(), ""); assert.equal(await sideways(), false);
   await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
 });
-await ok("a step opens its sheet: the name and the percent are saved", async () => {
-  await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await D().waitFor({ state: "visible" });
-  await p.waitForTimeout(400); const hb = await D().getByRole("button", { name: "Put it in Today" }).boundingBox(); assert.ok(hb.height < 70, "the choice buttons are " + hb.height + "px tall");
-  await p.screenshot({ path: "/tmp/claude-0/ph-test-step.png" });
-  await D().locator('[data-ak="n"]').fill("Lay the concrete base"); await D().locator('[data-ak="p"]').fill("40");
-  await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
-  const s = await sub("Lay the concrete base"); assert.ok(s, "not renamed"); assert.equal(s.pct, 40);
-  assert.match(await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).innerText(), /40%/);
+await ok("a half-typed step survives a background redraw", async () => {
+  await p.fill("#ph-newstep", "Half typed"); await p.evaluate(() => window.__board.render()); assert.equal(await p.locator("#ph-newstep").inputValue(), "Half typed");
+  await p.fill("#ph-newstep", "");
 });
-await ok("a percent out of range is refused", async () => {
-  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
-  await D().locator('[data-ak="p"]').fill("150"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(150);
-  assert.equal(await D().isVisible(), true); assert.match(await D().innerText(), /0 to 100/);
-  await D().getByRole("button", { name: "Close" }).click(); await p.waitForTimeout(150); assert.equal((await sub("Fit the roof")).pct, 0);
+await ok("a step opens its own page with every field the classic editor has", async () => {
+  await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await p.waitForTimeout(300);
+  assert.match(await p.evaluate(() => location.hash), /^#\/step\/.+/);
+  for (const sel of ["#ph-s-name", "#ph-s-pct", "#ph-s-due", "#ph-s-rep", "#ph-s-tag", "#ph-s-goal"]) assert.equal(await p.locator(sel).count(), 1, sel);
+  assert.equal(await p.locator('[data-ph=sset][data-k=status]').count(), 4); assert.equal(await p.locator('[data-ph=sset][data-k=prio]').count(), 3);
+  for (const k of ["stoday", "swhen", "sest", "sdone", "sdel"]) assert.equal(await p.locator(`[data-ph=${k}]`).count(), 1, k);
+  assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-step.png", fullPage: true });
 });
-await ok("Put it in Today, then Mark it done, from the step sheet", async () => {
-  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
-  await D().getByRole("button", { name: "Put it in Today" }).click(); await p.waitForTimeout(300);
+await ok("the name saves on Enter; an empty name is refused and put back", async () => {
+  await p.fill("#ph-s-name", "Lay the concrete base"); await p.press("#ph-s-name", "Enter"); await p.waitForTimeout(250);
+  assert.ok(await sub("Lay the concrete base")); assert.match(await p.locator("#ph-s-h").innerText(), /concrete/);
+  await p.fill("#ph-s-name", "  "); await p.press("#ph-s-name", "Enter"); await p.waitForTimeout(250);
+  assert.ok(await sub("Lay the concrete base")); assert.equal(await p.locator("#ph-s-name").inputValue(), "Lay the concrete base"); assert.match(await msg(), /needs a name/);
+});
+await ok("typing on the step page survives a background redraw", async () => {
+  await p.fill("#ph-s-tag", "Build"); await p.evaluate(() => window.__board.render()); assert.equal(await p.locator("#ph-s-tag").inputValue(), "Build");
+  await p.press("#ph-s-tag", "Enter"); await p.waitForTimeout(200); assert.equal((await sub("Lay the concrete base")).tag, "Build");
+});
+await ok("status and percent follow the same rules as the classic editor", async () => {
+  const N = "Lay the concrete base";
+  await tap('[data-ph=sset][data-k=status][data-v=doing]'); await p.waitForTimeout(200); assert.equal((await sub(N)).status, "doing");
+  await p.evaluate(() => { const r = document.getElementById("ph-s-pct"); r.value = "40"; r.dispatchEvent(new Event("input", { bubbles: true })); r.dispatchEvent(new Event("change", { bubbles: true })); });
+  await p.waitForTimeout(200); assert.equal((await sub(N)).pct, 40); assert.match(await p.locator("#ph-main").innerText(), /40%/);
+  await tap('[data-ph=sset][data-k=status][data-v=done]'); await p.waitForTimeout(200); assert.equal((await sub(N)).pct, 100);
+  await tap('[data-ph=sset][data-k=status][data-v=todo]'); await p.waitForTimeout(200); const s = await sub(N); assert.equal(s.status, "todo"); assert.equal(s.pct, 95);
+  assert.equal(await p.locator('[data-ph=sset][data-k=status][data-v=todo]').getAttribute("aria-pressed"), "true");
+});
+await ok("priority, deadline (and Clear), and repeats are saved", async () => {
+  const N = "Lay the concrete base";
+  await tap('[data-ph=sset][data-k=prio][data-v=high]'); await p.waitForTimeout(200); assert.equal((await sub(N)).prio, "high");
+  await p.fill("#ph-s-due", "2027-02-01"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "2027-02-01");
+  await tap("[data-ph=nodue]"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "");
+  await p.selectOption("#ph-s-rep", "weekly"); await p.waitForTimeout(250); const s = await sub(N); assert.equal(s.rep, "weekly"); assert.equal(s.pct, 0); assert.equal(s.status, "todo");
+  await p.selectOption("#ph-s-rep", ""); await p.waitForTimeout(250); assert.equal((await sub(N)).rep, "");
+});
+await ok("When and How long are asked and shown on the step page", async () => {
+  await tap("[data-ph=swhen]"); await D().waitFor({ state: "visible" }); await D().locator('[data-ak="t"]').fill("After lunch"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  assert.match(await p.locator("[data-ph=swhen]").innerText(), /After lunch/);
+  await tap("[data-ph=sest]"); await D().waitFor({ state: "visible" }); await D().locator('[data-ak="m"]').fill("25"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  assert.match(await p.locator("[data-ph=sest]").innerText(), /25 min/);
+});
+await ok("Put it in Today, then Mark it done", async () => {
+  await openStep("Fit the roof"); await tap("[data-ph=stoday]"); await p.waitForTimeout(300);
   const id = (await sub("Fit the roof")).id; assert.ok((await st()).oftad.some((c) => c.id === id), "not in Today");
-  await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).click(); await D().waitFor({ state: "visible" });
-  await D().getByRole("button", { name: "Mark it done" }).click(); await p.waitForTimeout(300);
-  assert.equal((await sub("Fit the roof")).status, "done");
-  assert.match(await p.locator("[data-ph=step]", { hasText: "Fit the roof" }).innerText(), /Done/i);
+  assert.equal(await p.locator("[data-ph=stoday]").isDisabled(), true);
+  await tap("[data-ph=sdone]"); await p.waitForTimeout(300); assert.equal((await sub("Fit the roof")).status, "done");
+  assert.equal(await p.locator("[data-ph=sdone]").count(), 0);
 });
-await ok("Remove this step asks first; Keep it keeps it; Remove it removes it", async () => {
-  const pick = async () => { await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).click(); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove this step" }).click(); await p.waitForTimeout(250); };
-  await pick(); assert.match(await D().innerText(), /Remove this step\?/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(250);
-  assert.ok(await sub("Lay the concrete base"));
-  await pick(); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(300);
-  assert.equal(await sub("Lay the concrete base"), undefined); assert.equal(await p.locator("[data-ph=step]", { hasText: "Lay the concrete base" }).count(), 0);
+await ok("a reload on a step page opens the same step", async () => {
+  await p.reload(); await p.waitForSelector("#ph-s-name"); assert.equal(await p.locator("#ph-s-name").inputValue(), "Fit the roof");
 });
-await ok("Edit changes the goal's name, priority and deadline", async () => {
+await ok("the Goal box moves the step to another goal", async () => {
+  const to = (await st()).groups.find((g) => g.name === "Read more").id;
+  await p.selectOption("#ph-s-goal", to); await p.waitForTimeout(300);
+  assert.equal((await sub("Fit the roof")).gid, to); assert.match(await msg(), /Moved to Read more/);
+  assert.match(await p.locator("#ph-main .ph-backl").innerText(), /Read more/);
+});
+await ok("Remove this step asks first; Keep it keeps it; Remove it removes it and goes back to the goal", async () => {
+  await openStep("Lay the concrete base");
+  await tap("[data-ph=sdel]"); await D().waitFor({ state: "visible" }); assert.match(await D().innerText(), /Remove this step\?/);
+  await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(250); assert.ok(await sub("Lay the concrete base"));
+  await tap("[data-ph=sdel]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(400);
+  assert.equal(await sub("Lay the concrete base"), undefined); assert.match(await p.evaluate(() => location.hash), /^#\/goal\//);
+});
+await ok("Edit changes the goal's name, priority, deadline, place and tags", async () => {
   await tap("[data-ph=gedit]"); await D().waitFor({ state: "visible" });
+  assert.equal(await D().getByRole("button", { name: "Move it to the Backlog" }).count(), 1);
   await D().locator('[data-ak="n"]').fill("Garden Shed 2027"); await D().getByRole("button", { name: "High" }).click();
-  await D().locator('[data-ak="d"]').fill("2027-03-01"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
-  const g = (await st()).groups.find((x) => x.name === "Garden Shed 2027"); assert.ok(g, "not renamed"); assert.equal(g.prio, "high"); assert.equal(g.due, "2027-03-01");
-  assert.match(await p.locator("#ph-main h1").innerText(), /Garden Shed 2027/); assert.match(await p.locator("#ph-main").innerText(), /high/i);
+  await D().locator('[data-ak="d"]').fill("2027-03-01"); await D().locator('[data-ak="w"]').selectOption("home"); await D().locator('[data-ak="t"]').fill("Home, DIY");
+  await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  const g = (await st()).groups.find((x) => x.name === "Garden Shed 2027"); assert.ok(g, "not renamed");
+  assert.equal(g.prio, "high"); assert.equal(g.due, "2027-03-01"); assert.equal(g.where, "home"); assert.deepEqual(g.tags, ["home", "diy"]);
+  const t = await p.locator("#ph-main").innerText(); assert.match(t, /at home/i); assert.match(t, /#diy/);
 });
-await ok("a Today item on Now opens the same step sheet", async () => {
-  await go("now"); const it = p.locator(".ph-item-b").first(); const nm = await it.innerText();
-  await it.click(); await D().waitFor({ state: "visible" }); assert.equal(await D().locator('[data-ak="n"]').inputValue(), nm.trim());
-  await D().getByRole("button", { name: "Close" }).click(); await p.waitForTimeout(150); await go("goals");
+await ok("a Today item on Now opens its step page", async () => {
+  await go("now"); const it = p.locator(".ph-item-b").first(); const nm = (await it.innerText()).trim();
+  await it.click(); await p.waitForTimeout(300); assert.match(await p.evaluate(() => location.hash), /^#\/step\//);
+  assert.equal(await p.locator("#ph-s-name").inputValue(), nm); await go("goals");
+});
+await ok("the phone wears Moonlit Plum; the desktop keeps its colours", async () => {
+  const c = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement); return { pri: cs.getPropertyValue("--ph-pri").trim(), bar: document.querySelector('meta[name="theme-color"][media*="light"]').content }; });
+  assert.equal(c.pri.toUpperCase(), "#2C1332"); assert.equal(c.bar.toUpperCase(), "#F6F2F7");
+  assert.equal(await p.locator("[data-ph=newgoal]").evaluate((e) => getComputedStyle(e).backgroundColor), "rgb(44, 19, 50)");
+  await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100);
+  assert.equal((await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--panel").trim())).toUpperCase(), "#2C1332");
+  await p.screenshot({ path: "/tmp/claude-0/ph-test-goals-dark.png" }); await p.emulateMedia({ colorScheme: "light" });
 });
 await ok("Backlog opens the old page under a Back bar, and Back returns to You", async () => {
   await go("backlog"); assert.equal(await p.locator("#ph-back").isVisible(), true); assert.equal(await p.locator("#ph-back-t").innerText(), "Backlog");
