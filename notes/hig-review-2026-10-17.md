@@ -17,6 +17,8 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 
 ## Should fix: consistency and access
 
+**Fixed 2026-10-17 on `app`: 5, 6, 7, 9 and 12 ("plum everywhere").** Talk, every sheet and the old pages under Back are flat plum on the phone at any width: the moulded look and its red focus ring are gone, and red is left for danger and errors. Phone text is in rem from `-apple-system-body`, so it follows the iPhone text size (17px at the default); tab labels stay 12px, as iOS does. Labels are the body font, 13px or more, sentence case. "Do this now" is plum (passes in both modes). The journal sheet no longer points at the keyboard microphone. Icon: plum `apple-touch-icon.png` and a new maskable `icon-maskable-512.png`; manifest `background_color` `#140A17`; cache `board-v8`. The desktop icons (`icon-192`, `icon-512`) and `theme_color` are unchanged. 4 new checks (43 in all) fail on af1c644 and pass after. At double text size, 7 screens have no sideways scroll and no clipped text.
+
 | # | Finding | Evidence | Fix |
 |---|---|---|---|
 | 5 | Two visual languages | Talk and every dialog keep the moulded desktop style: shadows, mono capitals, red focus ring, red assistant icon | Flat phone tokens for `#botsheet` and `dialog.ask` under `html.ph`; red only for danger |

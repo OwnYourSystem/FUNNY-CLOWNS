@@ -288,6 +288,49 @@ await ok("iPhone: the status bar band is plum in light, the ground in dark, and 
   await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100); b1 = await band(); assert.equal(b1.bg, "rgb(20, 10, 23)");
   await p.emulateMedia({ colorScheme: "light" }); await go("you");
 });
+/* ---------- plum everywhere (2026-10-17) ---------- */
+const REDS = ["rgb(228, 36, 24)", "rgb(255, 59, 48)", "rgb(184, 28, 18)", "rgb(255, 122, 114)", "rgba(255, 59, 48, 0.5)"];
+const redsIn = (sel) => p.evaluate(([sel, REDS]) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && !e.closest(".ask-err,.ph-danger,.bot-msg.err,dialog.danger"))
+  .flatMap((e) => { const c = getComputedStyle(e); return ["color", "backgroundColor", "borderTopColor"].filter((k) => REDS.includes(c[k]) && !(k === "borderTopColor" && c.borderTopWidth === "0px")).map((k) => (e.id || e.className || e.tagName) + " " + k); }), [sel, REDS]);
+const moulded = (sel) => p.evaluate((sel) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && /inset|-6px -6px|-3px -3px/.test(getComputedStyle(e).boxShadow)).map((e) => e.id || e.className), sel);
+await ok("plum: labels are sentence case in the body font, 13px or more, and Do this now is plum", async () => {
+  await go("now");
+  const k = await p.evaluate(() => [...document.querySelectorAll(".ph-k")].filter((e) => e.getClientRects().length).map((e) => { const c = getComputedStyle(e); return [c.textTransform, c.fontFamily.includes("DM Mono"), parseFloat(c.fontSize)]; }));
+  assert.ok(k.length > 0); for (const [t, mono, fs] of k) { assert.equal(t, "none"); assert.equal(mono, false); assert.ok(fs >= 13, "label " + fs + "px"); }
+  assert.equal(await p.locator(".ph-hot").first().evaluate((e) => getComputedStyle(e).color), "rgb(44, 19, 50)");
+});
+await ok("plum: Talk and a journal sheet have no red and no moulded shadows; their labels are not capitals", async () => {
+  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250);
+  await p.focus("#bot-input"); assert.deepEqual(await redsIn("#botsheet, #botsheet *"), []); assert.deepEqual(await moulded("#botsheet, #botsheet *"), []);
+  assert.equal(await p.locator("#bot-clear").evaluate((e) => getComputedStyle(e).textTransform), "none");
+  await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(200); await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" });
+  await D().locator('[data-ak="a"]').focus();
+  assert.deepEqual(await redsIn("dialog.ask[open], dialog.ask[open] *"), []); assert.deepEqual(await moulded("dialog.ask[open] *"), []);
+  assert.equal(await D().locator("label").first().evaluate((e) => getComputedStyle(e).textTransform), "none");
+  assert.doesNotMatch(await D().innerText(), /microphone on your phone/);
+  await p.keyboard.press("Escape"); await p.waitForTimeout(150);
+});
+await ok("plum: text follows the phone's text size, tab labels stay put, and nothing goes sideways", async () => {
+  await go("now"); const t0 = await p.locator(".ph-task").evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  await p.evaluate(() => { document.documentElement.style.fontSize = "34px"; }); await p.waitForTimeout(150);
+  const t1 = await p.locator(".ph-task").evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  assert.ok(Math.abs(t1 / t0 - 2) < 0.05, `task title ${t0} -> ${t1}`);
+  assert.equal(await p.locator('#ph-tabs [data-tab="now"]').evaluate((e) => getComputedStyle(e).fontSize), "12px");
+  assert.equal(await sideways(), false);
+  await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250);
+  assert.equal(await sideways(), false);
+  await p.evaluate(() => { document.documentElement.style.fontSize = ""; });
+});
+await ok("plum: the home-screen icon and the Android icon are plum; the launch colour is the plum ground", async () => {
+  const r = await p.evaluate(async () => {
+    const corner = async (src) => { const im = new Image(); im.src = src + "?t=" + Date.now(); await im.decode(); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
+      const x = c.getContext("2d"); x.drawImage(im, 0, 0); return [...x.getImageData(4, 4, 1, 1).data].slice(0, 3).join(","); };
+    const m = await (await fetch("manifest.webmanifest", { cache: "no-store" })).json();
+    return { apple: await corner("apple-touch-icon.png"), mask: await corner(m.icons.find((i) => i.purpose === "maskable").src), bg: m.background_color };
+  });
+  assert.equal(r.apple, "44,19,50"); assert.equal(r.mask, "44,19,50"); assert.equal(r.bg.toUpperCase(), "#140A17");
+  await go("you");
+});
 await ok("Classic view brings the old board back, and Phone view returns", async () => {
   await tap("[data-ph=classic]"); await p.waitForTimeout(300);
   assert.equal(await p.locator(".masthead").isVisible(), true); assert.equal(await p.locator("#ph").isVisible(), false);
