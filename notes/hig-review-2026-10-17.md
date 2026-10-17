@@ -1,6 +1,6 @@
 # Phone app against the Apple Human Interface Guidelines, 2026-10-17
 
-The owner's `apple-hig-design` skill was not loaded in the session, so this review uses the HIG directly. Rerun it with the skill in a new session.
+First pass used the HIG directly; the owner's `apple-hig-design` skill then loaded, and its checklist is at the end.
 
 Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 390x844 (targets, text sizes, contrast, input sizes, labels, sideways scroll), screenshots of each, plus landscape 844x390, the head tags, the manifest and the icon. Script: scratchpad `hig/audit.mjs` (ephemeral; rebuild from this note if needed).
 
@@ -28,7 +28,7 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 
 ## Polish
 
-13. Selected tab is a filled pill. iOS marks it with the tint colour and a filled symbol. Optional.
+13. Selected tab is a filled pill (Material 3). iOS marks it with the tint colour and a filled symbol. Raised to a FAIL by the skill, item 15.
 14. Page titles are 26px; the iOS large title is 34pt. Optional.
 15. No undo after Done or an edit. The HIG prefers undo to confirmation for things that can be reversed. Remove keeps its confirmation, which is right.
 
@@ -45,3 +45,27 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 ## Suggested order
 
 1 to 4 first (about half a day, mostly CSS, plus one media query). Then 5, 6, 7 and 12 together as "the phone finishes its plum". Then 8, 10 and 11 as one navigation pass. 13 to 15 when there is time.
+
+## The `apple-hig-design` checklist (section 10)
+
+Result: 6 PASS, 9 FAIL.
+
+| # | Check | Result | Element and fix |
+|---|---|---|---|
+| 1 | Tappable is obvious | FAIL | Today item names open the step but look like plain text; rows on You, Goals and the goal page open pages but have no chevron. Add a trailing chevron to every row that navigates |
+| 2 | No gesture-only feature | PASS | There are no gestures; every action has a button |
+| 3 | Undo, and destructive actions marked and confirmed | FAIL | Remove step and Remove goal: red and confirmed (pass). No Undo for Done, Mark it done, status, move to another goal, archive, backlog. The only undo is typing "undo done on ..." in Talk. Add a 5-second Undo strip; a done ring reopens on tap |
+| 4 | Under 100 ms; progress over 1 s | FAIL | All local, instant; Talk shows "Thinking..." and Stop (pass). No pressed state on `.ph-btn`, `.ph-chip`, `.ph-rowb`, `.ph-goal`: only the classic `.btn` has `:active`. Add one pressed token |
+| 5 | Hit areas 44x44 | FAIL | See Must fix 4 |
+| 6 | Primary actions in the thumb zone | FAIL | Tabs and Start it: pass. Goal "Edit", "New goal" and "Sign in" sit in the top-right corner, the hardest reach. Move them to the bottom of their page |
+| 7 | Adapts to tablet, landscape, split | FAIL | Landscape phone gets the desktop board (Must fix 1). iPad gets the full board, not a stretched phone (pass) |
+| 8 | Semantic text styles, largest size | FAIL | All px, no Dynamic Type; 11px mono capitals carry meaning (Should fix 6) |
+| 9 | Screen-reader labels | PASS | 0 unlabelled controls on 15 screens in both modes (script check; a VoiceOver walk-through is still owed) |
+| 10 | Contrast in light and dark | FAIL | "Do this now" 4.29:1 in light. Dark passes |
+| 11 | Reduce Motion | PASS | The phone has no motion; the sheet entry is removed under Reduce Motion |
+| 12 | Colour only with meaning, never alone | FAIL | Red on the Talk icon and the Talk input focus ring is decoration; red must mean destructive. Never colour alone: pass (done rings also strike through; dots have a count) |
+| 13 | Nothing removable | FAIL | Step page: the status and percent line above the bar repeat the Status control and Done slider just below. Goal page: "0% done" and "0 of N done" together. Talk: the "Assistant" header repeats the tab. Journal sheet: the keyboard-microphone sentence |
+| 14 | Always know where you are and how to go back | PASS | Tab marked, page title, Back on every sub-page, id in the address so reload keeps the place. Improve: chevron, one bar style, edge swipe |
+| 15 | No other platform's language | FAIL | The selected tab sits in a filled pill, which is Material 3's active indicator. iOS: tint colour plus a filled symbol |
+
+Skill section 7: dark ground `#140A17` is a deep plum, not pure black, and panels stay visible (pass). One accent, plum (pass, apart from 12).
