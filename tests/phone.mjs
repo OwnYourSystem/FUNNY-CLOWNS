@@ -238,6 +238,56 @@ await ok("Backlog opens the old page under a Back bar, and Back returns to You",
   assert.equal(await p.locator("#v-backlog").isVisible(), true); assert.equal(await p.locator(".masthead").isVisible(), false);
   await p.locator("#ph-back a").click(); await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/you");
 });
+/* ---------- the four iPhone breaks from the HIG review (2026-10-17) ---------- */
+const textBoxesUnder16 = () => p.evaluate(() => [...document.querySelectorAll("input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea")]
+  .filter((e) => e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize) < 16).map((e) => (e.id || e.getAttribute("data-ak") || e.tagName) + " " + getComputedStyle(e).fontSize));
+const under44 = (sel) => p.evaluate((sel) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length)
+  .map((e) => [((e.innerText || e.value || e.getAttribute("aria-label") || e.id) + "").trim().slice(0, 20), e.getBoundingClientRect().height]).filter((x) => x[1] < 44), sel);
+await ok("iPhone: no text box under 16px on Goals, the goal page, the step page, Talk or a journal sheet", async () => {
+  const bad = [];
+  await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); bad.push(...await textBoxesUnder16());
+  await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); bad.push(...await textBoxesUnder16());
+  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); bad.push(...await textBoxesUnder16());
+  await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(200); await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" });
+  bad.push(...await textBoxesUnder16()); await p.keyboard.press("Escape"); await p.waitForTimeout(150);
+  assert.deepEqual(bad, []);
+});
+await ok("iPhone: dialog buttons, Talk controls and segmented controls are 44px or more", async () => {
+  const bad = [];
+  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); bad.push(...await under44("#botsheet button, #bot-input"));
+  await go("goals"); bad.push(...await under44(".ph-seg a, .ph-backl"));
+  await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250);
+  bad.push(...await under44(".ph-segb button, .ph-backl, .ph-range"));
+  await tap("[data-ph=sdel]"); await D().waitFor({ state: "visible" }); bad.push(...await under44("dialog.ask[open] button")); await D().getByRole("button", { name: "Keep it" }).click();
+  await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(200); await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" });
+  bad.push(...await under44("dialog.ask[open] button")); await p.keyboard.press("Escape"); await p.waitForTimeout(150);
+  assert.deepEqual(bad, []);
+});
+/* its own context: a full-page screenshot earlier drops Playwright's touch emulation for the rest of the page's life */
+await ok("iPhone: turning the phone sideways keeps the phone app and the same page, with bottom sheets", async () => {
+  const lc = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, storageState: await ctx.storageState() });
+  const q = await lc.newPage();
+  try {
+    await q.goto(URL); await q.waitForSelector("#ph-main"); await q.evaluate(() => { location.hash = "#/goals"; }); await q.waitForTimeout(300);
+    await q.locator(".ph-goal").first().click(); await q.waitForTimeout(250); await q.locator("[data-ph=step]").first().click(); await q.waitForTimeout(250);
+    const h = await q.evaluate(() => location.hash), nm = await q.locator("#ph-s-name").inputValue();
+    await q.setViewportSize({ width: 844, height: 390 }); await q.waitForTimeout(400);
+    assert.equal(await q.evaluate(() => document.documentElement.classList.contains("ph")), true, "the desktop board came up");
+    assert.equal(await q.evaluate(() => location.hash), h); assert.equal(await q.locator("#ph-s-name").inputValue(), nm);
+    assert.equal(await q.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await q.locator("[data-ph=sdel]").click(); const d = q.locator("dialog.ask[open]"); await d.waitFor({ state: "visible" }); await q.waitForTimeout(300);
+    const bx = await d.boundingBox(); assert.ok(Math.abs(bx.y + bx.height - 390) < 2, "the sheet is not at the bottom: " + JSON.stringify(bx));
+    await d.getByRole("button", { name: "Keep it" }).click();
+    await q.setViewportSize({ width: 390, height: 844 }); await q.waitForTimeout(300);
+    assert.equal(await q.evaluate(() => document.documentElement.classList.contains("ph")), true);
+  } finally { await lc.close(); }
+});
+await ok("iPhone: the status bar band is plum in light, the ground in dark, and has no height in a browser tab", async () => {
+  const band = () => p.evaluate(() => { const e = document.getElementById("sbar"); return { bg: getComputedStyle(e).backgroundColor, h: e.getBoundingClientRect().height }; });
+  let b1 = await band(); assert.equal(b1.bg, "rgb(44, 19, 50)"); assert.equal(b1.h, 0);
+  await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100); b1 = await band(); assert.equal(b1.bg, "rgb(20, 10, 23)");
+  await p.emulateMedia({ colorScheme: "light" }); await go("you");
+});
 await ok("Classic view brings the old board back, and Phone view returns", async () => {
   await tap("[data-ph=classic]"); await p.waitForTimeout(300);
   assert.equal(await p.locator(".masthead").isVisible(), true); assert.equal(await p.locator("#ph").isVisible(), false);

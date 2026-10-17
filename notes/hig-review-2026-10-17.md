@@ -6,6 +6,8 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 
 ## Must fix: breaks on an iPhone
 
+**Fixed 2026-10-17 on `app`** (all four). The phone shell now also turns on for a touch screen under 500px high, so landscape keeps the app and the page. Every text box on the phone is 17px. A band the height of the status bar (`#sbar`, `env(safe-area-inset-top)`) is plum in light and the ground in dark, so the white status text always reads; it has no height in a browser tab. Dialog, Talk, segmented, Back and old-page controls are 44px or more. The phone always gets bottom sheets. 4 new checks in `phone.mjs` (39 in all); they fail on c45bcc6 and pass after. The status band was checked with a hand-set 59px inset, because Chromium has no safe-area inset: confirm on the installed app.
+
 | # | Finding | Evidence | Fix |
 |---|---|---|---|
 | 1 | Turning the phone sideways swaps the whole app for the desktop board | 844x390: `html.ph` off, masthead shown. The cut is `max-width: 820px` and an iPhone in landscape is 844 wide | Phone shell when `(max-width: 820px), (pointer: coarse) and (max-height: 500px)` |
