@@ -44,7 +44,7 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 
 ## Polish
 
-13. Selected tab is a filled pill (Material 3). iOS marks it with the tint colour and a filled symbol. Raised to a FAIL by the skill, item 15. Still open: the next step.
+13. Selected tab: **fixed 2026-10-17.** The pill (Material 3) is gone. The selected tab is the accent colour with a filled icon (so colour is not the only signal); the others are grey outlines. The bar is a little see-through with the page blurred behind it (solid when the phone asks for reduced transparency or has no blur). 1 new check (53 in all) fails on c232f99 and passes after. This closes checklist item 15. Test debt seen in the same run: `hints.mjs` "opening the board fires the brief" fails after 22:30 (the default day end, when the board goes quiet) on this build and on c232f99 alike; it depends on the clock and needs a fixed time, as `notices` got.
 14. Page titles are 26px; the iOS large title is 34pt. Optional.
 15. Undo: done in the navigation pass. Field edits on the step page are not on Undo; each change can be set back by hand.
 
@@ -64,7 +64,7 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 
 ## The `apple-hig-design` checklist (section 10)
 
-Result: 6 PASS, 9 FAIL.
+Result at the review: 6 PASS, 9 FAIL. After the four passes of 2026-10-17 (iPhone breaks, plum everywhere, navigation, tabs) all 15 pass, apart from the VoiceOver walk-through still owed on item 9.
 
 | # | Check | Result | Element and fix |
 |---|---|---|---|

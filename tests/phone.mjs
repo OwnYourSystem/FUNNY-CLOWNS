@@ -446,6 +446,26 @@ await ok("nav: a swipe in from the left edge goes Back; a swipe that starts mid-
     await swipe(6, 400, 240, 410); assert.equal(await q.evaluate(() => location.hash), "#/goals", "the board took the edge in a browser tab");
   } finally { await sb.close(); }
 });
+/* ---------- the tab bar, the iOS way (2026-10-17) ---------- */
+await ok("tabs: the selected tab is the accent colour with a filled icon and no pill; the rest are grey outlines; the bar is see-through", async () => {
+  for (const [route, tab] of [["now", "now"], ["journal", "journal"], ["goals", "you"]]) {
+    await go(route);
+    const t = await p.evaluate(() => [...document.querySelectorAll("#ph-tabs a")].map((a) => { const c = getComputedStyle(a), o = a.querySelector(".ti-o"), f = a.querySelector(".ti-f");
+      return { tab: a.dataset.tab, cur: a.getAttribute("aria-current"), color: c.color, bg: c.backgroundColor, o: getComputedStyle(o).display !== "none", f: getComputedStyle(f).display !== "none", h: a.getBoundingClientRect().height }; }));
+    for (const x of t) {
+      assert.ok(x.h >= 44, x.tab + " is " + x.h + "px");
+      assert.equal(x.bg, "rgba(0, 0, 0, 0)", x.tab + " has a pill");
+      if (x.tab === tab) { assert.equal(x.cur, "page"); assert.equal(x.color, "rgb(44, 19, 50)"); assert.ok(x.f && !x.o, x.tab + " is not filled"); }
+      else { assert.equal(x.cur, null); assert.equal(x.color, "rgb(107, 92, 112)"); assert.ok(x.o && !x.f, x.tab + " is not an outline"); }
+    }
+  }
+  assert.match(await p.locator("#ph-tabs").evaluate((e) => getComputedStyle(e).backdropFilter || getComputedStyle(e).webkitBackdropFilter), /blur/);
+  await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100);
+  assert.equal(await p.locator('#ph-tabs [aria-current="page"]').evaluate((e) => getComputedStyle(e).color), "rgb(216, 194, 224)");
+  await p.locator("#ph-tabs").screenshot({ path: "/tmp/claude-0/ph-test-tabs-dark.png" });
+  await p.emulateMedia({ colorScheme: "light" }); await p.locator("#ph-tabs").screenshot({ path: "/tmp/claude-0/ph-test-tabs-light.png" });
+  await go("you");
+});
 await ok("Classic view brings the old board back, and Phone view returns", async () => {
   await tap("[data-ph=classic]"); await p.waitForTimeout(300);
   assert.equal(await p.locator(".masthead").isVisible(), true); assert.equal(await p.locator("#ph").isVisible(), false);
