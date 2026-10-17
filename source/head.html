@@ -1142,7 +1142,7 @@ html.ph.ph-old .view.is-on{display:block !important}
 html.ph.ph-old .wrap{padding-top:64px}
 #ph-back{display:none}
 html.ph.ph-old #ph-back{display:flex; align-items:center; gap:12px; position:fixed; z-index:60; top:env(safe-area-inset-top,0px); left:0; right:0; height:56px;
-  padding:0 16px; background:var(--ground); border-bottom:1px solid var(--hair); font-size:17px; font-weight:600}
+  padding:0 16px; background:var(--ground); border-bottom:1px solid var(--hair); font-size:1rem; font-weight:600}
 html.ph.ph-old #ph-main{display:none}
 html.ph.ph-onb #ph-tabs{display:none}
 html.ph.ph-talk #ph-main{display:none}
@@ -1159,32 +1159,32 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
   font-size:12px; color:var(--muted); text-decoration:none; border-radius:14px}
 #ph-tabs a[aria-current="page"]{color:var(--ink); font-weight:600; background:var(--ph-wash)}
 #ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
-.ph-k{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
-.ph-hot{color:var(--run)}
-.ph-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px}
-.ph-h1{margin:2px 0 0; font-size:26px; line-height:1.15; font-weight:600; letter-spacing:-.02em}
-.ph-h2{margin:0; font-size:16px; font-weight:600}
-.ph-sub{margin:4px 0 0; font-size:14px; color:var(--ink-2); line-height:1.45}
-.ph-chip{font:inherit; font-size:14px; min-height:44px; padding:0 16px; border-radius:22px; border:1px solid var(--rule);
+.ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted); font-variant-numeric:tabular-nums}
+.ph-hot{color:var(--ph-pri); font-weight:600}
+.ph-head{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px}
+.ph-h1{margin:2px 0 0; font-size:1.5294rem; line-height:1.15; font-weight:600; letter-spacing:-.02em}
+.ph-h2{margin:0; font-size:0.9412rem; font-weight:600}
+.ph-sub{margin:4px 0 0; font-size:0.8235rem; color:var(--ink-2); line-height:1.45}
+.ph-chip{font:inherit; font-size:0.8235rem; min-height:44px; padding:0 16px; border-radius:22px; border:1px solid var(--rule);
   background:var(--panel); color:var(--ink); flex:0 0 auto}
 .ph-chip.ph-pri,.ph-btn.ph-pri{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri); font-weight:600}
 .ph-strip{display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; border-radius:14px; background:var(--raised);
   color:var(--ink); text-decoration:none}
-.ph-strip-t{flex:1 1 auto; min-width:0; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.ph-strip-go{font-size:14px; color:var(--ink-2)}
+.ph-strip-t{flex:1 1 auto; min-width:0; font-size:0.8235rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ph-strip-go{font-size:0.8235rem; color:var(--ink-2)}
 .ph-card{background:var(--panel); border:1px solid var(--rule); border-radius:22px; padding:18px}
-.ph-task{margin:8px 0 0; font-size:23px; line-height:1.22; font-weight:600; letter-spacing:-.01em; overflow-wrap:anywhere}
-.ph-why{margin:8px 0 0; font-size:14px; line-height:1.5; color:var(--ink-2)}
-.ph-line{margin:8px 0 0; font-size:16px; line-height:1.45; overflow-wrap:anywhere}
+.ph-task{margin:8px 0 0; font-size:1.3529rem; line-height:1.22; font-weight:600; letter-spacing:-.01em; overflow-wrap:anywhere}
+.ph-why{margin:8px 0 0; font-size:0.8235rem; line-height:1.5; color:var(--ink-2)}
+.ph-line{margin:8px 0 0; font-size:0.9412rem; line-height:1.45; overflow-wrap:anywhere}
 .ph-acts{display:flex; gap:10px; margin-top:16px}
-.ph-btn{flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; font:inherit; font-size:16px; font-weight:600;
+.ph-btn{flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; font:inherit; font-size:0.9412rem; font-weight:600;
   min-height:50px; padding:0 16px; border-radius:25px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); text-decoration:none}
-.ph-wide{flex:0 0 auto; width:100%; min-height:56px; border-radius:28px; font-size:17px}
-.ph-link{font:inherit; font-size:15px; color:var(--ink); background:none; border:0; padding:10px 0; text-decoration:underline; align-self:flex-start}
+.ph-wide{flex:0 0 auto; width:100%; min-height:56px; border-radius:28px; font-size:1rem}
+.ph-link{font:inherit; font-size:0.8824rem; color:var(--ink); background:none; border:0; padding:10px 0; text-decoration:underline; align-self:flex-start}
 .ph-center{align-self:center}
 .ph-row-h{display:flex; align-items:baseline; justify-content:space-between; padding:2px 4px 8px}
 .ph-list{list-style:none; margin:0; padding:0; background:var(--panel); border:1px solid var(--hair); border-radius:18px}
-.ph-item{display:flex; align-items:center; gap:12px; min-height:52px; padding:0 14px; border-top:1px solid var(--hair); font-size:15px}
+.ph-item{display:flex; align-items:center; gap:12px; min-height:52px; padding:0 14px; border-top:1px solid var(--hair); font-size:0.8824rem}
 .ph-item:first-child{border-top:0}
 .ph-item-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere; padding:12px 0}
 .ph-item.is-done .ph-item-t{color:var(--muted); text-decoration:line-through}
@@ -1192,67 +1192,67 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
   box-sizing:border-box; position:relative}
 button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-ring.on{background:var(--ph-pri); border-color:var(--ph-pri)}
-.ph-note{margin:0; padding:0 4px; font-size:13px; line-height:1.5; color:var(--muted)}
-.ph-empty{margin:0; padding:16px; border-radius:18px; background:var(--raised); font-size:14px; line-height:1.5; color:var(--ink-2)}
-.ph-days{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:2px 4px; font-size:14px; color:var(--ink-2)}
+.ph-note{margin:0; padding:0 4px; font-size:.765rem; line-height:1.5; color:var(--muted)}
+.ph-empty{margin:0; padding:16px; border-radius:18px; background:var(--raised); font-size:0.8235rem; line-height:1.5; color:var(--ink-2)}
+.ph-days{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:2px 4px; font-size:0.8235rem; color:var(--ink-2)}
 .ph-dots{display:flex; gap:6px; flex:0 0 auto}
 .ph-dot{width:10px; height:10px; border-radius:5px; background:var(--rule)}
 .ph-dot.on{background:var(--ph-pri)}
 .ph-two,.ph-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ph-tile{display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; min-height:68px; padding:12px 14px;
-  border-radius:18px; border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:16px; font-weight:600; color:var(--ink);
+  border-radius:18px; border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:0.9412rem; font-weight:600; color:var(--ink);
   text-decoration:none; text-align:left}
 .ph-gk{margin:6px 0 0; padding:0 4px; font-weight:400}
 .ph-grp{background:var(--panel); border:1px solid var(--hair); border-radius:18px; overflow:hidden}
 .ph-rowb,.ph-rowf{display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:52px; box-sizing:border-box;
-  padding:0 14px; border:0; border-top:1px solid var(--hair); background:transparent; font:inherit; font-size:15px; color:var(--ink); text-align:left}
+  padding:0 14px; border:0; border-top:1px solid var(--hair); background:transparent; font:inherit; font-size:0.8824rem; color:var(--ink); text-align:left}
 .ph-rowb:first-child,.ph-rowf:first-child{border-top:0}
-.ph-v{font-size:14px; color:var(--muted); text-align:right}
+.ph-v{font-size:0.8235rem; color:var(--muted); text-align:right}
 .ph-me{align-items:center}
 .ph-me-t{flex:1 1 auto; min-width:0}
 .ph-av{width:52px; height:52px; border-radius:26px; background:var(--raised); display:flex; align-items:center; justify-content:center; color:var(--ink-2); flex:0 0 auto}
-.ph-backl{font-size:15px; color:var(--ink-2); text-decoration:none; padding:10px 0; display:inline-block}
+.ph-backl{font-size:0.8824rem; color:var(--ink-2); text-decoration:none; padding:10px 0; display:inline-block}
 .ph-seg{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
-.ph-seg a{display:flex; align-items:center; justify-content:center; min-height:40px; border-radius:20px; font-size:14px; color:var(--ink-2); text-decoration:none}
+.ph-seg a{display:flex; align-items:center; justify-content:center; min-height:40px; border-radius:20px; font-size:0.8235rem; color:var(--ink-2); text-decoration:none}
 .ph-seg a[aria-current="page"]{background:var(--panel); color:var(--ink); font-weight:600}
 .ph-goals li{border-top:1px solid var(--hair)}
 .ph-goals li:first-child{border-top:0}
 .ph-goal{display:block; width:100%; padding:14px; border:0; background:transparent; font:inherit; color:var(--ink); text-align:left}
 .ph-goal-top{display:flex; align-items:baseline; gap:10px}
-.ph-goal-n{flex:1 1 auto; min-width:0; font-size:16px; font-weight:600; overflow-wrap:anywhere}
+.ph-goal-n{flex:1 1 auto; min-width:0; font-size:0.9412rem; font-weight:600; overflow-wrap:anywhere}
 .ph-bar{display:block; margin-top:8px; height:6px; border-radius:3px; background:var(--hair); overflow:hidden}
 .ph-bar span{display:block; height:6px; background:var(--ph-pri)}
-.ph-goal-x{display:block; margin-top:6px; font-size:13px; color:var(--muted); overflow-wrap:anywhere}
+.ph-goal-x{display:block; margin-top:6px; font-size:.765rem; color:var(--muted); overflow-wrap:anywhere}
 .ph-goal.is-done .ph-goal-n{color:var(--muted); text-decoration:line-through}
-.ph-item-b{background:none; border:0; font:inherit; font-size:15px; color:var(--ink); text-align:left; cursor:pointer}
+.ph-item-b{background:none; border:0; font:inherit; font-size:0.8824rem; color:var(--ink); text-align:left; cursor:pointer}
 .ph-add{display:flex; flex-direction:column; gap:6px}
 .ph-onb{display:flex; flex-direction:column; gap:12px; min-height:calc(100vh - 56px)}
-.ph-big{margin:48px 0 0; font-size:34px; line-height:1.12; font-weight:600; letter-spacing:-.02em}
-.ph-lede{margin:0; font-size:17px; line-height:1.5; color:var(--ink-2)}
+.ph-big{margin:48px 0 0; font-size:2rem; line-height:1.12; font-weight:600; letter-spacing:-.02em}
+.ph-lede{margin:0; font-size:1rem; line-height:1.5; color:var(--ink-2)}
 .ph-mt{margin-top:4px}
 .ph-fill{flex:1 1 auto; min-height:24px}
 .ph-steps{display:flex; gap:8px; justify-content:center; margin-bottom:8px}
 .ph-step{width:6px; height:6px; border-radius:3px; background:var(--rule)}
 .ph-step.on{width:24px; background:var(--ph-pri)}
-.ph-time{font:inherit; font-size:17px; width:136px; min-height:44px; box-sizing:border-box; border:1px solid var(--rule); border-radius:12px;
+.ph-time{font:inherit; font-size:1rem; width:136px; min-height:44px; box-sizing:border-box; border:1px solid var(--rule); border-radius:12px;
   padding:0 10px; background:var(--ground); color:var(--ink)}
 .ph-sw{display:inline-flex; border:1px solid var(--rule); border-radius:22px; overflow:hidden; flex:0 0 auto}
-.ph-sw button{font:inherit; font-size:14px; min-height:40px; min-width:56px; border:0; background:var(--panel); color:var(--ink-2)}
+.ph-sw button{font:inherit; font-size:0.8235rem; min-height:40px; min-width:56px; border:0; background:var(--panel); color:var(--ink-2)}
 .ph-sw button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
-.ph-lab{margin-top:8px; font-size:15px; font-weight:500}
-.ph-in{font:inherit; font-size:17px; width:100%; box-sizing:border-box; min-height:52px; border:1px solid var(--rule); border-radius:14px;
+.ph-lab{margin-top:8px; font-size:0.8824rem; font-weight:500}
+.ph-in{font:inherit; font-size:1rem; width:100%; box-sizing:border-box; min-height:52px; border:1px solid var(--rule); border-radius:14px;
   padding:0 14px; background:var(--panel); color:var(--ink)}
 .ph-mic{display:inline-flex; align-items:center; gap:8px; align-self:flex-start; min-height:44px; padding:0 16px; border-radius:22px;
-  border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:15px; color:var(--ink)}
+  border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:0.8824rem; color:var(--ink)}
 .ph-mic.on{border-color:var(--ph-pri); background:var(--ph-wash)}
 .ph-form{display:flex; flex-direction:column; gap:6px}
 .ph-form .ph-lab{margin-top:10px}
-.ph-segb{display:grid; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
-.ph-segb button{font:inherit; font-size:14px; min-height:40px; min-width:0; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
+.ph-segb{display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
+.ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:0; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
 .ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
-.ph-sel{font:inherit; font-size:17px; width:100%; min-height:52px; box-sizing:border-box; border:1px solid var(--rule); border-radius:14px;
+.ph-sel{font:inherit; font-size:1rem; width:100%; min-height:52px; box-sizing:border-box; border:1px solid var(--rule); border-radius:14px;
   padding:0 12px; background:var(--panel); color:var(--ink)}
-.ph-sel-s{flex:0 1 auto; width:auto; min-width:0; min-height:44px; font-size:15px; border-radius:22px}
+.ph-sel-s{flex:0 1 auto; width:auto; min-width:0; min-height:44px; font-size:0.8824rem; border-radius:22px}
 .ph-inrow{display:flex; gap:8px; align-items:center}
 .ph-inrow .ph-in{flex:1 1 auto; min-width:0}
 .ph-range{width:100%; min-height:40px; accent-color:var(--ph-pri)}
@@ -1271,8 +1271,8 @@ html.ph{--sbar:var(--ground)}
 html.ph[data-theme="light"]{--sbar:#2C1332}
 /* iOS zooms the page when a box under 16px is focused. Every box on the
    phone is 17px, the iOS body size. */
-html.ph input:not([type=range]):not([type=checkbox]):not([type=radio]),html.ph select,html.ph textarea{font-size:17px}
-html.ph .ask-fields textarea.f,html.ph #ph textarea{font-size:17px; font-family:var(--font); line-height:1.45}
+html.ph input:not([type=range]):not([type=checkbox]):not([type=radio]),html.ph select,html.ph textarea{font-size:max(16px,1rem)}
+html.ph .ask-fields textarea.f,html.ph #ph textarea{font-size:max(16px,1rem); font-family:var(--font); line-height:1.45}
 html.ph .seek input{min-height:44px}
 /* 44pt is the smallest thing a thumb should have to hit */
 html.ph .ask-acts .btn,html.ph .ask-pick button,html.ph .ask-mic,html.ph .bot-chip,html.ph #bot-clear,html.ph #bot-send,html.ph #bot-mic,html.ph #bot-stop,
@@ -1284,6 +1284,55 @@ html.ph .ph-range{min-height:44px}
 /* the phone always gets bottom sheets, on its side too */
 html.ph dialog.ask{margin:auto auto 0; width:100%; max-width:none; border-radius:22px 22px 0 0; border-bottom:0}
 html.ph .ask-in{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+
+/* ---- plum everywhere (2026-10-17, from the HIG review) ----
+   Text follows the iPhone's own text size (Dynamic Type): the root takes
+   -apple-system-body, which is 17px at the default setting, and the phone
+   is sized in rem from it. Elsewhere the root is 17px, so nothing moves. */
+html.ph{font-size:17px}
+@supports (font: -apple-system-body){ html.ph{font:-apple-system-body} }
+html.ph body{font-family:var(--font); font-size:.882rem}
+/* The moulded look belongs to the desktop board's narrow layout. On the
+   phone everything is flat plum, at any width: one surface, one hairline,
+   one accent. Red is for danger and errors only. */
+html.ph .wrap{--panel:unset; --raised:unset; --ground:unset}
+html.ph :is(.f,.seek,.xsel-btn){background:var(--panel); border:1px solid var(--rule); box-shadow:none; border-radius:14px}
+html.ph .f:focus,html.ph .seek:focus-within{outline:none; border-color:var(--ph-pri); box-shadow:0 0 0 3px var(--ph-wash); background:var(--panel)}
+html.ph .editor{background:var(--panel); border:1px solid var(--hair); box-shadow:none; border-radius:18px}
+html.ph :is(.btn,.mini,.chip,.tag,.bot-chip){background:var(--panel); border:1px solid var(--rule); box-shadow:none; color:var(--ink); border-radius:999px}
+html.ph :is(.btn,.mini,.chip,.tag,.bot-chip):active{background:var(--ph-wash)}
+html.ph :is(.btn,.mini)[aria-pressed="true"],html.ph .tag.on,html.ph :is(.btn,.mini).mic.on{background:var(--ph-wash); border-color:var(--ph-pri); color:var(--ink); box-shadow:none}
+html.ph .mini{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; padding:0 14px}
+html.ph :is(.kpis,.panel,.tcard,.gcard,.stub,.tick,.nowbadge,.jr-check,.xsel-menu){box-shadow:none; border:1px solid var(--hair); background:var(--panel)}
+html.ph .tcard[aria-pressed="true"]{box-shadow:none; border-color:var(--ph-pri); background:var(--ph-wash)}
+html.ph :is(.feedrow,.dayrow) button{box-shadow:none; border:1px solid var(--rule); background:var(--panel)}
+html.ph :is(.feedrow,.dayrow) button[aria-pressed="true"]{box-shadow:none; border-color:var(--ph-pri); background:var(--ph-wash); color:var(--ink)}
+html.ph .mains .bars>.row,html.ph .subs .row.sel{box-shadow:none; border:1px solid var(--hair); background:var(--panel)}
+html.ph .mains .bars>.row.sel{box-shadow:none; border:1px solid var(--ph-pri); background:var(--ph-wash)}
+html.ph .track,html.ph .iconrow .prev{box-shadow:none; background:var(--hair)}
+html.ph .xsel-opt.on{background:var(--ph-pri); color:var(--ph-on-pri)}
+/* the sheets */
+html.ph dialog.ask{background:var(--panel); border-color:var(--hair)}
+html.ph .ask-in h3{font-size:1.176rem; font-weight:600; letter-spacing:-.01em}
+html.ph .ask-in p{font-size:.882rem}
+html.ph .ask-fields label,html.ph .ask-lab{font-family:var(--font); font-size:.882rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--ink-2)}
+html.ph .ask-acts .btn{font-size:1rem; font-weight:600}
+html.ph .ask-pick button{font-size:.941rem; color:var(--ink); background:var(--panel); border-color:var(--rule)}
+html.ph .ask-mic{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; width:auto; align-self:flex-start; padding:0 16px; gap:8px}
+html.ph .ask-err{font-size:.882rem}
+/* Talk */
+html.ph #botsheet{box-shadow:none}
+html.ph .bot-log{background:transparent; border:0; box-shadow:none}
+html.ph .bot-mark{background:var(--ph-wash); color:var(--ph-pri)}
+html.ph .bot-name{font-size:1rem; font-weight:600}
+html.ph .bot-msg{font-size:.941rem}
+html.ph .bot-msg.you{background:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph .bot-msg.bot{background:var(--raised); border-color:var(--hair)}
+html.ph .bot-did{font-family:var(--font); font-size:.765rem; letter-spacing:0; text-transform:none}
+html.ph .bot-empty,html.ph .bot-chip{font-size:.882rem}
+html.ph .bot-note{font-size:.765rem}
+html.ph #bot-send{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri); font-weight:600}
+html.ph .btn,html.ph #bot-input{font-size:max(16px,.941rem)}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}

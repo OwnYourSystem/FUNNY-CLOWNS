@@ -114,6 +114,16 @@ bars, the active tab, rings). Dark: plum surfaces, lilac `#D8C2E0` presses.
 Light: plum presses on `#F6F2F7`. Red is for danger only. Keep text at 4.5:1 on
 every surface.
 
+**Phone type and surfaces (2026-10-17, HIG review).** Size phone text in rem:
+the root is `-apple-system-body` (17px at the default), so it follows the
+iPhone text size. Tab labels are the one exception (12px fixed). Labels are
+the body font, 13px or more, sentence case; no mono capitals on the phone.
+Inputs are never under 16px (`max(16px,1rem)`), or iOS zooms on focus.
+Every target is 44px or more. Nothing moulded on the phone: one surface, one
+hairline, `--ph-pri` for pressed and primary. Red only for danger and errors.
+The phone shell turns on for `(max-width: 820px), (pointer: coarse) and
+(max-height: 500px)`, so a phone on its side stays the phone app.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is

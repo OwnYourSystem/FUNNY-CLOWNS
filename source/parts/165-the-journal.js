@@ -74,7 +74,7 @@ function jrSays(c){
 function jrAsk(kind){
   var k=JR_KINDS[kind]?kind:jrKindNow(), K=JR_KINDS[k];
   return askUser({title:K.name+", "+jrDateLabel(jrDay()),
-    body:["Kept on this device only, with today's date and time. To speak instead of typing, use the microphone on your phone's keyboard."],
+    body:["Kept on this device only, with today's date and time."],
     fields:[{k:"kind",label:"Which",kind:"pick",row:true,opts:[["end","End of day"],["start","Start of day"]],value:k},
             {k:"a",label:K.qa,kind:"textarea"},{k:"b",label:K.qb,kind:"textarea"}],
     ok:"Save", cancel:"Not now",

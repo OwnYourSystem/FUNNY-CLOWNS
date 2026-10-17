@@ -1,9 +1,9 @@
 /* The board is one file, so the cache is one file plus its icons. It opens
    offline from the home screen, and picks up a new build in the background. */
-var CACHE = "board-v7";
+var CACHE = "board-v8";
 var DIGEST = "board-digest";   /* the page leaves a short summary here for the push handler; it is never cleaned away */
 var SHELL = ["./", "./index.html", "./manifest.webmanifest",
-             "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+             "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));

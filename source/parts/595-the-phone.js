@@ -259,7 +259,7 @@ function phOpts(list,cur){
   return list.map(function(o){ return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(cur)?" selected":"")+'>'+esc(o[1])+'</option>'; }).join("");
 }
 function phSegb(k,list,cur,label){
-  return '<div class="ph-segb" role="group" aria-label="'+esc(label)+'" style="grid-template-columns:repeat('+list.length+',minmax(0,1fr))">'+
+  return '<div class="ph-segb" role="group" aria-label="'+esc(label)+'">'+
     list.map(function(o){ return '<button type="button" data-ph="sset" data-k="'+k+'" data-v="'+esc(o[0])+'" aria-pressed="'+(String(o[0])===String(cur))+'">'+esc(o[1])+'</button>'; }).join("")+'</div>';
 }
 /* one goal: its steps, each one tap from its own page, and a box to add the next */
@@ -267,8 +267,8 @@ function phGoalPage(){
   var g=gById(PH_GOAL); if(!g) return phGoals();
   var p=groupPct(g), n=daysLeft(g), h=[], open=[], fin=[], meta=[];
   g.subs.forEach(function(id){ var s=state.subs[id]; if(!s) return; (s.pct>=100||s.status==="done"?fin:open).push(s); });
-  meta.push(n!==null?dueLabel(g):"no deadline");
-  if(g.prio==="high"||g.prio==="low") meta.push(g.prio);
+  meta.push(n!==null?dueLabel(g):"No deadline");
+  if(g.prio==="high"||g.prio==="low") meta.push(g.prio==="high"?"High priority":"Low priority");
   if(g.where&&g.where!=="any") meta.push(whereLabel(g.where));
   h.push('<div class="ph-head"><div style="min-width:0"><a class="ph-backl" href="#/goals">Back to Goals</a><h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>'+
     '<button type="button" class="ph-chip" data-ph="gedit">Edit</button></div>');
