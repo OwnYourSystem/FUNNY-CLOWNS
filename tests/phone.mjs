@@ -128,23 +128,22 @@ await ok("a goal opens its own page, with its id in the address", async () => {
   await p.locator(".ph-goal", { hasText: "Garden Shed" }).click(); await p.waitForTimeout(250);
   assert.match(await p.evaluate(() => location.hash), /^#\/goal\/.+/);
   assert.match(await p.locator("#ph-main h1").innerText(), /Garden Shed/);
-  assert.equal(await p.locator("#ph-newstep").isVisible(), true); assert.equal(await p.locator('[data-ph=mic][data-for="ph-newstep"]').isVisible(), true);
+  const dock = await p.locator(".ph-dock [data-ph=addstep]").boundingBox(); assert.ok(dock && dock.y > 844 * 0.6, "Add a step is not under the thumb: " + JSON.stringify(dock));
   assert.equal(await p.locator('#ph-tabs [data-tab="you"]').getAttribute("aria-current"), "page");
 });
-await ok("Add works with the button, with Enter, and with a repeat, and makes the same step as the classic Add", async () => {
-  await tap("[data-ph=addstep]"); await p.waitForTimeout(150); assert.match(await p.locator("#ph-onb-hint").innerText(), /first/);
-  await p.fill("#ph-newstep", "Lay the base"); await tap("[data-ph=addstep]"); await p.waitForTimeout(300);
-  await p.fill("#ph-newstep", "Fit the roof"); await p.press("#ph-newstep", "Enter"); await p.waitForTimeout(300);
-  await p.fill("#ph-newstep", "Oil the hinges"); await p.selectOption("#ph-newrep", "monthly"); await tap("[data-ph=addstep]"); await p.waitForTimeout(300);
+await ok("Add a step is a sheet with Speak; Add and Enter both add, a repeat is kept, and it comes back for the next one", async () => {
+  await tap("[data-ph=addstep]"); await D().waitFor({ state: "visible" });
+  assert.equal(await D().locator('[data-mic-to="n"]').isVisible(), true, "no Speak on the step box");
+  await D().getByRole("button", { name: "Add" }).click(); await p.waitForTimeout(150); assert.match(await D().innerText(), /first/);
+  await D().locator('[data-ak="n"]').fill("Lay the base"); await D().getByRole("button", { name: "Add" }).click(); await p.waitForTimeout(300);
+  assert.match(await D().innerText(), /Added .Lay the base/);
+  await D().locator('[data-ak="n"]').fill("Fit the roof"); await D().locator('[data-ak="n"]').press("Enter"); await p.waitForTimeout(300);
+  await D().locator('[data-ak="n"]').fill("Oil the hinges"); await D().locator('[data-ak="r"]').selectOption("monthly"); await D().getByRole("button", { name: "Add" }).click(); await p.waitForTimeout(300);
+  await D().getByRole("button", { name: "Done" }).click(); await p.waitForTimeout(250); assert.equal(await D().count(), 0);
   const s = await sub("Lay the base"); assert.ok(s); assert.equal(s.prio, "mid"); assert.equal(s.streak, 0); assert.equal(s.rep, "");
   assert.ok(await sub("Fit the roof")); const o = await sub("Oil the hinges"); assert.equal(o.rep, "monthly"); assert.ok(o.period);
   assert.match(await p.locator("[data-ph=step]", { hasText: "Oil the hinges" }).innerText(), /Monthly/);
-  assert.equal(await p.locator("#ph-newstep").inputValue(), ""); assert.equal(await sideways(), false);
-  await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
-});
-await ok("a half-typed step survives a background redraw", async () => {
-  await p.fill("#ph-newstep", "Half typed"); await p.evaluate(() => window.__board.render()); assert.equal(await p.locator("#ph-newstep").inputValue(), "Half typed");
-  await p.fill("#ph-newstep", "");
+  assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
 });
 await ok("a step opens its own page with every field the classic editor has", async () => {
   await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await p.waitForTimeout(300);
@@ -201,7 +200,7 @@ await ok("the Goal box moves the step to another goal", async () => {
   const to = (await st()).groups.find((g) => g.name === "Read more").id;
   await p.selectOption("#ph-s-goal", to); await p.waitForTimeout(300);
   assert.equal((await sub("Fit the roof")).gid, to); assert.match(await msg(), /Moved to Read more/);
-  assert.match(await p.locator("#ph-main .ph-backl").innerText(), /Read more/);
+  assert.match(await p.locator("#ph-main .ph-nav").innerText(), /Read more/);
 });
 await ok("Remove this step asks first; Keep it keeps it; Remove it removes it and goes back to the goal", async () => {
   await openStep("Lay the concrete base");
@@ -255,9 +254,9 @@ await ok("iPhone: no text box under 16px on Goals, the goal page, the step page,
 await ok("iPhone: dialog buttons, Talk controls and segmented controls are 44px or more", async () => {
   const bad = [];
   await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); bad.push(...await under44("#botsheet button, #bot-input"));
-  await go("goals"); bad.push(...await under44(".ph-seg a, .ph-backl"));
+  await go("goals"); bad.push(...await under44(".ph-seg a, .ph-nav, .ph-dock button"));
   await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250);
-  bad.push(...await under44(".ph-segb button, .ph-backl, .ph-range"));
+  bad.push(...await under44(".ph-segb button, .ph-nav, .ph-range, .ph-rowb"));
   await tap("[data-ph=sdel]"); await D().waitFor({ state: "visible" }); bad.push(...await under44("dialog.ask[open] button")); await D().getByRole("button", { name: "Keep it" }).click();
   await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(200); await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" });
   bad.push(...await under44("dialog.ask[open] button")); await p.keyboard.press("Escape"); await p.waitForTimeout(150);
@@ -330,6 +329,122 @@ await ok("plum: the home-screen icon and the Android icon are plum; the launch c
   });
   assert.equal(r.apple, "44,19,50"); assert.equal(r.mask, "44,19,50"); assert.equal(r.bg.toUpperCase(), "#140A17");
   await go("you");
+});
+/* ---------- navigation (2026-10-17) ---------- */
+const ev = async () => ((await st()).ev || []).map((e) => e.k);
+const undoBar = () => p.locator("#ph-undo");
+await ok("nav: Back is a chevron and the page it returns to, the same on Goals, a goal, a step and an old page", async () => {
+  const back = async () => p.locator("#ph-main .ph-nav, #ph-back .ph-nav").filter({ visible: true }).first();
+  await go("goals"); let b = await back(); assert.equal((await b.innerText()).trim(), "You"); assert.equal(await b.getAttribute("aria-label"), "Back to You"); assert.equal(await b.locator("svg").count(), 1);
+  await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); b = await back(); assert.equal((await b.innerText()).trim(), "Goals");
+  const gname = (await p.locator("#ph-main h1").innerText()).trim();
+  await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); b = await back(); assert.ok(gname.startsWith((await b.innerText()).trim().replace("…", "")));
+  await b.click(); await p.waitForTimeout(250); assert.match(await p.evaluate(() => location.hash), /^#\/goal\//);
+  await go("backlog"); b = await back(); assert.equal((await b.innerText()).trim(), "You"); assert.equal(await b.locator("svg").count(), 1);
+  const colour = await b.evaluate((e) => getComputedStyle(e).color); assert.equal(colour, "rgb(44, 19, 50)");
+  await go("you");
+});
+await ok("nav: rows that open something end in a chevron; rows that switch at once do not", async () => {
+  await go("you");
+  assert.equal(await p.locator(".ph-tile .ph-chev").count(), 4);
+  for (const k of ["dayend", "remind", "planner", "week", "account", "backup"]) assert.ok(await p.locator(`[data-ph=${k}] .ph-chev`).count() >= 1, k);
+  for (const k of ["theme", "classic"]) assert.equal(await p.locator(`[data-ph=${k}] .ph-chev`).count(), 0, k);
+  await go("goals"); assert.equal(await p.locator(".ph-goal .ph-chev").count(), await p.locator(".ph-goal").count());
+  await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); assert.equal(await p.locator("[data-ph=step] .ph-chev").count(), await p.locator("[data-ph=step]").count());
+  await go("now"); assert.equal(await p.locator(".ph-item-b .ph-chev").count(), await p.locator(".ph-item-b").count());
+});
+await ok("nav: the main action of Goals and a goal is in a dock under the thumb; You has nothing top right", async () => {
+  await go("goals"); let bx = await p.locator(".ph-dock [data-ph=newgoal]").boundingBox(); assert.ok(bx.y > 844 * 0.6 && bx.y + bx.height < 844, JSON.stringify(bx));
+  await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); bx = await p.locator(".ph-dock [data-ph=addstep]").boundingBox(); assert.ok(bx.y > 844 * 0.6 && bx.y + bx.height < 844, JSON.stringify(bx));
+  assert.equal(await p.locator("#ph-main .ph-head .ph-chip").count(), 0, "a chip is still top right");
+  await go("you"); assert.equal(await p.locator("#ph-main .ph-head .ph-chip").count(), 0); assert.equal(await p.locator("[data-ph=account]").count(), 1);
+});
+await ok("nav: nothing said twice: no bar above the step form, no count beside Steps, no Assistant title in Talk", async () => {
+  await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250);
+  assert.equal(await p.locator("section[aria-label=Steps] .ph-row-h .ph-k").count(), 0);
+  await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); assert.equal(await p.locator("#ph-main > div .ph-bar").count(), 0);
+  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); assert.equal(await p.locator(".bot-name").isVisible(), false); assert.equal(await p.locator("#bot-clear").isVisible(), true);
+  await go("you");
+});
+await ok("nav: a sheet has a grabber; a short pull springs back, a long pull closes it", async () => {
+  await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(200); await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" }); await p.waitForTimeout(300);
+  assert.equal(await D().locator(".ask-grab").isVisible(), true);
+  const h3 = await D().locator("h3").boundingBox(), x = h3.x + 40, y = h3.y + h3.height / 2;
+  await p.mouse.move(x, y); await p.mouse.down(); await p.mouse.move(x, y + 30, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(200);
+  assert.equal(await D().count(), 1, "a short pull closed it");
+  await p.mouse.move(x, y); await p.mouse.down(); await p.mouse.move(x, y + 160, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(300);
+  assert.equal(await D().count(), 0, "a long pull did not close it");
+});
+await ok("nav: Done shows Undo; Undo puts the step back and the log keeps a done and an undo", async () => {
+  await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250);
+  await tap("[data-ph=addstep]"); await D().waitFor({ state: "visible" }); await D().locator('[data-ak="n"]').fill("Sand the door"); await D().locator('[data-ak="n"]').press("Enter"); await p.waitForTimeout(250);
+  await D().getByRole("button", { name: "Done" }).click(); await p.waitForTimeout(200);
+  await p.locator("[data-ph=step]", { hasText: "Sand the door" }).click(); await p.waitForTimeout(250); await tap("[data-ph=stoday]"); await p.waitForTimeout(250);
+  await go("now"); const n0 = (await ev()).length;
+  await p.locator(".ph-item", { hasText: "Sand the door" }).locator("[data-ph=done]").click(); await p.waitForTimeout(300);
+  assert.equal(await undoBar().isVisible(), true); assert.match(await undoBar().innerText(), /Done: Sand the door/);
+  assert.equal((await sub("Sand the door")).status, "done");
+  await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300);
+  const s = await sub("Sand the door"); assert.notEqual(s.status, "done"); assert.equal(await undoBar().isVisible(), false);
+  assert.ok(!(await st()).done.some((c) => c.id === s.id) && (await st()).oftad.some((c) => c.id === s.id), "not back in Today");
+  const k = (await ev()).slice(n0); assert.ok(k.includes("done") && k.includes("undo"), "log: " + k.join(","));
+});
+await ok("nav: a ticked step reopens from its ring, with Undo", async () => {
+  await p.locator(".ph-item", { hasText: "Sand the door" }).locator("[data-ph=done]").click(); await p.waitForTimeout(300);
+  await p.locator(".ph-item", { hasText: "Sand the door" }).locator("[data-ph=reopen]").click(); await p.waitForTimeout(300);
+  const s = await sub("Sand the door"); assert.notEqual(s.status, "done"); assert.match(await undoBar().innerText(), /Back in Today/);
+  assert.ok((await st()).oftad.some((c) => c.id === s.id));
+});
+await ok("nav: Undo refuses when something else changed in between, and keeps the later change", async () => {
+  await p.locator(".ph-item", { hasText: "Sand the door" }).locator("[data-ph=done]").click(); await p.waitForTimeout(300);
+  await tap("[data-ph=dose]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Big day/ }).click(); await p.waitForTimeout(250);
+  await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300);
+  assert.equal((await sub("Sand the door")).status, "done", "undo went through over a later change");
+  assert.equal(await p.locator("[data-ph=dose]").innerText(), "Big day");
+  await tap("[data-ph=dose]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Let the board decide/ }).click(); await p.waitForTimeout(200);
+});
+await ok("nav: archiving a goal can be undone, and Undo hides by itself after 6 seconds", async () => {
+  await go("goals"); const name = (await p.locator(".ph-goal .ph-goal-n").first().innerText()).trim(), n = (await st()).groups.length;
+  await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); await tap("[data-ph=gedit]"); await D().waitFor({ state: "visible" });
+  await D().getByRole("button", { name: "Archive this goal" }).click(); await p.waitForTimeout(400);
+  assert.equal((await st()).groups.length, n - 1); assert.match(await undoBar().innerText(), /Archived/);
+  const ub = await p.locator("#ph-undo-b").boundingBox(), dk = await p.locator(".ph-dock button").boundingBox(); assert.ok(ub.y + ub.height <= dk.y, "Undo covers the dock");
+  await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300);
+  assert.equal((await st()).groups.length, n); assert.ok((await st()).groups.some((g) => g.name === name));
+  await p.locator(".ph-item, .ph-goal").first().waitFor(); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250);
+  await tap("[data-ph=addstep]"); await D().waitFor({ state: "visible" }); await D().locator('[data-ak="n"]').fill("Timer check"); await D().locator('[data-ak="n"]').press("Enter"); await p.waitForTimeout(250);
+  await D().getByRole("button", { name: "Done" }).click(); await p.waitForTimeout(200);
+  await p.locator("[data-ph=step]", { hasText: "Timer check" }).click(); await p.waitForTimeout(250); await tap("[data-ph=sdone]"); await p.waitForTimeout(200);
+  assert.equal(await undoBar().isVisible(), true); await p.waitForTimeout(6300); assert.equal(await undoBar().isVisible(), false);
+  await go("you");
+});
+/* a fresh context: an earlier full-page screenshot drops touch emulation */
+await ok("nav: a swipe in from the left edge goes Back; a swipe that starts mid-screen or runs down does not", async () => {
+  /* its own browser with Chromium's edge swipe (history Back) turned off, and the page told it is on the home screen,
+     so the check proves the board's own swipe and nothing else */
+  const sb = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox", "--disable-features=OverscrollHistoryNavigation"] });
+  const lc = await sb.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, storageState: await ctx.storageState() });
+  await lc.addInitScript(() => { Object.defineProperty(navigator, "standalone", { value: true, configurable: true }); window.__h = []; addEventListener("hashchange", () => window.__h.push(location.hash)); });
+  const q = await lc.newPage(), cdp = await lc.newCDPSession(q);
+  const swipe = async (x0, y0, x1, y1) => {
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x0, y: y0 }] });
+    for (let i = 1; i <= 8; i++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x0 + (x1 - x0) * i / 8, y: y0 + (y1 - y0) * i / 8 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await q.waitForTimeout(350);
+  };
+  try {
+    await q.goto(URL); await q.waitForSelector("#ph-main"); await q.evaluate(() => { location.hash = "#/goals"; }); await q.waitForTimeout(300);
+    await q.locator(".ph-goal").first().click(); await q.waitForTimeout(250); await q.locator("[data-ph=step]").first().click(); await q.waitForTimeout(300);
+    await swipe(200, 400, 380, 400); assert.match(await q.evaluate(() => location.hash), /^#\/step\//, "a mid-screen swipe went back");
+    await swipe(6, 300, 30, 600); assert.match(await q.evaluate(() => location.hash), /^#\/step\//, "a downward drag went back");
+    await swipe(6, 400, 240, 410); assert.match(await q.evaluate(() => location.hash), /^#\/goal\//);
+    await swipe(6, 400, 240, 410); assert.equal(await q.evaluate(() => location.hash), "#/goals", "goal to goals");
+    await swipe(6, 400, 240, 410); assert.equal(await q.evaluate(() => location.hash), "#/you", "goals to you");
+    await swipe(6, 400, 240, 410); assert.equal(await q.evaluate(() => location.hash), "#/you", "a top-level page has nowhere to go back to");
+    assert.equal(await q.evaluate(() => document.getElementById("ph-main").style.transform), "");
+    /* in a browser tab the board leaves the edge to the browser */
+    await q.evaluate(() => { Object.defineProperty(navigator, "standalone", { value: false, configurable: true }); location.hash = "#/goals"; }); await q.waitForTimeout(300);
+    await swipe(6, 400, 240, 410); assert.equal(await q.evaluate(() => location.hash), "#/goals", "the board took the edge in a browser tab");
+  } finally { await sb.close(); }
 });
 await ok("Classic view brings the old board back, and Phone view returns", async () => {
   await tap("[data-ph=classic]"); await p.waitForTimeout(300);

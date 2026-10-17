@@ -30,11 +30,23 @@ Build: `app` c45bcc6. Method: a script on 15 phone screens in light and dark at 
 | 11 | Rows that open something look like rows that show a value | You rows, goal rows, step rows: no disclosure chevron | Chevron on rows that navigate |
 | 12 | Icon and launch screen are the old black and red | `apple-touch-icon.png`, manifest `background_color` and `theme_color` `#08080A` | Plum icon; manifest colours from the phone tokens |
 
+**Fixed 2026-10-17 on `app`: 8, 10, 11 and checklist items 1, 3, 4, 6 and 13 ("the navigation pass").**
+- Back is one thing: a chevron and the name of the page it returns to, top left, in the accent, on Goals, a goal, a step and the old pages.
+- In the app opened from the home screen, a swipe in from the left edge goes Back. In a browser tab the edge is left to Safari or Chrome, which have their own; two Backs would fight.
+- Rows, tiles, goals, steps and Today items that open something end in a chevron. Theme and Classic view switch at once and have none.
+- Sheets have a grabber; pulling it or the title 90px down closes the sheet, and a short pull springs back.
+- Undo: Done, a ticked ring opened again, Not now, Start it, a step moved to another goal, a step or goal removed, a goal archived or moved to the Backlog. A bar above the tabs offers Undo for 6 seconds. It restores the board in place but keeps the event log, so the log reads done then undo, as on the board. If anything else changed in between, Undo refuses and keeps the later change.
+- Pressed state on every phone control.
+- Thumb zone: New goal and Add a step sit in a dock just above the tabs; Add a step is a sheet with Speak that comes back for the next step. Goal details is a row at the end of the goal page. Sign in is a row in You. Nothing is left top right.
+- Said once: no status bar above the step form, no count beside Steps, no Assistant title in Talk.
+- 11 new checks (52 in all). All 11 fail on 0bac45c and pass after.
+- Test debt seen during this pass: `memory.mjs` "Erase everything asks first" failed 3 times in 44 runs on this build and 0 in 12 on 0bac45c. A labelled copy passed 27 runs in a row; extra logging hides it, so it looks like a timing race in the test (it reads storage 200ms after the click). The change touches no desktop path (the grabber is hidden and the pull handler returns at once outside the phone). `memory` was already on the flaky list. Fix it with the other timing waits: wait for the state, not the clock.
+
 ## Polish
 
-13. Selected tab is a filled pill (Material 3). iOS marks it with the tint colour and a filled symbol. Raised to a FAIL by the skill, item 15.
+13. Selected tab is a filled pill (Material 3). iOS marks it with the tint colour and a filled symbol. Raised to a FAIL by the skill, item 15. Still open: the next step.
 14. Page titles are 26px; the iOS large title is 34pt. Optional.
-15. No undo after Done or an edit. The HIG prefers undo to confirmation for things that can be reversed. Remove keeps its confirmation, which is right.
+15. Undo: done in the navigation pass. Field edits on the step page are not on Undo; each change can be set back by hand.
 
 ## Already meets the HIG
 
