@@ -12,7 +12,10 @@ var PH_OLD={backlog:"Backlog", tags:"Tags", archive:"Archive", planner:"Planner"
 var PH_DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 var PH_MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var PH_MIC='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg>';
-try{ PH_MQ=window.matchMedia?matchMedia("(max-width: 820px)"):null; }catch(e){ PH_MQ=null; }
+/* A phone on its side is about 844 wide, past the 820 cut. It is still a
+   phone: a touch screen with little height. Turning it must not swap the app. */
+var PH_QUERY="(max-width: 820px), (pointer: coarse) and (max-height: 500px)";
+try{ PH_MQ=window.matchMedia?matchMedia(PH_QUERY):null; }catch(e){ PH_MQ=null; }
 function phClassic(){ try{ return localStorage.getItem(PH_KEY)==="1"; }catch(e){ return false; } }
 function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
