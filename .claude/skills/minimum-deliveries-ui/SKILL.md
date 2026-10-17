@@ -134,6 +134,12 @@ which shows Undo for 6 seconds; confirm only what is removed for good, and
 offer Undo after it too. Sheets come from `askUser` and get the grabber and
 pull-to-close for free. Say a thing once per screen.
 
+**Tab bar.** The selected tab is `--ph-pri` with the filled icon (`.ti-f`);
+the others are `--muted` outlines (`.ti-o`). Never a pill or a background
+behind the selected tab: that is Android's Material, not iOS. The bar is
+`--panel` at 82% with a 20px blur, solid under reduced transparency. Tab
+labels stay 12px at every text size.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is

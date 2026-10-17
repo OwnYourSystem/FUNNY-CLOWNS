@@ -1155,9 +1155,20 @@ html.ph.ph-talk #bot-min{display:none}
 html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))}
 #ph-tabs{position:fixed; z-index:55; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
   padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px)); background:var(--panel); border-top:1px solid var(--hair)}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  #ph-tabs{background:color-mix(in srgb, var(--panel) 82%, transparent); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px)}
+}
+@media (prefers-reduced-transparency: reduce){ #ph-tabs{background:var(--panel); -webkit-backdrop-filter:none; backdrop-filter:none} }
 #ph-tabs a{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:54px;
   font-size:12px; color:var(--muted); text-decoration:none; border-radius:14px}
-#ph-tabs a[aria-current="page"]{color:var(--ink); font-weight:600; background:var(--ph-wash)}
+/* The selected tab is marked the iOS way: the accent colour and a filled
+   icon, never a pill behind it. The filled shape means colour is not the
+   only signal. The bar is a little see-through, with the page blurred
+   behind it, and a hairline on top. */
+#ph-tabs a[aria-current="page"]{color:var(--ph-pri); font-weight:600; background:none}
+#ph-tabs .ti-f,#ph-tabs a[aria-current="page"] .ti-o{display:none}
+#ph-tabs a[aria-current="page"] .ti-f{display:block}
+#ph-tabs a:active{opacity:.6}
 #ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
 .ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted); font-variant-numeric:tabular-nums}
 .ph-hot{color:var(--ph-pri); font-weight:600}
@@ -1390,10 +1401,10 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="ph-undo" role="status" aria-live="polite" hidden><span id="ph-undo-t"></span><button type="button" id="ph-undo-b">Undo</button></div>
   <main id="ph-main"></main>
   <nav id="ph-tabs" aria-label="Main">
-    <a href="#/now" data-tab="now"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><span>Now</span></a>
-    <a href="#/talk" data-tab="talk"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z"/></svg><span>Talk</span></a>
-    <a href="#/journal" data-tab="journal"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v15H7.5A1.5 1.5 0 0 1 6 18.5z"/><path d="M9.5 8h6M9.5 11.5h6"/></svg><span>Journal</span></a>
-    <a href="#/you" data-tab="you"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg><span>You</span></a>
+    <a href="#/now" data-tab="now"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 1 0 18.4a9.2 9.2 0 0 1 0-18.4zm0 4a5.2 5.2 0 1 0 0 10.4a5.2 5.2 0 0 0 0-10.4zm0 2.3a2.9 2.9 0 1 1 0 5.8a2.9 2.9 0 0 1 0-5.8z"/></svg><span>Now</span></a>
+    <a href="#/talk" data-tab="talk"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M3.2 4.6h17.6v11.8H9.3L3.2 21.2z"/></svg><span>Talk</span></a>
+    <a href="#/journal" data-tab="journal"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v15H7.5A1.5 1.5 0 0 1 6 18.5z"/><path d="M9.5 8h6M9.5 11.5h6"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.7h10.2a2.2 2.2 0 0 1 2.2 2.2v16H7.6a2.4 2.4 0 0 1-2.4-2.4V4.5A1.8 1.8 0 0 1 7 2.7zm2.3 4.4v1.8h6.4V7.1zm0 3.6v1.8h6.4v-1.8z"/></svg><span>Journal</span></a>
+    <a href="#/you" data-tab="you"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.3" r="4.3"/><path d="M4.2 20.6c1.2-4.3 4.2-6.6 7.8-6.6s6.6 2.3 7.8 6.6z"/></svg><span>You</span></a>
   </nav>
 </div>
 <div class="wrap">
