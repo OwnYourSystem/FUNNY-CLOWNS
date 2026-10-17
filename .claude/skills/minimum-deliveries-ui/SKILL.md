@@ -124,6 +124,16 @@ hairline, `--ph-pri` for pressed and primary. Red only for danger and errors.
 The phone shell turns on for `(max-width: 820px), (pointer: coarse) and
 (max-height: 500px)`, so a phone on its side stays the phone app.
 
+**Phone navigation (2026-10-17).** Back is `phNav(href,label)`: a chevron and
+the name of the page it returns to, top left, in `--ph-pri`; `phParent()` says
+where it goes, and the left-edge swipe uses the same target (home-screen app
+only). A row or tile that opens something ends in `PH_CHEV`; one that switches
+at once has none. A page's main action goes in `.ph-dock` at the bottom, never
+top right. Anything that can be reversed goes through `phUndoable(label, fn)`,
+which shows Undo for 6 seconds; confirm only what is removed for good, and
+offer Undo after it too. Sheets come from `askUser` and get the grabber and
+pull-to-close for free. Say a thing once per screen.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is

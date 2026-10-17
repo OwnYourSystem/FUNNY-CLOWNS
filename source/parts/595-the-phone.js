@@ -11,11 +11,50 @@ var PH_V={end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", st
 var PH_OLD={backlog:"Backlog", tags:"Tags", archive:"Archive", planner:"Planner"};
 var PH_DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 var PH_MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var PH_CHEV='<svg class="ph-chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
+var PH_BACKI='<svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg>';
 var PH_MIC='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg>';
 /* A phone on its side is about 844 wide, past the 820 cut. It is still a
    phone: a touch screen with little height. Turning it must not swap the app. */
 var PH_QUERY="(max-width: 820px), (pointer: coarse) and (max-height: 500px)";
 try{ PH_MQ=window.matchMedia?matchMedia(PH_QUERY):null; }catch(e){ PH_MQ=null; }
+/* Back is one thing everywhere: a chevron and the name of the page it goes
+   back to, top left, in the accent colour, as on iOS. */
+function phNav(href,label){ return '<a class="ph-nav" href="'+href+'" aria-label="Back to '+esc(label)+'">'+PH_BACKI+'<span>'+esc(label)+'</span></a>'; }
+/* where Back (and a swipe in from the left edge) goes from here */
+function phParent(){
+  var r=phRoute();
+  if(r==="goals"||PH_OLD[r]) return "#/you";
+  if(r==="goal") return "#/goals";
+  if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
+  return "";
+}
+/* Undo. An action that can be taken back keeps a copy of the board from just
+   before it, and a bar above the tabs offers Undo for 6 seconds. Undo puts
+   the board back in place (the same object, so the event log sees a done
+   and then an undo, as on the board) but keeps the event log itself. If
+   anything else changed in between, Undo says so and does nothing, so it
+   can never throw away a later change.                                */
+var PH_UNDO=null;
+function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k==="savedAt")?undefined:v; }); }
+function phUndoable(label,fn){
+  var snap=JSON.stringify(state), r;
+  try{ r=fn(); }catch(e){ toast("",e.message); return; }
+  save(); renderAll();
+  if(PH_UNDO) clearTimeout(PH_UNDO.t);
+  PH_UNDO={snap:snap, fp:phFp(), t:setTimeout(phUndoHide,6000)};
+  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+  return r;
+}
+function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; var b=$("#ph-undo"); if(b) b.hidden=true; }
+function phUndo(){
+  var u=PH_UNDO; if(!u) return; phUndoHide();
+  if(phFp()!==u.fp){ toast("","Something else changed since then, so that cannot be undone here."); return; }
+  var o=JSON.parse(u.snap), ev=state.ev;
+  Object.keys(state).forEach(function(k){ if(!(k in o)) delete state[k]; });
+  Object.keys(o).forEach(function(k){ state[k]=o[k]; });
+  state.ev=ev; save(); renderAll(); PH_DRAWN=""; phRender();
+}
 function phClassic(){ try{ return localStorage.getItem(PH_KEY)==="1"; }catch(e){ return false; } }
 function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
@@ -87,8 +126,6 @@ function phRender(){
   var key=onb?"onb"+PH_ONB:r==="step"?"step:"+phArg():r;
   if((onb||r==="step") && PH_DRAWN===key) return;
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
-  /* a redraw keeps a half-typed new step */
-  var nb=$("#ph-newstep"), keep=nb?nb.value:"", had=nb&&document.activeElement===nb;
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
     : r==="journal" ? phJournal()
@@ -98,7 +135,6 @@ function phRender(){
     : r==="step" ? phStepPage()
     : (talk||old) ? ""
     : phNow();
-  nb=$("#ph-newstep"); if(nb&&keep){ nb.value=keep; if(had) nb.focus(); }
 }
 
 /* ---- Now ---- */
@@ -109,7 +145,7 @@ function phNow(){
   if(c){
     var e=c.e, K=JR_KINDS[e.kind]||JR_KINDS.end, ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
     h.push('<a class="ph-strip" href="#/journal"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
-      '<span class="ph-strip-t">'+esc(e.b?K.b+": "+e.b:K.a+": "+e.a)+'</span><span class="ph-strip-go">Open</span></a>');
+      '<span class="ph-strip-t">'+esc(e.b?K.b+": "+e.b:K.a+": "+e.a)+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
   if(cur){
     h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
@@ -136,8 +172,9 @@ function phNow(){
       var isDone=state.done.indexOf(it)>=0, nm=cardName(it), sub=it.k==="sub"&&state.subs[it.id];
       h.push('<li class="ph-item'+(isDone?" is-done":"")+'">'+
         (sub&&!isDone ? '<button type="button" class="ph-ring" data-ph="done" data-id="'+esc(it.id)+'" aria-label="Mark '+esc(nm)+' done"></button>'
-                      : '<span class="ph-ring'+(isDone?" on":"")+'" aria-hidden="true"></span>')+
-        (sub ? '<button type="button" class="ph-item-t ph-item-b" data-ph="step" data-id="'+esc(it.id)+'">'+esc(nm)+'</button>'
+         : sub&&isDone ? '<button type="button" class="ph-ring on" data-ph="reopen" data-id="'+esc(it.id)+'" aria-label="'+esc(nm)+' is done. Open it again"></button>'
+                       : '<span class="ph-ring'+(isDone?" on":"")+'" aria-hidden="true"></span>')+
+        (sub ? '<button type="button" class="ph-item-t ph-item-b" data-ph="step" data-id="'+esc(it.id)+'"><span>'+esc(nm)+'</span>'+PH_CHEV+'</button>'
              : '<span class="ph-item-t">'+esc(nm)+'</span>')+'</li>');
     });
     h.push('</ul>');
@@ -150,8 +187,15 @@ function phNow(){
 }
 function phDone(id){
   var s=state.subs[id]; if(!s) return;
-  try{ toolRun("set_status",{subtask:s.name,status:"done"}); toolRun("mark_done_today",{subtask:s.name}); }catch(e){ toast("Done",e.message); }
-  save(); renderAll();
+  phUndoable("Done: "+phCut(s.name,40),function(){ toolRun("set_status",{subtask:s.name,status:"done"}); toolRun("mark_done_today",{subtask:s.name}); });
+}
+/* a ticked step in Today goes back to open */
+function phReopen(id){
+  var s=state.subs[id]; if(!s) return;
+  phUndoable("Back in Today: "+phCut(s.name,40),function(){
+    toolRun("undo_done_today",{subtask:s.name});
+    if(s.status==="done"||s.pct>=100) editSub(s,"status","doing");
+  });
 }
 function phDose(){
   askUser({title:"How big is today?", body:"The board sizes the day from your recent days. Change it if it guessed wrong.",
@@ -191,8 +235,7 @@ function phYou(){
   var tags=allTags().length, rem=$("#btn-remind"), remOn=rem&&rem.getAttribute("aria-pressed")==="true";
   var th=(function(){ try{ return localStorage.getItem(THEME_KEY)||"system"; }catch(e){ return "system"; } })();
   h.push('<div class="ph-head ph-me"><span class="ph-av" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg></span>'+
-    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div>'+
-    '<button type="button" class="ph-chip" data-ph="account">'+(who?"Account":"Sign in")+'</button></div>');
+    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
   h.push('<h2 class="ph-k ph-gk">Your work</h2><div class="ph-grid">'+
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
@@ -203,12 +246,14 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("planner","What the board learned, and hints","")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
-    phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1))+
-    phRow("classic","Classic view","The old board")+'</div>');
+    phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+
+    phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+
+    phRow("classic","Classic view","The old board",true)+'</div>');
   return h.join("");
 }
-function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span></a>'; }
-function phRow(k,t,v){ return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span>'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+'</button>'; }
+function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
+/* a row that opens something has a chevron; one that switches at once (noChev) has not */
+function phRow(k,t,v,noChev){ return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>'; }
 function phDayEnd(){
   var me=state.me||freshMe();
   askUser({title:"When does your day end?", body:"Nothing reaches you after this time, and the board goes quiet.",
@@ -223,8 +268,7 @@ function phDayEnd(){
 /* ---- Goals ---- */
 function phGoals(){
   var h=[];
-  h.push('<div class="ph-head"><div><a class="ph-backl" href="#/you">Back to You</a><h1 class="ph-h1">Goals</h1></div>'+
-    '<button type="button" class="ph-chip ph-pri" data-ph="newgoal">New goal</button></div>');
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Goals</h1></div>');
   h.push('<nav class="ph-seg" aria-label="Show"><a href="#/goals" aria-current="page">Active</a><a href="#/backlog">Backlog</a><a href="#/archive">Archive</a></nav>');
   if(!state.groups.length) h.push('<p class="ph-empty">No goals yet. Press New goal, or say one in Talk.</p>');
   else {
@@ -233,12 +277,14 @@ function phGoals(){
       var p=groupPct(g), nx=null;
       g.subs.forEach(function(id){ var s=state.subs[id]; if(!nx && s && s.status!=="done" && s.pct<100) nx=s; });
       h.push('<li><button type="button" class="ph-goal" data-ph="goal" data-id="'+esc(g.id)+'">'+
-        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(g.name)+'</span><span class="ph-k">'+p+'%</span></span>'+
+        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(g.name)+'</span><span class="ph-k">'+p+'%</span>'+PH_CHEV+'</span>'+
         '<span class="ph-bar"><span style="width:'+p+'%"></span></span>'+
         '<span class="ph-goal-x">'+(nx?"Next: "+esc(nx.name):"All steps done")+'</span></button></li>');
     });
     h.push('</ul>');
   }
+  /* the one thing you come here to do sits at the bottom, under your thumb */
+  h.push('<div class="ph-dock"><button type="button" class="ph-btn ph-pri ph-wide" data-ph="newgoal">New goal</button></div>');
   return h.join("");
 }
 function phGoal(id){ PH_GOAL=id; location.hash="#/goal/"+encodeURIComponent(id); }
@@ -270,40 +316,40 @@ function phGoalPage(){
   meta.push(n!==null?dueLabel(g):"No deadline");
   if(g.prio==="high"||g.prio==="low") meta.push(g.prio==="high"?"High priority":"Low priority");
   if(g.where&&g.where!=="any") meta.push(whereLabel(g.where));
-  h.push('<div class="ph-head"><div style="min-width:0"><a class="ph-backl" href="#/goals">Back to Goals</a><h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>'+
-    '<button type="button" class="ph-chip" data-ph="gedit">Edit</button></div>');
+  h.push('<div style="min-width:0">'+phNav("#/goals","Goals")+'<h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>');
   h.push('<div><div class="ph-row-h" style="padding-bottom:4px"><span class="ph-k">'+p+'% done</span><span class="ph-k">'+esc(meta.join(" · "))+'</span></div>'+
     '<span class="ph-bar"><span style="width:'+p+'%"></span></span>'+
     ((g.tags||[]).length?'<p class="ph-note" style="margin-top:8px">'+esc(g.tags.map(function(t){ return "#"+t; }).join(" "))+'</p>':'')+'</div>');
-  h.push('<section aria-label="Steps"><div class="ph-row-h"><h2 class="ph-h2">Steps</h2><span class="ph-k">'+fin.length+' of '+(open.length+fin.length)+' done</span></div>');
-  if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Add the first one below.</p>');
+  h.push('<section aria-label="Steps"><div class="ph-row-h"><h2 class="ph-h2">Steps</h2></div>');
+  if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Press Add a step.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
     open.concat(fin).forEach(function(s){
       var dn=s.pct>=100||s.status==="done", fx=phStepFacts(s);
       h.push('<li><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
-        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span></span>'+
+        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
         (dn?'':'<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span>')+
         (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button></li>');
     });
     h.push('</ul>');
   }
   h.push('</section>');
-  h.push('<section aria-label="Add a step" class="ph-add"><label class="ph-lab" for="ph-newstep">Add a step</label>'+
-    '<input class="ph-in" id="ph-newstep" placeholder="Say it or type it" enterkeyhint="done">'+
-    '<div class="ph-acts" style="margin-top:8px"><button type="button" class="ph-mic" data-ph="mic" data-for="ph-newstep" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
-    '<select class="ph-sel ph-sel-s" id="ph-newrep" aria-label="How often it repeats">'+phOpts(REPEATS,"")+'</select>'+
-    '<button type="button" class="ph-btn ph-pri" data-ph="addstep">Add</button></div>'+
-    '<p class="ph-note" id="ph-onb-hint" aria-live="polite"></p></section>');
+  h.push('<div class="ph-grp">'+phRow("gedit","Goal details","")+'</div>');
+  h.push('<div class="ph-dock"><button type="button" class="ph-btn ph-pri ph-wide" data-ph="addstep">Add a step</button></div>');
   return h.join("");
 }
-function phAddStep(){
-  var g=gById(PH_GOAL), el=$("#ph-newstep"), v=el?String(el.value||"").trim():"", rp=$("#ph-newrep");
-  if(!g) return;
-  if(!v){ var n=$("#ph-onb-hint"); if(n) n.textContent="Type or say the step first."; if(el) el.focus(); return; }
-  addSub(g,v,rp?rp.value:"");
-  PH_DRAWN=""; save(); renderAll();
-  var again=$("#ph-newstep"); if(again){ again.value=""; again.focus(); }
+/* Add a step: a sheet from the bottom, with Speak, that comes back for the
+   next one until you close it, so a list goes in quickly. */
+function phAddStep(last){
+  var g=gById(PH_GOAL); if(!g) return;
+  askUser({title:"Add a step", body:[last?"Added \u201c"+last+"\u201d. Add the next, or press Done.":"In "+g.name+"."],
+    fields:[{k:"n",label:"The step",kind:"text",mic:true,ph:"Say it or type it"},{k:"r",label:"Repeats",kind:"select",opts:REPEATS,value:""}],
+    ok:"Add", cancel:last?"Done":"Close",
+    check:function(v){ return String(v.n||"").trim()?"":"Type or say the step first."; }}).then(function(v){
+    if(!v) return;
+    var sb=addSub(g,v.n,v.r||""); PH_DRAWN=""; save(); renderAll();
+    if(sb) phAddStep(sb.name);
+  });
 }
 /* One step on its own page, with every field the classic editor has. Each
    change is saved the moment it is made, as on the board. The page is drawn
@@ -314,10 +360,8 @@ function phStepPage(){
   var s=state.subs[phArg()]; if(!s) return PH_GOAL&&gById(PH_GOAL)?phGoalPage():phGoals();
   var g=gById(s.gid), h=[], w=whenMap()[s.id], e=estState().items[s.id], inT=state.oftad.some(function(c){ return c.id===s.id; });
   PH_GOAL=s.gid;
-  h.push('<div><a class="ph-backl" href="#/goal/'+esc(encodeURIComponent(s.gid))+'">Back to '+esc(g?phCut(g.name,28):"the goal")+'</a>'+
+  h.push('<div style="min-width:0">'+phNav("#/goal/"+esc(encodeURIComponent(s.gid)),g?phCut(g.name,28):"Goal")+
     '<h1 class="ph-h1" id="ph-s-h" style="overflow-wrap:anywhere">'+esc(s.name)+'</h1></div>');
-  h.push('<div><div class="ph-row-h" style="padding-bottom:4px"><span class="ph-k">'+esc(statusOf(s).label)+'</span><span class="ph-k">'+s.pct+'%</span></div>'+
-    '<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span></div>');
   h.push('<section class="ph-form" aria-label="This step">'+
     '<label class="ph-lab" for="ph-s-name">Name</label><input class="ph-in" id="ph-s-name" data-phed="name" value="'+esc(s.name)+'" enterkeyhint="done">'+
     '<span class="ph-lab">Status</span>'+phSegb("status",STATUSES,s.status==="done"||s.pct>=100?"done":s.status,"Status")+
@@ -343,7 +387,8 @@ function phStepPage(){
 function phStepEdit(el){
   var s=state.subs[phArg()]; if(!s) return;
   if(el.getAttribute("data-phmove")){
-    if(moveSub(s.id,el.value)){ save(); renderAll(); phStepRedraw(); var m=$("#ph-s-msg"); if(m) m.textContent="Moved to "+gById(s.gid).name+"."; }
+    var to=gById(el.value);
+    if(to && s.gid!==to.id){ phUndoable("Moved to "+phCut(to.name,36),function(){ moveSub(s.id,to.id); }); phStepRedraw(); var m=$("#ph-s-msg"); if(m) m.textContent="Moved to "+to.name+"."; }
     return;
   }
   var k=el.getAttribute("data-phed");
@@ -361,7 +406,7 @@ function phRemoveStep(id){
   var s=state.subs[id]; if(!s) return;
   askUser({title:"Remove this step?", body:["“"+s.name+"” goes for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
     if(!yes) return;
-    var gid=s.gid; removeSub(id); save(); renderAll();
+    var gid=s.gid; phUndoable("Removed: "+phCut(s.name,40),function(){ removeSub(id); });
     if(phRoute()==="step") phGoal(gid);
   });
 }
@@ -376,10 +421,10 @@ function phGoalEdit(){
     ok:"Save", cancel:"Close", more:[["backlog","Move it to the Backlog"],["archive","Archive this goal"],["remove","Remove this goal"]],
     check:function(v){ return String(v.n||"").trim()?"":"Give the goal a name."; }}).then(function(v){
     if(!v) return;
-    if(v==="archive"){ archiveGoal(g.id); return phGo("goals"); }
-    if(v==="backlog"){ backlogGoal(g.id); return phGo("goals"); }
+    if(v==="archive"){ phUndoable("Archived: "+phCut(g.name,40),function(){ archiveGoal(g.id); }); return phGo("goals"); }
+    if(v==="backlog"){ phUndoable("Moved to the Backlog: "+phCut(g.name,30),function(){ backlogGoal(g.id); }); return phGo("goals"); }
     if(v==="remove") return askUser({title:"Remove this goal?", body:["“"+g.name+"” and its "+g.subs.length+" steps go for good."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
-      if(!yes) return; try{ toolRun("remove_main_task",{main_task:g.name}); }catch(e){ toast("",e.message); } save(); renderAll(); phGo("goals"); });
+      if(!yes) return; phUndoable("Removed: "+phCut(g.name,40),function(){ toolRun("remove_main_task",{main_task:g.name}); }); phGo("goals"); });
     if((v.p||"mid")!==(g.prio||"mid")) editGoal(g,"prio",v.p);
     if((v.d||"")!==(g.due||"")) editGoal(g,"due",v.d);
     if((v.w||"any")!==(g.where||"any")) editGoal(g,"where",v.w);
@@ -484,8 +529,9 @@ function phOnbFinish(add){
     var k=b.getAttribute("data-ph"), id=b.getAttribute("data-id");
     if(k==="dose") phDose();
     else if(k==="done") phDone(id);
-    else if(k==="later"){ try{ toolRun("plan_today",{subtask:state.subs[id].name}); }catch(er){ toast("",er.message); } save(); renderAll(); }
-    else if(k==="take") takePick(id);
+    else if(k==="later"){ var ls=state.subs[id]; if(ls) phUndoable("Another day: "+phCut(ls.name,40),function(){ toolRun("plan_today",{subtask:ls.name}); }); }
+    else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
+    else if(k==="reopen") phReopen(id);
     else if(k==="else") phElse(id);
     else if(k==="why") phWhy();
     else if(k==="jr") jrAsk(b.getAttribute("data-kind"));
@@ -509,7 +555,7 @@ function phOnbFinish(add){
       else if(k==="sdone"){ phDone(cs.id); phStepRedraw(); }
       else phRemoveStep(cs.id);
     }
-    else if(k==="addstep") phAddStep();
+    else if(k==="addstep") phAddStep("");
     else if(k==="gedit") phGoalEdit();
     else if(k==="newgoal") phNewGoal();
     else if(k==="restore") $("#btn-backup").click();
@@ -522,12 +568,42 @@ function phOnbFinish(add){
   });
   root.addEventListener("keydown",function(e){
     if(e.key!=="Enter" || !e.target) return;
-    if(e.target.id==="ph-newstep"){ e.preventDefault(); phAddStep(); }
-    else if(e.target.getAttribute && e.target.getAttribute("data-phed")){ e.preventDefault(); e.target.blur(); }
+    if(e.target.getAttribute && e.target.getAttribute("data-phed")){ e.preventDefault(); e.target.blur(); }
   });
   root.addEventListener("change",function(e){ var t=e.target; if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
   root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
   addEventListener("hashchange",function(){ if(PH_ON){ PH_DRAWN=""; phRender(); scrollTo(0,0); } });
+  var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);
+  /* A swipe in from the left edge goes Back, as in every iPhone app. Only
+     the app opened from the home screen needs this: in a browser tab, Safari
+     and Chrome have their own edge swipe, and two Backs would fight. It only
+     starts within 24px of the edge, follows the finger, and needs 80px to
+     count; a mostly vertical move is a scroll and lets go. Back stays a
+     visible link at the top, so the swipe is a shortcut, never the only way. */
+  var sw=null;
+  function phStandalone(){ return navigator.standalone===true || !!(window.matchMedia && matchMedia("(display-mode: standalone)").matches); }
+  function swEl(){ return PH_OLD[phRoute()] ? document.querySelector(".wrap") : $("#ph-main"); }
+  function swReset(){ var el=swEl(); if(el){ el.style.transform=""; el.style.transition=""; } sw=null; }
+  document.addEventListener("touchstart",function(e){
+    sw=null;
+    if(!PH_ON || !phStandalone() || e.touches.length!==1 || document.querySelector("dialog.ask[open]") || !phParent()) return;
+    var t=e.touches[0]; if(t.clientX>24) return;
+    sw={x:t.clientX, y:t.clientY, dx:0, live:false};
+  },{passive:true});
+  document.addEventListener("touchmove",function(e){
+    if(!sw) return;
+    var t=e.touches[0], dx=t.clientX-sw.x, dy=t.clientY-sw.y;
+    if(!sw.live){ if(Math.abs(dy)>Math.abs(dx)){ swReset(); return; } if(dx<8) return; sw.live=true; }
+    sw.dx=Math.max(0,dx);
+    var el=swEl(), still=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(el && !still){ el.style.transition="none"; el.style.transform="translateX("+Math.round(sw.dx*0.6)+"px)"; }
+  },{passive:true});
+  document.addEventListener("touchend",function(){
+    if(!sw) return;
+    var go=sw.live && sw.dx>80 ? phParent() : "";
+    swReset(); if(go) location.hash=go;
+  },{passive:true});
+  document.addEventListener("touchcancel",swReset,{passive:true});
   if(PH_MQ){ if(PH_MQ.addEventListener) PH_MQ.addEventListener("change",phSet); else if(PH_MQ.addListener) PH_MQ.addListener(phSet); }
   phSet();
 })();

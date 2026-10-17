@@ -10,7 +10,7 @@
    that resolves to false (or null when it has fields) if it was cancelled, and
    to true (or an object of the field values) on yes. more:[[value,label]]
    adds choices that resolve to their value. fields are
-   {k, label, kind:"text"|"textarea"|"number"|"time"|"date"|"pick"|"select", value, ph, min,
+   {k, label, kind:"text"|"textarea"|"number"|"time"|"date"|"pick"|"select", value, ph, min, mic (a Speak button on a text box),
    max, opts:[[value,label]]}. A text box has a Speak button under it. check(values) may return a sentence to show in
    the dialog and keep it open. Questions queue and are shown one at a time. */
 /* Tab and Shift+Tab go round inside a box instead of out into the browser. */
@@ -54,10 +54,12 @@ function askNext(){
         '<button type="button" class="mini mic ask-mic" data-mic-to="'+esc(f.k)+'" aria-pressed="false" aria-label="Speak into this box">'+
         '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>'
       : '<input class="f" '+a+' type="'+(f.kind||"text")+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||"")+'"'+
-        (f.min!=null?' min="'+esc(f.min)+'"':'')+(f.max!=null?' max="'+esc(f.max)+'"':'')+'>';
+        (f.min!=null?' min="'+esc(f.min)+'"':'')+(f.max!=null?' max="'+esc(f.max)+'"':'')+'>'+
+        (f.mic?'<button type="button" class="mini mic ask-mic" data-mic-to="'+esc(f.k)+'" aria-pressed="false" aria-label="Speak into this box">'+
+        '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>':'');
     return '<label>'+esc(f.label||"")+inp+'</label>';
   }).join("");
-  d.innerHTML='<div class="ask-in"><h3 id="'+id+'t">'+esc(o.title||"")+'</h3>'+
+  d.innerHTML='<div class="ask-in"><span class="ask-grab" aria-hidden="true"></span><h3 id="'+id+'t">'+esc(o.title||"")+'</h3>'+
     (body.length?'<div id="'+id+'b">'+body.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+'</div>':'')+
     (hasF?'<div class="ask-fields">'+fh+'</div>':'')+
     '<p class="ask-err" role="alert"></p><p class="ask-hint" aria-live="polite"></p>'+
@@ -83,6 +85,27 @@ function askNext(){
     result=hasF?v:true; d.close("ok");
   }
   trapTab(d);
+  /* On the phone a sheet has a grabber, and pulling the grabber or the title
+     down far enough closes it, as on iOS. Close, Escape and a tap outside
+     still work, so the pull is a shortcut, never the only way out. */
+  var drag=null;
+  d.addEventListener("pointerdown",function(e){
+    if(!document.documentElement.classList.contains("ph") || !e.isPrimary) return;
+    if(!e.target.closest(".ask-grab,h3")) return;
+    drag={y:e.clientY, dy:0}; try{ d.setPointerCapture(e.pointerId); }catch(er){}
+    d.style.transition="none";
+  });
+  d.addEventListener("pointermove",function(e){
+    if(!drag) return; drag.dy=Math.max(0,e.clientY-drag.y);
+    d.style.transform=drag.dy?"translateY("+Math.round(drag.dy)+"px)":"";
+  });
+  function dragEnd(){
+    if(!drag) return; var far=drag.dy>90; drag=null;
+    d.style.transition=""; d.style.transform="";
+    if(far) d.close("");
+  }
+  d.addEventListener("pointerup",dragEnd);
+  d.addEventListener("pointercancel",dragEnd);
   var downOnBackdrop=false;
   d.addEventListener("pointerdown",function(e){ downOnBackdrop=(e.target===d); });
   d.addEventListener("click",function(e){

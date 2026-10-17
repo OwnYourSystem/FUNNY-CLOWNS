@@ -1277,7 +1277,7 @@ html.ph .seek input{min-height:44px}
 /* 44pt is the smallest thing a thumb should have to hit */
 html.ph .ask-acts .btn,html.ph .ask-pick button,html.ph .ask-mic,html.ph .bot-chip,html.ph #bot-clear,html.ph #bot-send,html.ph #bot-mic,html.ph #bot-stop,
 html.ph #bot-input,html.ph .ph-segb button,html.ph .ph-seg a,html.ph .ph-sw button,html.ph .ph-link,html.ph .ph-backl,
-html.ph .view.is-on .btn,html.ph .view.is-on .f,html.ph .view.is-on .mini{min-height:44px}
+html.ph .view.is-on .btn,html.ph .view.is-on .f,html.ph .view.is-on .mini,html.ph dialog.ask .f{min-height:44px}
 html.ph .ph-backl,html.ph .ph-link{display:inline-flex; align-items:center; min-width:44px}
 html.ph .ask-mic{display:inline-flex; align-items:center}
 html.ph .ph-range{min-height:44px}
@@ -1333,6 +1333,41 @@ html.ph .bot-empty,html.ph .bot-chip{font-size:.882rem}
 html.ph .bot-note{font-size:.765rem}
 html.ph #bot-send{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri); font-weight:600}
 html.ph .btn,html.ph #bot-input{font-size:max(16px,.941rem)}
+/* ---- navigation (2026-10-17, from the HIG review) ----
+   Back is a chevron and the name of the page it returns to, in the accent.
+   A row that opens something ends in a chevron. The main action of a page
+   sits in a dock at the bottom, under the thumb. Everything shows it was
+   pressed. Sheets have a grabber. Undo waits above the tabs for 6 seconds. */
+html.ph{-webkit-tap-highlight-color:transparent}
+.ph-nav{display:inline-flex; align-items:center; gap:2px; min-height:44px; min-width:44px; margin-left:-6px; padding:0 8px 0 0;
+  color:var(--ph-pri); font-size:1rem; font-weight:500; text-decoration:none; overflow-wrap:anywhere}
+html.ph.ph-old #ph-back{gap:8px}
+#ph-back-t{font-weight:600}
+.ph-chev{flex:0 0 auto; color:var(--muted)}
+.ph-rv{display:inline-flex; align-items:center; gap:8px; min-width:0; text-align:right}
+.ph-tile{position:relative; padding-right:34px}
+.ph-tile .ph-chev{position:absolute; right:12px; top:50%; margin-top:-7px}
+.ph-goal-top .ph-chev{align-self:center}
+.ph-item-b{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px}
+.ph-strip-go{display:inline-flex; color:var(--muted)}
+.ph-dock{margin-top:auto !important; position:sticky; z-index:6; bottom:calc(70px + env(safe-area-inset-bottom,0px)); margin:0 -18px -12px; padding:20px 18px 12px;
+  background:linear-gradient(to bottom, color-mix(in srgb, var(--ground) 0%, transparent), var(--ground) 20px)}
+html.ph :is(.ph-btn,.ph-chip,.ph-rowb,.ph-goal,.ph-tile,.ph-strip,.ph-item-b,.ph-segb button,.ph-seg a,.ph-nav,.ph-mic,.ph-sw button,.ph-ring):active{background:var(--ph-wash)}
+html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed="true"]:active{background:var(--ph-pri); opacity:.82}
+#ph-undo{display:none}
+html.ph #ph-undo:not([hidden]){display:flex; position:fixed; z-index:58; left:12px; right:12px; bottom:calc(80px + env(safe-area-inset-bottom,0px));
+  align-items:center; gap:12px; min-height:52px; box-sizing:border-box; padding:4px 6px 4px 16px; border-radius:16px;
+  background:var(--ph-pri); color:var(--ph-on-pri); font-size:.882rem; box-shadow:0 8px 24px rgba(0,0,0,.22)}
+html.ph:has(.ph-dock) #ph-undo:not([hidden]){bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+#ph-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#ph-undo-b{flex:0 0 auto; font:inherit; font-weight:700; min-height:44px; min-width:64px; padding:0 14px; border:0; border-radius:12px;
+  background:color-mix(in srgb, var(--ph-on-pri) 16%, transparent); color:var(--ph-on-pri)}
+.ask-grab{display:none}
+html.ph .ask-grab{display:block; width:40px; height:5px; border-radius:3px; background:var(--rule); margin:-12px auto 12px; cursor:grab}
+html.ph dialog.ask h3{touch-action:none}
+/* Talk: the tab already says Talk */
+html.ph.ph-talk .bot-mark,html.ph.ph-talk .bot-name{display:none}
+html.ph.ph-talk .sheet-head{justify-content:flex-end}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
@@ -1351,7 +1386,8 @@ try{var _t=localStorage.getItem("oys-theme");
 <div id="sbar" aria-hidden="true"></div>
 <canvas id="river" aria-hidden="true"></canvas>
 <div id="ph">
-  <div id="ph-back"><a class="ph-backl" href="#/you">Back</a><span id="ph-back-t"></span></div>
+  <div id="ph-back"><a class="ph-nav" href="#/you" aria-label="Back to You"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg><span>You</span></a><span id="ph-back-t"></span></div>
+  <div id="ph-undo" role="status" aria-live="polite" hidden><span id="ph-undo-t"></span><button type="button" id="ph-undo-b">Undo</button></div>
   <main id="ph-main"></main>
   <nav id="ph-tabs" aria-label="Main">
     <a href="#/now" data-tab="now"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><span>Now</span></a>
