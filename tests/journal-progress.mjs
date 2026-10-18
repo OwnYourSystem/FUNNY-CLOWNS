@@ -18,6 +18,7 @@ const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.pu
 const D = () => p.locator("dialog.ask[open]");
 const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250); };
 const jr = () => p.evaluate((JKEY) => JSON.parse(localStorage.getItem(JKEY)), JKEY);
+const tap0 = (sel) => p.locator(sel).first().click();
 const sideways = () => p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 await p.goto(URL); await p.waitForSelector("#ph-main");
 await p.click("[data-ph=onb-next]"); await p.waitForTimeout(150); await p.click("[data-ph=onb-next]"); await p.waitForTimeout(150);
@@ -127,6 +128,55 @@ await ok("Remove asks first; removing a day's last entry goes back to the Journa
   await p.locator("[data-ph=jrdel]").first().click(); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(400);
   assert.ok(!(await jr()).log.some((x) => x.id === "j1")); assert.equal(await p.evaluate(() => location.hash), "#/journal");
   assert.equal(await p.locator("[data-ph=jday]").count(), 1);
+});
+/* ---------- your photo on You, and small on every other page ---------- */
+const PHOTO = (process.env.APP_ROOT || "/tmp/claude-0/appwt") + "/apple-touch-icon.png";
+const mini = async () => p.evaluate(() => { const m = document.getElementById("ph-mini"); if (!m || m.hidden || !m.getClientRects().length) return null; const r = m.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height, img: !!m.querySelector("img") }; });
+const overlaps = (a, b) => a && b && !(a.x + a.w <= b.x || b.x + b.width <= a.x || a.y + a.h <= b.y || b.y + b.height <= a.y);
+await ok("photo: none yet, so no small photo anywhere, and You offers Add a photo", async () => {
+  await go("now"); assert.equal(await mini(), null);
+  await p.click('#ph-tabs [data-tab="you"]'); await p.waitForTimeout(250);
+  assert.match(await p.locator("#ph-main").innerText(), /Add a photo/); assert.equal(await p.locator("label.ph-av-b").count(), 1);
+});
+await ok("photo: picking one keeps a 256px square JPEG on this phone, outside the board's data, and shows it large on You", async () => {
+  await p.setInputFiles("#ph-photo-in", PHOTO); await p.waitForTimeout(600);
+  const saved = await p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY + ".photo")), KEY);
+  assert.match(saved.src, /^data:image\/jpeg;base64,/); assert.equal(saved.show, true);
+  const dim = await p.evaluate(async (src) => { const i = new Image(); i.src = src; await i.decode(); return [i.naturalWidth, i.naturalHeight]; }, saved.src);
+  assert.deepEqual(dim, [256, 256]); assert.ok(saved.src.length < 60000, "too big: " + saved.src.length);
+  assert.doesNotMatch(await p.evaluate((KEY) => localStorage.getItem(KEY), KEY), /data:image/, "the photo went into the board's data");
+  assert.equal(await p.locator("label.ph-av-b img").count(), 1); assert.equal(await mini(), null, "You shows the small one too");
+  assert.match(await p.locator("#ph-main").innerText(), /Change photo/);
+});
+await ok("photo: the small photo is at the top right of every page, leads to You, and covers nothing", async () => {
+  for (const r of ["now", "journal", "goals", "talk", "backlog"]) {
+    await go(r); const m = await mini(); assert.ok(m && m.img, "no photo on " + r);
+    assert.ok(m.w >= 44 && m.h >= 44, r + " target " + m.w + "x" + m.h); assert.ok(m.x > 390 - 70 && m.y < 90, r + " not top right: " + JSON.stringify(m));
+    const boxes = await p.evaluate((sels) => sels.map((sel) => [sel, [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden")
+      .map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })]), ["#ph-clock", "#bot-clear", ".ph-nav", "#ph-back-t", "[data-ph=dose]"]);
+    for (const [sel, list] of boxes) for (const bx of list) assert.ok(!overlaps(m, bx), r + ": the photo covers " + sel);
+  }
+  await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); assert.ok((await mini()).img, "no photo on a goal");
+  await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); assert.ok((await mini()).img, "no photo on a step");
+  await p.locator("#ph-mini").click(); await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/you");
+  assert.equal(await sideways(), false);
+});
+await ok("photo: Show it on every page can be switched off and on again", async () => {
+  await tap0("[data-ph=phshow]"); await p.waitForTimeout(200); await go("now"); assert.equal(await mini(), null);
+  await go("you"); assert.match(await p.locator("[data-ph=phshow]").innerText(), /Off/);
+  await tap0("[data-ph=phshow]"); await p.waitForTimeout(200); await go("now"); assert.ok((await mini()).img);
+});
+await ok("photo: Remove asks first, then the photo is gone everywhere", async () => {
+  await go("you"); await tap0("[data-ph=phdel]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
+  assert.ok(await p.evaluate((KEY) => localStorage.getItem(KEY + ".photo"), KEY));
+  await tap0("[data-ph=phdel]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(300);
+  assert.equal(await p.evaluate((KEY) => localStorage.getItem(KEY + ".photo"), KEY), null);
+  assert.equal(await p.locator("label.ph-av-b img").count(), 0); await go("now"); assert.equal(await mini(), null);
+});
+await ok("photo: a stored value that is not a picture this board made is never shown", async () => {
+  await p.evaluate((KEY) => localStorage.setItem(KEY + ".photo", JSON.stringify({ src: 'x" onerror="window.__bad=1', show: true })), KEY);
+  await go("journal"); await go("now"); assert.equal(await mini(), null); assert.equal(await p.evaluate(() => window.__bad), undefined);
+  await p.evaluate((KEY) => localStorage.removeItem(KEY + ".photo"), KEY);
 });
 await ok("no page errors (phone)", async () => { assert.deepEqual(errs, []); });
 await ctx.close();

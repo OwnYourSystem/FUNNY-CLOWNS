@@ -8,7 +8,7 @@ const KEY='oys-min-deliveries-v1';
   // A. rollover must not emit a storm of undo events
   let ctx=await browser.newContext({viewport:{width:390,height:900}}); let page=await ctx.newPage();
   page.on('pageerror',e=>errs.push(e.message)); page.on('console',m=>{ if(m.type()==='error') errs.push(m.text()); });
-  await page.goto('http://localhost:8731/index.html'); await page.waitForSelector('.row.pick');
+  await page.goto(process.env.BOARD_URL || 'http://localhost:8731/index.html'); await page.waitForSelector('.row.pick');
   await page.evaluate(KEY=>{ const s=JSON.parse(localStorage.getItem(KEY)); s.me=s.me||{}; s.me.done=true; const id=Object.keys(s.subs)[0]; const y=new Date(); y.setDate(y.getDate()-1); const p=x=>String(x).padStart(2,'0'); s.day=y.getFullYear()+'-'+p(y.getMonth()+1)+'-'+p(y.getDate()); s.done=[{k:'sub',id:id,done:true},{k:'sub',id:Object.keys(s.subs)[1],done:true}]; s.ev=[]; delete s.cap; localStorage.setItem(KEY,JSON.stringify(s)); },KEY);
   await page.reload(); await page.waitForSelector('.row.pick'); await page.waitForTimeout(300);
   let st=await page.evaluate(KEY=>{const s=JSON.parse(localStorage.getItem(KEY)); return {ev:s.ev.length, done:s.done.length, log:s.dayLog.length};},KEY);

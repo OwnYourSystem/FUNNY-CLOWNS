@@ -10,7 +10,7 @@ const KEY='oys-min-deliveries-v1';
     const page = await ctx.newPage();
     page.on('console', m=>{ if(m.type()==='error') errors.push(m.text()); });
     page.on('pageerror', e=>errors.push('pageerror: '+e.message));
-    await page.goto('http://localhost:8731/index.html');
+    await page.goto(process.env.BOARD_URL || 'http://localhost:8731/index.html');
     await page.waitForSelector('.row.pick',{timeout:10000});
     if(mut){
       await page.evaluate(([KEY,mut])=>{ const s=JSON.parse(localStorage.getItem(KEY)); s.me=s.me||{}; s.me.done=true; eval('('+mut+')')(s); localStorage.setItem(KEY,JSON.stringify(s)); },[KEY,mut]);
