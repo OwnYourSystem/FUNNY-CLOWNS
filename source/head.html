@@ -1413,6 +1413,24 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 .ph-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
 .ph-jr-e .ph-line b{font-weight:600; color:var(--ink-2)}
 .ph-btn.ph-danger{color:var(--accent-ink)}
+/* your photo: large on You, small at the top right of every other page (2026-10-18) */
+.ph-av-b{position:relative; overflow:visible; cursor:pointer}
+.ph-av img{width:100%; height:100%; border-radius:50%; object-fit:cover; display:block}
+.ph-av-plus{position:absolute; right:-2px; bottom:-2px; width:20px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:var(--ph-pri); color:var(--ph-on-pri); font-size:15px; font-weight:700; line-height:1; box-shadow:0 0 0 2px var(--ground)}
+.ph-av-b:active{opacity:.8}
+#ph-mini{display:none}
+html.ph.ph-has-me #ph-mini:not([hidden]){display:flex; position:absolute; z-index:20; top:calc(env(safe-area-inset-top,0px) + 18px); right:10px;
+  width:44px; height:44px; align-items:center; justify-content:center; border-radius:22px}
+html.ph.ph-old.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:61; top:calc(env(safe-area-inset-top,0px) + 6px)}
+html.ph.ph-talk.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:51; top:calc(env(safe-area-inset-top,0px) + 26px)}
+#ph-mini img{width:34px; height:34px; border-radius:17px; object-fit:cover; box-shadow:0 0 0 2px var(--panel)}
+#ph-mini:active{opacity:.7}
+html.ph.ph-has-me .ph-today-k{padding-right:48px}
+html.ph.ph-has-me .ph-today .ph-head{margin-top:12px}
+html.ph.ph-talk.ph-has-me .sheet-head{padding-right:48px}
+html.ph.ph-old.ph-has-me #ph-back{padding-right:60px}
+label.ph-rowb{cursor:pointer}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
@@ -1432,6 +1450,7 @@ try{var _t=localStorage.getItem("oys-theme");
 <canvas id="river" aria-hidden="true"></canvas>
 <div id="ph">
   <div id="ph-back"><a class="ph-nav" href="#/you" aria-label="Back to You"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg><span>You</span></a><span id="ph-back-t"></span></div>
+  <a id="ph-mini" href="#/you" aria-label="You" hidden></a>
   <div id="ph-undo" role="status" aria-live="polite" hidden><span id="ph-undo-t"></span><button type="button" id="ph-undo-b">Undo</button></div>
   <main id="ph-main"></main>
   <nav id="ph-tabs" aria-label="Main">

@@ -56,6 +56,45 @@ function phUndo(){
   Object.keys(o).forEach(function(k){ state[k]=o[k]; });
   state.ev=ev; save(); renderAll(); PH_DRAWN=""; phRender();
 }
+/* ---- your photo (2026-10-18) ----
+   Chosen with the phone's own picker (camera or library), cut to a square
+   and made small (256px, about 20 KB) before it is kept. It stays on this
+   phone in its own storage key, like the journal: no sync, no backup file,
+   never sent to the tutor. Once set it shows small at the top right of
+   every page and leads to You, where it shows large. A switch in You hides
+   it from the other pages. Only a picture this code made is ever shown. */
+var PH_PHOTO_KEY=KEY+".photo";
+function phPhoto(){
+  try{ var x=JSON.parse(localStorage.getItem(PH_PHOTO_KEY)||"null");
+    if(x && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(String(x.src))) return {src:x.src, show:x.show!==false}; }catch(e){}
+  return null;
+}
+function phPhotoSave(x){
+  try{ if(x) localStorage.setItem(PH_PHOTO_KEY,JSON.stringify(x)); else localStorage.removeItem(PH_PHOTO_KEY); return true; }
+  catch(e){ toast("Photo","This phone has no room left to keep the photo."); return false; }
+}
+function phPhotoFile(f){
+  if(!f) return;
+  if(!/^image\//.test(f.type||"")){ toast("Photo","That file is not a picture."); return; }
+  var url=URL.createObjectURL(f), im=new Image();
+  im.onload=function(){
+    var n=256, c=document.createElement("canvas"), w=im.naturalWidth, h=im.naturalHeight, sq=Math.min(w,h);
+    c.width=n; c.height=n; c.getContext("2d").drawImage(im,(w-sq)/2,(h-sq)/2,sq,sq,0,0,n,n);
+    URL.revokeObjectURL(url);
+    var old=phPhoto();
+    if(phPhotoSave({src:c.toDataURL("image/jpeg",0.85), show:old?old.show:true})){ PH_DRAWN=""; phRender(); }
+  };
+  im.onerror=function(){ URL.revokeObjectURL(url); toast("Photo","That picture could not be opened. Try another one."); };
+  im.src=url;
+}
+/* the small photo at the top right of every page but You and the welcome */
+function phMini(r,onb){
+  var el=$("#ph-mini"), p=phPhoto(), on=!!(p && p.show && !onb && r!=="you");
+  document.documentElement.classList.toggle("ph-has-me",on);
+  if(!el) return;
+  el.hidden=!on;
+  if(on && el.getAttribute("data-src")!==p.src){ el.innerHTML='<img src="'+esc(p.src)+'" alt="">'; el.setAttribute("data-src",p.src); }
+}
 function phClassic(){ try{ return localStorage.getItem(PH_KEY)==="1"; }catch(e){ return false; } }
 function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
@@ -125,7 +164,7 @@ function phRender(){
   var back=$("#ph-back-t"); if(back) back.textContent=PH_OLD[r]||"";
   /* the onboarding keeps what is typed: it is drawn again only when its step changes */
   var key=onb?"onb"+PH_ONB:r==="step"?"step:"+phArg():r;
-  if((onb||r==="step") && PH_DRAWN===key) return;
+  if((onb||r==="step") && PH_DRAWN===key){ phMini(r,onb); return; }
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
@@ -137,6 +176,7 @@ function phRender(){
     : r==="step" ? phStepPage()
     : (talk||old) ? ""
     : phNow();
+  phMini(r,onb);
 }
 
 /* ---- Now ---- */
@@ -316,8 +356,19 @@ function phYou(){
   var h=[], me=state.me||freshMe(), c=remCfg(), who=(typeof acct!=="undefined"&&acct&&(acct.email||acct.uid))||"";
   var tags=allTags().length, rem=$("#btn-remind"), remOn=rem&&rem.getAttribute("aria-pressed")==="true";
   var th=(function(){ try{ return localStorage.getItem(THEME_KEY)||"system"; }catch(e){ return "system"; } })();
-  h.push('<div class="ph-head ph-me"><span class="ph-av" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg></span>'+
+  var ph=phPhoto();
+  /* the photo is a label for the file box: one tap opens the phone's picker */
+  h.push('<div class="ph-head ph-me"><label class="ph-av ph-av-b" for="ph-photo-in">'+
+    (ph?'<img src="'+esc(ph.src)+'" alt="">':'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg>'+
+      '<span class="ph-av-plus" aria-hidden="true">+</span>')+
+    '<span class="ph-sr">'+(ph?"Change your photo":"Add a photo of you")+'</span></label>'+
+    '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr">'+
     '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
+  h.push('<h2 class="ph-k ph-gk">Your photo</h2><div class="ph-grp">'+
+    (ph ? '<label class="ph-rowb" for="ph-photo-in"><span>Change photo</span><span class="ph-rv">'+PH_CHEV+'</span></label>'+
+          phRow("phshow","Show it on every page",ph.show?"On":"Off",true)+
+          '<button type="button" class="ph-rowb ph-danger" data-ph="phdel"><span>Remove photo</span></button>'
+        : '<label class="ph-rowb" for="ph-photo-in"><span>Add a photo</span><span class="ph-rv"><span class="ph-v">Kept on this phone only</span>'+PH_CHEV+'</span></label>')+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your work</h2><div class="ph-grid">'+
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
@@ -615,6 +666,9 @@ function phOnbFinish(add){
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
     else if(k==="reopen") phReopen(id);
     else if(k==="jropen") PH_JR_OPEN=true;
+    else if(k==="phshow"){ var pp=phPhoto(); if(pp){ pp.show=!pp.show; phPhotoSave(pp); PH_DRAWN=""; phRender(); var sb=$("[data-ph=phshow]"); if(sb) sb.focus(); } }
+    else if(k==="phdel") askUser({title:"Remove your photo?", body:["It goes from this phone. You can add one again at any time."], ok:"Remove it", cancel:"Keep it", danger:true})
+      .then(function(yes){ if(yes){ phPhotoSave(null); PH_DRAWN=""; phRender(); } });
     else if(k==="jrpeek"){ PH_JR_OPEN=!PH_JR_OPEN; PH_DRAWN=""; phRender(); var pk=$("[data-ph=jrpeek]"); if(pk) pk.focus(); }
     else if(k==="jday") location.hash="#/jday/"+encodeURIComponent(b.getAttribute("data-d"));
     else if(k==="jredit") jrEditAsk(id).then(function(){ PH_DRAWN=""; phRender(); });
@@ -658,7 +712,8 @@ function phOnbFinish(add){
     if(e.key!=="Enter" || !e.target) return;
     if(e.target.getAttribute && e.target.getAttribute("data-phed")){ e.preventDefault(); e.target.blur(); }
   });
-  root.addEventListener("change",function(e){ var t=e.target; if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
+  root.addEventListener("change",function(e){ var t=e.target;
+    if(t && t.id==="ph-photo-in"){ phPhotoFile(t.files&&t.files[0]); t.value=""; return; } if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
   root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
   addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
   setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
