@@ -90,13 +90,21 @@ await ok("Journal: write the end of the day with the dialog, and it is listed wi
   await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(250);
   await tap("[data-ph=jr][data-kind=end]"); await D().waitFor({ state: "visible" }); assert.equal(await D().locator("[data-mic-to]").count(), 2);
   await D().locator('[data-ak="a"]').fill("Bought the timber"); await D().locator('[data-ak="b"]').fill("Cut the frame"); await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
+  /* builds from 2026-10-18 list days, not words: the entry shows once its day is opened */
+  if (await p.locator("[data-ph=jday]").count()) {
+    assert.doesNotMatch(await p.locator("#ph-main").innerText(), /Bought the timber/);
+    await p.locator("[data-ph=jday]").first().click(); await p.waitForTimeout(250);
+  }
   const t = await p.locator("#ph-main").innerText(); assert.match(t, /Bought the timber/); assert.match(t, /\d\d:\d\d/); assert.equal(await sideways(), false);
 });
 await ok("yesterday's note shows as one line on Now, and opens the Journal", async () => {
   await p.evaluate(([JKEY, YEST]) => { localStorage.setItem(JKEY, JSON.stringify({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "21:40", kind: "end", a: "Shipped", b: "Call the bank" }] })); }, [JKEY, YEST]);
   await p.reload(); await p.waitForSelector("#ph-main"); await go("now");
-  const s = p.locator(".ph-strip"); assert.match(await s.innerText(), /yesterday/i); assert.match(await s.innerText(), /Call the bank/);
+  const s = p.locator(".ph-strip"); assert.match(await s.innerText(), /yesterday/i);
+  /* builds from 2026-10-18 say the note is waiting; its words show on the Journal page the strip opens */
+  if (/note is waiting/.test(await s.innerText())) assert.doesNotMatch(await s.innerText(), /Call the bank/); else assert.match(await s.innerText(), /Call the bank/);
   await s.click(); await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/journal"); assert.match(await p.locator("#ph-main").innerText(), /where you left off/i);
+  assert.match(await p.locator("#ph-main").innerText(), /Call the bank/);
 });
 await ok("Talk is the chat as a full page with Speak, and it closes when you leave it", async () => {
   await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(300);

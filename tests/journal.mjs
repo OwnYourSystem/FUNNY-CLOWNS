@@ -67,6 +67,9 @@ await ok("it is kept apart: not in the board's state, so not in sync or the back
 await ok("the next day the note is the first thing on Today, and nothing opens over the board", async () => {
   await setJr({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "21:40", kind: "end", a: "Shipped the release", b: "Write the changelog" }] });
   await reload(); await p.waitForTimeout(400); assert.equal(await p.locator("dialog.ask[open]").count(), 0);
+  /* builds from 2026-10-18 keep the note's words closed until Show the note is pressed */
+  const peek = p.locator("#jr-check details.jr-peek");
+  if (await peek.count()) { assert.doesNotMatch(await p.locator("#jr-check").innerText(), /Shipped the release/); await peek.locator("summary").click(); await p.waitForTimeout(100); }
   const t = await p.locator("#jr-check").innerText(); assert.match(t, /Yesterday, 21:40/i); assert.match(t, /Done: Shipped the release/); assert.match(t, /Tomorrow: Write the changelog/);
 });
 await ok("the note also stays at the top of Today until hidden or until today has its own start", async () => {
@@ -90,6 +93,11 @@ await ok("'where did I leave off?' reads the last note back in the chat", async 
 await ok("'show my journal' opens the Planner with every entry, newest first, each with its date and time", async () => {
   const r = await say("show my journal"); assert.match(r, /2 entries/); await p.waitForTimeout(250);
   assert.equal(await p.evaluate(() => location.hash), "#/planner");
+  /* builds from 2026-10-18 list closed days: the words are not on show until a day is opened */
+  if (await p.locator("#jr-body details.jr-day").count()) {
+    assert.doesNotMatch(await p.locator("#jr-body").innerText(), /Shipped|changelog/i);
+    await p.locator("#jr-body details.jr-day").evaluateAll((l) => l.forEach((d) => { d.open = true; }));
+  }
   const t = await p.locator("#jr-body").innerText(); assert.ok(t.indexOf("The changelog first") < t.indexOf("Shipped"), "newest first"); assert.match(t, /21:40/); assert.match(t, /START OF DAY|Start of day/i);
 });
 await ok("the Journal button on Today opens the same dialog; an empty one cannot be saved", async () => {
