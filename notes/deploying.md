@@ -19,3 +19,14 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   Use Backup (footer) to save a board before trying a new build on it.
 - Rolling back: promote or redeploy the previous production deployment
   (`dpl_7MfsiA1YbRbGeGcLz2QJwrscdZnA`, commit `00d4813`).
+
+## 2026-10-18: production moved to 1daba83
+
+- Owner said "push all the changes to the prod link". `app` was fast-forwarded from 51e4a10 to
+  1daba83 (journal privacy and editing, the week card, date and clock, the photo, the phone pages).
+- Full regression on 1daba83 before the deploy: every suite passed; one timing check (the clock)
+  failed under load, passed alone, and was made to poll (tests commit on the dashboard branch).
+- Production deployment `dpl_D2GtpSS9r9VdzTfB3XL7n8CT6An8` (`target: production`, `ref: app`,
+  sha 1daba83), READY, aliased to funny-clowns.vercel.app. Checked: the live `sw.js` is `board-v8`
+  (it was `board-v5` on 14877b7).
+- Rolling back: redeploy or promote `dpl_9XwXeL5RJqjEKyJpz9DoVwmrm2D7` (commit 14877b7, 6 October).
