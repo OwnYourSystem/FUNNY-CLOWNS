@@ -26,6 +26,7 @@ function phParent(){
   var r=phRoute();
   if(r==="goals"||PH_OLD[r]) return "#/you";
   if(r==="goal") return "#/goals";
+  if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
   return "";
 }
@@ -35,7 +36,7 @@ function phParent(){
    and then an undo, as on the board) but keeps the event log itself. If
    anything else changed in between, Undo says so and does nothing, so it
    can never throw away a later change.                                */
-var PH_UNDO=null;
+var PH_UNDO=null, PH_JR_OPEN=false;
 function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k==="savedAt")?undefined:v; }); }
 function phUndoable(label,fn){
   var snap=JSON.stringify(state), r;
@@ -106,7 +107,7 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r);
+    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -129,6 +130,7 @@ function phRender(){
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
     : r==="journal" ? phJournal()
+    : r==="jday" ? phJDay()
     : r==="you" ? phYou()
     : r==="goals" ? phGoals()
     : r==="goal" ? phGoalPage()
@@ -140,12 +142,15 @@ function phRender(){
 /* ---- Now ---- */
 function phNow(){
   var d=new Date(), h=[], c=jrCardOn(), cur=phCurrent(), dy=phDays();
-  h.push('<div class="ph-head"><div><div class="ph-k">'+PH_DAYS[d.getDay()]+'</div><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+'</h1></div>'+
-    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div>');
+  /* the date with its year, the week and a running clock, as the old board had them */
+  h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
+    '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
+    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+
+    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div></header>');
   if(c){
     var e=c.e, K=JR_KINDS[e.kind]||JR_KINDS.end, ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
-    h.push('<a class="ph-strip" href="#/journal"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
-      '<span class="ph-strip-t">'+esc(e.b?K.b+": "+e.b:K.a+": "+e.a)+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
+    h.push('<a class="ph-strip" href="#/journal" data-ph="jropen"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
+      '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
   if(cur){
     h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
@@ -181,8 +186,60 @@ function phNow(){
   }
   if(state.plan.length) h.push('<p class="ph-note">'+state.plan.length+' waiting for another day.</p>');
   h.push('</section>');
-  h.push('<div class="ph-days"><span>Days you finished something: '+dy.n+' of the last 7</span><span class="ph-dots" aria-hidden="true">'+
-    dy.dots.map(function(x){ return '<span class="ph-dot'+(x?" on":"")+'"></span>'; }).join("")+'</span></div>');
+  h.push(phWeekCard(dy));
+  return h.join("");
+}
+function phClock(d){ return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds()); }
+/* Steps finished per day, last n days ending today. A Done taken back with
+   Undo the same day does not count. */
+function phDoneDays(n,endOffset){
+  var out=[], i, d, to=evWin(1)+864e5-(endOffset||0)*864e5, from=to-n*864e5, net={}, per={};
+  (state.ev||[]).forEach(function(e){
+    if(e.t<from||e.t>=to||(e.k!=="done"&&e.k!=="undo")) return;
+    var k=dstr(new Date(e.t))+"|"+e.id; net[k]=(net[k]||0)+(e.k==="done"?1:-1);
+  });
+  Object.keys(net).forEach(function(k){ if(net[k]>0){ var day=k.split("|")[0]; per[day]=(per[day]||0)+1; } });
+  for(i=n-1;i>=0;i--){ d=new Date(to-864e5); d.setDate(d.getDate()-i); out.push({d:dstr(d), day:d, c:per[dstr(d)]||0}); }
+  return out;
+}
+/* the average across every step, as overall() has it, as it stood at time t:
+   each step's value is the one it had before its first change after t */
+function phOverallAt(t){
+  var a=allSubs(); if(!a.length) return 0;
+  var first={};
+  (state.ev||[]).forEach(function(e){ if(e.k==="pct" && e.t>=t && !(e.id in first)) first[e.id]=e.a; });
+  var sum=0; a.forEach(function(s){ sum+=(s.id in first)?first[s.id]:s.pct; });
+  return Math.round(sum/a.length*10)/10;
+}
+/* The week from the air: a few numbers and one small chart, nothing to dig
+   into. Steps finished this week against the week before, how many days had
+   one, where all the goals stand and how far they moved, and the seven days
+   as columns. One colour, the accent; text stays in the text colours. */
+function phWeekCard(dy){
+  var wk=phDoneDays(7), prev=phDoneDays(7,7), n=0, p=0, mx=0;
+  wk.forEach(function(x){ n+=x.c; if(x.c>mx) mx=x.c; }); prev.forEach(function(x){ p+=x.c; });
+  var diff=n-p, ov=overall(), was=phOverallAt(evWin(7)), mv=Math.round((ov-was)*10)/10;
+  var delta=diff>0?"▲ "+diff+" on the week before":diff<0?"▼ "+(-diff)+" on the week before":"Same as the week before";
+  var moved=mv>0?"▲ "+mv+" points this week":mv<0?"▼ "+(-mv)+" points this week":"No change this week";
+  var h=['<section class="ph-week" aria-labelledby="ph-week-h"><div class="ph-row-h"><h2 class="ph-h2" id="ph-week-h">Your week</h2><span class="ph-k">Last 7 days</span></div>'];
+  h.push('<div class="ph-two"><div class="ph-stat"><span class="ph-stat-l">Steps finished</span><span class="ph-stat-v">'+n+'</span><span class="ph-stat-d">'+delta+'</span></div>'+
+    '<div class="ph-stat"><span class="ph-stat-l">Days with a step done</span><span class="ph-stat-v">'+dy.n+' <small>of 7</small></span><span class="ph-stat-d">'+(dy.n>=5?"A steady week":dy.n>=3?"Keep the run going":"One step makes a day")+'</span></div></div>');
+  h.push('<div class="ph-stat ph-meter-w"><span class="ph-stat-l">All goals</span><span class="ph-stat-v">'+Math.round(ov)+'%</span>'+
+    '<span class="ph-meter" role="meter" aria-label="All goals" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(ov)+'"><span style="width:'+Math.max(0,Math.min(100,ov))+'%"></span></span>'+
+    '<span class="ph-stat-d">'+moved+'</span></div>');
+  /* the columns: each is a button, so a tap (or focus) reads its day out */
+  h.push('<div class="ph-cols-w"><p class="ph-cols-read" id="ph-cols-read" aria-live="polite">'+(n?"Tap a day to see it":"Finish a step and it shows here")+'</p>'+
+    '<div class="ph-cols" role="group" aria-label="Steps finished each day, last 7 days">');
+  wk.forEach(function(x,i){
+    var lab=PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()], ht=mx?Math.round(x.c/mx*100):0, today=i===wk.length-1;
+    h.push('<button type="button" class="ph-col'+(today?" is-today":"")+'" data-ph="col" data-say="'+esc(lab+": "+x.c+(x.c===1?" step":" steps")+" finished")+'" aria-label="'+esc(lab+", "+x.c+(x.c===1?" step":" steps"))+'">'+
+      '<span class="ph-col-v">'+(x.c&&x.c===mx?x.c:"")+'</span><span class="ph-col-t"><span class="ph-col-b" style="height:'+ht+'%"></span></span>'+
+      '<span class="ph-col-x">'+(today?"Today":PH_DAYS[x.day.getDay()].slice(0,3))+'</span></button>');
+  });
+  h.push('</div></div>');
+  /* the same numbers as a table, for a screen reader */
+  h.push('<table class="ph-sr"><caption>Steps finished each day</caption><tbody>'+wk.map(function(x){ return '<tr><th scope="row">'+esc(PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()])+'</th><td>'+x.c+'</td></tr>'; }).join("")+'</tbody></table>');
+  h.push('</section>');
   return h.join("");
 }
 function phDone(id){
@@ -213,19 +270,44 @@ function phWhy(){
   askUser({title:"Why this one", body:[c.why||"You put it in Today."].concat(c.v?verdictNot(c.v):[]), noOk:true, cancel:"Close"});
 }
 
-/* ---- Journal ---- */
+/* ---- Journal ----
+   Private and quiet on purpose (2026-10-18): the page shows that there are
+   notes, never what they say. Yesterday's note is one closed card; Show opens
+   it. Earlier days are rows; a day opens on its own page, where each entry can
+   be edited or removed. Leaving the page closes everything again. */
 function phJournal(){
   var h=[], c=jrCheckpoint();
   h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on this phone only.</p></div></div>');
   if(c){
     var s=jrSays(c);
-    h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-k">Where you left off · '+esc(s.head)+'</div>'+
-      s.lines.map(function(t){ return '<p class="ph-line">'+esc(t)+'</p>'; }).join("")+'</section>');
+    h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-row-h" style="padding:0"><div class="ph-k">Where you left off · '+esc(s.head)+'</div></div>'+
+      (PH_JR_OPEN ? s.lines.map(function(t){ return '<p class="ph-line">'+esc(t)+'</p>'; }).join("")+
+          '<button type="button" class="ph-link" data-ph="jrpeek" aria-expanded="true">Hide it</button>'
+        : '<button type="button" class="ph-link" data-ph="jrpeek" aria-expanded="false">Show it</button>')+'</section>');
   }
   h.push('<div class="ph-two"><button type="button" class="ph-tile" data-ph="jr" data-kind="start"><span class="ph-k">Morning</span><span>Start of day</span></button>'+
-    '<button type="button" class="ph-tile" data-ph="jr" data-kind="end"><span class="ph-k">Evening</span><span>End of day</span></button></div>'+
-    '<p class="ph-note">Each has Speak under its boxes: say it, check it, save it.</p>');
-  h.push('<section aria-label="Earlier"><div class="ph-row-h"><h2 class="ph-h2">Earlier</h2><span class="ph-k">Newest first</span></div>'+jrListHtml()+'</section>');
+    '<button type="button" class="ph-tile" data-ph="jr" data-kind="end"><span class="ph-k">Evening</span><span>End of day</span></button></div>');
+  var days=jrDayList();
+  h.push('<section aria-label="Earlier"><div class="ph-row-h"><h2 class="ph-h2">Earlier</h2><span class="ph-k">'+(days.length?days.length+(days.length===1?" day":" days"):"")+'</span></div>');
+  if(!days.length) h.push('<p class="ph-empty">No entries yet. Start of day and End of day are above.</p>');
+  else h.push('<div class="ph-grp">'+days.map(function(x){
+    return '<button type="button" class="ph-rowb" data-ph="jday" data-d="'+esc(x.d)+'"><span>'+esc(jrDateLabel(x.d))+'</span><span class="ph-rv"><span class="ph-v">'+esc(jrDaySays(x))+'</span>'+PH_CHEV+'</span></button>';
+  }).join("")+'</div>');
+  h.push('</section>');
+  return h.join("");
+}
+/* one day: its entries, each with Edit and Remove */
+function phJDay(){
+  var d=phArg(), l=d?jrDayEntries(d):[], h=[];
+  if(!l.length) return phJournal();
+  h.push('<div style="min-width:0">'+phNav("#/journal","Journal")+'<h1 class="ph-h1">'+esc(jrDateLabel(d))+'</h1></div>');
+  l.forEach(function(e){
+    var K=JR_KINDS[e.kind]||JR_KINDS.end, ed=jrEdited(e);
+    h.push('<section class="ph-card ph-jr-e" aria-label="'+esc(K.name+", "+e.tm)+'"><div class="ph-k">'+esc(e.tm+" · "+K.name+(ed?" · "+ed:""))+'</div>'+
+      (e.a?'<p class="ph-line"><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p class="ph-line"><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+
+      '<div class="ph-acts"><button type="button" class="ph-btn" data-ph="jredit" data-id="'+esc(e.id)+'">Edit</button>'+
+      '<button type="button" class="ph-btn ph-danger" data-ph="jrdel" data-id="'+esc(e.id)+'">Remove</button></div></section>');
+  });
   return h.join("");
 }
 
@@ -532,6 +614,12 @@ function phOnbFinish(add){
     else if(k==="later"){ var ls=state.subs[id]; if(ls) phUndoable("Another day: "+phCut(ls.name,40),function(){ toolRun("plan_today",{subtask:ls.name}); }); }
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
     else if(k==="reopen") phReopen(id);
+    else if(k==="jropen") PH_JR_OPEN=true;
+    else if(k==="jrpeek"){ PH_JR_OPEN=!PH_JR_OPEN; PH_DRAWN=""; phRender(); var pk=$("[data-ph=jrpeek]"); if(pk) pk.focus(); }
+    else if(k==="jday") location.hash="#/jday/"+encodeURIComponent(b.getAttribute("data-d"));
+    else if(k==="jredit") jrEditAsk(id).then(function(){ PH_DRAWN=""; phRender(); });
+    else if(k==="jrdel") jrRemoveAsk(id).then(function(gone){ if(gone && phRoute()==="jday" && !jrDayEntries(phArg()).length) location.hash="#/journal"; else { PH_DRAWN=""; phRender(); } });
+    else if(k==="col"){ var rd=$("#ph-cols-read"); if(rd) rd.textContent=b.getAttribute("data-say"); }
     else if(k==="else") phElse(id);
     else if(k==="why") phWhy();
     else if(k==="jr") jrAsk(b.getAttribute("data-kind"));
@@ -572,7 +660,8 @@ function phOnbFinish(add){
   });
   root.addEventListener("change",function(e){ var t=e.target; if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
   root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
-  addEventListener("hashchange",function(){ if(PH_ON){ PH_DRAWN=""; phRender(); scrollTo(0,0); } });
+  addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
+  setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
   var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);
   /* A swipe in from the left edge goes Back, as in every iPhone app. Only
      the app opened from the home screen needs this: in a browser tab, Safari

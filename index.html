@@ -629,6 +629,15 @@ button.now-n:hover{color:var(--run)}
 .jr-e{margin-top:8px}
 .jr-e p{margin:4px 0 0; font-size:13.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; max-width:68ch}
 .jr-e b{font-weight:500; color:var(--ink-2)}
+/* a day is closed until it is opened, and so is yesterday's note (2026-10-18) */
+.jr-day summary{cursor:pointer; list-style:none; display:flex; align-items:baseline; gap:10px; padding:4px 0}
+.jr-day summary::-webkit-details-marker,.jr-peek summary::-webkit-details-marker{display:none}
+.jr-day summary::after{content:"\203A"; margin-left:auto; font-family:var(--font); font-size:16px; letter-spacing:0; transition:transform .15s var(--ease)}
+.jr-day[open] summary::after{transform:rotate(90deg)}
+.jr-n{font-family:var(--font); font-size:12px; letter-spacing:0; text-transform:none}
+.jr-peek{margin-top:8px}
+.jr-peek summary{cursor:pointer; list-style:none; font-size:13px; color:var(--ink-2); text-decoration:underline}
+.jr-peek[open] summary{display:none}
 .now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
@@ -1170,7 +1179,7 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
 #ph-tabs a[aria-current="page"] .ti-f{display:block}
 #ph-tabs a:active{opacity:.6}
 #ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
-.ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted); font-variant-numeric:tabular-nums}
+.ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted)}
 .ph-hot{color:var(--ph-pri); font-weight:600}
 .ph-head{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px}
 .ph-h1{margin:2px 0 0; font-size:1.5294rem; line-height:1.15; font-weight:600; letter-spacing:-.02em}
@@ -1379,6 +1388,31 @@ html.ph dialog.ask h3{touch-action:none}
 /* Talk: the tab already says Talk */
 html.ph.ph-talk .bot-mark,html.ph.ph-talk .bot-name{display:none}
 html.ph.ph-talk .sheet-head{justify-content:flex-end}
+/* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
+.ph-today{display:flex; flex-direction:column; gap:2px}
+.ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+.ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ph-pri); letter-spacing:.04em}
+.ph-week{display:flex; flex-direction:column; gap:10px}
+.ph-week .ph-row-h{padding-bottom:0}
+.ph-stat{display:flex; flex-direction:column; gap:2px; padding:12px 14px; border-radius:18px; border:1px solid var(--hair); background:var(--panel); min-width:0}
+.ph-stat-l{font-size:.824rem; color:var(--ink-2)}
+.ph-stat-v{font-size:1.65rem; font-weight:600; line-height:1.15; color:var(--ink)}
+.ph-stat-v small{font-size:.824rem; font-weight:500; color:var(--ink-2)}
+.ph-stat-d{font-size:.765rem; color:var(--muted)}
+.ph-meter{display:block; height:8px; margin:6px 0 4px; border-radius:4px; background:var(--ph-wash); overflow:hidden}
+.ph-meter span{display:block; height:100%; border-radius:4px; background:var(--ph-pri)}
+.ph-cols-w{padding:12px 8px 6px; border-radius:18px; border:1px solid var(--hair); background:var(--panel)}
+.ph-cols-read{margin:0 6px 6px; min-height:1.3em; font-size:.824rem; color:var(--ink-2)}
+.ph-cols{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:end}
+.ph-col{display:flex; flex-direction:column; align-items:center; gap:4px; min-height:44px; padding:0; border:0; border-radius:10px; background:transparent; font:inherit; color:var(--ink-2)}
+.ph-col-v{font-size:.765rem; font-weight:600; color:var(--ink); min-height:1.2em}
+.ph-col-t{display:flex; align-items:flex-end; justify-content:center; width:100%; height:84px; border-bottom:1px solid var(--rule)}
+.ph-col-b{display:block; width:min(24px,60%); min-height:0; border-radius:4px 4px 0 0; background:var(--ph-pri)}
+.ph-col-x{font-size:.765rem}
+.ph-col.is-today .ph-col-x{font-weight:600; color:var(--ink)}
+.ph-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.ph-jr-e .ph-line b{font-weight:600; color:var(--ink-2)}
+.ph-btn.ph-danger{color:var(--accent-ink)}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
@@ -3834,6 +3868,38 @@ function jrAdd(o,now){
   jrSave();
   return e;
 }
+/* Any entry can be changed later, the old ones too. It keeps the date and
+   time it was written (its place in the record) and gains the time it was
+   last changed, which is shown beside it. Removing is for good. */
+function jrById(id){ var l=jrData().log; for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; return null; }
+function jrEdit(id,o,now){
+  var e=jrById(id); if(!e) throw new Error("That entry is not there any more.");
+  o=o||{}; now=now||new Date();
+  var a=jrClip(o.a), b=jrClip(o.b), kind=JR_KINDS[o.kind]?o.kind:e.kind;
+  if(!a && !b) throw new Error("An entry needs some words. To take it away, use Remove.");
+  if(a===e.a && b===e.b && kind===e.kind) return e;
+  e.a=a; e.b=b; e.kind=kind; e.ed=now.toISOString();
+  jrSave();
+  return e;
+}
+function jrRemove(id){
+  var D=jrData(), n=D.log.length;
+  D.log=D.log.filter(function(e){ return e.id!==id; });
+  if(D.log.length===n) return false;
+  jrSave(); return true;
+}
+/* the days that have entries, newest first, each with how many and of which kind */
+function jrDayList(){
+  var by={}, days=[];
+  jrData().log.forEach(function(e){ if(!by[e.d]){ by[e.d]={d:e.d, n:0, start:0, end:0}; days.push(e.d); } by[e.d].n++; by[e.d][e.kind==="start"?"start":"end"]++; });
+  return days.sort().reverse().map(function(d){ return by[d]; });
+}
+function jrDayEntries(d){ return jrData().log.filter(function(e){ return e.d===d; }).sort(function(x,y){ return x.at<y.at?-1:1; }); }
+function jrDaySays(x){
+  var k=[]; if(x.start) k.push(x.start===1?"start of day":x.start+" starts"); if(x.end) k.push(x.end===1?"end of day":x.end+" ends");
+  return k.join(" and ");
+}
+function jrEdited(e){ if(!e.ed) return ""; var t=new Date(e.ed); return "changed "+(dstr(t)===e.d?"":jrDateLabel(dstr(t)).replace(/ \d{4}$/,"")+" ")+pad2(t.getHours())+":"+pad2(t.getMinutes()); }
 function jrDateLabel(d){ var p=String(d).split("-"), x=new Date(+p[0],+p[1]-1,+p[2]); return JR_DAYS[x.getDay()]+" "+(+p[2])+" "+JR_MONS[+p[1]-1]+" "+p[0]; }
 function jrWhen(e){ return jrDateLabel(e.d)+", "+e.tm; }
 function jrLines(e){
@@ -3879,18 +3945,43 @@ function jrAsk(kind){
     return e;
   });
 }
-/* every entry, newest first, grouped by day, each with its time */
+/* change an entry: the same sheet it was written in, filled in */
+function jrEditAsk(id){
+  var e=jrById(id); if(!e) return Promise.resolve(null);
+  var K=JR_KINDS[e.kind]||JR_KINDS.end;
+  return askUser({title:"Edit: "+K.name+", "+jrWhen(e),
+    body:["It keeps its date and time; the time you change it is noted beside it."],
+    fields:[{k:"kind",label:"Which",kind:"pick",row:true,opts:[["end","End of day"],["start","Start of day"]],value:e.kind},
+            {k:"a",label:K.qa,kind:"textarea",value:e.a},{k:"b",label:K.qb,kind:"textarea",value:e.b}],
+    ok:"Save", cancel:"Not now",
+    check:function(v){ return (!String(v.a||"").trim() && !String(v.b||"").trim()) ? "An entry needs some words. To take it away, use Remove." : ""; }}).then(function(v){
+    if(!v) return null;
+    var r=null; try{ r=jrEdit(id,{kind:v.kind,a:v.a,b:v.b}); }catch(er){ toast("Journal",er.message); }
+    renderAll(); return r;
+  });
+}
+function jrRemoveAsk(id){
+  var e=jrById(id); if(!e) return Promise.resolve(false);
+  return askUser({title:"Remove this entry?", body:[jrWhen(e)+". It goes for good; nothing else keeps a copy."],
+    ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
+    if(!yes) return false;
+    jrRemove(id); renderAll(); return true;
+  });
+}
+/* Every day with entries, newest first, each closed until it is opened, so
+   nothing anyone wrote is on show when the page opens. Inside a day, each
+   entry has its time, Edit and Remove. */
 function jrListHtml(){
-  var l=jrData().log.slice().reverse();
-  if(!l.length) return '<p class="wk-note">No entries yet. Press Write, or type &ldquo;journal my day&rdquo; to the assistant.</p>';
-  var days=[], by={};
-  l.forEach(function(e){ if(!by[e.d]){ by[e.d]=[]; days.push(e.d); } by[e.d].push(e); });
-  return days.map(function(d){
-    return '<div class="jr-day"><div class="jr-date">'+esc(jrDateLabel(d))+'</div>'+by[d].map(function(e){
-      var K=JR_KINDS[e.kind]||JR_KINDS.end;
-      return '<div class="jr-e"><div class="jr-meta">'+esc(e.tm)+' &middot; '+esc(K.name)+'</div>'+
-        (e.a?'<p><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+'</div>';
-    }).join("")+'</div>';
+  var days=jrDayList();
+  if(!days.length) return '<p class="wk-note">No entries yet. Press Write, or type &ldquo;journal my day&rdquo; to the assistant.</p>';
+  return days.map(function(x){
+    return '<details class="jr-day"><summary class="jr-date">'+esc(jrDateLabel(x.d))+' <span class="jr-n">'+esc(jrDaySays(x))+'</span></summary>'+
+      jrDayEntries(x.d).map(function(e){
+        var K=JR_KINDS[e.kind]||JR_KINDS.end, ed=jrEdited(e);
+        return '<div class="jr-e"><div class="jr-meta">'+esc(e.tm)+' &middot; '+esc(K.name)+(ed?' &middot; '+esc(ed):'')+'</div>'+
+          (e.a?'<p><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+
+          '<div class="jr-acts"><button class="mini" data-jr-edit="'+esc(e.id)+'">Edit</button><button class="mini" data-jr-del="'+esc(e.id)+'">Remove</button></div></div>';
+      }).join("")+'</details>';
   }).join("");
 }
 function renderJournal(){
@@ -3902,7 +3993,7 @@ function renderJournal(){
       var s=jrSays(c);
       card.hidden=false;
       card.innerHTML='<div class="jr-k">Where you left off &middot; '+esc(s.head)+'</div>'+
-        s.lines.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+
+        '<details class="jr-peek"><summary>Show the note</summary>'+s.lines.map(function(t){ return '<p>'+esc(t)+'</p>'; }).join("")+'</details>'+
         '<div class="jr-acts"><button class="mini" data-jr-write="start">Write today&rsquo;s start</button><button class="mini" data-jr-hide>Hide</button></div>';
     }
   }
@@ -3912,6 +4003,13 @@ document.addEventListener("click",function(e){
   var w=e.target.closest&&e.target.closest("[data-jr-write]");
   if(w){ e.stopPropagation(); jrAsk(w.getAttribute("data-jr-write")||""); return; }
   if(e.target.closest&&e.target.closest("[data-jr-hide]")){ jrHide(); renderAll(); }
+});
+
+document.addEventListener("click",function(e){
+  var ed=e.target.closest&&e.target.closest("[data-jr-edit]");
+  if(ed){ e.stopPropagation(); jrEditAsk(ed.getAttribute("data-jr-edit")); return; }
+  var dl=e.target.closest&&e.target.closest("[data-jr-del]");
+  if(dl){ e.stopPropagation(); jrRemoveAsk(dl.getAttribute("data-jr-del")); }
 });
 function jrData(){
   if(JR_DATA) return JR_DATA;
@@ -8609,6 +8707,7 @@ function phParent(){
   var r=phRoute();
   if(r==="goals"||PH_OLD[r]) return "#/you";
   if(r==="goal") return "#/goals";
+  if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
   return "";
 }
@@ -8618,7 +8717,7 @@ function phParent(){
    and then an undo, as on the board) but keeps the event log itself. If
    anything else changed in between, Undo says so and does nothing, so it
    can never throw away a later change.                                */
-var PH_UNDO=null;
+var PH_UNDO=null, PH_JR_OPEN=false;
 function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k==="savedAt")?undefined:v; }); }
 function phUndoable(label,fn){
   var snap=JSON.stringify(state), r;
@@ -8689,7 +8788,7 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r);
+    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -8712,6 +8811,7 @@ function phRender(){
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
     : r==="journal" ? phJournal()
+    : r==="jday" ? phJDay()
     : r==="you" ? phYou()
     : r==="goals" ? phGoals()
     : r==="goal" ? phGoalPage()
@@ -8723,12 +8823,15 @@ function phRender(){
 /* ---- Now ---- */
 function phNow(){
   var d=new Date(), h=[], c=jrCardOn(), cur=phCurrent(), dy=phDays();
-  h.push('<div class="ph-head"><div><div class="ph-k">'+PH_DAYS[d.getDay()]+'</div><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+'</h1></div>'+
-    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div>');
+  /* the date with its year, the week and a running clock, as the old board had them */
+  h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
+    '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
+    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+
+    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div></header>');
   if(c){
     var e=c.e, K=JR_KINDS[e.kind]||JR_KINDS.end, ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
-    h.push('<a class="ph-strip" href="#/journal"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
-      '<span class="ph-strip-t">'+esc(e.b?K.b+": "+e.b:K.a+": "+e.a)+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
+    h.push('<a class="ph-strip" href="#/journal" data-ph="jropen"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
+      '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
   if(cur){
     h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
@@ -8764,8 +8867,60 @@ function phNow(){
   }
   if(state.plan.length) h.push('<p class="ph-note">'+state.plan.length+' waiting for another day.</p>');
   h.push('</section>');
-  h.push('<div class="ph-days"><span>Days you finished something: '+dy.n+' of the last 7</span><span class="ph-dots" aria-hidden="true">'+
-    dy.dots.map(function(x){ return '<span class="ph-dot'+(x?" on":"")+'"></span>'; }).join("")+'</span></div>');
+  h.push(phWeekCard(dy));
+  return h.join("");
+}
+function phClock(d){ return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds()); }
+/* Steps finished per day, last n days ending today. A Done taken back with
+   Undo the same day does not count. */
+function phDoneDays(n,endOffset){
+  var out=[], i, d, to=evWin(1)+864e5-(endOffset||0)*864e5, from=to-n*864e5, net={}, per={};
+  (state.ev||[]).forEach(function(e){
+    if(e.t<from||e.t>=to||(e.k!=="done"&&e.k!=="undo")) return;
+    var k=dstr(new Date(e.t))+"|"+e.id; net[k]=(net[k]||0)+(e.k==="done"?1:-1);
+  });
+  Object.keys(net).forEach(function(k){ if(net[k]>0){ var day=k.split("|")[0]; per[day]=(per[day]||0)+1; } });
+  for(i=n-1;i>=0;i--){ d=new Date(to-864e5); d.setDate(d.getDate()-i); out.push({d:dstr(d), day:d, c:per[dstr(d)]||0}); }
+  return out;
+}
+/* the average across every step, as overall() has it, as it stood at time t:
+   each step's value is the one it had before its first change after t */
+function phOverallAt(t){
+  var a=allSubs(); if(!a.length) return 0;
+  var first={};
+  (state.ev||[]).forEach(function(e){ if(e.k==="pct" && e.t>=t && !(e.id in first)) first[e.id]=e.a; });
+  var sum=0; a.forEach(function(s){ sum+=(s.id in first)?first[s.id]:s.pct; });
+  return Math.round(sum/a.length*10)/10;
+}
+/* The week from the air: a few numbers and one small chart, nothing to dig
+   into. Steps finished this week against the week before, how many days had
+   one, where all the goals stand and how far they moved, and the seven days
+   as columns. One colour, the accent; text stays in the text colours. */
+function phWeekCard(dy){
+  var wk=phDoneDays(7), prev=phDoneDays(7,7), n=0, p=0, mx=0;
+  wk.forEach(function(x){ n+=x.c; if(x.c>mx) mx=x.c; }); prev.forEach(function(x){ p+=x.c; });
+  var diff=n-p, ov=overall(), was=phOverallAt(evWin(7)), mv=Math.round((ov-was)*10)/10;
+  var delta=diff>0?"▲ "+diff+" on the week before":diff<0?"▼ "+(-diff)+" on the week before":"Same as the week before";
+  var moved=mv>0?"▲ "+mv+" points this week":mv<0?"▼ "+(-mv)+" points this week":"No change this week";
+  var h=['<section class="ph-week" aria-labelledby="ph-week-h"><div class="ph-row-h"><h2 class="ph-h2" id="ph-week-h">Your week</h2><span class="ph-k">Last 7 days</span></div>'];
+  h.push('<div class="ph-two"><div class="ph-stat"><span class="ph-stat-l">Steps finished</span><span class="ph-stat-v">'+n+'</span><span class="ph-stat-d">'+delta+'</span></div>'+
+    '<div class="ph-stat"><span class="ph-stat-l">Days with a step done</span><span class="ph-stat-v">'+dy.n+' <small>of 7</small></span><span class="ph-stat-d">'+(dy.n>=5?"A steady week":dy.n>=3?"Keep the run going":"One step makes a day")+'</span></div></div>');
+  h.push('<div class="ph-stat ph-meter-w"><span class="ph-stat-l">All goals</span><span class="ph-stat-v">'+Math.round(ov)+'%</span>'+
+    '<span class="ph-meter" role="meter" aria-label="All goals" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(ov)+'"><span style="width:'+Math.max(0,Math.min(100,ov))+'%"></span></span>'+
+    '<span class="ph-stat-d">'+moved+'</span></div>');
+  /* the columns: each is a button, so a tap (or focus) reads its day out */
+  h.push('<div class="ph-cols-w"><p class="ph-cols-read" id="ph-cols-read" aria-live="polite">'+(n?"Tap a day to see it":"Finish a step and it shows here")+'</p>'+
+    '<div class="ph-cols" role="group" aria-label="Steps finished each day, last 7 days">');
+  wk.forEach(function(x,i){
+    var lab=PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()], ht=mx?Math.round(x.c/mx*100):0, today=i===wk.length-1;
+    h.push('<button type="button" class="ph-col'+(today?" is-today":"")+'" data-ph="col" data-say="'+esc(lab+": "+x.c+(x.c===1?" step":" steps")+" finished")+'" aria-label="'+esc(lab+", "+x.c+(x.c===1?" step":" steps"))+'">'+
+      '<span class="ph-col-v">'+(x.c&&x.c===mx?x.c:"")+'</span><span class="ph-col-t"><span class="ph-col-b" style="height:'+ht+'%"></span></span>'+
+      '<span class="ph-col-x">'+(today?"Today":PH_DAYS[x.day.getDay()].slice(0,3))+'</span></button>');
+  });
+  h.push('</div></div>');
+  /* the same numbers as a table, for a screen reader */
+  h.push('<table class="ph-sr"><caption>Steps finished each day</caption><tbody>'+wk.map(function(x){ return '<tr><th scope="row">'+esc(PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()])+'</th><td>'+x.c+'</td></tr>'; }).join("")+'</tbody></table>');
+  h.push('</section>');
   return h.join("");
 }
 function phDone(id){
@@ -8796,19 +8951,44 @@ function phWhy(){
   askUser({title:"Why this one", body:[c.why||"You put it in Today."].concat(c.v?verdictNot(c.v):[]), noOk:true, cancel:"Close"});
 }
 
-/* ---- Journal ---- */
+/* ---- Journal ----
+   Private and quiet on purpose (2026-10-18): the page shows that there are
+   notes, never what they say. Yesterday's note is one closed card; Show opens
+   it. Earlier days are rows; a day opens on its own page, where each entry can
+   be edited or removed. Leaving the page closes everything again. */
 function phJournal(){
   var h=[], c=jrCheckpoint();
   h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on this phone only.</p></div></div>');
   if(c){
     var s=jrSays(c);
-    h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-k">Where you left off · '+esc(s.head)+'</div>'+
-      s.lines.map(function(t){ return '<p class="ph-line">'+esc(t)+'</p>'; }).join("")+'</section>');
+    h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-row-h" style="padding:0"><div class="ph-k">Where you left off · '+esc(s.head)+'</div></div>'+
+      (PH_JR_OPEN ? s.lines.map(function(t){ return '<p class="ph-line">'+esc(t)+'</p>'; }).join("")+
+          '<button type="button" class="ph-link" data-ph="jrpeek" aria-expanded="true">Hide it</button>'
+        : '<button type="button" class="ph-link" data-ph="jrpeek" aria-expanded="false">Show it</button>')+'</section>');
   }
   h.push('<div class="ph-two"><button type="button" class="ph-tile" data-ph="jr" data-kind="start"><span class="ph-k">Morning</span><span>Start of day</span></button>'+
-    '<button type="button" class="ph-tile" data-ph="jr" data-kind="end"><span class="ph-k">Evening</span><span>End of day</span></button></div>'+
-    '<p class="ph-note">Each has Speak under its boxes: say it, check it, save it.</p>');
-  h.push('<section aria-label="Earlier"><div class="ph-row-h"><h2 class="ph-h2">Earlier</h2><span class="ph-k">Newest first</span></div>'+jrListHtml()+'</section>');
+    '<button type="button" class="ph-tile" data-ph="jr" data-kind="end"><span class="ph-k">Evening</span><span>End of day</span></button></div>');
+  var days=jrDayList();
+  h.push('<section aria-label="Earlier"><div class="ph-row-h"><h2 class="ph-h2">Earlier</h2><span class="ph-k">'+(days.length?days.length+(days.length===1?" day":" days"):"")+'</span></div>');
+  if(!days.length) h.push('<p class="ph-empty">No entries yet. Start of day and End of day are above.</p>');
+  else h.push('<div class="ph-grp">'+days.map(function(x){
+    return '<button type="button" class="ph-rowb" data-ph="jday" data-d="'+esc(x.d)+'"><span>'+esc(jrDateLabel(x.d))+'</span><span class="ph-rv"><span class="ph-v">'+esc(jrDaySays(x))+'</span>'+PH_CHEV+'</span></button>';
+  }).join("")+'</div>');
+  h.push('</section>');
+  return h.join("");
+}
+/* one day: its entries, each with Edit and Remove */
+function phJDay(){
+  var d=phArg(), l=d?jrDayEntries(d):[], h=[];
+  if(!l.length) return phJournal();
+  h.push('<div style="min-width:0">'+phNav("#/journal","Journal")+'<h1 class="ph-h1">'+esc(jrDateLabel(d))+'</h1></div>');
+  l.forEach(function(e){
+    var K=JR_KINDS[e.kind]||JR_KINDS.end, ed=jrEdited(e);
+    h.push('<section class="ph-card ph-jr-e" aria-label="'+esc(K.name+", "+e.tm)+'"><div class="ph-k">'+esc(e.tm+" · "+K.name+(ed?" · "+ed:""))+'</div>'+
+      (e.a?'<p class="ph-line"><b>'+esc(K.a)+'</b> '+esc(e.a)+'</p>':'')+(e.b?'<p class="ph-line"><b>'+esc(K.b)+'</b> '+esc(e.b)+'</p>':'')+
+      '<div class="ph-acts"><button type="button" class="ph-btn" data-ph="jredit" data-id="'+esc(e.id)+'">Edit</button>'+
+      '<button type="button" class="ph-btn ph-danger" data-ph="jrdel" data-id="'+esc(e.id)+'">Remove</button></div></section>');
+  });
   return h.join("");
 }
 
@@ -9115,6 +9295,12 @@ function phOnbFinish(add){
     else if(k==="later"){ var ls=state.subs[id]; if(ls) phUndoable("Another day: "+phCut(ls.name,40),function(){ toolRun("plan_today",{subtask:ls.name}); }); }
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
     else if(k==="reopen") phReopen(id);
+    else if(k==="jropen") PH_JR_OPEN=true;
+    else if(k==="jrpeek"){ PH_JR_OPEN=!PH_JR_OPEN; PH_DRAWN=""; phRender(); var pk=$("[data-ph=jrpeek]"); if(pk) pk.focus(); }
+    else if(k==="jday") location.hash="#/jday/"+encodeURIComponent(b.getAttribute("data-d"));
+    else if(k==="jredit") jrEditAsk(id).then(function(){ PH_DRAWN=""; phRender(); });
+    else if(k==="jrdel") jrRemoveAsk(id).then(function(gone){ if(gone && phRoute()==="jday" && !jrDayEntries(phArg()).length) location.hash="#/journal"; else { PH_DRAWN=""; phRender(); } });
+    else if(k==="col"){ var rd=$("#ph-cols-read"); if(rd) rd.textContent=b.getAttribute("data-say"); }
     else if(k==="else") phElse(id);
     else if(k==="why") phWhy();
     else if(k==="jr") jrAsk(b.getAttribute("data-kind"));
@@ -9155,7 +9341,8 @@ function phOnbFinish(add){
   });
   root.addEventListener("change",function(e){ var t=e.target; if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
   root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
-  addEventListener("hashchange",function(){ if(PH_ON){ PH_DRAWN=""; phRender(); scrollTo(0,0); } });
+  addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
+  setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
   var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);
   /* A swipe in from the left edge goes Back, as in every iPhone app. Only
      the app opened from the home screen needs this: in a browser tab, Safari

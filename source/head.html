@@ -629,6 +629,15 @@ button.now-n:hover{color:var(--run)}
 .jr-e{margin-top:8px}
 .jr-e p{margin:4px 0 0; font-size:13.5px; color:var(--ink); line-height:1.55; white-space:pre-wrap; max-width:68ch}
 .jr-e b{font-weight:500; color:var(--ink-2)}
+/* a day is closed until it is opened, and so is yesterday's note (2026-10-18) */
+.jr-day summary{cursor:pointer; list-style:none; display:flex; align-items:baseline; gap:10px; padding:4px 0}
+.jr-day summary::-webkit-details-marker,.jr-peek summary::-webkit-details-marker{display:none}
+.jr-day summary::after{content:"\203A"; margin-left:auto; font-family:var(--font); font-size:16px; letter-spacing:0; transition:transform .15s var(--ease)}
+.jr-day[open] summary::after{transform:rotate(90deg)}
+.jr-n{font-family:var(--font); font-size:12px; letter-spacing:0; text-transform:none}
+.jr-peek{margin-top:8px}
+.jr-peek summary{cursor:pointer; list-style:none; font-size:13px; color:var(--ink-2); text-decoration:underline}
+.jr-peek[open] summary{display:none}
 .now-follow{margin-top:16px; padding-top:14px; border-top:1px solid var(--hair); font-size:13.5px; color:var(--ink-2); line-height:1.6}
 .now-not{margin:4px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
 .now-not li{font-size:13px; color:var(--muted); line-height:1.5; padding-left:15px; position:relative}
@@ -1170,7 +1179,7 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
 #ph-tabs a[aria-current="page"] .ti-f{display:block}
 #ph-tabs a:active{opacity:.6}
 #ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
-.ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted); font-variant-numeric:tabular-nums}
+.ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted)}
 .ph-hot{color:var(--ph-pri); font-weight:600}
 .ph-head{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px}
 .ph-h1{margin:2px 0 0; font-size:1.5294rem; line-height:1.15; font-weight:600; letter-spacing:-.02em}
@@ -1379,6 +1388,31 @@ html.ph dialog.ask h3{touch-action:none}
 /* Talk: the tab already says Talk */
 html.ph.ph-talk .bot-mark,html.ph.ph-talk .bot-name{display:none}
 html.ph.ph-talk .sheet-head{justify-content:flex-end}
+/* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
+.ph-today{display:flex; flex-direction:column; gap:2px}
+.ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+.ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ph-pri); letter-spacing:.04em}
+.ph-week{display:flex; flex-direction:column; gap:10px}
+.ph-week .ph-row-h{padding-bottom:0}
+.ph-stat{display:flex; flex-direction:column; gap:2px; padding:12px 14px; border-radius:18px; border:1px solid var(--hair); background:var(--panel); min-width:0}
+.ph-stat-l{font-size:.824rem; color:var(--ink-2)}
+.ph-stat-v{font-size:1.65rem; font-weight:600; line-height:1.15; color:var(--ink)}
+.ph-stat-v small{font-size:.824rem; font-weight:500; color:var(--ink-2)}
+.ph-stat-d{font-size:.765rem; color:var(--muted)}
+.ph-meter{display:block; height:8px; margin:6px 0 4px; border-radius:4px; background:var(--ph-wash); overflow:hidden}
+.ph-meter span{display:block; height:100%; border-radius:4px; background:var(--ph-pri)}
+.ph-cols-w{padding:12px 8px 6px; border-radius:18px; border:1px solid var(--hair); background:var(--panel)}
+.ph-cols-read{margin:0 6px 6px; min-height:1.3em; font-size:.824rem; color:var(--ink-2)}
+.ph-cols{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:end}
+.ph-col{display:flex; flex-direction:column; align-items:center; gap:4px; min-height:44px; padding:0; border:0; border-radius:10px; background:transparent; font:inherit; color:var(--ink-2)}
+.ph-col-v{font-size:.765rem; font-weight:600; color:var(--ink); min-height:1.2em}
+.ph-col-t{display:flex; align-items:flex-end; justify-content:center; width:100%; height:84px; border-bottom:1px solid var(--rule)}
+.ph-col-b{display:block; width:min(24px,60%); min-height:0; border-radius:4px 4px 0 0; background:var(--ph-pri)}
+.ph-col-x{font-size:.765rem}
+.ph-col.is-today .ph-col-x{font-weight:600; color:var(--ink)}
+.ph-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.ph-jr-e .ph-line b{font-weight:600; color:var(--ink-2)}
+.ph-btn.ph-danger{color:var(--accent-ink)}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
