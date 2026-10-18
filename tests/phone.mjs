@@ -240,10 +240,17 @@ await ok("the phone wears Moonlit Plum; the desktop keeps its colours", async ()
   assert.equal((await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--panel").trim())).toUpperCase(), "#2C1332");
   await p.screenshot({ path: "/tmp/claude-0/ph-test-goals-dark.png" }); await p.emulateMedia({ colorScheme: "light" });
 });
-await ok("Backlog opens the old page under a Back bar, and Back returns to You", async () => {
-  await go("backlog"); assert.equal(await p.locator("#ph-back").isVisible(), true); assert.equal(await p.locator("#ph-back-t").innerText(), "Backlog");
-  assert.equal(await p.locator("#v-backlog").isVisible(), true); assert.equal(await p.locator(".masthead").isVisible(), false);
-  await p.locator("#ph-back a").click(); await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/you");
+await ok("Backlog opens (as a phone page, or on older builds the old page under a Back bar), and Back returns to You", async () => {
+  await go("backlog"); assert.equal(await p.locator(".masthead").isVisible(), false);
+  if (await p.locator("#ph-back").isVisible()) {
+    assert.equal(await p.locator("#ph-back-t").innerText(), "Backlog"); assert.equal(await p.locator("#v-backlog").isVisible(), true);
+    await p.locator("#ph-back a").click();
+  } else {
+    /* builds from 2026-10-18: the phone's own Backlog page */
+    assert.equal((await p.locator("#ph-main h1").innerText()).trim(), "Backlog"); assert.equal(await p.locator("#v-backlog").isVisible(), false);
+    await p.locator("#ph-main .ph-nav").click();
+  }
+  await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/you");
 });
 /* ---------- the four iPhone breaks from the HIG review (2026-10-17) ---------- */
 const textBoxesUnder16 = () => p.evaluate(() => [...document.querySelectorAll("input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea")]
