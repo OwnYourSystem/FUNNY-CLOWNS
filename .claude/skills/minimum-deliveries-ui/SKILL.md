@@ -140,6 +140,15 @@ behind the selected tab: that is Android's Material, not iOS. The bar is
 `--panel` at 82% with a 20px blur, solid under reduced transparency. Tab
 labels stay 12px at every text size.
 
+**No old pages left on the phone (2026-10-18).** Backlog, Archive, Tags, the
+Planner and What the board learned are phone pages (`#/backlog`, `#/archive`,
+`#/tags`, `#/planner`, `#/learned`). `PH_OLD` is empty; a board page added
+later should get a phone page, not the Back-bar fallback. Pages that hold a
+box being typed in are in `PH_LOCK` (drawn once per visit, redrawn by their
+own actions). Data changes go through shared functions (`backlogAdd`,
+`backlogActivate`, `backlogRemove`, `meSet`, `meDay`, `editSub`, `editGoal`)
+or press the board's own button, never a copy of its logic.
+
 ## The phone shell is moulded, not drawn
 
 Below 820px the board changes its lighting, never its values. Everything is

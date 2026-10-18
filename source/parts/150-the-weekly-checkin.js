@@ -56,7 +56,7 @@ function weekNote(){
 }
 function weekAsk(){
   var last=weekLast(), cur=last&&last.k===weekKeyOf(new Date())?last:null, opts=[1,2,3,4,5].map(function(n){ return [String(n),String(n)]; });
-  askUser({title:"This week",
+  return askUser({title:"This week",
     body:["Five taps, from 1 (low) to 5 (high). It stays on this device only: it is not synced, and the tutor never sees it.","It is not a test and not advice. It is there so you can see how your weeks compare."],
     fields:WEEK_ITEMS.map(function(it){ return {k:it[0],label:it[1],kind:"pick",row:true,opts:opts,value:cur?cur[it[0]]:""}; }),
     ok:"Save", cancel:"Not now",

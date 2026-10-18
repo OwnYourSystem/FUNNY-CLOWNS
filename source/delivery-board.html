@@ -1268,7 +1268,7 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-form{display:flex; flex-direction:column; gap:6px}
 .ph-form .ph-lab{margin-top:10px}
 .ph-segb{display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
-.ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:0; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
+.ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:44px; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
 .ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
 .ph-sel{font:inherit; font-size:1rem; width:100%; min-height:52px; box-sizing:border-box; border:1px solid var(--rule); border-radius:14px;
   padding:0 12px; background:var(--panel); color:var(--ink)}
@@ -1431,6 +1431,36 @@ html.ph.ph-has-me .ph-today .ph-head{margin-top:12px}
 html.ph.ph-talk.ph-has-me .sheet-head{padding-right:48px}
 html.ph.ph-old.ph-has-me #ph-back{padding-right:60px}
 label.ph-rowb{cursor:pointer}
+/* Backlog, Archive, Tags, Planner and What the board learned as phone pages (2026-10-18) */
+.ph-search{min-height:44px}
+.ph-chips{display:flex; flex-wrap:wrap; gap:8px}
+.ph-tchip{display:inline-flex; align-items:baseline; gap:8px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--rule);
+  background:var(--panel); color:var(--ink); font:inherit; font-size:.941rem}
+.ph-tchip-n{font-size:.765rem; color:var(--muted)}
+.ph-tchip[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+.ph-tchip[aria-pressed="true"] .ph-tchip-n{color:var(--ph-on-pri); opacity:.8}
+.ph-where{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:4px 8px 4px 14px; border-top:1px solid var(--hair); font-size:.882rem}
+.ph-where:first-child{border-top:0}
+.ph-where span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+.ph-where .ph-sel-s{flex:0 0 auto; max-width:52%}
+.ph-held .ph-v{text-align:right; max-width:60%}
+.ph-mem{padding:14px}
+.ph-mem .ph-line{margin:0}
+.ph-danger-l{color:var(--accent-ink); padding:8px 0 0; min-height:44px}
+.ph-form .ph-h2{margin-top:6px}
+/* the interview, on the phone: plum, body type, 44px choices */
+html.ph #interview .card{border-color:var(--hair)}
+html.ph .iv-k{font-family:var(--font); font-size:.824rem; letter-spacing:0; text-transform:none; color:var(--muted)}
+html.ph .iv-dots i.on{background:var(--ph-pri)}
+html.ph #interview h3{font-weight:600; font-size:1.176rem}
+html.ph #interview .lede{font-size:.882rem}
+html.ph #iv-body label{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; color:var(--ink-2)}
+html.ph .ivpick button{min-height:44px; color:var(--ink); font-size:.941rem; border-color:var(--rule)}
+html.ph .ivpick button[aria-pressed="true"]{border-color:var(--ph-pri); background:var(--ph-wash)}
+html.ph #interview .dayrow button,html.ph #interview .feedrow button{font-family:var(--font); letter-spacing:0; text-transform:none; min-height:44px; min-width:44px}
+html.ph #interview .dayrow button[aria-pressed="true"],html.ph #interview .feedrow button[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph .iv-acts .btn{min-height:44px; font-size:1rem}
+html.ph .iv-acts .btn.take{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}
@@ -3661,7 +3691,7 @@ function weekNote(){
 }
 function weekAsk(){
   var last=weekLast(), cur=last&&last.k===weekKeyOf(new Date())?last:null, opts=[1,2,3,4,5].map(function(n){ return [String(n),String(n)]; });
-  askUser({title:"This week",
+  return askUser({title:"This week",
     body:["Five taps, from 1 (low) to 5 (high). It stays on this device only: it is not synced, and the tutor never sees it.","It is not a test and not advice. It is there so you can see how your weeks compare."],
     fields:WEEK_ITEMS.map(function(it){ return {k:it[0],label:it[1],kind:"pick",row:true,opts:opts,value:cur?cur[it[0]]:""}; }),
     ok:"Save", cancel:"Not now",
@@ -5229,6 +5259,20 @@ function editGoal(g,k,v){
   else return false;
   return true;
 }
+/* the backlog: add an idea, make one a goal, remove one. Both views call these. */
+function backlogAdd(t){ var v=String(t||"").trim(); if(!v) return null; var it={t:v,d:todayStr()}; state.backlog.unshift(it); return it; }
+function backlogActivate(i){
+  var it=state.backlog.splice(i,1)[0]; if(!it) return null;
+  var g=it.goal||newGoal(it.t);
+  state.groups.push(g); state.sel=g.id; touchHist();
+  return {g:g, wasGoal:!!it.goal};
+}
+function backlogRemove(i){
+  var it=state.backlog[i]; if(!it) return false;
+  if(it.goal){ it.goal.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); }); state.killed.push(it.goal.id); }
+  state.backlog.splice(i,1); touchHist();
+  return true;
+}
 /* a new subtask, and removing one for good: the same from both views */
 function addSub(g,name,rep){
   var n=String(name||"").trim(); if(!g||!n) return null;
@@ -5302,21 +5346,15 @@ document.addEventListener("click",function(e){
   if(gb){ backlogGoal(gb.dataset.gback); return; }
   var bg=e.target.closest("[data-bl-goal]");
   if(bg){
-    var it=state.backlog.splice(+bg.dataset.blGoal,1)[0];
-    if(it){ var g=it.goal||newGoal(it.t);
-      state.groups.push(g); state.sel=g.id; openGroupEd=!it.goal;
-      touchHist(); save(); location.hash="#/board"; renderAll(); }
+    var res=backlogActivate(+bg.dataset.blGoal);
+    if(res){ openGroupEd=!res.wasGoal; save(); location.hash="#/board"; renderAll(); }
     return;
   }
   var bd=e.target.closest("[data-bl-del]");
   if(bd){
     var bi=+bd.dataset.blDel, bit=state.backlog[bi]; if(!bit) return;
-    if(bit.goal){
-      if(!armGate("bldel:"+bit.goal.id,bd,"Remove it and all "+bit.goal.subs.length+"?")) return;
-      bit.goal.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); });
-      state.killed.push(bit.goal.id);
-    }
-    state.backlog.splice(bi,1); touchHist(); save(); renderAll(); return;
+    if(bit.goal && !armGate("bldel:"+bit.goal.id,bd,"Remove it and all "+bit.goal.subs.length+"?")) return;
+    backlogRemove(bi); save(); renderAll(); return;
   }
   var sn=e.target.closest("[data-snap]");
   if(sn){
@@ -8401,24 +8439,33 @@ function renderPlanner(){
   held.innerHTML = rows.length ? rows.join("")
     : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
 }
-$("#pl-form").addEventListener("input",function(e){
-  var k=e.target.dataset.me; if(!k) return;
-  var me=state.me, v=e.target.value;
+/* one fact about the person's week, and a working day on or off: the board's
+   Planner and the phone's both come through here */
+function meSet(k,v){
+  var me=state.me||(state.me=freshMe());
   if(k==="w0") me.work[0]=v;
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
   else me[k]=v;
-  me.done=true; save(); renderVerdict(); renderPlanner2();
+  me.done=true;
+}
+function meDay(i){
+  var me=state.me||(state.me=freshMe()), at=me.days.indexOf(i);
+  if(at>=0) me.days.splice(at,1); else me.days.push(i);
+  me.days.sort(); me.done=true;
+  return me.days.indexOf(i)>=0;
+}
+$("#pl-form").addEventListener("input",function(e){
+  var k=e.target.dataset.me; if(!k) return;
+  meSet(k,e.target.value); save(); renderVerdict(); renderPlanner2();
 });
 $("#pl-form").addEventListener("change",function(e){
   if(e.target.dataset.me) { save(); renderVerdict(); }
 });
 $("#pl-form").addEventListener("click",function(e){
   var b=e.target.closest("[data-day]"); if(!b) return;
-  var i=+b.dataset.day, me=state.me, at=me.days.indexOf(i);
-  if(at>=0) me.days.splice(at,1); else me.days.push(i);
-  me.days.sort(); me.done=true; save();
-  b.setAttribute("aria-pressed", me.days.indexOf(i)>=0 ? "true":"false");
+  var on=meDay(+b.dataset.day); save();
+  b.setAttribute("aria-pressed", on ? "true":"false");
   renderVerdict(); renderPlanner2();
 });
 $("#pl-form").addEventListener("click",function(e){
@@ -8692,7 +8739,7 @@ function renderArchive(){
 
 $("#bl-add").addEventListener("click",function(){
   var v=$("#bl-name").value.trim(); if(!v){ $("#bl-name").focus(); return; }
-  state.backlog.unshift({t:v,d:todayStr()});
+  backlogAdd(v);
   $("#bl-name").value="";
   save(); renderAll();
 });
@@ -8708,7 +8755,14 @@ $("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl
    bar. "Classic view" in You turns the old phone board back on.          */
 var PH_KEY="oys-classic", PH_MQ=null, PH_ON=false, PH_DRAWN="", PH_ONB=0, PH_GOAL="";
 var PH_V={end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
-var PH_OLD={backlog:"Backlog", tags:"Tags", archive:"Archive", planner:"Planner"};
+/* The board's own pages a phone still shows under a Back bar. Since
+   2026-10-18 Backlog, Tags, Archive and the Planner have phone pages of
+   their own, so none is left; the mechanism stays for any page added later. */
+var PH_OLD={};
+/* the phone pages drawn once per visit, because they hold a box being typed in;
+   their own actions draw them again */
+var PH_LOCK={step:1, planner:1, learned:1, backlog:1, archive:1, tags:1};
+var PH_Q={}, PH_TAGS=[];
 var PH_DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 var PH_MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var PH_CHEV='<svg class="ph-chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg>';
@@ -8724,7 +8778,7 @@ function phNav(href,label){ return '<a class="ph-nav" href="'+href+'" aria-label
 /* where Back (and a swipe in from the left edge) goes from here */
 function phParent(){
   var r=phRoute();
-  if(r==="goals"||PH_OLD[r]) return "#/you";
+  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned") return "#/you";
   if(r==="goal") return "#/goals";
   if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
@@ -8741,7 +8795,7 @@ function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k=
 function phUndoable(label,fn){
   var snap=JSON.stringify(state), r;
   try{ r=fn(); }catch(e){ toast("",e.message); return; }
-  save(); renderAll();
+  save(); renderAll(); PH_DRAWN=""; phRender();
   if(PH_UNDO) clearTimeout(PH_UNDO.t);
   PH_UNDO={snap:snap, fp:phFp(), t:setTimeout(phUndoHide,6000)};
   var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
@@ -8846,7 +8900,7 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -8863,8 +8917,8 @@ function phRender(){
   phTabsMark(r);
   var back=$("#ph-back-t"); if(back) back.textContent=PH_OLD[r]||"";
   /* the onboarding keeps what is typed: it is drawn again only when its step changes */
-  var key=onb?"onb"+PH_ONB:r==="step"?"step:"+phArg():r;
-  if((onb||r==="step") && PH_DRAWN===key){ phMini(r,onb); return; }
+  var key=onb?"onb"+PH_ONB:PH_LOCK[r]?r+":"+phArg():r;
+  if((onb||PH_LOCK[r]) && PH_DRAWN===key){ phMini(r,onb); return; }
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
   PH_DRAWN=key;
   main.innerHTML = onb ? phOnbHtml()
@@ -8874,6 +8928,11 @@ function phRender(){
     : r==="goals" ? phGoals()
     : r==="goal" ? phGoalPage()
     : r==="step" ? phStepPage()
+    : r==="backlog" ? phBacklog()
+    : r==="archive" ? phArchive()
+    : r==="tags" ? phTags()
+    : r==="planner" ? phPlanner()
+    : r==="learned" ? phLearned()
     : (talk||old) ? ""
     : phNow();
   phMini(r,onb);
@@ -9010,6 +9069,195 @@ function phWhy(){
   askUser({title:"Why this one", body:[c.why||"You put it in Today."].concat(c.v?verdictNot(c.v):[]), noOk:true, cancel:"Close"});
 }
 
+/* ---- Backlog, Archive, Tags (2026-10-18) ----
+   The phone's own pages for what the board shows as its Backlog, Archive and
+   Tags pages. Rows open a sheet with what can be done to them; anything that
+   can be taken back has Undo. Both views call the same functions. */
+function phSeg(cur){
+  function a(r,t){ return '<a href="#/'+r+'"'+(cur===r?' aria-current="page"':'')+'>'+t+'</a>'; }
+  return '<nav class="ph-seg" aria-label="Show">'+a("goals","Active")+a("backlog","Backlog")+a("archive","Archive")+'</nav>';
+}
+function phSearchBox(r,ph){
+  return '<input class="ph-in ph-search" id="ph-q" data-r="'+r+'" type="search" placeholder="'+esc(ph)+'" aria-label="'+esc(ph)+'" value="'+esc(PH_Q[r]||"")+'" enterkeyhint="search" autocomplete="off">';
+}
+function phHit(r,t){ var q=String(PH_Q[r]||"").trim().toLowerCase(); return !q || String(t||"").toLowerCase().indexOf(q)>=0; }
+function phShortDate(d){ var p=String(d||"").split("-"); return p.length===3 ? (+p[2])+" "+PH_MONTHS[+p[1]-1].slice(0,3)+" "+p[0] : ""; }
+function phBacklog(){
+  var h=[];
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Backlog</h1><p class="ph-sub">Ideas worth doing that are not goals yet. Put one here so it stops taking room in your head.</p></div>');
+  h.push(phSeg("backlog"));
+  if(state.backlog.length>4) h.push(phSearchBox("backlog","Search the backlog"));
+  h.push('<div id="ph-list-body">'+phBacklogList()+'</div>');
+  h.push('<div class="ph-dock"><button type="button" class="ph-btn ph-pri ph-wide" data-ph="bladd">Add an idea</button></div>');
+  return h.join("");
+}
+function phBacklogList(){
+  var l=state.backlog.filter(function(b){ return phHit("backlog",b.t); });
+  if(!l.length) return '<p class="ph-empty">'+(state.backlog.length?"Nothing matches.":"Nothing waiting. Add the next idea with the button below.")+'</p>';
+  return '<div class="ph-grp">'+l.map(function(b){
+    var i=state.backlog.indexOf(b), g=b.goal;
+    return '<button type="button" class="ph-rowb" data-ph="blitem" data-i="'+i+'"><span>'+esc(b.t)+'</span><span class="ph-rv"><span class="ph-v">'+
+      esc(g?g.subs.length+(g.subs.length===1?" step":" steps")+" · "+groupPct(g)+"%":"Added "+phShortDate(b.d))+'</span>'+PH_CHEV+'</span></button>';
+  }).join("")+'</div>';
+}
+function phBlItem(i){
+  var b=state.backlog[i]; if(!b) return;
+  var g=b.goal;
+  askUser({title:b.t, body:[g?"A goal with "+g.subs.length+(g.subs.length===1?" step":" steps")+", "+groupPct(g)+"% done, waiting here. Added "+phShortDate(b.d)+".":"An idea, added "+phShortDate(b.d)+"."],
+    more:[["go",g?"Make it active":"Make it a goal"],["del","Remove it"]], noOk:true, cancel:"Close"}).then(function(v){
+    if(v==="go"){
+      var res=null; phUndoable((g?"Active again: ":"Now a goal: ")+phCut(b.t,36),function(){ res=backlogActivate(i); });
+      if(res) phGoal(res.g.id);
+    } else if(v==="del"){
+      askUser({title:"Remove it?", body:[g?"“"+b.t+"” and its "+g.subs.length+" steps go.":"“"+b.t+"” goes."], ok:"Remove it", cancel:"Keep it", danger:true}).then(function(yes){
+        if(yes) phUndoable("Removed: "+phCut(b.t,40),function(){ backlogRemove(i); });
+      });
+    }
+  });
+}
+function phBlAdd(last){
+  askUser({title:"Add an idea", body:[last?"Added “"+last+"”. Add the next, or press Done.":"Something for a free hour. It can become a goal later."],
+    fields:[{k:"t",label:"The idea",kind:"text",mic:true,ph:"Say it or type it"}], ok:"Add", cancel:last?"Done":"Close",
+    check:function(v){ return String(v.t||"").trim()?"":"Type or say the idea first."; }}).then(function(v){
+    if(!v) return;
+    var it=backlogAdd(v.t); save(); renderAll(); PH_DRAWN=""; phRender();
+    if(it) phBlAdd(it.t);
+  });
+}
+function phArchive(){
+  var h=[];
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Archive</h1><p class="ph-sub">Finished goals, kept with their steps. Any of them can go back on the board.</p></div>');
+  h.push(phSeg("archive"));
+  if(state.archive.length>4) h.push(phSearchBox("archive","Search finished goals"));
+  h.push('<div id="ph-list-body">'+phArchiveList()+'</div>');
+  return h.join("");
+}
+function phArchiveList(){
+  var l=state.archive.filter(function(g){ return phHit("archive",g.name); });
+  if(!l.length) return '<p class="ph-empty">'+(state.archive.length?"Nothing matches.":"Nothing archived yet. Archive a finished goal from its Goal details.")+'</p>';
+  return '<div class="ph-grp">'+l.map(function(g){
+    return '<button type="button" class="ph-rowb" data-ph="aritem" data-id="'+esc(g.id)+'"><span>'+esc(g.name)+'</span><span class="ph-rv"><span class="ph-v">'+
+      esc((g.archivedAt?phShortDate(g.archivedAt)+" · ":"")+groupPct(g)+"%")+'</span>'+PH_CHEV+'</span></button>';
+  }).join("")+'</div>';
+}
+function phArItem(id){
+  var g=null; state.archive.forEach(function(x){ if(x.id===id) g=x; }); if(!g) return;
+  askUser({title:g.name, body:[g.subs.length+(g.subs.length===1?" step, ":" steps, ")+groupPct(g)+"% done."+(g.archivedAt?" Archived "+phShortDate(g.archivedAt)+".":"")],
+    more:[["back","Put it back on the board"]], noOk:true, cancel:"Close"}).then(function(v){
+    if(v!=="back") return;
+    phUndoable("Back on the board: "+phCut(g.name,32),function(){ unarchiveGoal(g.id); });
+    phGoal(g.id);
+  });
+}
+/* Tags: pick one or more; the goals that carry all of them show below. The
+   pick is the phone page's own, so it never filters the board on a computer. */
+function phTags(){
+  var h=[], tags=allTags();
+  PH_TAGS=PH_TAGS.filter(function(t){ return tags.some(function(x){ return x.t===t; }); });
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Tags</h1><p class="ph-sub">Pick tags to see the goals that carry all of them. A goal gets its tags in its Goal details.</p></div>');
+  if(!tags.length){ h.push('<p class="ph-empty">No tags yet. Add up to five to any goal in its Goal details.</p>'); return h.join(""); }
+  h.push('<div class="ph-chips" role="group" aria-label="Tags">'+tags.map(function(x){
+    var gs=state.groups.filter(function(g){ return g.tags.indexOf(x.t)>=0; }), pct=gs.length?Math.round(gs.reduce(function(t,g){ return t+groupPct(g); },0)/gs.length):0;
+    return '<button type="button" class="ph-tchip" data-ph="tagpick" data-t="'+esc(x.t)+'" aria-pressed="'+(PH_TAGS.indexOf(x.t)>=0)+'"><span>#'+esc(x.t)+'</span><span class="ph-tchip-n">'+x.n+' · '+pct+'%</span></button>';
+  }).join("")+'</div>');
+  var picked=PH_TAGS.length?state.groups.filter(function(g){ return PH_TAGS.every(function(t){ return g.tags.indexOf(t)>=0; }); }):[];
+  h.push('<section aria-label="Goals with these tags"><div class="ph-row-h"><h2 class="ph-h2">'+(PH_TAGS.length?"Goals with "+(PH_TAGS.length===1?"this tag":"all of these"):"Goals")+'</h2></div>');
+  if(!PH_TAGS.length) h.push('<p class="ph-empty">Pick a tag above.</p>');
+  else if(!picked.length) h.push('<p class="ph-empty">No goal carries all of those tags.</p>');
+  else h.push('<div class="ph-grp">'+picked.map(function(g){
+    return '<button type="button" class="ph-rowb" data-ph="goal" data-id="'+esc(g.id)+'"><span>'+esc(g.name)+'</span><span class="ph-rv"><span class="ph-v">'+groupPct(g)+'%</span>'+PH_CHEV+'</span></button>';
+  }).join("")+'</div>');
+  h.push('</section>');
+  return h.join("");
+}
+
+/* ---- the Planner (2026-10-18) ----
+   What the board may assume about an ordinary week, saved the moment it is
+   changed, as on the board's Planner (same meSet and meDay). Then where each
+   goal can be done, what is held back right now and why, and the interview. */
+function phPlanner(){
+  var me=state.me||freshMe(), h=[];
+  function tm(k,lab,v){ return '<label class="ph-lab" for="ph-p-'+k+'">'+lab+'</label><input class="ph-in" type="time" id="ph-p-'+k+'" data-pme="'+k+'" value="'+esc(v||"")+'">'; }
+  function sel(k,lab,list,v){ return '<label class="ph-lab" for="ph-p-'+k+'">'+lab+'</label><select class="ph-sel" id="ph-p-'+k+'" data-pme="'+k+'">'+phOpts(list,v)+'</select>'; }
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Planner</h1><p class="ph-sub">What the board may assume about an ordinary week. Changes are saved as you make them.</p></div>');
+  h.push('<section class="ph-form" aria-label="Your week"><h2 class="ph-h2">Your week</h2>'+
+    '<span class="ph-lab">Working days</span><div class="ph-segb" role="group" aria-label="Working days">'+
+      DAYS_SHORT.map(function(n,i){ return '<button type="button" data-ph="pday" data-day="'+i+'" aria-pressed="'+(me.days.indexOf(i)>=0)+'" aria-label="'+esc(PH_DAYS[i])+'">'+esc(n.slice(0,2))+'</button>'; }).join("")+'</div>'+
+    '<div class="ph-two"><div>'+tm("w0","Work starts",me.work[0])+'</div><div>'+tm("w1","Work ends",me.work[1])+'</div></div>'+
+    '<label class="ph-lab" for="ph-p-commute">Travel each way, in minutes</label><input class="ph-in" type="number" inputmode="numeric" min="0" max="240" id="ph-p-commute" data-pme="commute" value="'+(+me.commute||0)+'">'+
+    tm("wind","Your day ends at",me.wind)+
+    sel("sharp","When you are sharpest",SHARP,me.sharp)+
+    sel("gym","Training fits",GYMWIN,me.gym)+
+    tm("brief","Morning brief at",me.brief||"07:30")+'</section>');
+  h.push('<section class="ph-form" aria-label="What matters"><h2 class="ph-h2">What matters</h2>'+
+    '<label class="ph-lab" for="ph-p-north">The one thing that matters most right now</label><input class="ph-in" id="ph-p-north" data-pme="north" value="'+esc(me.north||"")+'" placeholder="Ship the tracker before the audit" enterkeyhint="done">'+
+    '<label class="ph-lab" for="ph-p-never">Never plan over</label><input class="ph-in" id="ph-p-never" data-pme="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon" enterkeyhint="done"></section>');
+  h.push('<section aria-label="Where each goal can be done"><div class="ph-row-h"><h2 class="ph-h2">Where each goal can be done</h2></div>'+
+    '<p class="ph-note">This is what stops it telling you to train while you are at work.</p>'+
+    (state.groups.length?'<div class="ph-grp ph-wheres">'+state.groups.map(function(g){
+      return '<label class="ph-where"><span>'+esc(g.name)+'</span><select class="ph-sel ph-sel-s" data-pwhere="'+esc(g.id)+'" aria-label="Where '+esc(g.name)+' can be done">'+phOpts(WHERES.map(function(x){ return [x[0],x[1]]; }),g.where||"any")+'</select></label>';
+    }).join("")+'</div>':'<p class="ph-empty">No goals yet.</p>')+'</section>');
+  h.push('<section aria-label="Held back right now"><div class="ph-row-h"><h2 class="ph-h2">Held back right now</h2></div><div id="ph-held">'+phHeld()+'</div></section>');
+  h.push('<div class="ph-grp">'+phRow("interview","Interview me again","")+'</div>');
+  return h.join("");
+}
+function phHeld(){
+  var c=nowCtx(), rows=[];
+  state.groups.forEach(function(g){ if(groupPct(g)>=100) return; var f=feasible(g,c); if(!f.ok) rows.push([g.name,whereLabel(g.where)+" · "+f.why]); });
+  return rows.length ? '<div class="ph-grp">'+rows.map(function(x){ return '<div class="ph-rowf ph-held"><span>'+esc(x[0])+'</span><span class="ph-v">'+esc(x[1])+'</span></div>'; }).join("")+'</div>'
+    : '<p class="ph-empty">Nothing is held back. Everything can be worked on in this hour.</p>';
+}
+function phPlannerEdit(el){
+  if(el.getAttribute("data-pwhere")){ var g=gById(el.getAttribute("data-pwhere")); if(g){ editGoal(g,"where",el.value); save(); renderAll(); } }
+  else { meSet(el.getAttribute("data-pme"),el.value); save(); renderAll(); }
+  var hd=$("#ph-held"); if(hd) hd.innerHTML=phHeld();
+}
+
+/* ---- What the board learned, and hints (2026-10-18) ----
+   The private side of the board's Planner, on its own page: the notes it
+   keeps about how you work, the daily hint, and the weekly check-in. The
+   switches and the erase buttons press the board's own, so the rules and the
+   confirmations are the same. */
+function phLearned(){
+  var h=[], k=memKept(), wl=weekData().log, hs=hintStats(hintLog().concat(state.hint&&state.hint.ans?[state.hint]:[])), nn=!(state.me&&state.me.hintNote===false);
+  h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">What the board learned</h1><p class="ph-sub">Only what you kept. The tutor reads these when you chat with it. Anything it learned lapses after '+MEM_LAPSE+' days unless it shows up again.</p></div>');
+  h.push('<div class="ph-grp">'+phRow("memlearn","Learning",memLearnOn()?"On":"Off",true)+'</div>');
+  h.push('<section aria-label="What it keeps"><div class="ph-row-h"><h2 class="ph-h2">What it keeps</h2></div>'+
+    (k.length?k.map(function(m){
+      var src=m.src==="you"?"You told it":m.src==="tutor"?"The tutor suggested it, you kept it":"Learned from what you did";
+      var lapse=m.src==="you"?"stays until you remove it":"lapses "+phShortDate(addDays(m.seen,MEM_LAPSE))+" unless it shows up again";
+      return '<div class="ph-card ph-mem"><p class="ph-line">'+esc(m.t)+'</p><p class="ph-note" style="padding:0">'+esc(src+" · "+lapse+(m.evid?" · "+m.evid:""))+'</p>'+
+        '<button type="button" class="ph-link ph-danger-l" data-ph="memdel" data-id="'+esc(m.id)+'">Remove</button></div>';
+    }).join(""):'<p class="ph-empty">Nothing kept yet. When it notices a pattern it asks you first.</p>')+
+    '<label class="ph-lab" for="ph-memnew">Tell it something lasting about how you work</label>'+
+    '<input class="ph-in" id="ph-memnew" maxlength="140" placeholder="Mornings are for deep work" enterkeyhint="done">'+
+    '<div class="ph-acts" style="margin-top:8px"><button type="button" class="ph-mic" data-ph="mic" data-for="ph-memnew" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
+    '<button type="button" class="ph-btn ph-pri" data-ph="memadd">Remember it</button></div><p class="ph-note" id="ph-onb-hint" aria-live="polite"></p></section>');
+  h.push('<section aria-label="Daily hint"><div class="ph-row-h"><h2 class="ph-h2">Daily hint</h2></div>'+
+    '<p class="ph-note">One a day at most, from your own numbers or the library, with where it came from. It learns which kind you find helpful.</p>'+
+    '<div class="ph-grp">'+phRow("hinton","Hints",hintOn()?"On":"Off",true)+phRow("hintnote","Also as a reminder",nn?"On":"Off",true)+phRow("baron","Low-day check-in",barOn()?"On":"Off",true)+'</div>'+
+    '<div class="ph-grp" style="margin-top:10px">'+HINT_TYPES.map(function(t){ var r=hs[t];
+      return '<div class="ph-rowf"><span>'+esc(HINT_NAMES[t])+'</span><span class="ph-v">'+esc(r.n?r.h+" helpful, "+r.no+" not for me":"Not tried yet")+'</span></div>'; }).join("")+'</div>'+
+    '<div class="ph-grp" style="margin-top:10px"><button type="button" class="ph-rowb ph-danger" data-ph="hintreset"><span>Forget which hints helped</span></button></div></section>');
+  h.push('<section aria-label="Weekly check-in"><div class="ph-row-h"><h2 class="ph-h2">Weekly check-in</h2><span class="ph-k">'+(wl.length?wl.length+" kept":"")+'</span></div>'+
+    '<p class="ph-note">Five taps, 1 to 5, once a week if you like. Kept on this phone only. It is not a test and not advice.</p>'+
+    '<div class="ph-grp">'+phRow("week","Check in",weekDue()?"Due":"Done this week")+
+    wl.slice(-4).reverse().map(function(x){ var t=0; WEEK_ITEMS.forEach(function(it){ t+=+x[it[0]]||0; });
+      return '<div class="ph-rowf"><span>Week '+esc(String(x.k).split("-W")[1]||x.k)+' · '+esc(phShortDate(x.d))+'</span><span class="ph-v">Average '+(Math.round(t/WEEK_ITEMS.length*10)/10)+' of 5</span></div>'; }).join("")+'</div>'+
+    (wl.length?'<div class="ph-grp" style="margin-top:10px"><button type="button" class="ph-rowb ph-danger" data-ph="weekerase"><span>Delete my check-ins</span></button></div>':'')+'</section>');
+  h.push('<div class="ph-grp"><button type="button" class="ph-rowb ph-danger" data-ph="memerase"><span>Erase everything it has learned</span></button></div>');
+  return h.join("");
+}
+function phMemAdd(){
+  var el=$("#ph-memnew"), v=el?String(el.value||"").trim():"";
+  if(!v){ var n=$("#ph-onb-hint"); if(n) n.textContent="Type or say it first."; if(el) el.focus(); return; }
+  try{ memAdd(v,"you"); }catch(er){ toast("Memory",er.message); return; }
+  save(); renderAll(); PH_DRAWN=""; phRender();
+}
+/* press one of the board's own buttons, then draw this page again */
+function phPress(sel){ var b=$(sel); if(b) b.click(); PH_DRAWN=""; phRender(); }
+function phPressAsk(sel){ var b=$(sel); if(b) b.click(); var t=setInterval(function(){ if(!document.querySelector("dialog.ask[open]")){ clearInterval(t); PH_DRAWN=""; phRender(); } },150); }
+
 /* ---- Journal ----
    Private and quiet on purpose (2026-10-18): the page shows that there are
    notes, never what they say. Yesterday's note is one closed card; Show opens
@@ -9077,7 +9325,7 @@ function phYou(){
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
-    phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("planner","What the board learned, and hints","")+'</div>');
+    phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("learned","What the board learned, and hints","")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
     phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+
     phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+
@@ -9102,7 +9350,7 @@ function phDayEnd(){
 function phGoals(){
   var h=[];
   h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Goals</h1></div>');
-  h.push('<nav class="ph-seg" aria-label="Show"><a href="#/goals" aria-current="page">Active</a><a href="#/backlog">Backlog</a><a href="#/archive">Archive</a></nav>');
+  h.push(phSeg("goals"));
   if(!state.groups.length) h.push('<p class="ph-empty">No goals yet. Press New goal, or say one in Talk.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
@@ -9366,6 +9614,22 @@ function phOnbFinish(add){
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
     else if(k==="reopen") phReopen(id);
     else if(k==="jropen") PH_JR_OPEN=true;
+    else if(k==="bladd") phBlAdd("");
+    else if(k==="blitem") phBlItem(+b.getAttribute("data-i"));
+    else if(k==="aritem") phArItem(id);
+    else if(k==="tagpick"){ var tg=b.getAttribute("data-t"), ti=PH_TAGS.indexOf(tg); if(ti>=0) PH_TAGS.splice(ti,1); else PH_TAGS.push(tg); PH_DRAWN=""; phRender(); var tb=document.querySelector('[data-ph=tagpick][data-t="'+(window.CSS&&CSS.escape?CSS.escape(tg):tg)+'"]'); if(tb) tb.focus(); }
+    else if(k==="pday"){ var on=meDay(+b.getAttribute("data-day")); save(); renderAll(); b.setAttribute("aria-pressed",on?"true":"false"); var hd=$("#ph-held"); if(hd) hd.innerHTML=phHeld(); }
+    else if(k==="interview") $("#pl-interview").click();
+    else if(k==="learned") phGo("learned");
+    else if(k==="memlearn") phPress("#mem-learn");
+    else if(k==="memadd") phMemAdd();
+    else if(k==="memdel"){ memDrop(id,false); save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="memerase") phPressAsk("#mem-erase");
+    else if(k==="hinton") phPress("#hint-on");
+    else if(k==="hintnote") phPress("#hint-note");
+    else if(k==="baron") phPress("#bar-on");
+    else if(k==="hintreset") phPressAsk("#hint-reset");
+    else if(k==="weekerase") phPressAsk("#week-erase");
     else if(k==="phshow"){ var pp=phPhoto(); if(pp){ pp.show=!pp.show; phPhotoSave(pp); PH_DRAWN=""; phRender(); var sb=$("[data-ph=phshow]"); if(sb) sb.focus(); } }
     else if(k==="phdel") askUser({title:"Remove your photo?", body:["It goes from this phone. You can add one again at any time."], ok:"Remove it", cancel:"Keep it", danger:true})
       .then(function(yes){ if(yes){ phPhotoSave(null); PH_DRAWN=""; phRender(); } });
@@ -9381,7 +9645,7 @@ function phOnbFinish(add){
     else if(k==="dayend") phDayEnd();
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="planner") phGo("planner");
-    else if(k==="week") weekAsk();
+    else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="theme"){ $("#btn-theme").click(); PH_DRAWN=""; phRender(); phBarColour(); }
     else if(k==="classic"){ try{ localStorage.setItem(PH_KEY,"1"); }catch(er){} location.hash="#/board"; phSet(); }
@@ -9410,11 +9674,14 @@ function phOnbFinish(add){
   });
   root.addEventListener("keydown",function(e){
     if(e.key!=="Enter" || !e.target) return;
-    if(e.target.getAttribute && e.target.getAttribute("data-phed")){ e.preventDefault(); e.target.blur(); }
+    if(e.target.getAttribute && (e.target.getAttribute("data-phed")||e.target.getAttribute("data-pme"))){ e.preventDefault(); e.target.blur(); }
+    else if(e.target.id==="ph-memnew"){ e.preventDefault(); phMemAdd(); }
   });
   root.addEventListener("change",function(e){ var t=e.target;
-    if(t && t.id==="ph-photo-in"){ phPhotoFile(t.files&&t.files[0]); t.value=""; return; } if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
-  root.addEventListener("input",function(e){ if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
+    if(t && t.id==="ph-photo-in"){ phPhotoFile(t.files&&t.files[0]); t.value=""; return; }
+    if(t && t.getAttribute && (t.getAttribute("data-pme")||t.getAttribute("data-pwhere"))){ phPlannerEdit(t); return; } if(t && t.getAttribute && (t.getAttribute("data-phed")||t.getAttribute("data-phmove"))) phStepEdit(t); });
+  root.addEventListener("input",function(e){
+    if(e.target && e.target.id==="ph-q"){ var qr=e.target.getAttribute("data-r"); PH_Q[qr]=e.target.value; var lb=$("#ph-list-body"); if(lb) lb.innerHTML=qr==="archive"?phArchiveList():phBacklogList(); return; } if(e.target && e.target.id==="ph-s-pct"){ var o=$("#ph-s-pv"); if(o) o.textContent=e.target.value+"%"; } });
   addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
   setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
   var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);

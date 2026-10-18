@@ -15,7 +15,7 @@ function renderArchive(){
 
 $("#bl-add").addEventListener("click",function(){
   var v=$("#bl-name").value.trim(); if(!v){ $("#bl-name").focus(); return; }
-  state.backlog.unshift({t:v,d:todayStr()});
+  backlogAdd(v);
   $("#bl-name").value="";
   save(); renderAll();
 });

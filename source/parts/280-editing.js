@@ -33,6 +33,20 @@ function editGoal(g,k,v){
   else return false;
   return true;
 }
+/* the backlog: add an idea, make one a goal, remove one. Both views call these. */
+function backlogAdd(t){ var v=String(t||"").trim(); if(!v) return null; var it={t:v,d:todayStr()}; state.backlog.unshift(it); return it; }
+function backlogActivate(i){
+  var it=state.backlog.splice(i,1)[0]; if(!it) return null;
+  var g=it.goal||newGoal(it.t);
+  state.groups.push(g); state.sel=g.id; touchHist();
+  return {g:g, wasGoal:!!it.goal};
+}
+function backlogRemove(i){
+  var it=state.backlog[i]; if(!it) return false;
+  if(it.goal){ it.goal.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); }); state.killed.push(it.goal.id); }
+  state.backlog.splice(i,1); touchHist();
+  return true;
+}
 /* a new subtask, and removing one for good: the same from both views */
 function addSub(g,name,rep){
   var n=String(name||"").trim(); if(!g||!n) return null;
@@ -106,21 +120,15 @@ document.addEventListener("click",function(e){
   if(gb){ backlogGoal(gb.dataset.gback); return; }
   var bg=e.target.closest("[data-bl-goal]");
   if(bg){
-    var it=state.backlog.splice(+bg.dataset.blGoal,1)[0];
-    if(it){ var g=it.goal||newGoal(it.t);
-      state.groups.push(g); state.sel=g.id; openGroupEd=!it.goal;
-      touchHist(); save(); location.hash="#/board"; renderAll(); }
+    var res=backlogActivate(+bg.dataset.blGoal);
+    if(res){ openGroupEd=!res.wasGoal; save(); location.hash="#/board"; renderAll(); }
     return;
   }
   var bd=e.target.closest("[data-bl-del]");
   if(bd){
     var bi=+bd.dataset.blDel, bit=state.backlog[bi]; if(!bit) return;
-    if(bit.goal){
-      if(!armGate("bldel:"+bit.goal.id,bd,"Remove it and all "+bit.goal.subs.length+"?")) return;
-      bit.goal.subs.forEach(function(id){ delete state.subs[id]; state.killed.push(id); });
-      state.killed.push(bit.goal.id);
-    }
-    state.backlog.splice(bi,1); touchHist(); save(); renderAll(); return;
+    if(bit.goal && !armGate("bldel:"+bit.goal.id,bd,"Remove it and all "+bit.goal.subs.length+"?")) return;
+    backlogRemove(bi); save(); renderAll(); return;
   }
   var sn=e.target.closest("[data-snap]");
   if(sn){

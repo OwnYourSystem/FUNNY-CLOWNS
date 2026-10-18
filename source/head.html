@@ -1268,7 +1268,7 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-form{display:flex; flex-direction:column; gap:6px}
 .ph-form .ph-lab{margin-top:10px}
 .ph-segb{display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
-.ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:0; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
+.ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:44px; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
 .ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
 .ph-sel{font:inherit; font-size:1rem; width:100%; min-height:52px; box-sizing:border-box; border:1px solid var(--rule); border-radius:14px;
   padding:0 12px; background:var(--panel); color:var(--ink)}
@@ -1431,6 +1431,36 @@ html.ph.ph-has-me .ph-today .ph-head{margin-top:12px}
 html.ph.ph-talk.ph-has-me .sheet-head{padding-right:48px}
 html.ph.ph-old.ph-has-me #ph-back{padding-right:60px}
 label.ph-rowb{cursor:pointer}
+/* Backlog, Archive, Tags, Planner and What the board learned as phone pages (2026-10-18) */
+.ph-search{min-height:44px}
+.ph-chips{display:flex; flex-wrap:wrap; gap:8px}
+.ph-tchip{display:inline-flex; align-items:baseline; gap:8px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--rule);
+  background:var(--panel); color:var(--ink); font:inherit; font-size:.941rem}
+.ph-tchip-n{font-size:.765rem; color:var(--muted)}
+.ph-tchip[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+.ph-tchip[aria-pressed="true"] .ph-tchip-n{color:var(--ph-on-pri); opacity:.8}
+.ph-where{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:4px 8px 4px 14px; border-top:1px solid var(--hair); font-size:.882rem}
+.ph-where:first-child{border-top:0}
+.ph-where span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+.ph-where .ph-sel-s{flex:0 0 auto; max-width:52%}
+.ph-held .ph-v{text-align:right; max-width:60%}
+.ph-mem{padding:14px}
+.ph-mem .ph-line{margin:0}
+.ph-danger-l{color:var(--accent-ink); padding:8px 0 0; min-height:44px}
+.ph-form .ph-h2{margin-top:6px}
+/* the interview, on the phone: plum, body type, 44px choices */
+html.ph #interview .card{border-color:var(--hair)}
+html.ph .iv-k{font-family:var(--font); font-size:.824rem; letter-spacing:0; text-transform:none; color:var(--muted)}
+html.ph .iv-dots i.on{background:var(--ph-pri)}
+html.ph #interview h3{font-weight:600; font-size:1.176rem}
+html.ph #interview .lede{font-size:.882rem}
+html.ph #iv-body label{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; color:var(--ink-2)}
+html.ph .ivpick button{min-height:44px; color:var(--ink); font-size:.941rem; border-color:var(--rule)}
+html.ph .ivpick button[aria-pressed="true"]{border-color:var(--ph-pri); background:var(--ph-wash)}
+html.ph #interview .dayrow button,html.ph #interview .feedrow button{font-family:var(--font); letter-spacing:0; text-transform:none; min-height:44px; min-width:44px}
+html.ph #interview .dayrow button[aria-pressed="true"],html.ph #interview .feedrow button[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph .iv-acts .btn{min-height:44px; font-size:1rem}
+html.ph .iv-acts .btn.take{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
 html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
 html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
 html.ph #jr-check{display:none}

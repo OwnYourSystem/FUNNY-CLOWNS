@@ -54,24 +54,33 @@ function renderPlanner(){
   held.innerHTML = rows.length ? rows.join("")
     : '<p class="calm">Nothing is held back. Everything on the board can be worked in this hour.</p>';
 }
-$("#pl-form").addEventListener("input",function(e){
-  var k=e.target.dataset.me; if(!k) return;
-  var me=state.me, v=e.target.value;
+/* one fact about the person's week, and a working day on or off: the board's
+   Planner and the phone's both come through here */
+function meSet(k,v){
+  var me=state.me||(state.me=freshMe());
   if(k==="w0") me.work[0]=v;
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
   else me[k]=v;
-  me.done=true; save(); renderVerdict(); renderPlanner2();
+  me.done=true;
+}
+function meDay(i){
+  var me=state.me||(state.me=freshMe()), at=me.days.indexOf(i);
+  if(at>=0) me.days.splice(at,1); else me.days.push(i);
+  me.days.sort(); me.done=true;
+  return me.days.indexOf(i)>=0;
+}
+$("#pl-form").addEventListener("input",function(e){
+  var k=e.target.dataset.me; if(!k) return;
+  meSet(k,e.target.value); save(); renderVerdict(); renderPlanner2();
 });
 $("#pl-form").addEventListener("change",function(e){
   if(e.target.dataset.me) { save(); renderVerdict(); }
 });
 $("#pl-form").addEventListener("click",function(e){
   var b=e.target.closest("[data-day]"); if(!b) return;
-  var i=+b.dataset.day, me=state.me, at=me.days.indexOf(i);
-  if(at>=0) me.days.splice(at,1); else me.days.push(i);
-  me.days.sort(); me.done=true; save();
-  b.setAttribute("aria-pressed", me.days.indexOf(i)>=0 ? "true":"false");
+  var on=meDay(+b.dataset.day); save();
+  b.setAttribute("aria-pressed", on ? "true":"false");
   renderVerdict(); renderPlanner2();
 });
 $("#pl-form").addEventListener("click",function(e){
