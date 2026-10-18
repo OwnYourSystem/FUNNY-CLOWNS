@@ -49,7 +49,9 @@ await ok("Now opens with the day, the week, the date with its year, and a clock 
   assert.match(await p.locator("#ph-main h1").innerText(), new RegExp("^" + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear() + "$"));
   assert.match(await p.locator(".ph-today .ph-k").innerText(), /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday) · Week \d{1,2}$/);
   const c1 = await p.locator("#ph-clock").innerText(); assert.match(c1, /^\d\d:\d\d:\d\d$/);
-  await p.waitForTimeout(1300); assert.notEqual(await p.locator("#ph-clock").innerText(), c1, "the clock stood still");
+  /* poll, not one fixed wait: a loaded machine can hold the 1-second tick back */
+  await p.waitForFunction(c => document.getElementById("ph-clock").innerText !== c, c1, { timeout: 4000 }).catch(() => {});
+  assert.notEqual(await p.locator("#ph-clock").innerText(), c1, "the clock stood still");
   const bx = await p.locator("#ph-clock").boundingBox(); assert.ok(bx.y < 120, "the clock is not at the top");
 });
 
