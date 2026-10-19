@@ -1,4 +1,4 @@
-/* The brand (2026-10-19): Qordel, its name written in Ruba Regular as the logo, "Powered by OwnYourSystem", and a notification badge Android can paint. */
+/* The brand (2026-10-19): Qordel, its name in capitals as the logo, "Powered by OwnYourSystem", and a notification badge Android can paint. */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -23,7 +23,7 @@ await ok("the name is Qordel: page title, home-screen title, app name", async ()
 await ok("the welcome shows the mark and the name", async () => {
   await p.evaluate(() => document.fonts.ready);
   assert.equal(await p.locator(".ph-onb .ph-word").first().textContent(), "Qordel");
-  assert.match(await p.locator(".ph-onb .ph-word").first().evaluate((e) => getComputedStyle(e).fontFamily), /^"?Ruba"?/);
+  assert.equal(await p.locator(".ph-onb .ph-word").first().innerText(), "QORDEL");
   assert.equal(await p.locator(".ph-onb .ph-by").first().innerText(), "Powered by OwnYourSystem");
   assert.ok(!/Daysize|OwnYourDay|Planck/.test(await p.content()), "an old name is still on the page");
 });
@@ -48,7 +48,7 @@ await ok("the home-screen icons are the name in white on Moonlit Plum", async ()
     return { corner: await at("icon-192.png", 0.02, 0.02), apple: await at("apple-touch-icon.png", 0.02, 0.02), ink: await white("icon-192.png"), inkA: await white("apple-touch-icon.png") };
   });
   assert.equal(px.corner, "44,19,50"); assert.equal(px.apple, "44,19,50");
-  assert.ok(px.ink > 0.03 && px.ink < 0.3, "no white name on the icon: " + px.ink); assert.ok(px.inkA > 0.03, "no white name on the home-screen icon");
+  assert.ok(px.ink > 0.015 && px.ink < 0.3, "no white name on the icon: " + px.ink); assert.ok(px.inkA > 0.015, "no white name on the home-screen icon");
 });
 
 /* the reminder a push becomes: the worker draws it */
@@ -82,15 +82,15 @@ await ok("with reminders off, there is no test row", async () => {
   assert.equal(await p.locator("[data-ph=remtest]").count(), 0);
 });
 /* 2026-10-19: the name on every page, plum only on buttons, and Talk writes at the top */
-await ok("every page starts with the name in Ruba and Powered by OwnYourSystem", async () => {
+await ok("every page starts with the name in capitals and Powered by OwnYourSystem", async () => {
   await p.evaluate(() => document.fonts.ready);
   for (const r of ["now", "journal", "you", "goals", "backlog", "planner", "talk"]) {
     await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250);
     const b = await p.evaluate(() => { const e = [...document.querySelectorAll(".ph-brand")].find((x) => x.getClientRects().length); if (!e) return null;
-      const w = e.querySelector(".ph-word"); return { word: w.textContent, by: (e.querySelector(".ph-by") || {}).textContent, font: getComputedStyle(w).fontFamily, top: e.getBoundingClientRect().top }; });
-    assert.ok(b, r + ": no name"); assert.equal(b.word, "Qordel"); assert.equal(b.by, "Powered by OwnYourSystem"); assert.match(b.font, /^"?Ruba"?/); assert.ok(b.top < 60, r + ": the name is not at the top");
+      const w = e.querySelector(".ph-word"); return { word: w.textContent, by: (e.querySelector(".ph-by") || {}).textContent, font: getComputedStyle(w).fontFamily, caps: getComputedStyle(w).textTransform, top: e.getBoundingClientRect().top }; });
+    assert.ok(b, r + ": no name"); assert.equal(b.word, "Qordel"); assert.equal(b.by, "Powered by OwnYourSystem"); assert.match(b.font, /^"?Schibsted Grotesk"?/); assert.equal(b.caps, "uppercase"); assert.ok(b.top < 60, r + ": the name is not at the top");
   }
-  assert.equal(await p.evaluate(() => document.fonts.check('20px "Ruba"')), true, "the Ruba font did not load");
+  assert.equal(await p.evaluate(() => document.fonts.check('600 20px "Schibsted Grotesk"')), true, "the app font did not load");
 });
 await ok("Talk: a big box at the top to write in, above the chips and the answers", async () => {
   await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);

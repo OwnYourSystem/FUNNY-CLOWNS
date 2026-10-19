@@ -8,9 +8,10 @@
 
 ## Logo
 
-- The name written in Ruba Regular, as for Planck ("the logo is the name"). Ruba is unicase, so it reads "qordel". App icons: white on Moonlit Plum. Android badge: a heavier "q".
-- Watch: in Ruba the "o" is a notched rounded box, and "qordel" can read as "qardel" at a glance. The owner's card shows QORDEL in plain capitals, which reads at once.
-- Files: `make-icons-qordel.cjs`, `qordel-icon-1024.png`, `qordel-wordmark.png`.
+- **The name in capitals, QORDEL** (owner: "use capitals", after the Ruba version could read as "qardel"). Set in the app's own Schibsted Grotesk SemiBold, letter-spacing 0.06em, so the logo, the text and the icons are one family on every device. In the app the text stays "Qordel" (shown in capitals by CSS), so a screen reader says the word.
+- App icons: QORDEL in white on Moonlit Plum `#2C1332`. Android status-bar badge: the "Q".
+- Ruba Regular is no longer used; its file and credit were removed.
+- Files: `make-icons-qordel.cjs` (draws every icon from the app font; needs the font's data URI in `schibsted-600.txt` beside it), `qordel-icon-1024.png`, `qordel-wordmark.png`.
 
 ## Name check (2026-10-19)
 
