@@ -121,10 +121,12 @@ await ok("Planner: where each goal can be done saves, and the held-back list ans
   assert.equal((await st()).groups[0].where, "body");
   assert.ok(await p.locator("#ph-held").count());
 });
-await ok("Planner: Interview me again opens the interview, in plum, and Leave it closes it", async () => {
+await ok("Planner: Interview me again opens the interview, plum on its button only, and Leave it closes it", async () => {
   await p.locator("[data-ph=interview]").click(); await p.waitForTimeout(400);
   assert.equal(await p.locator("#interview").isVisible(), true);
-  assert.equal(await p.locator(".iv-dots i.on").first().evaluate((e) => getComputedStyle(e).backgroundColor), "rgb(44, 19, 50)");
+  /* 2026-10-19: plum is for buttons; the progress dots are the text colour */
+  assert.equal(await p.locator(".iv-dots i.on").first().evaluate((e) => getComputedStyle(e).backgroundColor), "rgb(0, 0, 0)");
+  assert.equal(await p.locator(".iv-acts .btn.take").first().evaluate((e) => getComputedStyle(e).backgroundColor), "rgb(44, 19, 50)");
   assert.equal(await p.locator(".iv-k").evaluate((e) => getComputedStyle(e).textTransform), "none");
   await p.locator("#iv-quit").click(); await p.waitForTimeout(300); assert.equal(await p.locator("#interview").isVisible(), false);
 });

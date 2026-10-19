@@ -44,3 +44,10 @@ A garment size tag, tilted, with a punched hole and a Tape Yellow string. On the
 ## Where the name and mark are in the app
 
 Page title and home-screen title, manifest `name` and `short_name`, the classic board's eyebrow, the welcome screen (mark and name), every notification (mark as icon, badge in the status bar, "Open Daysize ..." when there is no summary), the tutor's prompt.
+
+## 2026-10-19, second round (owner's phone test)
+
+- **Wordmark font: Ruba Regular**, sent by the owner ("use this font"). By floor-3013, made with FontStruct, Creative Commons BY-SA 3.0: free to use with credit. The credit is in `fonts/Ruba-Regular-LICENSE.txt` in the app. It is a unicase display font, so "Daysize" shows as "daysize". It is for the name only. Note: the flyer brief says "RobaRegular"; Ruba is the font the owner chose, so use Ruba there too.
+- **The name and mark on every phone page**, top left (Now, Talk, Journal, You, Goals, a goal, a step, Backlog, Archive, Tags, Planner, Learned).
+- **Colour: the plum theme is dropped.** Plain greys (iOS style) for grounds, cards and text; plum only on buttons (owner: "drop it as the whole and use only for the buttons. Keep it simple"). The app icon stays plum: it is the logo.
+- **iPhone status bar**: `apple-mobile-web-app-status-bar-style` is now `default`, so iOS draws its own readable status bar on the light page. Re-add the app to the home screen to pick it up; check it on an iPhone.

@@ -232,12 +232,16 @@ await ok("a Today item on Now opens its step page", async () => {
   await it.click(); await p.waitForTimeout(300); assert.match(await p.evaluate(() => location.hash), /^#\/step\//);
   assert.equal(await p.locator("#ph-s-name").inputValue(), nm); await go("goals");
 });
-await ok("the phone wears Moonlit Plum; the desktop keeps its colours", async () => {
-  const c = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement); return { pri: cs.getPropertyValue("--ph-pri").trim(), bar: document.querySelector('meta[name="theme-color"][media*="light"]').content }; });
-  assert.equal(c.pri.toUpperCase(), "#2C1332"); assert.equal(c.bar.toUpperCase(), "#F6F2F7");
+/* 2026-10-19, the owner: drop the plum as a theme, keep it for the buttons only */
+await ok("the phone is plain greys with plum only on buttons; the desktop keeps its colours", async () => {
+  const c = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement); return { pri: cs.getPropertyValue("--ph-pri").trim(), ground: cs.getPropertyValue("--ground").trim(), bar: document.querySelector('meta[name="theme-color"][media*="light"]').content }; });
+  assert.equal(c.pri.toUpperCase(), "#2C1332"); assert.equal(c.ground.toUpperCase(), "#F2F2F7"); assert.equal(c.bar.toUpperCase(), "#F2F2F7");
   assert.equal(await p.locator("[data-ph=newgoal]").evaluate((e) => getComputedStyle(e).backgroundColor), "rgb(44, 19, 50)");
+  /* the card a goal sits on is plain white, not tinted */
+  assert.equal(await p.locator(".ph-goal").first().evaluate((e) => { for (let x = e; x; x = x.parentElement) { const b = getComputedStyle(x).backgroundColor; if (b !== "rgba(0, 0, 0, 0)") return b; } return ""; }), "rgb(255, 255, 255)");
   await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100);
-  assert.equal((await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--panel").trim())).toUpperCase(), "#2C1332");
+  const d = await p.evaluate(() => { const cs = getComputedStyle(document.documentElement); return { panel: cs.getPropertyValue("--panel").trim(), ground: cs.getPropertyValue("--ground").trim() }; });
+  assert.equal(d.panel.toUpperCase(), "#1C1C1E"); assert.equal(d.ground.toUpperCase(), "#000000");
   await p.screenshot({ path: "/tmp/claude-0/ph-test-goals-dark.png" }); await p.emulateMedia({ colorScheme: "light" });
 });
 await ok("Backlog opens (as a phone page, or on older builds the old page under a Back bar), and Back returns to You", async () => {
@@ -296,10 +300,11 @@ await ok("iPhone: turning the phone sideways keeps the phone app and the same pa
     assert.equal(await q.evaluate(() => document.documentElement.classList.contains("ph")), true);
   } finally { await lc.close(); }
 });
-await ok("iPhone: the status bar band is plum in light, the ground in dark, and has no height in a browser tab", async () => {
+await ok("iPhone: the system draws the status bar (default style); the band is the ground and has no height in a browser tab", async () => {
+  assert.equal(await p.locator('meta[name="apple-mobile-web-app-status-bar-style"]').getAttribute("content"), "default");
   const band = () => p.evaluate(() => { const e = document.getElementById("sbar"); return { bg: getComputedStyle(e).backgroundColor, h: e.getBoundingClientRect().height }; });
-  let b1 = await band(); assert.equal(b1.bg, "rgb(44, 19, 50)"); assert.equal(b1.h, 0);
-  await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100); b1 = await band(); assert.equal(b1.bg, "rgb(20, 10, 23)");
+  let b1 = await band(); assert.equal(b1.bg, "rgb(242, 242, 247)"); assert.equal(b1.h, 0);
+  await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100); b1 = await band(); assert.equal(b1.bg, "rgb(0, 0, 0)");
   await p.emulateMedia({ colorScheme: "light" }); await go("you");
 });
 /* ---------- plum everywhere (2026-10-17) ---------- */
@@ -307,11 +312,11 @@ const REDS = ["rgb(228, 36, 24)", "rgb(255, 59, 48)", "rgb(184, 28, 18)", "rgb(2
 const redsIn = (sel) => p.evaluate(([sel, REDS]) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && !e.closest(".ask-err,.ph-danger,.bot-msg.err,dialog.danger"))
   .flatMap((e) => { const c = getComputedStyle(e); return ["color", "backgroundColor", "borderTopColor"].filter((k) => REDS.includes(c[k]) && !(k === "borderTopColor" && c.borderTopWidth === "0px")).map((k) => (e.id || e.className || e.tagName) + " " + k); }), [sel, REDS]);
 const moulded = (sel) => p.evaluate((sel) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && /inset|-6px -6px|-3px -3px/.test(getComputedStyle(e).boxShadow)).map((e) => e.id || e.className), sel);
-await ok("plum: labels are sentence case in the body font, 13px or more, and Do this now is plum", async () => {
+await ok("plum: labels are sentence case in the body font, 13px or more, and Do this now is in the text colour", async () => {
   await go("now");
   const k = await p.evaluate(() => [...document.querySelectorAll(".ph-k")].filter((e) => e.getClientRects().length).map((e) => { const c = getComputedStyle(e); return [c.textTransform, c.fontFamily.includes("DM Mono"), parseFloat(c.fontSize)]; }));
   assert.ok(k.length > 0); for (const [t, mono, fs] of k) { assert.equal(t, "none"); assert.equal(mono, false); assert.ok(fs >= 13, "label " + fs + "px"); }
-  assert.equal(await p.locator(".ph-hot").first().evaluate((e) => getComputedStyle(e).color), "rgb(44, 19, 50)");
+  assert.equal(await p.locator(".ph-hot").first().evaluate((e) => getComputedStyle(e).color), "rgb(0, 0, 0)");
 });
 await ok("plum: Talk and a journal sheet have no red and no moulded shadows; their labels are not capitals", async () => {
   await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250);
@@ -335,14 +340,14 @@ await ok("plum: text follows the phone's text size, tab labels stay put, and not
   assert.equal(await sideways(), false);
   await p.evaluate(() => { document.documentElement.style.fontSize = ""; });
 });
-await ok("plum: the home-screen icon and the Android icon are plum; the launch colour is the plum ground", async () => {
+await ok("plum: the home-screen icon and the Android icon are the plum mark; the launch colour is the dark ground", async () => {
   const r = await p.evaluate(async () => {
     const corner = async (src) => { const im = new Image(); im.src = src + "?t=" + Date.now(); await im.decode(); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
       const x = c.getContext("2d"); x.drawImage(im, 0, 0); return [...x.getImageData(4, 4, 1, 1).data].slice(0, 3).join(","); };
     const m = await (await fetch("manifest.webmanifest", { cache: "no-store" })).json();
     return { apple: await corner("apple-touch-icon.png"), mask: await corner(m.icons.find((i) => i.purpose === "maskable").src), bg: m.background_color };
   });
-  assert.equal(r.apple, "44,19,50"); assert.equal(r.mask, "44,19,50"); assert.equal(r.bg.toUpperCase(), "#140A17");
+  assert.equal(r.apple, "44,19,50"); assert.equal(r.mask, "44,19,50"); assert.equal(r.bg.toUpperCase(), "#000000");
   await go("you");
 });
 /* ---------- navigation (2026-10-17) ---------- */
@@ -356,7 +361,7 @@ await ok("nav: Back is a chevron and the page it returns to, the same on Goals, 
   await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); b = await back(); assert.ok(gname.startsWith((await b.innerText()).trim().replace("…", "")));
   await b.click(); await p.waitForTimeout(250); assert.match(await p.evaluate(() => location.hash), /^#\/goal\//);
   await go("backlog"); b = await back(); assert.equal((await b.innerText()).trim(), "You"); assert.equal(await b.locator("svg").count(), 1);
-  const colour = await b.evaluate((e) => getComputedStyle(e).color); assert.equal(colour, "rgb(44, 19, 50)");
+  const colour = await b.evaluate((e) => getComputedStyle(e).color); assert.equal(colour, "rgb(0, 0, 0)");
   await go("you");
 });
 await ok("nav: rows that open something end in a chevron; rows that switch at once do not", async () => {
@@ -462,7 +467,7 @@ await ok("nav: a swipe in from the left edge goes Back; a swipe that starts mid-
   } finally { await sb.close(); }
 });
 /* ---------- the tab bar, the iOS way (2026-10-17) ---------- */
-await ok("tabs: the selected tab is the accent colour with a filled icon and no pill; the rest are grey outlines; the bar is see-through", async () => {
+await ok("tabs: the selected tab is the text colour with a filled icon and no pill; the rest are grey outlines; the bar is see-through", async () => {
   for (const [route, tab] of [["now", "now"], ["journal", "journal"], ["goals", "you"]]) {
     await go(route);
     const t = await p.evaluate(() => [...document.querySelectorAll("#ph-tabs a")].map((a) => { const c = getComputedStyle(a), o = a.querySelector(".ti-o"), f = a.querySelector(".ti-f");
@@ -470,13 +475,13 @@ await ok("tabs: the selected tab is the accent colour with a filled icon and no 
     for (const x of t) {
       assert.ok(x.h >= 44, x.tab + " is " + x.h + "px");
       assert.equal(x.bg, "rgba(0, 0, 0, 0)", x.tab + " has a pill");
-      if (x.tab === tab) { assert.equal(x.cur, "page"); assert.equal(x.color, "rgb(44, 19, 50)"); assert.ok(x.f && !x.o, x.tab + " is not filled"); }
-      else { assert.equal(x.cur, null); assert.equal(x.color, "rgb(107, 92, 112)"); assert.ok(x.o && !x.f, x.tab + " is not an outline"); }
+      if (x.tab === tab) { assert.equal(x.cur, "page"); assert.equal(x.color, "rgb(0, 0, 0)"); assert.ok(x.f && !x.o, x.tab + " is not filled"); }
+      else { assert.equal(x.cur, null); assert.equal(x.color, "rgb(99, 99, 102)"); assert.ok(x.o && !x.f, x.tab + " is not an outline"); }
     }
   }
   assert.match(await p.locator("#ph-tabs").evaluate((e) => getComputedStyle(e).backdropFilter || getComputedStyle(e).webkitBackdropFilter), /blur/);
   await p.emulateMedia({ colorScheme: "dark" }); await p.waitForTimeout(100);
-  assert.equal(await p.locator('#ph-tabs [aria-current="page"]').evaluate((e) => getComputedStyle(e).color), "rgb(216, 194, 224)");
+  assert.equal(await p.locator('#ph-tabs [aria-current="page"]').evaluate((e) => getComputedStyle(e).color), "rgb(255, 255, 255)");
   await p.locator("#ph-tabs").screenshot({ path: "/tmp/claude-0/ph-test-tabs-dark.png" });
   await p.emulateMedia({ colorScheme: "light" }); await p.locator("#ph-tabs").screenshot({ path: "/tmp/claude-0/ph-test-tabs-light.png" });
   await go("you");

@@ -17,13 +17,13 @@ await ok("the name is Daysize: page title, home-screen title, app name", async (
   assert.equal(await p.title(), "Daysize");
   assert.equal(await p.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content"), "Daysize");
   const m = await p.evaluate(async () => (await fetch("manifest.webmanifest", { cache: "no-store" })).json());
-  assert.equal(m.name, "Daysize"); assert.equal(m.short_name, "Daysize"); assert.equal(m.theme_color.toUpperCase(), "#2C1332");
+  assert.equal(m.name, "Daysize"); assert.equal(m.short_name, "Daysize"); assert.equal(m.theme_color.toUpperCase(), "#000000");
   assert.ok(!/Minimum Deliveries/.test(await p.content()), "the old name is still on the page");
 });
 await ok("the welcome shows the mark and the name", async () => {
   const img = p.locator(".ph-onb .ph-logo"); assert.equal(await img.isVisible(), true);
   assert.equal(await img.evaluate((e) => e.complete && e.naturalWidth), 192);
-  assert.match(await p.locator(".ph-onb .ph-k").first().innerText(), /^Daysize$/i);
+  assert.match(await p.locator(".ph-onb .ph-word").first().innerText(), /^Daysize$/i);
 });
 await ok("the badge is one colour on a see-through ground, so Android paints the mark, not a square", async () => {
   const r = await p.evaluate(async () => {
@@ -74,6 +74,36 @@ await ok("with reminders off, there is no test row", async () => {
   await p.evaluate(() => { document.getElementById("btn-remind").setAttribute("aria-pressed", "false"); location.hash = "#/goals"; });
   await p.waitForTimeout(200); await p.evaluate(() => { location.hash = "#/you"; }); await p.waitForTimeout(300);
   assert.equal(await p.locator("[data-ph=remtest]").count(), 0);
+});
+/* 2026-10-19: the name on every page, plum only on buttons, and Talk writes at the top */
+await ok("every page starts with the mark and the name, set in Ruba", async () => {
+  await p.evaluate(() => document.fonts.ready);
+  for (const r of ["now", "journal", "you", "goals", "backlog", "planner", "talk"]) {
+    await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250);
+    const b = await p.evaluate(() => { const e = [...document.querySelectorAll(".ph-brand")].find((x) => x.getClientRects().length); if (!e) return null;
+      const w = e.querySelector(".ph-word"); return { word: w.textContent, font: getComputedStyle(w).fontFamily, top: e.getBoundingClientRect().top, img: e.querySelector("img").naturalWidth }; });
+    assert.ok(b, r + ": no name"); assert.equal(b.word, "Daysize"); assert.match(b.font, /^"?Ruba"?/); assert.ok(b.top < 60, r + ": the name is not at the top"); assert.equal(b.img, 192);
+  }
+  assert.equal(await p.evaluate(() => document.fonts.check('20px "Ruba"')), true, "the Ruba font did not load");
+});
+await ok("Talk: a big box at the top to write in, above the chips and the answers", async () => {
+  await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);
+  const g = await p.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const i = document.getElementById("bot-input");
+    return { tag: i.tagName, inTop: r("#bot-input").top, inH: r("#bot-input").height, chips: r("#bot-chips").top, log: r("#bot-log").top }; });
+  assert.equal(g.tag, "TEXTAREA"); assert.ok(g.inTop < 140, "box top " + g.inTop); assert.ok(g.inH >= 120, "box height " + g.inH);
+  assert.ok(g.chips > g.inTop + g.inH && g.log > g.chips, JSON.stringify(g));
+});
+await ok("Talk: Enter sends; the newest question and its answer come first, under the box", async () => {
+  for (const q of ["help", "what is left today?"]) { await p.fill("#bot-input", q); await p.keyboard.press("Enter"); await p.waitForTimeout(700); }
+  const t = await p.evaluate(() => [...document.querySelectorAll("#bot-log .bot-turn")].map((x) => ({ q: x.querySelector(".bot-msg.you").textContent, a: !!x.querySelector(".bot-msg.bot"), top: x.getBoundingClientRect().top })));
+  assert.equal(t.length, 2); assert.ok(t.every((x) => x.a), "a question has no answer under it");
+  assert.equal(t[1].q, "what is left today?"); assert.ok(t[1].top < t[0].top, "the newest turn is not first");
+  assert.equal(await p.inputValue("#bot-input"), "");
+});
+await ok("plum is on buttons only: Send is plum, the page, the cards and your words are not", async () => {
+  const c = await p.evaluate(() => ({ send: getComputedStyle(document.getElementById("bot-send")).backgroundColor, you: getComputedStyle(document.querySelector(".bot-msg.you")).backgroundColor,
+    sheet: getComputedStyle(document.getElementById("botsheet")).backgroundColor, tab: getComputedStyle(document.querySelector('#ph-tabs [aria-current="page"]')).color }));
+  assert.equal(c.send, "rgb(44, 19, 50)"); for (const k of ["you", "sheet", "tab"]) assert.ok(!/44, 19, 50|216, 194, 224/.test(c[k]), k + " is plum: " + c[k]);
 });
 await ok("no page errors", async () => { assert.deepEqual(errs, []); });
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");
