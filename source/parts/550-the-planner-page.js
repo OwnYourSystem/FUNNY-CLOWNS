@@ -15,6 +15,7 @@ function renderPlanner(){
     '<label>Ends<input class="f" type="time" data-me="w1" value="'+esc(me.work[1])+'"></label>'+
     '<label>Each way, in minutes<input class="f" type="number" min="0" max="240" data-me="commute" value="'+
       (+me.commute||0)+'"></label>'+
+    '<label>Your day starts at<input class="f" type="time" data-me="rise" value="'+esc(me.rise||"07:00")+'"></label>'+
     '<label>Your day ends at<input class="f" type="time" data-me="wind" value="'+esc(me.wind)+'"></label>'+
     '<label>Sharpest<select class="f" data-me="sharp">'+SHARP.map(function(o){
       return '<option value="'+o[0]+'"'+(me.sharp===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
@@ -62,6 +63,7 @@ function meSet(k,v){
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
   else me[k]=v;
+  if(k==="rise"){ var moved=remFitDay(me); if(moved) toast("",moved); }
   me.done=true;
 }
 function meDay(i){

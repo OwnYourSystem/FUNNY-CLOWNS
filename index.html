@@ -2165,7 +2165,7 @@ function allTags(){
    and it never leaves this browser.                                     */
 function freshMe(){
   return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"], commute:30,
-          sharp:"morning", gym:"evening", wind:"22:30", north:"", never:"",
+          sharp:"morning", gym:"evening", rise:"07:00", wind:"22:30", north:"", never:"",
           feeds:[], brief:"07:30", icon:""};
 }
 function toGoals(){
@@ -2464,6 +2464,14 @@ function pastDayEnd(me, mins){
   var w=hm((me||{}).wind);
   return w>=4*60 ? (mins>=w || mins<4*60) : (mins>=w && mins<4*60);
 }
+/* True from 04:00 until "your day starts at" (owner, 2026-10-19: a day has
+   a start as well as an end). A start at or before 04:00 has no early quiet. */
+function beforeDayStart(me, mins){
+  var r=hm((me||{}).rise||"07:00");
+  return r>4*60 && mins>=4*60 && mins<r;
+}
+/* nothing reaches you outside your day: before it starts, or after it ends */
+function outsideDay(me, mins){ return pastDayEnd(me, mins) || beforeDayStart(me, mins); }
 var DAYNAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function nowCtx(at){
   var d=at||new Date(), me=state.me||freshMe();
@@ -2481,10 +2489,12 @@ function nowCtx(at){
     beforeWork: onDuty && now<a-c,
     afterWork: onDuty && now>b+c,
     wound: pastDayEnd(me, now),       /* past the end of the day, or the small hours */
+    early: beforeDayStart(me, now),   /* the morning, before the day starts */
     free: !(onDuty && now>=a-c && now<=b+c),
     home: clockLabel(me.work[1]),
     leave: clockLabel(me.work[0]),
     wind: clockLabel(me.wind),
+    rise: clockLabel(me.rise||"07:00"),
     slot: now<12*60 ? "morning" : (now<17*60 ? "afternoon" : "evening")
   };
 }
@@ -2498,6 +2508,12 @@ function feasible(g,c){
     if(w==="out")  return {ok:false, why:"it is past "+c.wind+" and nothing is open"};
     if(w==="work") return {ok:false, why:"it needs you at work, and it is past "+c.wind};
     return {ok:true, soft:true, why:"it is past "+c.wind+", so this is a quiet one"};
+  }
+  if(c.early){
+    if(w==="body") return {ok:false, why:"your day starts at "+c.rise};
+    if(w==="out")  return {ok:false, why:"your day starts at "+c.rise+" and nothing is open yet"};
+    if(w==="work") return {ok:false, why:"it needs you at work, and your day starts at "+c.rise};
+    return {ok:true, soft:true, why:"your day starts at "+c.rise+", so this is a quiet one"};
   }
   if(c.away){
     if(w==="body") return {ok:false, why:"you are out until about "+c.home};
@@ -4295,7 +4311,7 @@ function goalScore(g,c,me){
   if(me.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
   if(g.where==="body" && c.free) sc+=38;
   if(g.where==="work" && c.atWork) sc+=30;
-  if(g.where==="home" && c.free && !c.wound) sc+=14;
+  if(g.where==="home" && c.free && !c.wound && !c.early) sc+=14;
   return sc;
 }
 /* within-goal only: which step of this goal, now */
@@ -4358,6 +4374,7 @@ function verdictWhy(v){
   out.push("It is "+pad2(c.d.getHours())+":"+pad2(c.d.getMinutes())+" on a "+c.day+
     (c.away ? " and you are out until about "+c.home
             : c.wound ? " and your day is meant to be over"
+            : c.early ? " and your day starts at "+c.rise
                       : " and your time is your own")+".");
   if(s.rep && periodKey(s.rep))
     out.push(repLabel(s.rep)+", and today is not done"+(s.streak?". You are "+s.streak+" in a row":"")+".");
@@ -5878,7 +5895,7 @@ function checkRemind(at){
   var me=state.me||freshMe(), c=remCfg(), now=at instanceof Date ? at : new Date(), mins=now.getHours()*60+now.getMinutes();
   /* Nothing is sent after the day is meant to be over. The board says the day
      has an end, so its notifications respect it too. */
-  if(pastDayEnd(me, mins)) return;
+  if(outsideDay(me, mins)) return;
   var today=todayStr();
   if(!state.told||state.told.d!==today) state.told={d:today, am:false, pm:false, hint:false};
 
@@ -5911,10 +5928,21 @@ function remCfg(){
   var me=state.me||freshMe();
   return {am:me.remAm!==false, pm:me.remPm!==false, amAt:me.brief||"07:30", pmAt:me.pmAt||"15:00"};
 }
+/* The push server knows when the day ends but not when it starts, so a
+   reminder never waits on it: when the start moves past a reminder time,
+   the reminder moves to the start, and the person is told.              */
+function remFitDay(me){
+  var r=me.rise||"07:00", out=[];
+  if(beforeDayStart(me,hm(me.brief||"07:30"))){ me.brief=r; out.push("Your morning brief moves to "+r+", the start of your day."); }
+  if(beforeDayStart(me,hm(me.pmAt||"15:00"))){ me.pmAt=r; out.push("Your afternoon check moves to "+r+"."); }
+  return out.join(" ");
+}
 function remCheck(v){
   var me=state.me||freshMe(), a=hm(v.amAt), p=hm(v.pmAt);
   if(v.am==="on" && isNaN(a)) return "Set a time for the morning brief.";
   if(v.pm==="on" && isNaN(p)) return "Set a time for the afternoon check.";
+  if(v.am==="on" && beforeDayStart(me,a)) return "The morning brief would come before your day starts at "+clockLabel(me.rise||"07:00")+". Pick a later time.";
+  if(v.pm==="on" && beforeDayStart(me,p)) return "The afternoon check would come before your day starts at "+clockLabel(me.rise||"07:00")+". Pick a later time.";
   if(v.am==="on" && pastDayEnd(me,a)) return "The morning brief would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
   if(v.pm==="on" && pastDayEnd(me,p)) return "The afternoon check would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
   if(v.am==="on" && v.pm==="on" && p<=a) return "Set the afternoon check later than the morning brief.";
@@ -5923,7 +5951,7 @@ function remCheck(v){
 function remAsk(first){
   var me=state.me||freshMe(), c=remCfg(), oo=[["on","On"],["off","Off"]];
   return askUser({title:first?"Set your reminders":"Your reminders",
-    body:["You choose which reminders come and when. At most 2 a day, and nothing after your day ends at "+clockLabel(me.wind)+". A reminder stays on your phone until you close it. It never covers the board.",
+    body:["You choose which reminders come and when. At most 2 a day, and nothing before your day starts at "+clockLabel(me.rise||"07:00")+" or after your day ends at "+clockLabel(me.wind)+". A reminder stays on your phone until you close it. It never covers the board.",
       "Where it can, they also arrive when the board is closed. For that, a server keeps this device's address, your time zone and the times you set here. It never gets a task, a goal or any of your words."+(first?" Your browser will ask you to allow notifications next.":" To stop them all, set both to Off.")],
     fields:[{k:"am",label:"Morning brief: today's one task and why",kind:"pick",row:true,opts:oo,value:c.am?"on":"off"},
             {k:"amAt",label:"Morning brief at",kind:"time",value:c.amAt},
@@ -6711,8 +6739,8 @@ function botTools(){
      if(state.sel===g.id) state.sel=state.groups.length?state.groups[0].id:"";
      return done("Removed "+g.name+" and its "+n+" step"+(n===1?"":"s")+".");
    }},
-  {name:"set_setting",description:"Change one of the person's settings. key: day_end (a time), work_hours (like 8 to 4:30), work_days (like monday to friday), commute (minutes each way), sharpest (morning, afternoon or evening), training (before work, at lunch, after work, weekends only, or not at the moment), brief_time (a time), afternoon_time (a time), morning_brief (on or off), afternoon_check (on or off), north_star (one line), hints, hint_reminders, low_day_question, learning, animation (on or off), theme (dark, light or system).",
-   inputSchema:{type:"object",properties:{key:{type:"string",enum:["day_end","work_hours","work_days","commute","sharpest","training","brief_time","afternoon_time","morning_brief","afternoon_check","north_star","hints","hint_reminders","low_day_question","learning","animation","theme"]},value:{type:"string"}},required:["key","value"]},
+  {name:"set_setting",description:"Change one of the person's settings. key: day_start (a time), day_end (a time), work_hours (like 8 to 4:30), work_days (like monday to friday), commute (minutes each way), sharpest (morning, afternoon or evening), training (before work, at lunch, after work, weekends only, or not at the moment), brief_time (a time), afternoon_time (a time), morning_brief (on or off), afternoon_check (on or off), north_star (one line), hints, hint_reminders, low_day_question, learning, animation (on or off), theme (dark, light or system).",
+   inputSchema:{type:"object",properties:{key:{type:"string",enum:["day_start","day_end","work_hours","work_days","commute","sharpest","training","brief_time","afternoon_time","morning_brief","afternoon_check","north_star","hints","hint_reminders","low_day_question","learning","animation","theme"]},value:{type:"string"}},required:["key","value"]},
    execute:function(a){ var msg=applySetting(String(a.key||""),a.value); return done(msg); }},
   {name:"set_minimum_day",description:"Set the person's minimum day: up to 4 small things that count even when nothing else moves. Replaces the current list. An empty list switches it off.",
    inputSchema:{type:"object",properties:{items:{type:"array",items:{type:"string"}}},required:["items"]},
@@ -7018,6 +7046,10 @@ var PARSE={
 function applySetting(key,val){
   var me=state.me||(state.me=freshMe()), v=String(val==null?"":val).trim(), t, x, b;
   switch(key){
+    case "day_start":
+      t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 07:00 or 7am.");
+      me.rise=t; x=remFitDay(me);
+      return "Your day now starts at "+t+". Nothing reaches you before that, and suggestions stay quiet until then."+(x?" "+x:"");
     case "day_end":
       t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 21:00 or 9pm.");
       me.wind=t; return "Your day now ends at "+t+". Reminders and suggestions go quiet after that.";
@@ -7167,6 +7199,9 @@ act({id:"goal_restore",group:"Goals",ex:"Bring Home back from the backlog or arc
 act({id:"goal_remove",group:"Goals",ex:"Remove goal Home",kw:["remove","delete","goal"],
   re:[/^(?:remove|delete|drop|scrap) (?:the )?(?:goal|project|main task) (.+)$/],take:[["goal",1]],ask:{goal:"Which goal?"},
   run:function(v){ return pendStage({name:"remove_main_task"},{main_task:v.goal}); }});
+act({id:"day_start",group:"Settings",ex:"My day starts at 7am",kw:["day","start","morning","begin","wake","up"],
+  re:[/\b(?:(?:my )?day (?:starts?|begins?)|start of (?:my )?day|i (?:get up|wake up|start (?:my day|the day)))\b(?: (?:at|to|is|by))? ?(.*)$/],take:[["time",1]],ask:{time:"What time does your day start? For example 07:00 or 7am."},
+  run:function(v){ return toolRun("set_setting",{key:"day_start",value:v.time}); }});
 act({id:"day_end",group:"Settings",ex:"My day ends at 9pm",kw:["day","end","evening","finish","wind"],
   re:[/\b(?:day ends?|end of (?:my )?day|wind ?down(?: time)?|stop for the day)\b(?: (?:at|to|is|by))? ?(.*)$/],take:[["time",1]],ask:{time:"What time does your day end? For example 21:00 or 9pm."},
   run:function(v){ return toolRun("set_setting",{key:"day_end",value:v.time}); }});
@@ -7527,7 +7562,7 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
+  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, remCheck:remCheck, askUser:askUser,
   push:{state:function(){ return PUSH; }, digest:digestWrite, sync:pushSync, brief:briefText},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
@@ -8555,6 +8590,7 @@ function renderPlanner(){
     '<label>Ends<input class="f" type="time" data-me="w1" value="'+esc(me.work[1])+'"></label>'+
     '<label>Each way, in minutes<input class="f" type="number" min="0" max="240" data-me="commute" value="'+
       (+me.commute||0)+'"></label>'+
+    '<label>Your day starts at<input class="f" type="time" data-me="rise" value="'+esc(me.rise||"07:00")+'"></label>'+
     '<label>Your day ends at<input class="f" type="time" data-me="wind" value="'+esc(me.wind)+'"></label>'+
     '<label>Sharpest<select class="f" data-me="sharp">'+SHARP.map(function(o){
       return '<option value="'+o[0]+'"'+(me.sharp===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
@@ -8602,6 +8638,7 @@ function meSet(k,v){
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
   else me[k]=v;
+  if(k==="rise"){ var moved=remFitDay(me); if(moved) toast("",moved); }
   me.done=true;
 }
 function meDay(i){
@@ -8706,8 +8743,8 @@ var IVQ=[
   {k:"gym", q:"When can you train?",
    n:"This is the one that stops it telling you to get on an airbike at one o\u2019clock on a Monday.",
    kind:"pick", opts:GYMWIN},
-  {k:"wind", q:"When does your day end?",
-   n:"After this, it will only offer you something quiet, and it will say so.",
+  {k:"wind", q:"When does your day start, and when does it end?",
+   n:"Outside these times it will only offer you something quiet, and it will say so. Nothing reaches you before the start or after the end.",
    kind:"time", ph:"22:30"},
   {k:"north", q:"What is the one thing that matters most right now?",
    n:"One line. It does not score anything on its own; it is what you are shown when the board argues with you.",
@@ -8722,7 +8759,7 @@ var IVQ=[
 function ivOpen(){
   var me=state.me||freshMe();
   IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), commute:me.commute,
-              sharp:me.sharp, gym:me.gym, wind:me.wind, north:me.north||"",
+              sharp:me.sharp, gym:me.gym, rise:me.rise||"07:00", wind:me.wind, north:me.north||"",
               feeds:(me.feeds||[]).slice(), where:{}}};
   state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
   $("#interview").hidden=false;
@@ -8753,7 +8790,8 @@ function ivPaint(){
     h='<label>Minutes<input class="f" type="number" min="0" max="240" data-iv="commute" value="'+
       (+a.commute||0)+'" placeholder="'+esc(q.ph||"")+'"></label>';
   else if(q.kind==="time")
-    h='<label>Time<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label>';
+    h='<div class="two"><label>Starts<input class="f" type="time" data-iv="rise" value="'+esc(a.rise)+'"></label>'+
+      '<label>Ends<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label></div>';
   else if(q.kind==="text")
     h='<label>In one line<input class="f" data-iv="north" value="'+esc(a.north)+'" placeholder="'+
       esc(q.ph||"")+'"></label>';
@@ -8780,7 +8818,7 @@ function ivSave(){
   me.days=a.days.slice().sort(); if(!me.days.length) me.days=[];
   me.work=[a.work[0]||"08:00", a.work[1]||"16:30"];
   me.commute=Math.max(0,Math.min(240,+a.commute||0));
-  me.sharp=a.sharp; me.gym=a.gym; me.wind=a.wind||"22:30"; me.north=a.north||"";
+  me.sharp=a.sharp; me.gym=a.gym; me.rise=a.rise||"07:00"; me.wind=a.wind||"22:30"; me.north=a.north||"";
   me.feeds=(a.feeds||[]).slice(0,6);
   me.done=true;
   state.groups.forEach(function(g){ if(a.where[g.id]) g.where=a.where[g.id]; });
@@ -8909,7 +8947,7 @@ $("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl
    Tags, Backlog, Archive and the Planner open as the old pages under a Back
    bar. "Classic view" in You turns the old phone board back on.          */
 var PH_KEY="oys-classic", PH_MQ=null, PH_ON=false, PH_DRAWN="", PH_ONB=0, PH_GOAL="";
-var PH_V={end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
+var PH_V={start:"07:00", end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
 /* The board's own pages a phone still shows under a Back bar. Since
    2026-10-18 Backlog, Tags, Archive and the Planner have phone pages of
    their own, so none is left; the mechanism stays for any page added later. */
@@ -9337,7 +9375,7 @@ function phPlanner(){
       DAYS_SHORT.map(function(n,i){ return '<button type="button" data-ph="pday" data-day="'+i+'" aria-pressed="'+(me.days.indexOf(i)>=0)+'" aria-label="'+esc(PH_DAYS[i])+'">'+esc(n.slice(0,2))+'</button>'; }).join("")+'</div>'+
     '<div class="ph-two"><div>'+tm("w0","Work starts",me.work[0])+'</div><div>'+tm("w1","Work ends",me.work[1])+'</div></div>'+
     '<label class="ph-lab" for="ph-p-commute">Travel each way, in minutes</label><input class="ph-in" type="number" inputmode="numeric" min="0" max="240" id="ph-p-commute" data-pme="commute" value="'+(+me.commute||0)+'">'+
-    tm("wind","Your day ends at",me.wind)+
+    '<div class="ph-two"><div>'+tm("rise","Your day starts at",me.rise||"07:00")+'</div><div>'+tm("wind","Your day ends at",me.wind)+'</div></div>'+
     sel("sharp","When you are sharpest",SHARP,me.sharp)+
     sel("gym","Training fits",GYMWIN,me.gym)+
     tm("brief","Morning brief at",me.brief||"07:30")+'</section>');
@@ -9464,6 +9502,8 @@ function phYou(){
     '<span class="ph-sr">'+(ph?"Change your photo":"Add a photo of you")+'</span></label>'+
     '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr">'+
     '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
+  /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
+  h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your photo</h2><div class="ph-grp">'+
     (ph ? '<label class="ph-rowb" for="ph-photo-in"><span>Change photo</span><span class="ph-rv">'+PH_CHEV+'</span></label>'+
           phRow("phshow","Show it on every page",ph.show?"On":"Off",true)+
@@ -9473,6 +9513,7 @@ function phYou(){
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your day</h2><div class="ph-grp">'+
+    phRow("daystart","Day starts",clockLabel(me.rise||"07:00"))+
     phRow("dayend","Day ends",clockLabel(me.wind))+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -9480,7 +9521,6 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("learned","What the board learned, and hints","")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
-    phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+
     phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+'</div>');
   return h.join("");
 }
@@ -9500,11 +9540,26 @@ function phTestNote(){
     new Notification(t,o); sent();
   }catch(e){ toast("","This phone did not show it."); }
 }
+function phDayStart(){
+  var me=state.me||freshMe();
+  askUser({title:"When does your day start?", body:"Nothing reaches you before this time, and the board stays quiet until then.",
+    fields:[{k:"t",label:"Day starts at",kind:"time",value:me.rise||"07:00"}], ok:"Save", cancel:"Not now",
+    check:function(v){ var t=pTime(v.t); return !t?"Set a time.":phDayOrder(t,me.wind); }}).then(function(v){
+    if(!v) return;
+    try{ applySetting("day_start",v.t); }catch(e){ toast("",e.message); }
+    save(); renderAll();
+  });
+}
+/* a day starts before it ends; an end after midnight (00:30) is always later */
+function phDayOrder(start,end){
+  var a=hm(start), b=hm(end);
+  return b>=4*60 && a>=b ? "Your day has to start before it ends at "+clockLabel(end)+"." : "";
+}
 function phDayEnd(){
   var me=state.me||freshMe();
   askUser({title:"When does your day end?", body:"Nothing reaches you after this time, and the board goes quiet.",
     fields:[{k:"t",label:"Day ends at",kind:"time",value:me.wind}], ok:"Save", cancel:"Not now",
-    check:function(v){ return pTime(v.t)?"":"Set a time."; }}).then(function(v){
+    check:function(v){ var t=pTime(v.t); return !t?"Set a time.":phDayOrder(me.rise||"07:00",t); }}).then(function(v){
     if(!v) return;
     try{ applySetting("day_end",v.t); }catch(e){ toast("",e.message); }
     save(); renderAll();
@@ -9710,7 +9765,8 @@ function phOnbHtml(){
       '<button type="button" data-ph="tog" data-k="'+k+'" data-v="off" aria-pressed="'+(v[k]==="off")+'">Off</button></span>'; };
     return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
       '<h1 class="ph-h1 ph-mt">Your day</h1><p class="ph-lede">Two questions. Everything else the board asks later, when it matters.</p>'+
-      '<div class="ph-grp"><label class="ph-rowf"><span>My day ends at</span><input class="ph-time" type="time" id="ph-end" value="'+esc(v.end)+'"></label></div>'+
+      '<div class="ph-grp"><label class="ph-rowf"><span>My day starts at</span><input class="ph-time" type="time" id="ph-start" value="'+esc(v.start)+'"></label>'+
+      '<label class="ph-rowf"><span>My day ends at</span><input class="ph-time" type="time" id="ph-end" value="'+esc(v.end)+'"></label></div>'+
       '<p class="ph-note">Nothing reaches you after this time.</p>'+
       '<h2 class="ph-k ph-gk">Reminders, at most 2 a day</h2><div class="ph-grp">'+
       '<div class="ph-rowf"><span>Morning brief</span>'+tg("am")+'</div>'+
@@ -9734,6 +9790,7 @@ function phOnbHtml(){
 }
 function phOnbRead(){
   var g=function(id){ var e=document.getElementById(id); return e?e.value:null; }, x;
+  if((x=g("ph-start"))!==null) PH_V.start=x;
   if((x=g("ph-end"))!==null) PH_V.end=x;
   if((x=g("ph-am"))!==null) PH_V.amAt=x;
   if((x=g("ph-pm"))!==null) PH_V.pmAt=x;
@@ -9744,8 +9801,10 @@ function phOnbStep(i){ phOnbRead(); PH_ONB=Math.max(0,Math.min(2,i)); PH_DRAWN="
 function phOnbDay(){
   phOnbRead();
   var me=state.me||(state.me=freshMe()), v=PH_V, err=$("#ph-onb-err");
+  if(!pTime(v.start)){ if(err) err.textContent="Set the time your day starts."; return; }
   if(!pTime(v.end)){ if(err) err.textContent="Set the time your day ends."; return; }
-  me.wind=pTime(v.end);
+  var ord=phDayOrder(pTime(v.start),pTime(v.end)); if(ord){ if(err) err.textContent=ord; return; }
+  me.rise=pTime(v.start); me.wind=pTime(v.end);
   var bad=remCheck({am:v.am,amAt:v.amAt,pm:v.pm,pmAt:v.pmAt});
   if(bad){ if(err) err.textContent=bad; return; }
   remApply({am:v.am,amAt:v.amAt,pm:v.pm,pmAt:v.pmAt});
@@ -9807,6 +9866,7 @@ function phOnbFinish(add){
     else if(k==="why") phWhy();
     else if(k==="jr") jrAsk(b.getAttribute("data-kind"));
     else if(k==="account") $("#btn-account").click();
+    else if(k==="daystart") phDayStart();
     else if(k==="dayend") phDayEnd();
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="remtest") phTestNote();

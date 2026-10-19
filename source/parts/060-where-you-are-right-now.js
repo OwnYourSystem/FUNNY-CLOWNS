@@ -10,6 +10,14 @@ function pastDayEnd(me, mins){
   var w=hm((me||{}).wind);
   return w>=4*60 ? (mins>=w || mins<4*60) : (mins>=w && mins<4*60);
 }
+/* True from 04:00 until "your day starts at" (owner, 2026-10-19: a day has
+   a start as well as an end). A start at or before 04:00 has no early quiet. */
+function beforeDayStart(me, mins){
+  var r=hm((me||{}).rise||"07:00");
+  return r>4*60 && mins>=4*60 && mins<r;
+}
+/* nothing reaches you outside your day: before it starts, or after it ends */
+function outsideDay(me, mins){ return pastDayEnd(me, mins) || beforeDayStart(me, mins); }
 var DAYNAME=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 function nowCtx(at){
   var d=at||new Date(), me=state.me||freshMe();
@@ -27,10 +35,12 @@ function nowCtx(at){
     beforeWork: onDuty && now<a-c,
     afterWork: onDuty && now>b+c,
     wound: pastDayEnd(me, now),       /* past the end of the day, or the small hours */
+    early: beforeDayStart(me, now),   /* the morning, before the day starts */
     free: !(onDuty && now>=a-c && now<=b+c),
     home: clockLabel(me.work[1]),
     leave: clockLabel(me.work[0]),
     wind: clockLabel(me.wind),
+    rise: clockLabel(me.rise||"07:00"),
     slot: now<12*60 ? "morning" : (now<17*60 ? "afternoon" : "evening")
   };
 }
@@ -44,6 +54,12 @@ function feasible(g,c){
     if(w==="out")  return {ok:false, why:"it is past "+c.wind+" and nothing is open"};
     if(w==="work") return {ok:false, why:"it needs you at work, and it is past "+c.wind};
     return {ok:true, soft:true, why:"it is past "+c.wind+", so this is a quiet one"};
+  }
+  if(c.early){
+    if(w==="body") return {ok:false, why:"your day starts at "+c.rise};
+    if(w==="out")  return {ok:false, why:"your day starts at "+c.rise+" and nothing is open yet"};
+    if(w==="work") return {ok:false, why:"it needs you at work, and your day starts at "+c.rise};
+    return {ok:true, soft:true, why:"your day starts at "+c.rise+", so this is a quiet one"};
   }
   if(c.away){
     if(w==="body") return {ok:false, why:"you are out until about "+c.home};

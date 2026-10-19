@@ -7,7 +7,7 @@
    Tags, Backlog, Archive and the Planner open as the old pages under a Back
    bar. "Classic view" in You turns the old phone board back on.          */
 var PH_KEY="oys-classic", PH_MQ=null, PH_ON=false, PH_DRAWN="", PH_ONB=0, PH_GOAL="";
-var PH_V={end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
+var PH_V={start:"07:00", end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
 /* The board's own pages a phone still shows under a Back bar. Since
    2026-10-18 Backlog, Tags, Archive and the Planner have phone pages of
    their own, so none is left; the mechanism stays for any page added later. */
@@ -435,7 +435,7 @@ function phPlanner(){
       DAYS_SHORT.map(function(n,i){ return '<button type="button" data-ph="pday" data-day="'+i+'" aria-pressed="'+(me.days.indexOf(i)>=0)+'" aria-label="'+esc(PH_DAYS[i])+'">'+esc(n.slice(0,2))+'</button>'; }).join("")+'</div>'+
     '<div class="ph-two"><div>'+tm("w0","Work starts",me.work[0])+'</div><div>'+tm("w1","Work ends",me.work[1])+'</div></div>'+
     '<label class="ph-lab" for="ph-p-commute">Travel each way, in minutes</label><input class="ph-in" type="number" inputmode="numeric" min="0" max="240" id="ph-p-commute" data-pme="commute" value="'+(+me.commute||0)+'">'+
-    tm("wind","Your day ends at",me.wind)+
+    '<div class="ph-two"><div>'+tm("rise","Your day starts at",me.rise||"07:00")+'</div><div>'+tm("wind","Your day ends at",me.wind)+'</div></div>'+
     sel("sharp","When you are sharpest",SHARP,me.sharp)+
     sel("gym","Training fits",GYMWIN,me.gym)+
     tm("brief","Morning brief at",me.brief||"07:30")+'</section>');
@@ -562,6 +562,8 @@ function phYou(){
     '<span class="ph-sr">'+(ph?"Change your photo":"Add a photo of you")+'</span></label>'+
     '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr">'+
     '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
+  /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
+  h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your photo</h2><div class="ph-grp">'+
     (ph ? '<label class="ph-rowb" for="ph-photo-in"><span>Change photo</span><span class="ph-rv">'+PH_CHEV+'</span></label>'+
           phRow("phshow","Show it on every page",ph.show?"On":"Off",true)+
@@ -571,6 +573,7 @@ function phYou(){
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your day</h2><div class="ph-grp">'+
+    phRow("daystart","Day starts",clockLabel(me.rise||"07:00"))+
     phRow("dayend","Day ends",clockLabel(me.wind))+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -578,7 +581,6 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("learned","What the board learned, and hints","")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
-    phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+
     phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+'</div>');
   return h.join("");
 }
@@ -598,11 +600,26 @@ function phTestNote(){
     new Notification(t,o); sent();
   }catch(e){ toast("","This phone did not show it."); }
 }
+function phDayStart(){
+  var me=state.me||freshMe();
+  askUser({title:"When does your day start?", body:"Nothing reaches you before this time, and the board stays quiet until then.",
+    fields:[{k:"t",label:"Day starts at",kind:"time",value:me.rise||"07:00"}], ok:"Save", cancel:"Not now",
+    check:function(v){ var t=pTime(v.t); return !t?"Set a time.":phDayOrder(t,me.wind); }}).then(function(v){
+    if(!v) return;
+    try{ applySetting("day_start",v.t); }catch(e){ toast("",e.message); }
+    save(); renderAll();
+  });
+}
+/* a day starts before it ends; an end after midnight (00:30) is always later */
+function phDayOrder(start,end){
+  var a=hm(start), b=hm(end);
+  return b>=4*60 && a>=b ? "Your day has to start before it ends at "+clockLabel(end)+"." : "";
+}
 function phDayEnd(){
   var me=state.me||freshMe();
   askUser({title:"When does your day end?", body:"Nothing reaches you after this time, and the board goes quiet.",
     fields:[{k:"t",label:"Day ends at",kind:"time",value:me.wind}], ok:"Save", cancel:"Not now",
-    check:function(v){ return pTime(v.t)?"":"Set a time."; }}).then(function(v){
+    check:function(v){ var t=pTime(v.t); return !t?"Set a time.":phDayOrder(me.rise||"07:00",t); }}).then(function(v){
     if(!v) return;
     try{ applySetting("day_end",v.t); }catch(e){ toast("",e.message); }
     save(); renderAll();
@@ -808,7 +825,8 @@ function phOnbHtml(){
       '<button type="button" data-ph="tog" data-k="'+k+'" data-v="off" aria-pressed="'+(v[k]==="off")+'">Off</button></span>'; };
     return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
       '<h1 class="ph-h1 ph-mt">Your day</h1><p class="ph-lede">Two questions. Everything else the board asks later, when it matters.</p>'+
-      '<div class="ph-grp"><label class="ph-rowf"><span>My day ends at</span><input class="ph-time" type="time" id="ph-end" value="'+esc(v.end)+'"></label></div>'+
+      '<div class="ph-grp"><label class="ph-rowf"><span>My day starts at</span><input class="ph-time" type="time" id="ph-start" value="'+esc(v.start)+'"></label>'+
+      '<label class="ph-rowf"><span>My day ends at</span><input class="ph-time" type="time" id="ph-end" value="'+esc(v.end)+'"></label></div>'+
       '<p class="ph-note">Nothing reaches you after this time.</p>'+
       '<h2 class="ph-k ph-gk">Reminders, at most 2 a day</h2><div class="ph-grp">'+
       '<div class="ph-rowf"><span>Morning brief</span>'+tg("am")+'</div>'+
@@ -832,6 +850,7 @@ function phOnbHtml(){
 }
 function phOnbRead(){
   var g=function(id){ var e=document.getElementById(id); return e?e.value:null; }, x;
+  if((x=g("ph-start"))!==null) PH_V.start=x;
   if((x=g("ph-end"))!==null) PH_V.end=x;
   if((x=g("ph-am"))!==null) PH_V.amAt=x;
   if((x=g("ph-pm"))!==null) PH_V.pmAt=x;
@@ -842,8 +861,10 @@ function phOnbStep(i){ phOnbRead(); PH_ONB=Math.max(0,Math.min(2,i)); PH_DRAWN="
 function phOnbDay(){
   phOnbRead();
   var me=state.me||(state.me=freshMe()), v=PH_V, err=$("#ph-onb-err");
+  if(!pTime(v.start)){ if(err) err.textContent="Set the time your day starts."; return; }
   if(!pTime(v.end)){ if(err) err.textContent="Set the time your day ends."; return; }
-  me.wind=pTime(v.end);
+  var ord=phDayOrder(pTime(v.start),pTime(v.end)); if(ord){ if(err) err.textContent=ord; return; }
+  me.rise=pTime(v.start); me.wind=pTime(v.end);
   var bad=remCheck({am:v.am,amAt:v.amAt,pm:v.pm,pmAt:v.pmAt});
   if(bad){ if(err) err.textContent=bad; return; }
   remApply({am:v.am,amAt:v.amAt,pm:v.pm,pmAt:v.pmAt});
@@ -905,6 +926,7 @@ function phOnbFinish(add){
     else if(k==="why") phWhy();
     else if(k==="jr") jrAsk(b.getAttribute("data-kind"));
     else if(k==="account") $("#btn-account").click();
+    else if(k==="daystart") phDayStart();
     else if(k==="dayend") phDayEnd();
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="remtest") phTestNote();

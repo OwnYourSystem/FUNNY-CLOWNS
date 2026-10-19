@@ -35,7 +35,7 @@ function checkRemind(at){
   var me=state.me||freshMe(), c=remCfg(), now=at instanceof Date ? at : new Date(), mins=now.getHours()*60+now.getMinutes();
   /* Nothing is sent after the day is meant to be over. The board says the day
      has an end, so its notifications respect it too. */
-  if(pastDayEnd(me, mins)) return;
+  if(outsideDay(me, mins)) return;
   var today=todayStr();
   if(!state.told||state.told.d!==today) state.told={d:today, am:false, pm:false, hint:false};
 
@@ -68,10 +68,21 @@ function remCfg(){
   var me=state.me||freshMe();
   return {am:me.remAm!==false, pm:me.remPm!==false, amAt:me.brief||"07:30", pmAt:me.pmAt||"15:00"};
 }
+/* The push server knows when the day ends but not when it starts, so a
+   reminder never waits on it: when the start moves past a reminder time,
+   the reminder moves to the start, and the person is told.              */
+function remFitDay(me){
+  var r=me.rise||"07:00", out=[];
+  if(beforeDayStart(me,hm(me.brief||"07:30"))){ me.brief=r; out.push("Your morning brief moves to "+r+", the start of your day."); }
+  if(beforeDayStart(me,hm(me.pmAt||"15:00"))){ me.pmAt=r; out.push("Your afternoon check moves to "+r+"."); }
+  return out.join(" ");
+}
 function remCheck(v){
   var me=state.me||freshMe(), a=hm(v.amAt), p=hm(v.pmAt);
   if(v.am==="on" && isNaN(a)) return "Set a time for the morning brief.";
   if(v.pm==="on" && isNaN(p)) return "Set a time for the afternoon check.";
+  if(v.am==="on" && beforeDayStart(me,a)) return "The morning brief would come before your day starts at "+clockLabel(me.rise||"07:00")+". Pick a later time.";
+  if(v.pm==="on" && beforeDayStart(me,p)) return "The afternoon check would come before your day starts at "+clockLabel(me.rise||"07:00")+". Pick a later time.";
   if(v.am==="on" && pastDayEnd(me,a)) return "The morning brief would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
   if(v.pm==="on" && pastDayEnd(me,p)) return "The afternoon check would come after your day ends at "+clockLabel(me.wind)+". Pick an earlier time.";
   if(v.am==="on" && v.pm==="on" && p<=a) return "Set the afternoon check later than the morning brief.";
@@ -80,7 +91,7 @@ function remCheck(v){
 function remAsk(first){
   var me=state.me||freshMe(), c=remCfg(), oo=[["on","On"],["off","Off"]];
   return askUser({title:first?"Set your reminders":"Your reminders",
-    body:["You choose which reminders come and when. At most 2 a day, and nothing after your day ends at "+clockLabel(me.wind)+". A reminder stays on your phone until you close it. It never covers the board.",
+    body:["You choose which reminders come and when. At most 2 a day, and nothing before your day starts at "+clockLabel(me.rise||"07:00")+" or after your day ends at "+clockLabel(me.wind)+". A reminder stays on your phone until you close it. It never covers the board.",
       "Where it can, they also arrive when the board is closed. For that, a server keeps this device's address, your time zone and the times you set here. It never gets a task, a goal or any of your words."+(first?" Your browser will ask you to allow notifications next.":" To stop them all, set both to Off.")],
     fields:[{k:"am",label:"Morning brief: today's one task and why",kind:"pick",row:true,opts:oo,value:c.am?"on":"off"},
             {k:"amAt",label:"Morning brief at",kind:"time",value:c.amAt},

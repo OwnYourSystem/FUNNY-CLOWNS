@@ -98,7 +98,7 @@ function goalScore(g,c,me){
   if(me.sharp===c.slot && (g.prio==="high"||u>=50)) sc+=30;
   if(g.where==="body" && c.free) sc+=38;
   if(g.where==="work" && c.atWork) sc+=30;
-  if(g.where==="home" && c.free && !c.wound) sc+=14;
+  if(g.where==="home" && c.free && !c.wound && !c.early) sc+=14;
   return sc;
 }
 /* within-goal only: which step of this goal, now */
@@ -161,6 +161,7 @@ function verdictWhy(v){
   out.push("It is "+pad2(c.d.getHours())+":"+pad2(c.d.getMinutes())+" on a "+c.day+
     (c.away ? " and you are out until about "+c.home
             : c.wound ? " and your day is meant to be over"
+            : c.early ? " and your day starts at "+c.rise
                       : " and your time is your own")+".");
   if(s.rep && periodKey(s.rep))
     out.push(repLabel(s.rep)+", and today is not done"+(s.streak?". You are "+s.streak+" in a row":"")+".");

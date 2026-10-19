@@ -18,8 +18,8 @@ var IVQ=[
   {k:"gym", q:"When can you train?",
    n:"This is the one that stops it telling you to get on an airbike at one o\u2019clock on a Monday.",
    kind:"pick", opts:GYMWIN},
-  {k:"wind", q:"When does your day end?",
-   n:"After this, it will only offer you something quiet, and it will say so.",
+  {k:"wind", q:"When does your day start, and when does it end?",
+   n:"Outside these times it will only offer you something quiet, and it will say so. Nothing reaches you before the start or after the end.",
    kind:"time", ph:"22:30"},
   {k:"north", q:"What is the one thing that matters most right now?",
    n:"One line. It does not score anything on its own; it is what you are shown when the board argues with you.",
@@ -34,7 +34,7 @@ var IVQ=[
 function ivOpen(){
   var me=state.me||freshMe();
   IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), commute:me.commute,
-              sharp:me.sharp, gym:me.gym, wind:me.wind, north:me.north||"",
+              sharp:me.sharp, gym:me.gym, rise:me.rise||"07:00", wind:me.wind, north:me.north||"",
               feeds:(me.feeds||[]).slice(), where:{}}};
   state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
   $("#interview").hidden=false;
@@ -65,7 +65,8 @@ function ivPaint(){
     h='<label>Minutes<input class="f" type="number" min="0" max="240" data-iv="commute" value="'+
       (+a.commute||0)+'" placeholder="'+esc(q.ph||"")+'"></label>';
   else if(q.kind==="time")
-    h='<label>Time<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label>';
+    h='<div class="two"><label>Starts<input class="f" type="time" data-iv="rise" value="'+esc(a.rise)+'"></label>'+
+      '<label>Ends<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label></div>';
   else if(q.kind==="text")
     h='<label>In one line<input class="f" data-iv="north" value="'+esc(a.north)+'" placeholder="'+
       esc(q.ph||"")+'"></label>';
@@ -92,7 +93,7 @@ function ivSave(){
   me.days=a.days.slice().sort(); if(!me.days.length) me.days=[];
   me.work=[a.work[0]||"08:00", a.work[1]||"16:30"];
   me.commute=Math.max(0,Math.min(240,+a.commute||0));
-  me.sharp=a.sharp; me.gym=a.gym; me.wind=a.wind||"22:30"; me.north=a.north||"";
+  me.sharp=a.sharp; me.gym=a.gym; me.rise=a.rise||"07:00"; me.wind=a.wind||"22:30"; me.north=a.north||"";
   me.feeds=(a.feeds||[]).slice(0,6);
   me.done=true;
   state.groups.forEach(function(g){ if(a.where[g.id]) g.where=a.where[g.id]; });

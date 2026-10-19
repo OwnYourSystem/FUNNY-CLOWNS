@@ -10,7 +10,7 @@
    and it never leaves this browser.                                     */
 function freshMe(){
   return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"], commute:30,
-          sharp:"morning", gym:"evening", wind:"22:30", north:"", never:"",
+          sharp:"morning", gym:"evening", rise:"07:00", wind:"22:30", north:"", never:"",
           feeds:[], brief:"07:30", icon:""};
 }
 function toGoals(){

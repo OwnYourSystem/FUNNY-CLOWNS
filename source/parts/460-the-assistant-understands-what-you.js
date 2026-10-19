@@ -166,6 +166,10 @@ var PARSE={
 function applySetting(key,val){
   var me=state.me||(state.me=freshMe()), v=String(val==null?"":val).trim(), t, x, b;
   switch(key){
+    case "day_start":
+      t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 07:00 or 7am.");
+      me.rise=t; x=remFitDay(me);
+      return "Your day now starts at "+t+". Nothing reaches you before that, and suggestions stay quiet until then."+(x?" "+x:"");
     case "day_end":
       t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 21:00 or 9pm.");
       me.wind=t; return "Your day now ends at "+t+". Reminders and suggestions go quiet after that.";
@@ -315,6 +319,9 @@ act({id:"goal_restore",group:"Goals",ex:"Bring Home back from the backlog or arc
 act({id:"goal_remove",group:"Goals",ex:"Remove goal Home",kw:["remove","delete","goal"],
   re:[/^(?:remove|delete|drop|scrap) (?:the )?(?:goal|project|main task) (.+)$/],take:[["goal",1]],ask:{goal:"Which goal?"},
   run:function(v){ return pendStage({name:"remove_main_task"},{main_task:v.goal}); }});
+act({id:"day_start",group:"Settings",ex:"My day starts at 7am",kw:["day","start","morning","begin","wake","up"],
+  re:[/\b(?:(?:my )?day (?:starts?|begins?)|start of (?:my )?day|i (?:get up|wake up|start (?:my day|the day)))\b(?: (?:at|to|is|by))? ?(.*)$/],take:[["time",1]],ask:{time:"What time does your day start? For example 07:00 or 7am."},
+  run:function(v){ return toolRun("set_setting",{key:"day_start",value:v.time}); }});
 act({id:"day_end",group:"Settings",ex:"My day ends at 9pm",kw:["day","end","evening","finish","wind"],
   re:[/\b(?:day ends?|end of (?:my )?day|wind ?down(?: time)?|stop for the day)\b(?: (?:at|to|is|by))? ?(.*)$/],take:[["time",1]],ask:{time:"What time does your day end? For example 21:00 or 9pm."},
   run:function(v){ return toolRun("set_setting",{key:"day_end",value:v.time}); }});
@@ -675,7 +682,7 @@ var BRAIN=[
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, askUser:askUser,
+  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, remCheck:remCheck, askUser:askUser,
   push:{state:function(){ return PUSH; }, digest:digestWrite, sync:pushSync, brief:briefText},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
