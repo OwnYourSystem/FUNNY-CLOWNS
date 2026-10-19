@@ -74,3 +74,11 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   Ruba-Qordel builds had it), so the capitals build is the one served.
 - Note: the Git hook missed the bda5820 push (no preview was built); a preview was created by hand.
 - Rolling back: `dpl_Hq6W2Ys2U8BUUvkMUkz9a46QYfum` (42087bc, OwnYourDay with the guide, this evening).
+
+## 2026-10-19 (late night): production moved to 7b9d4cc (backup carries the private parts)
+
+- Owner: "release it". The backup file carries the journal, weekly check-ins and photo (switch on by
+  default); a restore adds back only what is missing. Full regression green (one voice timing flake,
+  fixed in the test, 3 clean runs alone).
+- Production deployment `dpl_BjsGnWWBus4J3xNUiWPPzc5ewmBj`, READY, aliased to funny-clowns.vercel.app.
+- Rolling back: `dpl_3SwciVrg7rvAm3KDePAA7h78XBz2` (3c6f71c, Qordel in capitals).
