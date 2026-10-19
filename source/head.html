@@ -303,6 +303,32 @@ body.flat #canvas{transform:none!important}
 .bot-ask .f{flex:1 1 auto; width:auto}
 #bot-input{resize:none; overflow:auto; display:block}
 .bot-turn{display:flex; flex-direction:column; gap:10px}
+.bot-hid{display:none}
+.bot-p{display:block}
+.bot-p+.bot-p,.bot-list+.bot-p{margin-top:8px}
+.bot-t{text-align:justify; hyphens:auto; -webkit-hyphens:auto}
+.bot-p:has(.bot-t){text-align:justify; hyphens:auto; -webkit-hyphens:auto}
+.bot-gap{height:6px}
+.bot-h,.bot-lh{display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin:12px 0 4px;
+  font-size:.82em; font-weight:600; color:var(--muted); letter-spacing:.01em}
+.bot-msg>.bot-h:first-child,.bot-msg>.bot-lh:first-child,.bot-p>.bot-lh:first-child{margin-top:2px}
+.bot-h span{text-transform:lowercase}
+.bot-h span::first-letter{text-transform:uppercase}
+.bot-h span{display:inline-block}
+.bot-lh::after{content:attr(data-n); min-width:20px; padding:1px 7px; border-radius:999px; background:var(--inset); color:var(--ink-2); font-size:.92em; text-align:center}
+.bot-list{display:flex; flex-direction:column; margin:2px -4px 0; border-radius:12px; overflow:hidden}
+.bot-row{display:flex; flex-direction:column; justify-content:center; gap:2px; min-height:40px; padding:8px 4px; border-top:1px solid var(--hair);
+  color:var(--ink); text-decoration:none; text-align:left; white-space:normal}
+.bot-list>.bot-row:first-child{border-top:0}
+.bot-rt{font-weight:500; line-height:1.35}
+.bot-rs{font-size:.88em; color:var(--muted); line-height:1.35}
+.bot-msg[data-help] .bot-row{cursor:pointer}
+.bot-go{position:relative; padding-right:26px}
+.bot-go::after{content:""; position:absolute; right:8px; top:50%; width:7px; height:7px; margin-top:-4px; border-right:1.6px solid var(--muted); border-top:1.6px solid var(--muted); transform:rotate(45deg)}
+html.ph .bot-msg.bot{white-space:normal; width:100%; box-sizing:border-box; max-width:none; padding:14px 16px; border-radius:18px; font-size:1rem; line-height:1.5}
+html.ph .bot-msg.you{max-width:82%; padding:10px 14px; border-radius:18px; border-bottom-right-radius:6px}
+html.ph .bot-row{min-height:44px}
+html.ph :is(.bot-go,.bot-msg[data-help] .bot-row):active{background:var(--ph-wash)}
 .btn.mic{display:inline-flex; align-items:center; gap:6px}
 .btn.mic.on,.mini.mic.on{color:var(--accent); border-color:var(--accent)}
 .ask-mic{display:inline-flex; align-items:center; gap:6px; margin-top:6px}
@@ -1277,6 +1303,9 @@ html.ph.ph-talk .bot-pend{order:2}
 html.ph.ph-talk .bot-chips{order:3}
 html.ph.ph-talk .bot-note{order:3}
 html.ph.ph-talk .bot-log{order:4; flex:0 0 auto; max-height:none; overflow:visible; flex-direction:column-reverse; padding-right:0}
+/* a reply that reads at a glance: a card, short paragraphs set justified,
+   lists as rows with hairlines, headings small; the head stays on top */
+html.ph.ph-talk .sheet-head{position:sticky; top:-12px; z-index:3; background:var(--ground); margin:-12px -16px 0; padding:12px 16px 10px}
 .ph-big{margin:48px 0 0; font-size:2rem; line-height:1.12; font-weight:600; letter-spacing:-.02em}
 .ph-lede{margin:0; font-size:1rem; line-height:1.5; color:var(--ink-2)}
 .ph-mt{margin-top:4px}
@@ -1456,7 +1485,7 @@ html.ph.ph-talk.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:51; top
 #ph-mini:active{opacity:.7}
 html.ph.ph-has-me .ph-today-k{padding-right:48px}
 html.ph.ph-has-me .ph-today .ph-head{margin-top:12px}
-html.ph.ph-talk.ph-has-me .sheet-head{padding-right:48px}
+html.ph.ph-talk.ph-has-me .sheet-head{padding-right:64px}
 html.ph.ph-old.ph-has-me #ph-back{padding-right:60px}
 label.ph-rowb{cursor:pointer}
 /* Backlog, Archive, Tags, Planner and What the board learned as phone pages (2026-10-18) */

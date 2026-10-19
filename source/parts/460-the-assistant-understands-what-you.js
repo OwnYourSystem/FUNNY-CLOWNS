@@ -779,7 +779,8 @@ function modelThere(){ return !!botSample || (proxyReady() && !!(acct&&acct.acce
 
 function botBubble(cls,text){
   var log=$("#bot-log"), d=document.createElement("div");
-  d.className="bot-msg "+cls; d.textContent=text;
+  d.className="bot-msg "+cls;
+  if(cls==="bot") botRich(d,text); else d.textContent=text;
   /* a question opens a turn and its answers join it, so the phone can show
      the newest turn first and keep each answer under its question */
   var turn=log.lastElementChild;
@@ -788,6 +789,97 @@ function botBubble(cls,text){
   if(document.documentElement.classList.contains("ph-talk")){ var sh=$("#botsheet"); if(sh) sh.scrollTop=0; }
   return d;
 }
+/* ---- a reply laid out to read at a glance (2026-10-19) ----
+   The words stay exactly as written; only layout is added around them, so
+   the reply's text is the same as before. A line starting "- " is a row.
+   A line in capitals is a section heading. "Label: name, name." where every
+   name is a real step or goal becomes a heading with a count and one row per
+   name. On the phone a row that names one step or goal opens it; a row of examples
+   from help puts the words in the box. Separators are kept but hidden.   */
+function botRich(d,text){
+  var names=botNames(), lines=String(text).split("\n"), list=null;
+  lines.forEach(function(line,i){
+    var last=i===lines.length-1, el, m;
+    if((m=line.match(/^- (.*)$/))){
+      if(!list){ list=bEl("div","bot-list"); d.appendChild(list); }
+      el=botRow(m[1],names,"- ",d); list.appendChild(el);
+    }else{
+      list=null;
+      var nx=0; if((m=line.match(/^([^:]{1,40}):$/))) while(i+1+nx<lines.length && /^- /.test(lines[i+1+nx])) nx++;
+      if(nx){ el=bEl("div","bot-lh"); el.appendChild(bEl("span","",m[1])); el.appendChild(bEl("span","bot-hid",":")); el.setAttribute("data-n",String(nx)); }
+      else if(/^[A-Z][A-Z -]{2,}$/.test(line)){ el=bEl("div","bot-h"); el.appendChild(bEl("span","",line)); d.setAttribute("data-help","1"); }
+      else if(!line){ el=bEl("div","bot-gap"); }
+      else el=botPara(line,names,d);
+      d.appendChild(el);
+    }
+    if(!last) el.appendChild(bEl("span","bot-hid","\n"));
+  });
+}
+function bEl(tag,cls,t){ var e=document.createElement(tag); if(cls) e.className=cls; if(t!==undefined) e.textContent=t; return e; }
+/* every step, goal and card name, longest first, with the step it opens */
+function botNames(){
+  var seen={}, out=[];
+  var add=function(n,id){ if(!n) return; if(seen[n]===undefined){ seen[n]=id||""; out.push(n); } else if(seen[n]!==(id||"")) seen[n]=""; };
+  Object.keys(state.subs).forEach(function(k){ add(state.subs[k].name,k); });
+  state.groups.forEach(function(g){ add(g.name,"g:"+g.id); });
+  out.sort(function(a,b){ return b.length-a.length; });
+  return {list:out, id:seen};
+}
+function botMatch(t,at,names){
+  for(var i=0;i<names.list.length;i++){ var n=names.list[i]; if(t.substr(at,n.length)===n) return n; }
+  return null;
+}
+/* "Label: a, b and c." with every item a known name, or null */
+function botListAt(t,from,names){
+  var at=from, items=[], seps=[];
+  for(var guard=0;guard<200;guard++){
+    var n=botMatch(t,at,names); if(!n) return null;
+    items.push(n); at+=n.length;
+    var rest=t.substr(at), sep=(rest.match(/^(, and |, | and )/)||[])[0];
+    if(sep){ seps.push(sep); at+=sep.length; continue; }
+    sep=(rest.match(/^\.(?=\s|$)/)||[])[0];
+    if(sep!==undefined){ seps.push(sep); at+=sep.length; return {items:items,seps:seps,end:at}; }
+    if(!rest){ seps.push(""); return {items:items,seps:seps,end:at}; }
+    return null;
+  }
+  return null;
+}
+function botPara(line,names,d){
+  var p=bEl("div","bot-p"), re=/(^|\s)([A-Z][A-Za-z ]{0,28}): /g, at=0, m;
+  while((m=re.exec(line))){
+    var lab=m.index+m[1].length, body=lab+m[2].length+2, L=botListAt(line,body,names);
+    if(!L) continue;
+    if(lab>at) p.appendChild(bEl("span","bot-t",line.slice(at,lab)));
+    var h=bEl("div","bot-lh"); h.appendChild(bEl("span","",m[2])); h.appendChild(bEl("span","bot-hid",": "));
+    h.setAttribute("data-n",String(L.items.length)); p.appendChild(h);
+    var box=bEl("div","bot-list");
+    L.items.forEach(function(n,k){ var r=botRow(n,names,"",d); r.appendChild(bEl("span","bot-hid",L.seps[k])); box.appendChild(r); });
+    p.appendChild(box); at=L.end; re.lastIndex=at;
+  }
+  if(at<line.length) p.appendChild(bEl("span","bot-t",line.slice(at)));
+  return p;
+}
+function botRow(t,names,lead,d){
+  var n=botMatch(t,0,names), id=n?names.id[n]:"", r;
+  var link=typeof PH_ON!=="undefined" && PH_ON && id;
+  r=bEl(link?"a":"div","bot-row"+(link?" bot-go":""));
+  if(link) r.setAttribute("href",id.indexOf("g:")===0?"#/goal/"+encodeURIComponent(id.slice(2)):"#/step/"+encodeURIComponent(id));
+  if(lead) r.appendChild(bEl("span","bot-hid",lead));
+  if(n){
+    r.appendChild(bEl("span","bot-rt",n));
+    var rest=t.slice(n.length), c=rest.match(/^: /);
+    if(c){ r.appendChild(bEl("span","bot-hid",": ")); rest=rest.slice(2); }
+    if(rest) r.appendChild(bEl("span","bot-rs",rest));
+  }
+  else r.appendChild(bEl("span","bot-rt",t));
+  return r;
+}
+/* a help example, tapped, goes into the box to send or change */
+$("#bot-log").addEventListener("click",function(e){
+  var r=e.target.closest&&e.target.closest(".bot-msg[data-help] .bot-row:not(.bot-go)"); if(!r) return;
+  var i=$("#bot-input"), t=r.querySelector(".bot-rt"); if(!i||!t) return;
+  i.value=t.textContent; try{ i.focus(); }catch(er){}
+});
 function botRender(){
   var log=$("#bot-log"); log.innerHTML=""; pendRender();
   if(!botTurns.length){
