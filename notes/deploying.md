@@ -63,3 +63,14 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Production deployment `dpl_Hq6W2Ys2U8BUUvkMUkz9a46QYfum`, READY, aliased to funny-clowns.vercel.app
   (sha 42087bc per Vercel).
 - Rolling back: `dpl_BJFA9KkYph33MqT4zsrzYbEWqJvQ` (3aeac1e, OwnYourDay and day start, this afternoon).
+
+## 2026-10-19 (night): production moved to 3c6f71c (Qordel)
+
+- Owner: "use capitals, then release it". Contains bda5820 (Planck, never released on its own),
+  be2c771 (Qordel, the tagline on the welcome) and 3c6f71c (QORDEL in capitals in the app font).
+- Full regression on 3c6f71c: all 30 suites green, no failures (purity 315).
+- Production deployment `dpl_3SwciVrg7rvAm3KDePAA7h78XBz2`, READY, aliased to funny-clowns.vercel.app.
+  Checked live: manifest name "Qordel"; `fonts/Ruba-Regular-LICENSE.txt` now 404 (only the Planck and
+  Ruba-Qordel builds had it), so the capitals build is the one served.
+- Note: the Git hook missed the bda5820 push (no preview was built); a preview was created by hand.
+- Rolling back: `dpl_Hq6W2Ys2U8BUUvkMUkz9a46QYfum` (42087bc, OwnYourDay with the guide, this evening).
