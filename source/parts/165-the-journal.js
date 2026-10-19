@@ -7,8 +7,9 @@
 
    It is as personal as the weekly check-in and kept apart the same way: its
    own storage key, never in the board's state, so it stays out of account
-   sync, the backup text, a reset, the tutor's snapshot and tools, the memory
-   and the hints. The chat can open it, save into it and read the last note
+   sync, a reset, the tutor's snapshot and tools, the memory and the hints.
+   Since 2026-10-19 the backup file carries it, while the person keeps
+   "Include my journal, weekly check-ins and photo" on (see 360-backup). The chat can open it, save into it and read the last note
    back to the person who wrote it. It is deleted only from its own panel.
    A day here runs to 04:00, like the board's day: a note written at 00:30
    belongs to the evening before.                                          */

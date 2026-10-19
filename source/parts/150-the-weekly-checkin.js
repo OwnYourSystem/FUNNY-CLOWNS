@@ -7,7 +7,8 @@
 
    This is about as personal as the board gets, so it is kept apart on purpose.
    It lives under its own storage key, never in the board's state. That keeps it
-   out of account sync, out of the backup text, out of the tutor's snapshot and
+   out of account sync (the backup file carries it since 2026-10-19, while the
+   person keeps it switched on; see 360-backup), out of the tutor's snapshot and
    tools, out of the memory, and out of the hints. Nothing infers it, nothing
    asks for it unprompted (a quiet line on the board shows when one is due, and
    it opens only when you press it), and it can be deleted whole. The board says

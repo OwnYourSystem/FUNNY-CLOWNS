@@ -1285,6 +1285,11 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 [aria-checked="true"]>.ph-rv>.ph-switch::after{transform:translateX(20px)}
 @media (prefers-reduced-motion: reduce){ .ph-switch,.ph-switch::after{transition:none} }
 .ph-empty+.ph-lab,.ph-mem+.ph-lab{display:block; margin-top:16px}
+/* backup: the switch for the private parts, 44px on the phone */
+.io-priv{display:flex; align-items:center; gap:10px; margin-top:10px; font-size:.9rem; color:var(--ink)}
+.io-priv input{width:20px; height:20px; flex:none; accent-color:var(--ph-pri,var(--accent))}
+.io-note{margin:4px 0 0; font-size:.8rem; color:var(--muted); line-height:1.45}
+html.ph .io-priv{min-height:44px}
 /* the first-time guide (2026-10-19): one choice from a list is rows with a tick */
 .ph-choice{text-align:left}
 .ph-choice>span:first-child{display:flex; flex-direction:column; gap:2px}
@@ -1888,6 +1893,8 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="d-body">
         <p style="margin:0">Your board lives in this browser only, so the saved file and the web link each keep their own. Move one across by copying the text below, then pasting it in on the other device and loading it.</p>
         <textarea id="io" spellcheck="false" aria-label="Backup data"></textarea>
+        <label class="io-priv"><input type="checkbox" id="io-private" checked> Include my journal, weekly check-ins and photo</label>
+        <p class="io-note">With this on, the file holds your private notes. Keep it where only you can open it. Signing in never sends them anywhere.</p>
         <div class="row-btns">
           <button class="btn" id="io-dump">Show backup</button>
           <button class="btn" id="io-load">Load pasted backup</button>
@@ -3733,7 +3740,8 @@ function renderFloor(){
 
    This is about as personal as the board gets, so it is kept apart on purpose.
    It lives under its own storage key, never in the board's state. That keeps it
-   out of account sync, out of the backup text, out of the tutor's snapshot and
+   out of account sync (the backup file carries it since 2026-10-19, while the
+   person keeps it switched on; see 360-backup), out of the tutor's snapshot and
    tools, out of the memory, and out of the hints. Nothing infers it, nothing
    asks for it unprompted (a quiet line on the board shows when one is due, and
    it opens only when you press it), and it can be deleted whole. The board says
@@ -3974,8 +3982,9 @@ function renderFollow(){
 
    It is as personal as the weekly check-in and kept apart the same way: its
    own storage key, never in the board's state, so it stays out of account
-   sync, the backup text, a reset, the tutor's snapshot and tools, the memory
-   and the hints. The chat can open it, save into it and read the last note
+   sync, a reset, the tutor's snapshot and tools, the memory and the hints.
+   Since 2026-10-19 the backup file carries it, while the person keeps
+   "Include my journal, weekly check-ins and photo" on (see 360-backup). The chat can open it, save into it and read the last note
    back to the person who wrote it. It is deleted only from its own panel.
    A day here runs to 04:00, like the board's day: a note written at 00:30
    belongs to the evening before.                                          */
@@ -6025,28 +6034,96 @@ pushSync();
   d.addEventListener("close",function(){ try{ if(opener) opener.focus(); }catch(er){} });
 })();
 var IO=$("#io");
+/* ---- the private parts in the backup (owner, 2026-10-19: "go ahead with the backup") ----
+   The journal, the weekly check-ins and the photo live in their own keys,
+   never in the board's state, so account sync and the tutor never see them.
+   They used to be left out of the backup too, which meant a cleared browser
+   or a lost phone lost them for good (the Apple principles check: reliability
+   failed). Now the backup file carries them while "Include my journal, weekly
+   check-ins and photo" is on (it is, unless the person turns it off). Loading
+   a backup adds back what is missing and never overwrites: an entry already
+   on this phone is kept, nothing is doubled, the photo returns only if there
+   is none. Anything that does not look like what this app writes is dropped. */
+var BK_PHOTO_RE=/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
+function bkPrivate(){
+  var ph=null;
+  try{ var x=JSON.parse(localStorage.getItem(KEY+".photo")||"null"); if(x && BK_PHOTO_RE.test(String(x.src))) ph={src:x.src, show:x.show!==false}; }catch(e){}
+  return {journal:jrData().log.slice(), week:weekData().log.slice(), photo:ph};
+}
+function bkText(){
+  var o=JSON.parse(JSON.stringify(state)), inc=$("#io-private");
+  delete o.private;
+  if(!inc||inc.checked) o.private=bkPrivate();
+  return JSON.stringify(o);
+}
+function bkJrOk(e){
+  return e && typeof e.id==="string" && e.id.length<=40 && typeof e.at==="string" && !isNaN(Date.parse(e.at)) &&
+    /^\d{4}-\d\d-\d\d$/.test(e.d) && /^\d\d:\d\d$/.test(e.tm) && !!JR_KINDS[e.kind] &&
+    typeof e.a==="string" && typeof e.b==="string" && (e.a||e.b);
+}
+function bkWkOk(e){
+  return e && /^\d{4}-W\d\d$/.test(e.k) && /^\d{4}-\d\d-\d\d$/.test(e.d) &&
+    WEEK_ITEMS.every(function(it){ var v=e[it[0]]; return v===Math.round(v) && v>=1 && v<=5; });
+}
+/* add back what is missing; returns how many of each came back */
+function bkMerge(p){
+  var got={journal:0, week:0, photo:false};
+  if(!p||typeof p!=="object") return got;
+  if(Array.isArray(p.journal)){
+    var J=jrData(), have={}; J.log.forEach(function(e){ have[e.id]=1; });
+    p.journal.forEach(function(e){
+      if(!bkJrOk(e)||have[e.id]) return;
+      var c={id:e.id, at:e.at, d:e.d, tm:e.tm, kind:e.kind, a:jrClip(e.a), b:jrClip(e.b)};
+      if(typeof e.ed==="string" && !isNaN(Date.parse(e.ed))) c.ed=e.ed;
+      J.log.push(c); have[e.id]=1; got.journal++;
+    });
+    J.log.sort(function(a,b){ return a.at<b.at?-1:a.at>b.at?1:0; });
+    if(J.log.length>JR_KEEP) J.log.splice(0,J.log.length-JR_KEEP);
+    jrSave();
+  }
+  if(Array.isArray(p.week)){
+    var W=weekData(), hk={}; W.log.forEach(function(e){ hk[e.k]=1; });
+    p.week.forEach(function(e){
+      if(!bkWkOk(e)||hk[e.k]) return;
+      var c={k:e.k, d:e.d}; WEEK_ITEMS.forEach(function(it){ c[it[0]]=e[it[0]]; });
+      if(e.n===Math.round(e.n) && e.n>=0) c.n=e.n;
+      W.log.push(c); hk[e.k]=1; got.week++;
+    });
+    W.log.sort(function(a,b){ return a.d<b.d?-1:a.d>b.d?1:0; });
+    if(W.log.length>WEEK_KEEP) W.log.splice(0,W.log.length-WEEK_KEEP);
+    weekSave();
+  }
+  if(p.photo && BK_PHOTO_RE.test(String(p.photo.src))){
+    var mine=null; try{ mine=JSON.parse(localStorage.getItem(KEY+".photo")||"null"); }catch(e){}
+    if(!mine){ try{ localStorage.setItem(KEY+".photo",JSON.stringify({src:p.photo.src, show:p.photo.show!==false})); got.photo=true; }catch(e){} }
+  }
+  return got;
+}
 var sandboxed=(function(){ try{ return window.self!==window.top; }catch(e){ return true; } })();
 if(sandboxed) $("#io-save").textContent="Copy backup text";
-$("#io-dump").addEventListener("click",function(){ IO.value=JSON.stringify(state); IO.focus(); IO.select(); });
+$("#io-dump").addEventListener("click",function(){ IO.value=bkText(); IO.focus(); IO.select(); });
 $("#io-load").addEventListener("click",function(){
   try{
     var s=JSON.parse(IO.value);
     if(!s||!(s.v===1||s.v===2)) throw new Error("bad");
-    localStorage.setItem(KEY,JSON.stringify(s)); location.reload();
+    var priv=s.private; delete s.private;
+    localStorage.setItem(KEY,JSON.stringify(s));
+    bkMerge(priv);
+    location.reload();
   }catch(e){ ioMsg("That is not a board backup. Paste the whole line, first brace to last."); }
 });
 $("#io-save").addEventListener("click",function(){
   if(sandboxed){
-    IO.value=JSON.stringify(state); IO.focus(); IO.select();
+    IO.value=bkText(); IO.focus(); IO.select();
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(IO.value).catch(function(){});
     return;
   }
   try{
     var a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([JSON.stringify(state)],{type:"application/json"}));
-    a.download="minimum-deliveries-"+todayStr()+".json";
+    a.href=URL.createObjectURL(new Blob([bkText()],{type:"application/json"}));
+    a.download="qordel-backup-"+todayStr()+".json";
     document.body.appendChild(a); a.click(); a.remove();
-  }catch(e){ IO.value=JSON.stringify(state); IO.focus(); IO.select(); ioMsg("This browser will not save a file. The backup text is selected instead, copy it."); }
+  }catch(e){ IO.value=bkText(); IO.focus(); IO.select(); ioMsg("This browser will not save a file. The backup text is selected instead, copy it."); }
 });
 $("#io-file").addEventListener("change",function(e){
   var f=e.target.files[0]; if(!f) return;
@@ -9036,8 +9113,8 @@ function phUndo(){
 /* ---- your photo (2026-10-18) ----
    Chosen with the phone's own picker (camera or library), cut to a square
    and made small (256px, about 20 KB) before it is kept. It stays on this
-   phone in its own storage key, like the journal: no sync, no backup file,
-   never sent to the tutor. Once set it shows small at the top right of
+   phone in its own storage key, like the journal: no sync, never sent to the
+   tutor; the backup file carries it while the person keeps that switched on. Once set it shows small at the top right of
    every page and leads to You, where it shows large. A switch in You hides
    it from the other pages. Only a picture this code made is ever shown. */
 var PH_PHOTO_KEY=KEY+".photo";

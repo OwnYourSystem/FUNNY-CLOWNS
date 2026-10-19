@@ -1285,6 +1285,11 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 [aria-checked="true"]>.ph-rv>.ph-switch::after{transform:translateX(20px)}
 @media (prefers-reduced-motion: reduce){ .ph-switch,.ph-switch::after{transition:none} }
 .ph-empty+.ph-lab,.ph-mem+.ph-lab{display:block; margin-top:16px}
+/* backup: the switch for the private parts, 44px on the phone */
+.io-priv{display:flex; align-items:center; gap:10px; margin-top:10px; font-size:.9rem; color:var(--ink)}
+.io-priv input{width:20px; height:20px; flex:none; accent-color:var(--ph-pri,var(--accent))}
+.io-note{margin:4px 0 0; font-size:.8rem; color:var(--muted); line-height:1.45}
+html.ph .io-priv{min-height:44px}
 /* the first-time guide (2026-10-19): one choice from a list is rows with a tick */
 .ph-choice{text-align:left}
 .ph-choice>span:first-child{display:flex; flex-direction:column; gap:2px}
@@ -1888,6 +1893,8 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="d-body">
         <p style="margin:0">Your board lives in this browser only, so the saved file and the web link each keep their own. Move one across by copying the text below, then pasting it in on the other device and loading it.</p>
         <textarea id="io" spellcheck="false" aria-label="Backup data"></textarea>
+        <label class="io-priv"><input type="checkbox" id="io-private" checked> Include my journal, weekly check-ins and photo</label>
+        <p class="io-note">With this on, the file holds your private notes. Keep it where only you can open it. Signing in never sends them anywhere.</p>
         <div class="row-btns">
           <button class="btn" id="io-dump">Show backup</button>
           <button class="btn" id="io-load">Load pasted backup</button>

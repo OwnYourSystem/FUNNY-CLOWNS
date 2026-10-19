@@ -74,8 +74,8 @@ function phUndo(){
 /* ---- your photo (2026-10-18) ----
    Chosen with the phone's own picker (camera or library), cut to a square
    and made small (256px, about 20 KB) before it is kept. It stays on this
-   phone in its own storage key, like the journal: no sync, no backup file,
-   never sent to the tutor. Once set it shows small at the top right of
+   phone in its own storage key, like the journal: no sync, never sent to the
+   tutor; the backup file carries it while the person keeps that switched on. Once set it shows small at the top right of
    every page and leads to You, where it shows large. A switch in You hides
    it from the other pages. Only a picture this code made is ever shown. */
 var PH_PHOTO_KEY=KEY+".photo";
