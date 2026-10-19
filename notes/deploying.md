@@ -52,3 +52,14 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Production deployment `dpl_BJFA9KkYph33MqT4zsrzYbEWqJvQ`, READY, aliased to funny-clowns.vercel.app.
   Checked live: manifest name "OwnYourDay"; `fonts/Outfit-OFL.txt` served.
 - Rolling back: `dpl_8BdQZSfY1ozbyWwh2vWpTJLKjNCJ` (8db3ba2, Daysize, this morning).
+
+## 2026-10-19 (evening): production moved to 42087bc (guide, HIG review 2)
+
+- Owner: "value first, then release it". Contains f59dc59 (HIG review 2: switches, Undo for Clear,
+  photo level with Clear), a0b9c69 and 42087bc (the first-time guide, value first: welcome and first
+  goal, then Now with a "Set up your week" card that opens the 5 guide screens and stays until done).
+- `claude/phone-onboarding-guide` was fast-forwarded into `app`. Full regression on 42087bc: all 30
+  suites green, no failures (purity 315).
+- Production deployment `dpl_Hq6W2Ys2U8BUUvkMUkz9a46QYfum`, READY, aliased to funny-clowns.vercel.app
+  (sha 42087bc per Vercel).
+- Rolling back: `dpl_BJFA9KkYph33MqT4zsrzYbEWqJvQ` (3aeac1e, OwnYourDay and day start, this afternoon).
