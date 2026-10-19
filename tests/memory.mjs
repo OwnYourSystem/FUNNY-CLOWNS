@@ -162,7 +162,9 @@ await ok("a learned or tutor-suggested note lapses after 60 days unless seen aga
 await reset(`function(s){ s.mem=[{id:"k1",t:"Evening is when you finish things.",src:"board",st:"kept",d:"2026-10-01",seen:"2026-10-02",key:"hours",k:"finding",apply:{sharp:"evening",prev:"morning"}},{id:"k2",t:"Short steps",src:"you",st:"kept",d:"2026-10-01",seen:"2026-10-02"}]; s.me.sharp="evening"; }`);
 await ok("Erase everything asks first, clears the list and puts learned settings back", async () => {
   await p.evaluate(() => { location.hash = "#/planner"; }); await p.waitForTimeout(300);
-  const btn = p.locator("#mem-erase"); await btn.click(); await p.locator("dialog.ask[open]").waitFor(); assert.equal((await st()).mem.length, 2); await p.locator("dialog.ask[open] [data-aok]").waitFor(); await p.locator("dialog.ask[open] [data-aok]").click(); await p.waitForTimeout(200);
+  const btn = p.locator("#mem-erase"); await btn.click(); await p.locator("dialog.ask[open]").waitFor(); assert.equal((await st()).mem.length, 2); await p.locator("dialog.ask[open] [data-aok]").waitFor(); await p.locator("dialog.ask[open] [data-aok]").click();
+  /* wait for the save, not a fixed 200ms: under load the write lands later */
+  await p.waitForFunction((KEY) => { try { const x = JSON.parse(localStorage.getItem(KEY)); return x.mem.length === 0 && x.me.sharp === "morning"; } catch (e) { return false; } }, KEY, { timeout: 3000 }).catch(() => {});
   const s = await st(); assert.equal(s.mem.length, 0); assert.equal(s.me.sharp, "morning");
 });
 await ok("the add box keeps a note, and the page fits a phone", async () => {

@@ -10,7 +10,7 @@ T=$(cd "$(dirname "$0")" && pwd)
 : "${APP_ROOT:?set APP_ROOT to a checkout of the app branch}"; export APP_ROOT
 C=$(mktemp -d)
 cd "$T"
-for f in evidence experiments memory hints safety barrier reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor $EXTRA; do
+for f in evidence experiments memory hints safety barrier reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor journal-progress phone-pages brand $EXTRA; do
   [ -f $f.mjs ] || continue
   echo "== $f"; timeout 280 node $f.mjs 2>&1 | grep -E "^(PASS|FAIL)" | awk '/FAIL/{print substr($0,1,300)} {c[$1]++} END{print c["PASS"]+0" pass, "c["FAIL"]+0" fail"}'
 done
