@@ -1277,6 +1277,14 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-add{display:flex; flex-direction:column; gap:6px}
 .ph-onb{display:flex; flex-direction:column; gap:12px; min-height:calc(100vh - 56px)}
 .ph-onb .ph-logo{width:64px; height:64px; border-radius:15px; display:block}
+/* ---- HIG review 2 (2026-10-19) ----
+   On/Off rows are switches; a label after a card has room above it. */
+.ph-switch{position:relative; flex:none; width:51px; height:31px; border-radius:16px; background:var(--rule); transition:background .2s}
+.ph-switch::after{content:""; position:absolute; top:2px; left:2px; width:27px; height:27px; border-radius:50%; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.25); transition:transform .2s}
+[aria-checked="true"]>.ph-rv>.ph-switch{background:var(--ph-pri)}
+[aria-checked="true"]>.ph-rv>.ph-switch::after{transform:translateX(20px)}
+@media (prefers-reduced-motion: reduce){ .ph-switch,.ph-switch::after{transition:none} }
+.ph-empty+.ph-lab,.ph-mem+.ph-lab{display:block; margin-top:16px}
 /* ---- OwnYourDay at the top of every page (2026-10-19) ----
    The mark (a half sun over two rising arcs) and the name in Outfit
    SemiBold (SIL Open Font License, fonts/Outfit-OFL.txt), with "Powered
@@ -1480,7 +1488,7 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 html.ph.ph-has-me #ph-mini:not([hidden]){display:flex; position:absolute; z-index:20; top:calc(env(safe-area-inset-top,0px) + 18px); right:10px;
   width:44px; height:44px; align-items:center; justify-content:center; border-radius:22px}
 html.ph.ph-old.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:61; top:calc(env(safe-area-inset-top,0px) + 6px)}
-html.ph.ph-talk.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:51; top:calc(env(safe-area-inset-top,0px) + 26px)}
+html.ph.ph-talk.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:51; top:calc(env(safe-area-inset-top,0px) + 12px)} /* level with Clear in the sticky head */
 #ph-mini img{width:34px; height:34px; border-radius:17px; object-fit:cover; box-shadow:0 0 0 2px var(--panel)}
 #ph-mini:active{opacity:.7}
 html.ph.ph-has-me .ph-today-k{padding-right:48px}
@@ -8079,7 +8087,12 @@ $("#mem-erase").addEventListener("click",function(e){
     memErase(); save(); renderAll();
   });
 });
-$("#bot-clear").addEventListener("click",function(e){ e.stopPropagation(); botTurns=[]; PEND=null; wireClear(); botRender(); });
+$("#bot-clear").addEventListener("click",function(e){
+  e.stopPropagation(); var keep=botTurns.slice();
+  botTurns=[]; PEND=null; wireClear(); botRender();
+  /* on the phone, Clear can be taken back for 6 seconds, like Done and Remove */
+  if(keep.length && typeof PH_ON!=="undefined" && PH_ON) phUndoFn("Conversation cleared",function(){ botTurns=keep; botRender(); });
+});
 $("#bot-pend").addEventListener("click",function(e){
   e.stopPropagation();
   if(e.target.closest("[data-pend-yes]")) pendYes();
@@ -8995,8 +9008,15 @@ function phUndoable(label,fn){
   return r;
 }
 function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; var b=$("#ph-undo"); if(b) b.hidden=true; }
+/* Undo for something that is not the board's state (a cleared conversation) */
+function phUndoFn(label,restore){
+  if(PH_UNDO) clearTimeout(PH_UNDO.t);
+  PH_UNDO={fn:restore, t:setTimeout(phUndoHide,6000)};
+  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+}
 function phUndo(){
   var u=PH_UNDO; if(!u) return; phUndoHide();
+  if(u.fn){ u.fn(); return; }
   if(phFp()!==u.fp){ toast("","Something else changed since then, so that cannot be undone here."); return; }
   var o=JSON.parse(u.snap), ev=state.ev;
   Object.keys(state).forEach(function(k){ if(!(k in o)) delete state[k]; });
@@ -9526,7 +9546,12 @@ function phYou(){
 }
 function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
 /* a row that opens something has a chevron; one that switches at once (noChev) has not */
-function phRow(k,t,v,noChev){ return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>'; }
+function phRow(k,t,v,noChev){
+  /* a row that turns something on or off is a switch, the iOS way (HIG review 2, 2026-10-19) */
+  if(noChev && (v==="On"||v==="Off"))
+    return '<button type="button" class="ph-rowb" role="switch" aria-checked="'+(v==="On")+'" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv"><span class="ph-sr">'+v+'</span><span class="ph-switch" aria-hidden="true"></span></span></button>';
+  return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>';
+}
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){

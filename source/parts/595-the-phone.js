@@ -55,8 +55,15 @@ function phUndoable(label,fn){
   return r;
 }
 function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; var b=$("#ph-undo"); if(b) b.hidden=true; }
+/* Undo for something that is not the board's state (a cleared conversation) */
+function phUndoFn(label,restore){
+  if(PH_UNDO) clearTimeout(PH_UNDO.t);
+  PH_UNDO={fn:restore, t:setTimeout(phUndoHide,6000)};
+  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+}
 function phUndo(){
   var u=PH_UNDO; if(!u) return; phUndoHide();
+  if(u.fn){ u.fn(); return; }
   if(phFp()!==u.fp){ toast("","Something else changed since then, so that cannot be undone here."); return; }
   var o=JSON.parse(u.snap), ev=state.ev;
   Object.keys(state).forEach(function(k){ if(!(k in o)) delete state[k]; });
@@ -586,7 +593,12 @@ function phYou(){
 }
 function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
 /* a row that opens something has a chevron; one that switches at once (noChev) has not */
-function phRow(k,t,v,noChev){ return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>'; }
+function phRow(k,t,v,noChev){
+  /* a row that turns something on or off is a switch, the iOS way (HIG review 2, 2026-10-19) */
+  if(noChev && (v==="On"||v==="Off"))
+    return '<button type="button" class="ph-rowb" role="switch" aria-checked="'+(v==="On")+'" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv"><span class="ph-sr">'+v+'</span><span class="ph-switch" aria-hidden="true"></span></span></button>';
+  return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>';
+}
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){

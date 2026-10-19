@@ -260,7 +260,12 @@ $("#mem-erase").addEventListener("click",function(e){
     memErase(); save(); renderAll();
   });
 });
-$("#bot-clear").addEventListener("click",function(e){ e.stopPropagation(); botTurns=[]; PEND=null; wireClear(); botRender(); });
+$("#bot-clear").addEventListener("click",function(e){
+  e.stopPropagation(); var keep=botTurns.slice();
+  botTurns=[]; PEND=null; wireClear(); botRender();
+  /* on the phone, Clear can be taken back for 6 seconds, like Done and Remove */
+  if(keep.length && typeof PH_ON!=="undefined" && PH_ON) phUndoFn("Conversation cleared",function(){ botTurns=keep; botRender(); });
+});
 $("#bot-pend").addEventListener("click",function(e){
   e.stopPropagation();
   if(e.target.closest("[data-pend-yes]")) pendYes();
