@@ -1,3 +1,20 @@
+# Brand: Planck
+
+**Decision, 2026-10-19 (fourth round):** the owner renames the app **Planck**, after Max Planck. "Powered by OwnYourSystem" stays under the name. It replaces OwnYourDay (kept below as history).
+
+## The logo is the name
+
+- "For the logo you just need to write the name in Ruba Regular font" (owner). Ruba Regular by floor-3013, FontStruct, CC BY-SA 3.0; credit in `fonts/Ruba-Regular-LICENSE.txt` in the app. Ruba is unicase, so the name reads "planck".
+- App icons: the name in white on Moonlit Plum `#2C1332` (the button colour), 74% of the width; maskable 62% so it sits in the safe circle.
+- Android status-bar badge: the "p" alone, one colour, drawn heavier (the full word is unreadable at 24px and Ruba's thin strokes fade at that size).
+- In the app: the name in Ruba at the top of every page, "Powered by OwnYourSystem" under it in the body font. The welcome shows it large.
+- Files: `make-icons-planck.cjs` (draws every icon from the font), `planck-icon-1024.png`, `planck-wordmark.png`.
+- Not checked yet: "Planck" as a trademark for a planner app, and its domains. "Planck" is a famous surname and a physics term (Planck constant, the Planck mission), so expect many existing marks; search classes 9 and 42 before print.
+
+---
+
+# History: OwnYourDay (2026-10-19, third round)
+
 # Brand: OwnYourDay
 
 **Decision, 2026-10-19 (third round):** the owner renames the app **OwnYourDay**, "Powered by OwnYourSystem". It replaces Daysize (kept below as history).

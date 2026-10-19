@@ -101,7 +101,9 @@ await ok("due again after 7 days, not before", async () => {
 await ok("Delete asks first, keeps them on Not now, and removes the whole key when confirmed", async () => {
   await seed(null, await L([[3, 3, 3, 3, 3, 1], [3, 3, 3, 3, 3, 1]])); await p.evaluate(() => { location.hash = "#/planner"; }); await settle();
   await p.locator("#week-erase").click(); await D().waitFor(); assert.match(await D().innerText(), /all 2 weekly check-ins/); assert.equal(await p.evaluate(() => document.activeElement.hasAttribute("data-acancel")), true); await p.keyboard.press("Escape"); await settle(); assert.equal((await wk()).log.length, 2);
-  await p.locator("#week-erase").click(); await D().waitFor(); await D().locator("[data-aok]").click(); await settle(); assert.equal(await wk(), null); assert.match(await p.locator("#week-body").innerText(), /No check-ins yet/);
+  await p.waitForFunction(() => !document.querySelector("dialog.ask[open]"), null, { timeout: 3000 }).catch(() => {}); /* the first sheet is gone before the second opens */
+  await p.locator("#week-erase").click(); await D().waitFor(); await D().locator("[data-aok]").click();
+  await p.waitForFunction((WK) => localStorage.getItem(WK) === null, WK, { timeout: 3000 }).catch(() => {}); await settle(); assert.equal(await wk(), null); assert.match(await p.locator("#week-body").innerText(), /No check-ins yet/);
 });
 await ok("Reset the board removes them too, and says so", async () => {
   await seed(null, await L([[3, 3, 3, 3, 3, 1]])); await p.locator("#btn-backup").click().catch(() => {}); 

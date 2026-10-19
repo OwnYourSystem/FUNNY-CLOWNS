@@ -348,14 +348,14 @@ await ok("plum: text follows the phone's text size, tab labels stay put, and not
   assert.equal(await sideways(), false);
   await p.evaluate(() => { document.documentElement.style.fontSize = ""; });
 });
-await ok("icons: the home-screen icon and the Android icon are the OwnYourDay mark on cream; the launch colour is the dark ground", async () => {
+await ok("icons: the home-screen icon and the Android icon are the name on Moonlit Plum; the launch colour is the dark ground", async () => {
   const r = await p.evaluate(async () => {
     const corner = async (src) => { const im = new Image(); im.src = src + "?t=" + Date.now(); await im.decode(); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
       const x = c.getContext("2d"); x.drawImage(im, 0, 0); return [...x.getImageData(4, 4, 1, 1).data].slice(0, 3).join(","); };
     const m = await (await fetch("manifest.webmanifest", { cache: "no-store" })).json();
     return { apple: await corner("apple-touch-icon.png"), mask: await corner(m.icons.find((i) => i.purpose === "maskable").src), bg: m.background_color };
   });
-  assert.equal(r.apple, "251,249,244"); assert.equal(r.mask, "251,249,244"); assert.equal(r.bg.toUpperCase(), "#000000");
+  assert.equal(r.apple, "44,19,50"); assert.equal(r.mask, "44,19,50"); assert.equal(r.bg.toUpperCase(), "#000000");
   await go("you");
 });
 /* ---------- navigation (2026-10-17) ---------- */
