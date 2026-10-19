@@ -159,7 +159,9 @@ await seed2(`function(s){ s.hintLog=[{d:"2026-09-01",type:"progress",key:"k1",an
 await p2.evaluate(() => { location.hash = "#/planner"; }); await p2.waitForTimeout(300);
 await ok("planner: what helps you is shown with counts, and Forget what helps asks first and clears it", async () => {
   const t = await p2.locator("#hint-stats").innerText(); assert.match(t, /Evidence of your progress[\s\S]*1 helpful, 0 not for me/); assert.match(t, /A goal that stopped moving[\s\S]*0 helpful, 1 not for me/); assert.match(t, /An idea from the library[\s\S]*not tried yet/);
-  const btn = p2.locator("#hint-reset"); await btn.click(); await p2.locator("dialog.ask[open]").waitFor(); assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 2); await p2.locator("dialog.ask[open] [data-aok]").click(); await p2.waitForTimeout(200);
+  const btn = p2.locator("#hint-reset"); await btn.click(); await p2.locator("dialog.ask[open]").waitFor(); assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 2); await p2.locator("dialog.ask[open] [data-aok]").click();
+  /* wait for the save, not a fixed 200ms */
+  await p2.waitForFunction((KEY) => { try { return JSON.parse(localStorage.getItem(KEY)).hintLog.length === 0; } catch (e) { return false; } }, KEY, { timeout: 3000 }).catch(() => {});
   assert.equal((await p2.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).hintLog.length, KEY)), 0);
 });
 await ok("the planner section and the card fit a phone", async () => {

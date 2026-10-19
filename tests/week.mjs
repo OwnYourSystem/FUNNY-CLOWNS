@@ -51,7 +51,9 @@ await ok("all five are needed; the error stays in the dialog", async () => {
 await ok("saving keeps the five numbers and the week's finished count, under its own key", async () => {
   const t0 = Date.now(); await p.evaluate(() => { const s = JSON.parse(localStorage.getItem("oys-min-deliveries-v1")); const t = Date.now(); s.ev = [1, 2, 3].map((i) => ({ t: t - i * 3600000, k: "done", id: "x" + i })); localStorage.setItem("oys-min-deliveries-v1", JSON.stringify(s)); });
   await p.reload(); await p.waitForSelector(".row.pick");
-  await nudge().locator("[data-week-open]").click(); await D().waitFor(); await pickAll({ e: 3, m: 4, c: 2, f: 3, w: 5 }); await D().locator("[data-aok]").click(); await settle();
+  await nudge().locator("[data-week-open]").click(); await D().waitFor(); await pickAll({ e: 3, m: 4, c: 2, f: 3, w: 5 }); await D().locator("[data-aok]").click();
+  await p.waitForFunction((WK) => { try { return JSON.parse(localStorage.getItem(WK)).log.length > 0; } catch (e) { return false; } }, WK, { timeout: 3000 }).catch(() => {});
+  await settle();
   const x = await wk(); assert.equal(x.log.length, 1); const e = x.log[0]; assert.deepEqual([e.e, e.m, e.c, e.f, e.w], [3, 4, 2, 3, 5]); assert.equal(e.n, 3); assert.match(e.k, /^\d{4}-W\d\d$/);
   assert.equal(await nudge().isHidden(), true, "no longer due");
 });
