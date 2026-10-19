@@ -576,6 +576,7 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Your day</h2><div class="ph-grp">'+
     phRow("dayend","Day ends",clockLabel(me.wind))+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
+    (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("learned","What the board learned, and hints","")+'</div>');
@@ -588,6 +589,19 @@ function phYou(){
 function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
 /* a row that opens something has a chevron; one that switches at once (noChev) has not */
 function phRow(k,t,v,noChev){ return '<button type="button" class="ph-rowb" data-ph="'+k+'"><span>'+esc(t)+'</span><span class="ph-rv">'+(v?'<span class="ph-v">'+esc(v)+'</span>':"")+(noChev?"":PH_CHEV)+'</span></button>'; }
+/* a reminder now, so the person sees how one looks on this phone: the same
+   icon, badge and wording as the morning brief, sent from this page */
+function phTestNote(){
+  var t="A test from Daysize", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
+  var sent=function(){ toast("","Sent. Look at the top of the screen."); };
+  try{
+    if(navigator.serviceWorker&&navigator.serviceWorker.controller){
+      navigator.serviceWorker.ready.then(function(reg){ return reg.showNotification(t,o); }).then(sent,function(){ toast("","This phone did not show it."); });
+      return;
+    }
+    new Notification(t,o); sent();
+  }catch(e){ toast("","This phone did not show it."); }
+}
 function phDayEnd(){
   var me=state.me||freshMe();
   askUser({title:"When does your day end?", body:"Nothing reaches you after this time, and the board goes quiet.",
@@ -786,9 +800,9 @@ function phDotsHtml(i){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-k">Minimum Deliveries</div>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-k">Daysize</div>'+
     '<h1 class="ph-big">One next step, every day.</h1>'+
-    '<p class="ph-lede">The board picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
+    '<p class="ph-lede">Daysize picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Start</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="restore">I have a board already: restore it</button></div>';
@@ -897,6 +911,7 @@ function phOnbFinish(add){
     else if(k==="account") $("#btn-account").click();
     else if(k==="dayend") phDayEnd();
     else if(k==="remind") $("#btn-remind").click();
+    else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();

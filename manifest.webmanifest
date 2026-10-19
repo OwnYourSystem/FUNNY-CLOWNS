@@ -1,13 +1,13 @@
 {
-  "name": "Minimum Deliveries Board",
-  "short_name": "Deliveries",
-  "description": "One board for every main task and subtask, with a voice you press and talk to.",
+  "name": "Daysize",
+  "short_name": "Daysize",
+  "description": "A daily planner that gets smaller when your day does.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#140A17",
-  "theme_color": "#08080A",
+  "theme_color": "#2C1332",
   "icons": [
     {
       "src": "icon-192.png",

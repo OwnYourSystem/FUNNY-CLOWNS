@@ -23,7 +23,7 @@ function fire(title,body,tag){
   try{
     if(navigator.serviceWorker && navigator.serviceWorker.ready && navigator.serviceWorker.controller){
       navigator.serviceWorker.ready.then(function(reg){
-        reg.showNotification(title,{body:body,tag:tag,icon:"icon-192.png",badge:"icon-192.png",requireInteraction:true});
+        reg.showNotification(title,{body:body,tag:tag,icon:"icon-192.png",badge:"badge-96.png",requireInteraction:true});
       }).catch(function(){ new Notification(title,{body:body,tag:tag,requireInteraction:true}); });
       return;
     }
