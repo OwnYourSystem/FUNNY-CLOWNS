@@ -22,6 +22,7 @@ await ok("the welcome asks when the day starts as well as when it ends, and a st
   await p.fill("#ph-start", "06:30"); await p.fill("#ph-am", "06:00"); await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(200);
   assert.match(await p.locator("#ph-onb-err").innerText(), /before your day starts at 06:30/, "a brief before the start was let through");
   await p.fill("#ph-am", "07:00"); await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(300);
+  for (let i = 0; i < 3; i++) { await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(250); } /* Your work, How you work, What matters most */
   const me = (await st()).me; assert.equal(me.rise, "06:30"); assert.equal(me.wind, "22:30");
   await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await p.locator("[data-ph=onb-done]").click(); await p.waitForTimeout(500);
 });

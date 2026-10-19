@@ -60,7 +60,8 @@ await ok("a pushed reminder carries the mark, the one-colour badge, and says Own
 });
 
 /* You: send a test reminder */
-await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(150); await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(300);
+/* the first-time guide: Your day, Your work, How you work, What matters most, then the first goal */
+for (let i = 0; i < 5; i++) { await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(250); }
 await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await p.locator("[data-ph=onb-done]").click(); await p.waitForTimeout(500);
 await p.evaluate(() => { location.hash = "#/you"; }); await p.waitForTimeout(300);
 await ok("with reminders on, You offers a test reminder; it shows at once with the same mark and badge", async () => {

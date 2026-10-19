@@ -45,14 +45,16 @@ await ok("a first open shows the welcome, with no tabs and no old board", async 
 await ok("Your day: a time after the day end is refused, and the step does not move on", async () => {
   await tap("[data-ph=onb-next]"); await p.waitForTimeout(150);
   await p.fill("#ph-end", "18:00"); await p.fill("#ph-pm", "19:00"); await tap("[data-ph=onb-next]"); await p.waitForTimeout(150);
-  assert.match(await p.locator("#ph-onb-err").innerText(), /after your day ends/); assert.equal(await p.locator(".ph-steps").getAttribute("aria-label"), "Step 2 of 3");
+  assert.match(await p.locator("#ph-onb-err").innerText(), /after your day ends/); assert.equal(await p.locator(".ph-steps").getAttribute("aria-label"), "Step 2 of 6");
 });
 await ok("Your day saves the day end and the person's reminder choices", async () => {
   await p.fill("#ph-end", "21:00"); await p.fill("#ph-pm", "16:00"); await tap("[data-ph=tog][data-k=am][data-v=off]"); await p.waitForTimeout(100);
   assert.equal(await p.locator("#ph-end").inputValue(), "21:00", "a typed value was lost when a switch was pressed");
   await tap("[data-ph=onb-next]"); await p.waitForTimeout(300);
   const me = (await st()).me; assert.equal(me.wind, "21:00"); assert.equal(me.remAm, false); assert.equal(me.remPm, true); assert.equal(me.pmAt, "16:00");
-  assert.equal(await p.locator(".ph-steps").getAttribute("aria-label"), "Step 3 of 3");
+  assert.equal(await p.locator(".ph-steps").getAttribute("aria-label"), "Step 3 of 6");
+  for (let i = 0; i < 3; i++) { await tap("[data-ph=onb-next]"); await p.waitForTimeout(250); } /* Your work, How you work, What matters most */
+  assert.equal(await p.locator(".ph-steps").getAttribute("aria-label"), "Step 6 of 6");
 });
 await ok("the first goal and step are added, and Now opens with the four tabs", async () => {
   await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await tap("[data-ph=onb-done]"); await p.waitForTimeout(400);
