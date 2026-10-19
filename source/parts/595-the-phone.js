@@ -250,6 +250,11 @@ function phNow(){
   if(state.plan.length) h.push('<p class="ph-note">'+state.plan.length+' waiting for another day.</p>');
   h.push('</section>');
   h.push(phWeekCard(dy));
+  var bd=bkDue();
+  if(bd) h.push('<section class="ph-card ph-bk" aria-label="Back up your board"><h2 class="ph-h2">Back up your board</h2>'+
+    '<p class="ph-why">'+(bd.days===null?"You have not saved a backup yet.":"Your last backup was "+bd.days+" days ago.")+
+    ' A backup file keeps your board, journal and check-ins safe if this phone is lost or its browser is cleared.</p>'+
+    '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="bknow">Back up now</button><button type="button" class="ph-btn" data-ph="bklater">Later</button></div></section>');
   return h.join("");
 }
 function phClock(d){ return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds()); }
@@ -1052,6 +1057,8 @@ function phOnbFinish(add){
     else if(k==="planner") phGo("planner");
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
+    else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }
+    else if(k==="bklater"){ bkLater(); PH_DRAWN=""; phRender(); }
     else if(k==="theme"){ $("#btn-theme").click(); PH_DRAWN=""; phRender(); phBarColour(); }
     else if(k==="goal") phGoal(id);
     else if(k==="step") phStepGo(id);

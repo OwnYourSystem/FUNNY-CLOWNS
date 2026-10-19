@@ -7,7 +7,11 @@
   $("#backup-close").addEventListener("click",function(){ d.close(); });
   d.addEventListener("pointerdown",function(e){ downOn=(e.target===d); });
   d.addEventListener("click",function(e){ if(e.target===d && downOn) d.close(); });
-  d.addEventListener("close",function(){ try{ if(opener) opener.focus(); }catch(er){} });
+  d.addEventListener("close",function(){
+    try{ if(opener) opener.focus(); }catch(er){}
+    /* on the phone, Now redraws so a backup just saved takes the reminder away */
+    if(typeof PH_ON!=="undefined" && PH_ON){ PH_DRAWN=""; phRender(); }
+  });
 })();
 var IO=$("#io");
 /* ---- the private parts in the backup (owner, 2026-10-19: "go ahead with the backup") ----
@@ -26,6 +30,26 @@ function bkPrivate(){
   try{ var x=JSON.parse(localStorage.getItem(KEY+".photo")||"null"); if(x && BK_PHOTO_RE.test(String(x.src))) ph={src:x.src, show:x.show!==false}; }catch(e){}
   return {journal:jrData().log.slice(), week:weekData().log.slice(), photo:ph};
 }
+/* ---- a quiet monthly reminder to back up (owner, 2026-10-19) ----
+   A backup only helps if one exists. When there is something to lose (a
+   finished step, a journal entry or a check-in), the board has been in use
+   for a week, and no file was saved in 30 days, Now shows one card. Saving
+   a file resets the clock; Later hides it for 7 days. No notification.  */
+var BK_LAST=KEY+".lastBackup", BK_LATER=KEY+".backupLater", BK_DAY=864e5;
+function bkMark(){ try{ localStorage.setItem(BK_LAST,new Date().toISOString()); localStorage.removeItem(BK_LATER); }catch(e){} }
+function bkGet(k){ try{ var t=Date.parse(localStorage.getItem(k)||""); return isNaN(t)?0:t; }catch(e){ return 0; } }
+function bkDue(now){
+  var t=(now||new Date()).getTime(), first=Infinity, lose=false;
+  (state.ev||[]).forEach(function(e){ if(e&&e.t){ if(e.t<first) first=e.t; if(e.k==="done") lose=true; } });
+  jrData().log.forEach(function(e){ var a=Date.parse(e.at); lose=true; if(a<first) first=a; });
+  weekData().log.forEach(function(e){ var a=Date.parse(e.d); lose=true; if(a<first) first=a; });
+  if(!lose || !(t-first>=7*BK_DAY)) return null;
+  var last=bkGet(BK_LAST), later=bkGet(BK_LATER);
+  if(last && t-last<30*BK_DAY) return null;
+  if(later && t-later<7*BK_DAY) return null;
+  return {days: last ? Math.floor((t-last)/BK_DAY) : null};
+}
+function bkLater(){ try{ localStorage.setItem(BK_LATER,new Date().toISOString()); }catch(e){} }
 function bkText(){
   var o=JSON.parse(JSON.stringify(state)), inc=$("#io-private");
   delete o.private;
@@ -91,14 +115,14 @@ $("#io-load").addEventListener("click",function(){
 $("#io-save").addEventListener("click",function(){
   if(sandboxed){
     IO.value=bkText(); IO.focus(); IO.select();
-    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(IO.value).catch(function(){});
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(IO.value).then(bkMark).catch(function(){});
     return;
   }
   try{
     var a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([bkText()],{type:"application/json"}));
     a.download="qordel-backup-"+todayStr()+".json";
-    document.body.appendChild(a); a.click(); a.remove();
+    document.body.appendChild(a); a.click(); a.remove(); bkMark();
   }catch(e){ IO.value=bkText(); IO.focus(); IO.select(); ioMsg("This browser will not save a file. The backup text is selected instead, copy it."); }
 });
 $("#io-file").addEventListener("change",function(e){
