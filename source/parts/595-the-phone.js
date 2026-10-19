@@ -160,7 +160,7 @@ function phTabsMark(r){
   });
 }
 /* the mark, the name and who made it, at the top of every page */
-var PH_BRAND_IN='<svg class="ph-mark" viewBox="84 156 350 246" width="40" height="28" aria-hidden="true"><path d="M173 250 A86 86 0 0 1 345 250 Z" fill="#E9B949"/><path d="M92 352 Q 250 196 410 330 Q 262 272 92 352 Z" fill="#9DB59A"/><path d="M138 392 Q 290 270 426 394 Q 300 352 138 392 Z" fill="currentColor"/></svg><span class="ph-bt"><span class="ph-word">OwnYourDay</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
+var PH_BRAND_IN='<span class="ph-bt"><span class="ph-word">Planck</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
 var PH_BRAND='<div class="ph-brand">'+PH_BRAND_IN+'</div>';
 function phRender(){
   if(!PH_ON) return;
@@ -609,7 +609,7 @@ function phRow(k,t,v,noChev){
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){
-  var t="A test from OwnYourDay", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
+  var t="A test from Planck", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
   var sent=function(){ toast("","Sent. Look at the top of the screen."); };
   try{
     if(navigator.serviceWorker&&navigator.serviceWorker.controller){
@@ -847,9 +847,9 @@ function phChoice(k,list,v,label){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-bt"><div class="ph-word">OwnYourDay</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Planck</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
     '<h1 class="ph-big">One next step, every day.</h1>'+
-    '<p class="ph-lede">OwnYourDay picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
+    '<p class="ph-lede">Planck picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Start</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="restore">I have a board already: restore it</button></div>';

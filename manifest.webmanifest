@@ -1,6 +1,6 @@
 {
-  "name": "OwnYourDay",
-  "short_name": "OwnYourDay",
+  "name": "Planck",
+  "short_name": "Planck",
   "description": "A daily planner that gets smaller when your day does.",
   "start_url": "./",
   "scope": "./",
