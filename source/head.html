@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Daysize">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
@@ -301,6 +301,8 @@ body.flat #canvas{transform:none!important}
   .bot-size{display:none}
 }
 .bot-ask .f{flex:1 1 auto; width:auto}
+#bot-input{resize:none; overflow:auto; display:block}
+.bot-turn{display:flex; flex-direction:column; gap:10px}
 .btn.mic{display:inline-flex; align-items:center; gap:6px}
 .btn.mic.on,.mini.mic.on{color:var(--accent); border-color:var(--accent)}
 .ask-mic{display:inline-flex; align-items:center; gap:6px; margin-top:6px}
@@ -1113,35 +1115,36 @@ input[type=file]{font:inherit; font-size:12.5px; color:var(--muted); max-width:1
    purpose: one decision per screen, nothing moulded, nothing moving. The old
    page stays in the document for the desktop, for Classic view, and for the
    pages You opens under a Back bar.                                      */
-/* Moonlit Plum, #2C1332 (2026-10-15): the phone's own colour. Only html.ph
-   gets it, so the desktop keeps its look. Dark is the default, as on the
-   board: plum is the surface and a pale lilac does the pressing. In light,
-   plum does the pressing on a plum-tinted white. Red stays for danger.  */
+/* Plain greys, and the brand colour only on buttons (owner, 2026-10-19:
+   "drop the theme as a whole and use it only for the buttons. Keep it
+   simple"). Moonlit Plum #2C1332 fills a button in light, pale lilac in
+   dark. Grounds, cards, text, tabs, Back, charts and the clock are neutral.
+   Only html.ph gets this, so the desktop keeps its look. Red is danger.  */
 html.ph{
   color-scheme:dark;
-  --ground:#140A17; --panel:#2C1332; --raised:#36193D; --inset:rgba(244,238,246,.06);
-  --ink:#F4EEF6; --ink-2:#C2B3C7; --muted:#A08EA6;
-  --hair:rgba(244,238,246,.09); --rule:rgba(244,238,246,.2);
-  --ph-pri:#D8C2E0; --ph-on-pri:#2C1332; --ph-wash:rgba(216,194,224,.14);
-  --nm-bg:#1D0E21; --nm-hi:rgba(244,238,246,.05); --nm-lo:rgba(0,0,0,.6);
+  --ground:#000000; --panel:#1C1C1E; --raised:#2C2C2E; --inset:rgba(255,255,255,.07);
+  --ink:#FFFFFF; --ink-2:#D1D1D6; --muted:#98989F;
+  --hair:rgba(255,255,255,.1); --rule:rgba(255,255,255,.22);
+  --ph-pri:#D8C2E0; --ph-on-pri:#2C1332; --ph-wash:rgba(255,255,255,.1);
+  --nm-bg:#121214; --nm-hi:rgba(255,255,255,.05); --nm-lo:rgba(0,0,0,.6);
 }
 @media (prefers-color-scheme: light){
   html.ph:not([data-theme="dark"]){
     color-scheme:light;
-    --ground:#F6F2F7; --panel:#FFFFFF; --raised:#ECE4EE; --inset:rgba(44,19,50,.06);
-    --ink:#1E0D22; --ink-2:#55465A; --muted:#6B5C70;
-    --hair:rgba(44,19,50,.1); --rule:rgba(44,19,50,.22);
-    --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(44,19,50,.07);
-    --nm-bg:#EFE8F1; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(120,96,128,.35);
+    --ground:#F2F2F7; --panel:#FFFFFF; --raised:#E9E9EE; --inset:rgba(0,0,0,.05);
+    --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
+    --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
+    --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+    --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
   }
 }
 html.ph[data-theme="light"]{
   color-scheme:light;
-  --ground:#F6F2F7; --panel:#FFFFFF; --raised:#ECE4EE; --inset:rgba(44,19,50,.06);
-  --ink:#1E0D22; --ink-2:#55465A; --muted:#6B5C70;
-  --hair:rgba(44,19,50,.1); --rule:rgba(44,19,50,.22);
-  --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(44,19,50,.07);
-  --nm-bg:#EFE8F1; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(120,96,128,.35);
+  --ground:#F2F2F7; --panel:#FFFFFF; --raised:#E9E9EE; --inset:rgba(0,0,0,.05);
+  --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
+  --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
+  --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+  --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
 }
 #ph{display:none}
 html.ph body{background:var(--ground)}
@@ -1170,17 +1173,17 @@ html.ph.ph-onb #ph-main{padding-bottom:max(28px,env(safe-area-inset-bottom,0px))
 @media (prefers-reduced-transparency: reduce){ #ph-tabs{background:var(--panel); -webkit-backdrop-filter:none; backdrop-filter:none} }
 #ph-tabs a{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:54px;
   font-size:12px; color:var(--muted); text-decoration:none; border-radius:14px}
-/* The selected tab is marked the iOS way: the accent colour and a filled
+/* The selected tab is marked the iOS way: the text colour and a filled
    icon, never a pill behind it. The filled shape means colour is not the
    only signal. The bar is a little see-through, with the page blurred
    behind it, and a hairline on top. */
-#ph-tabs a[aria-current="page"]{color:var(--ph-pri); font-weight:600; background:none}
+#ph-tabs a[aria-current="page"]{color:var(--ink); font-weight:600; background:none}
 #ph-tabs .ti-f,#ph-tabs a[aria-current="page"] .ti-o{display:none}
 #ph-tabs a[aria-current="page"] .ti-f{display:block}
 #ph-tabs a:active{opacity:.6}
-#ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ph-pri); outline-offset:2px}
+#ph-tabs a:focus-visible,#ph button:focus-visible,#ph a:focus-visible,#ph input:focus-visible,#ph select:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
 .ph-k{font-family:var(--font); font-size:.765rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--muted)}
-.ph-hot{color:var(--ph-pri); font-weight:600}
+.ph-hot{color:var(--ink); font-weight:600}
 .ph-head{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px}
 .ph-h1{margin:2px 0 0; font-size:1.5294rem; line-height:1.15; font-weight:600; letter-spacing:-.02em}
 .ph-h2{margin:0; font-size:0.9412rem; font-weight:600}
@@ -1217,7 +1220,7 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-days{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:2px 4px; font-size:0.8235rem; color:var(--ink-2)}
 .ph-dots{display:flex; gap:6px; flex:0 0 auto}
 .ph-dot{width:10px; height:10px; border-radius:5px; background:var(--rule)}
-.ph-dot.on{background:var(--ph-pri)}
+.ph-dot.on{background:var(--ink)}
 .ph-two,.ph-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
 .ph-tile{display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; min-height:68px; padding:12px 14px;
   border-radius:18px; border:1px solid var(--rule); background:var(--panel); font:inherit; font-size:0.9412rem; font-weight:600; color:var(--ink);
@@ -1241,20 +1244,43 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-goal-top{display:flex; align-items:baseline; gap:10px}
 .ph-goal-n{flex:1 1 auto; min-width:0; font-size:0.9412rem; font-weight:600; overflow-wrap:anywhere}
 .ph-bar{display:block; margin-top:8px; height:6px; border-radius:3px; background:var(--hair); overflow:hidden}
-.ph-bar span{display:block; height:6px; background:var(--ph-pri)}
+.ph-bar span{display:block; height:6px; background:var(--ink-2)}
 .ph-goal-x{display:block; margin-top:6px; font-size:.765rem; color:var(--muted); overflow-wrap:anywhere}
 .ph-goal.is-done .ph-goal-n{color:var(--muted); text-decoration:line-through}
 .ph-item-b{background:none; border:0; font:inherit; font-size:0.8824rem; color:var(--ink); text-align:left; cursor:pointer}
 .ph-add{display:flex; flex-direction:column; gap:6px}
 .ph-onb{display:flex; flex-direction:column; gap:12px; min-height:calc(100vh - 56px)}
 .ph-onb .ph-logo{width:64px; height:64px; border-radius:15px; display:block}
+/* ---- Daysize at the top of every page (2026-10-19) ----
+   The mark and the name in Ruba Regular, the font the owner chose: by
+   floor-3013, CC BY-SA 3.0 (credit in fonts/Ruba-Regular-LICENSE.txt).
+   It is used for the name only. It has one weight, so nothing is bolded. */
+@font-face{font-family:"Ruba"; src:url("fonts/Ruba-Regular.ttf") format("truetype"); font-weight:400; font-display:swap}
+.ph-word{font-family:"Ruba",var(--font); font-synthesis:none; font-size:1.45rem; font-weight:400; letter-spacing:.02em; color:var(--ink); line-height:1}
+.ph-brand{display:flex; align-items:center; gap:10px; min-height:44px; margin:-10px 0 -4px}
+.ph-brand img{width:28px; height:28px; border-radius:7px; display:block; flex:none}
+#ph-tbrand{display:none}
+html.ph.ph-talk #ph-tbrand{display:flex; margin:0 auto 0 0}
+html.ph.ph-talk .sheet-head{justify-content:space-between}
+/* ---- Talk: you write at the top, in a big box (2026-10-19) ----
+   The box sits where the eye starts, under the name. The answer comes just
+   below the chips, newest first, so the question and its answer stay
+   together on screen. The sheet scrolls as one page.                    */
+html.ph.ph-talk #botsheet{overflow-y:auto}
+html.ph.ph-talk .sheet-head{order:0}
+html.ph.ph-talk .bot-ask{order:1; flex-wrap:wrap; justify-content:flex-end; margin-top:4px}
+html.ph.ph-talk #bot-input{flex:1 1 100%; min-height:9.5em; padding:14px 16px; border-radius:18px; line-height:1.45; background:var(--panel); border:1px solid var(--rule)}
+html.ph.ph-talk .bot-pend{order:2}
+html.ph.ph-talk .bot-chips{order:3}
+html.ph.ph-talk .bot-note{order:3}
+html.ph.ph-talk .bot-log{order:4; flex:0 0 auto; max-height:none; overflow:visible; flex-direction:column-reverse; padding-right:0}
 .ph-big{margin:48px 0 0; font-size:2rem; line-height:1.12; font-weight:600; letter-spacing:-.02em}
 .ph-lede{margin:0; font-size:1rem; line-height:1.5; color:var(--ink-2)}
 .ph-mt{margin-top:4px}
 .ph-fill{flex:1 1 auto; min-height:24px}
 .ph-steps{display:flex; gap:8px; justify-content:center; margin-bottom:8px}
 .ph-step{width:6px; height:6px; border-radius:3px; background:var(--rule)}
-.ph-step.on{width:24px; background:var(--ph-pri)}
+.ph-step.on{width:24px; background:var(--ink)}
 .ph-time{font:inherit; font-size:1rem; width:136px; min-height:44px; box-sizing:border-box; border:1px solid var(--rule); border-radius:12px;
   padding:0 10px; background:var(--ground); color:var(--ink)}
 .ph-sw{display:inline-flex; border:1px solid var(--rule); border-radius:22px; overflow:hidden; flex:0 0 auto}
@@ -1288,8 +1314,6 @@ html.ph dialog.ask:not(.danger) .ask-acts .btn.take{background:var(--ph-pri); co
    In a browser tab the inset is 0, so the band is not there.            */
 #sbar{position:fixed; z-index:95; top:0; left:0; right:0; height:env(safe-area-inset-top,0px); pointer-events:none; background:var(--sbar,#0B0B0E)}
 html.ph{--sbar:var(--ground)}
-@media (prefers-color-scheme: light){ html.ph:not([data-theme="dark"]){--sbar:#2C1332} }
-html.ph[data-theme="light"]{--sbar:#2C1332}
 /* iOS zooms the page when a box under 16px is focused. Every box on the
    phone is 17px, the iOS body size. */
 html.ph input:not([type=range]):not([type=checkbox]):not([type=radio]),html.ph select,html.ph textarea{font-size:max(16px,1rem)}
@@ -1344,24 +1368,24 @@ html.ph .ask-err{font-size:.882rem}
 /* Talk */
 html.ph #botsheet{box-shadow:none}
 html.ph .bot-log{background:transparent; border:0; box-shadow:none}
-html.ph .bot-mark{background:var(--ph-wash); color:var(--ph-pri)}
+html.ph .bot-mark{background:var(--raised); color:var(--ink)}
 html.ph .bot-name{font-size:1rem; font-weight:600}
 html.ph .bot-msg{font-size:.941rem}
-html.ph .bot-msg.you{background:var(--ph-pri); color:var(--ph-on-pri)}
-html.ph .bot-msg.bot{background:var(--raised); border-color:var(--hair)}
+html.ph .bot-msg.you{background:var(--raised); color:var(--ink)}
+html.ph .bot-msg.bot{background:var(--panel); border-color:var(--hair)}
 html.ph .bot-did{font-family:var(--font); font-size:.765rem; letter-spacing:0; text-transform:none}
 html.ph .bot-empty,html.ph .bot-chip{font-size:.882rem}
 html.ph .bot-note{font-size:.765rem}
 html.ph #bot-send{background:var(--ph-pri); color:var(--ph-on-pri); border-color:var(--ph-pri); font-weight:600}
 html.ph .btn,html.ph #bot-input{font-size:max(16px,.941rem)}
 /* ---- navigation (2026-10-17, from the HIG review) ----
-   Back is a chevron and the name of the page it returns to, in the accent.
+   Back is a chevron and the name of the page it returns to.
    A row that opens something ends in a chevron. The main action of a page
    sits in a dock at the bottom, under the thumb. Everything shows it was
    pressed. Sheets have a grabber. Undo waits above the tabs for 6 seconds. */
 html.ph{-webkit-tap-highlight-color:transparent}
 .ph-nav{display:inline-flex; align-items:center; gap:2px; min-height:44px; min-width:44px; margin-left:-6px; padding:0 8px 0 0;
-  color:var(--ph-pri); font-size:1rem; font-weight:500; text-decoration:none; overflow-wrap:anywhere}
+  color:var(--ink); font-size:1rem; font-weight:500; text-decoration:none; overflow-wrap:anywhere}
 html.ph.ph-old #ph-back{gap:8px}
 #ph-back-t{font-weight:600}
 .ph-chev{flex:0 0 auto; color:var(--muted)}
@@ -1378,11 +1402,11 @@ html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed
 #ph-undo{display:none}
 html.ph #ph-undo:not([hidden]){display:flex; position:fixed; z-index:58; left:12px; right:12px; bottom:calc(80px + env(safe-area-inset-bottom,0px));
   align-items:center; gap:12px; min-height:52px; box-sizing:border-box; padding:4px 6px 4px 16px; border-radius:16px;
-  background:var(--ph-pri); color:var(--ph-on-pri); font-size:.882rem; box-shadow:0 8px 24px rgba(0,0,0,.22)}
+  background:var(--ink); color:var(--ground); font-size:.882rem; box-shadow:0 8px 24px rgba(0,0,0,.22)}
 html.ph:has(.ph-dock) #ph-undo:not([hidden]){bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 #ph-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
 #ph-undo-b{flex:0 0 auto; font:inherit; font-weight:700; min-height:44px; min-width:64px; padding:0 14px; border:0; border-radius:12px;
-  background:color-mix(in srgb, var(--ph-on-pri) 16%, transparent); color:var(--ph-on-pri)}
+  background:color-mix(in srgb, var(--ground) 16%, transparent); color:var(--ground)}
 .ask-grab{display:none}
 html.ph .ask-grab{display:block; width:40px; height:5px; border-radius:3px; background:var(--rule); margin:-12px auto 12px; cursor:grab}
 html.ph dialog.ask h3{touch-action:none}
@@ -1392,7 +1416,7 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 /* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
 .ph-today{display:flex; flex-direction:column; gap:2px}
 .ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
-.ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ph-pri); letter-spacing:.04em}
+.ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ink); letter-spacing:.04em}
 .ph-week{display:flex; flex-direction:column; gap:10px}
 .ph-week .ph-row-h{padding-bottom:0}
 .ph-stat{display:flex; flex-direction:column; gap:2px; padding:12px 14px; border-radius:18px; border:1px solid var(--hair); background:var(--panel); min-width:0}
@@ -1401,14 +1425,14 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 .ph-stat-v small{font-size:.824rem; font-weight:500; color:var(--ink-2)}
 .ph-stat-d{font-size:.765rem; color:var(--muted)}
 .ph-meter{display:block; height:8px; margin:6px 0 4px; border-radius:4px; background:var(--ph-wash); overflow:hidden}
-.ph-meter span{display:block; height:100%; border-radius:4px; background:var(--ph-pri)}
+.ph-meter span{display:block; height:100%; border-radius:4px; background:var(--ink-2)}
 .ph-cols-w{padding:12px 8px 6px; border-radius:18px; border:1px solid var(--hair); background:var(--panel)}
 .ph-cols-read{margin:0 6px 6px; min-height:1.3em; font-size:.824rem; color:var(--ink-2)}
 .ph-cols{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:end}
 .ph-col{display:flex; flex-direction:column; align-items:center; gap:4px; min-height:44px; padding:0; border:0; border-radius:10px; background:transparent; font:inherit; color:var(--ink-2)}
 .ph-col-v{font-size:.765rem; font-weight:600; color:var(--ink); min-height:1.2em}
 .ph-col-t{display:flex; align-items:flex-end; justify-content:center; width:100%; height:84px; border-bottom:1px solid var(--rule)}
-.ph-col-b{display:block; width:min(24px,60%); min-height:0; border-radius:4px 4px 0 0; background:var(--ph-pri)}
+.ph-col-b{display:block; width:min(24px,60%); min-height:0; border-radius:4px 4px 0 0; background:var(--ink-2)}
 .ph-col-x{font-size:.765rem}
 .ph-col.is-today .ph-col-x{font-weight:600; color:var(--ink)}
 .ph-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
@@ -1452,7 +1476,7 @@ label.ph-rowb{cursor:pointer}
 /* the interview, on the phone: plum, body type, 44px choices */
 html.ph #interview .card{border-color:var(--hair)}
 html.ph .iv-k{font-family:var(--font); font-size:.824rem; letter-spacing:0; text-transform:none; color:var(--muted)}
-html.ph .iv-dots i.on{background:var(--ph-pri)}
+html.ph .iv-dots i.on{background:var(--ink)}
 html.ph #interview h3{font-weight:600; font-size:1.176rem}
 html.ph #interview .lede{font-size:.882rem}
 html.ph #iv-body label{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; color:var(--ink-2)}
@@ -1839,6 +1863,7 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="flashnote" role="status" aria-live="polite" hidden></div>
   <div id="botsheet" hidden>
     <div class="sheet-head">
+      <span class="ph-brand" id="ph-tbrand"><img src="icon-192.png" alt="" width="28" height="28"><span class="ph-word">Daysize</span></span>
       <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
       <span class="bot-name">Assistant</span>
       <span class="bot-tools">
@@ -1850,7 +1875,7 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="bot-pend" id="bot-pend" role="status" aria-live="polite" hidden></div>
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
-      <input class="f" id="bot-input" autocomplete="off" placeholder="Tell me what to change, or ask a question" aria-label="Message the assistant">
+      <textarea class="f" id="bot-input" rows="1" autocomplete="off" enterkeyhint="send" placeholder="Tell me what to change, or ask a question" aria-label="Message the assistant"></textarea>
       <button class="btn mic" id="bot-mic" type="button" aria-pressed="false" aria-label="Speak instead of typing"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>
       <button class="btn" id="bot-send">Send</button>
       <button class="btn" id="bot-stop" hidden>Stop</button>

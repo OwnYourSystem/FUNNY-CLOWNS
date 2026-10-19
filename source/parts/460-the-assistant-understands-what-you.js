@@ -780,7 +780,12 @@ function modelThere(){ return !!botSample || (proxyReady() && !!(acct&&acct.acce
 function botBubble(cls,text){
   var log=$("#bot-log"), d=document.createElement("div");
   d.className="bot-msg "+cls; d.textContent=text;
-  log.appendChild(d); log.scrollTop=log.scrollHeight;
+  /* a question opens a turn and its answers join it, so the phone can show
+     the newest turn first and keep each answer under its question */
+  var turn=log.lastElementChild;
+  if(cls==="you"||!turn||!turn.classList.contains("bot-turn")){ turn=document.createElement("div"); turn.className="bot-turn"; log.appendChild(turn); }
+  turn.appendChild(d); log.scrollTop=log.scrollHeight;
+  if(document.documentElement.classList.contains("ph-talk")){ var sh=$("#botsheet"); if(sh) sh.scrollTop=0; }
   return d;
 }
 function botRender(){

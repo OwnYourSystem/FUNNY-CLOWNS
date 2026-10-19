@@ -107,12 +107,18 @@ views; never into one view alone. The step page is drawn once per step and
 keeps what is typed; redraw it (`phStepRedraw`) only after a change that moves
 other fields.
 
-**Phone colour: Moonlit Plum `#2C1332`.** It is set as tokens on `html.ph` only
-(`--ground`, `--panel`, `--raised`, `--ink`, `--ph-pri`, `--ph-on-pri`,
-`--ph-wash`). Use `--ph-pri` for anything pressed, primary, or filled (buttons,
-bars, the active tab, rings). Dark: plum surfaces, lilac `#D8C2E0` presses.
-Light: plum presses on `#F6F2F7`. Red is for danger only. Keep text at 4.5:1 on
-every surface.
+**Phone colour: plain greys, plum on buttons only (owner, 2026-10-19).** Tokens
+are on `html.ph` only. Grounds, cards and text are neutral: dark `#000000`
+ground, `#1C1C1E` cards, white text; light `#F2F2F7` ground, white cards,
+black text. `--ph-pri` (Moonlit Plum `#2C1332` in light, lilac `#D8C2E0` in
+dark) is for buttons and controls you press: primary buttons, Send, switches
+and segments that are on, the done ring. Tabs, Back, the clock, charts, labels
+and chat bubbles use the text colours, never `--ph-pri`. Red is for danger
+only. Keep text at 4.5:1 on every surface.
+
+**Brand: Daysize.** Every phone page starts with `.ph-brand`: the mark
+(`icon-192.png`) and the name in Ruba Regular (`fonts/Ruba-Regular.ttf`,
+CC BY-SA 3.0, credit kept next to it). Ruba is for the name only.
 
 **Phone type and surfaces (2026-10-17, HIG review).** Size phone text in rem:
 the root is `-apple-system-body` (17px at the default), so it follows the

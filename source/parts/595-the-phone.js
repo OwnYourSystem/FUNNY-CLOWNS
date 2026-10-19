@@ -157,6 +157,8 @@ function phTabsMark(r){
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
+/* the mark and the name, at the top of every page */
+var PH_BRAND='<div class="ph-brand"><img src="icon-192.png" alt="" width="28" height="28"><span class="ph-word">Daysize</span></div>';
 function phRender(){
   if(!PH_ON) return;
   var root=document.documentElement, r=phRoute(), onb=!state.me||!state.me.done, main=$("#ph-main");
@@ -174,7 +176,7 @@ function phRender(){
   if((onb||PH_LOCK[r]) && PH_DRAWN===key){ phMini(r,onb); return; }
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
   PH_DRAWN=key;
-  main.innerHTML = onb ? phOnbHtml()
+  main.innerHTML = (onb||talk||old ? "" : PH_BRAND) + (onb ? phOnbHtml()
     : r==="journal" ? phJournal()
     : r==="jday" ? phJDay()
     : r==="you" ? phYou()
@@ -187,7 +189,7 @@ function phRender(){
     : r==="planner" ? phPlanner()
     : r==="learned" ? phLearned()
     : (talk||old) ? ""
-    : phNow();
+    : phNow());
   phMini(r,onb);
 }
 
@@ -800,7 +802,7 @@ function phDotsHtml(i){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-k">Daysize</div>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-word">Daysize</div>'+
     '<h1 class="ph-big">One next step, every day.</h1>'+
     '<p class="ph-lede">Daysize picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
