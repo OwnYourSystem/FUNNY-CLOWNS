@@ -10,8 +10,8 @@ const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-119
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message));
 await p.goto(URL); await p.waitForSelector("#ph-main .ph-onb");
-/* the first-time guide: Your day, Your work, How you work, What matters most, then the first goal */
-for (let i = 0; i < 5; i++) { await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(250); }
+/* value first: the welcome, then the first goal (the guide comes later, from Now) */
+await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(250);
 await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await p.locator("[data-ph=onb-done]").click(); await p.waitForTimeout(500);
 await p.evaluate((KEY) => { const c = document.createElement("canvas"); c.width = c.height = 16; localStorage.setItem(KEY + ".photo", JSON.stringify({ src: c.toDataURL("image/jpeg"), show: true })); }, KEY);
 await p.reload(); await p.waitForTimeout(500);

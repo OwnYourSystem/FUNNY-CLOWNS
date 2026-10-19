@@ -19,8 +19,8 @@ const main = () => p.locator("#ph-main").innerText();
 const sideways = () => p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 const undo = async () => { await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300); };
 await p.goto(URL); await p.waitForSelector("#ph-main");
-/* the first-time guide: Your day, Your work, How you work, What matters most, then the first goal */
-for (let i = 0; i < 5; i++) { await p.click("[data-ph=onb-next]"); await p.waitForTimeout(250); }
+/* value first: the welcome, then the first goal (the guide comes later, from Now) */
+await p.click("[data-ph=onb-next]"); await p.waitForTimeout(250);
 await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await p.click("[data-ph=onb-done]"); await p.waitForTimeout(300);
 await p.evaluate((KEY) => {
   const s = JSON.parse(localStorage.getItem(KEY));
