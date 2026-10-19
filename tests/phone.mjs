@@ -38,7 +38,7 @@ const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; },
 const sideways = () => p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 
 await ok("a first open shows the welcome, with no tabs and no old board", async () => {
-  assert.match(await p.locator("#ph-main").innerText(), /One next step, every day/);
+  assert.match(await p.locator("#ph-main").innerText(), /One step. In the right order/);
   assert.equal(await p.locator("#ph-tabs").isVisible(), false); assert.equal(await p.locator(".masthead").isVisible(), false);
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-welcome.png" });
 });

@@ -1,4 +1,4 @@
-/* The brand (2026-10-19): Planck, its name written in Ruba Regular as the logo, "Powered by OwnYourSystem", and a notification badge Android can paint. */
+/* The brand (2026-10-19): Qordel, its name written in Ruba Regular as the logo, "Powered by OwnYourSystem", and a notification badge Android can paint. */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -13,19 +13,19 @@ await p.goto(URL); await p.waitForSelector("#ph-main .ph-onb");
 const shown = () => p.evaluate(async () => (await (await navigator.serviceWorker.ready).getNotifications()).map((n) => ({ title: n.title, body: n.body, icon: n.icon, badge: n.badge })));
 const closeAll = () => p.evaluate(async () => { for (const n of await (await navigator.serviceWorker.ready).getNotifications()) n.close(); });
 
-await ok("the name is Planck: page title, home-screen title, app name", async () => {
-  assert.equal(await p.title(), "Planck");
-  assert.equal(await p.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content"), "Planck");
+await ok("the name is Qordel: page title, home-screen title, app name", async () => {
+  assert.equal(await p.title(), "Qordel");
+  assert.equal(await p.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content"), "Qordel");
   const m = await p.evaluate(async () => (await fetch("manifest.webmanifest", { cache: "no-store" })).json());
-  assert.equal(m.name, "Planck"); assert.equal(m.short_name, "Planck"); assert.equal(m.theme_color.toUpperCase(), "#000000");
+  assert.equal(m.name, "Qordel"); assert.equal(m.short_name, "Qordel"); assert.equal(m.theme_color.toUpperCase(), "#000000");
   assert.ok(!/Minimum Deliveries/.test(await p.content()), "the old name is still on the page");
 });
 await ok("the welcome shows the mark and the name", async () => {
   await p.evaluate(() => document.fonts.ready);
-  assert.equal(await p.locator(".ph-onb .ph-word").first().textContent(), "Planck");
+  assert.equal(await p.locator(".ph-onb .ph-word").first().textContent(), "Qordel");
   assert.match(await p.locator(".ph-onb .ph-word").first().evaluate((e) => getComputedStyle(e).fontFamily), /^"?Ruba"?/);
   assert.equal(await p.locator(".ph-onb .ph-by").first().innerText(), "Powered by OwnYourSystem");
-  assert.ok(!/Daysize|OwnYourDay/.test(await p.content()), "an old name is still on the page");
+  assert.ok(!/Daysize|OwnYourDay|Planck/.test(await p.content()), "an old name is still on the page");
 });
 await ok("the badge is one colour on a see-through ground, so Android paints the mark, not a square", async () => {
   const r = await p.evaluate(async () => {
@@ -56,10 +56,10 @@ await p.evaluate(async () => { await navigator.serviceWorker.ready; });
 const cdp = await ctx.newCDPSession(p); let regId = null;
 cdp.on("ServiceWorker.workerRegistrationUpdated", (e) => { if (e.registrations && e.registrations.length) regId = e.registrations[0].registrationId; });
 await cdp.send("ServiceWorker.enable"); for (let i = 0; i < 50 && !regId; i++) await p.waitForTimeout(100);
-await ok("a pushed reminder carries the mark, the one-colour badge, and says Planck when it has no summary", async () => {
+await ok("a pushed reminder carries the mark, the one-colour badge, and says Qordel when it has no summary", async () => {
   await closeAll(); await cdp.send("ServiceWorker.deliverPushMessage", { origin: ORIGIN, registrationId: regId, data: JSON.stringify({ k: "am" }) }); await p.waitForTimeout(400);
   const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A new day");
-  assert.match(s[0].body, /Planck/); assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
+  assert.match(s[0].body, /Qordel/); assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
 });
 
 /* You: send a test reminder */
@@ -73,7 +73,7 @@ await ok("with reminders on, You offers a test reminder; it shows at once with t
   const row = p.locator("[data-ph=remtest]"); assert.equal(await row.isVisible(), true);
   assert.ok((await row.boundingBox()).height >= 44);
   await closeAll(); await row.click(); await p.waitForTimeout(500);
-  const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A test from Planck");
+  const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A test from Qordel");
   assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
 });
 await ok("with reminders off, there is no test row", async () => {
@@ -88,7 +88,7 @@ await ok("every page starts with the name in Ruba and Powered by OwnYourSystem",
     await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250);
     const b = await p.evaluate(() => { const e = [...document.querySelectorAll(".ph-brand")].find((x) => x.getClientRects().length); if (!e) return null;
       const w = e.querySelector(".ph-word"); return { word: w.textContent, by: (e.querySelector(".ph-by") || {}).textContent, font: getComputedStyle(w).fontFamily, top: e.getBoundingClientRect().top }; });
-    assert.ok(b, r + ": no name"); assert.equal(b.word, "Planck"); assert.equal(b.by, "Powered by OwnYourSystem"); assert.match(b.font, /^"?Ruba"?/); assert.ok(b.top < 60, r + ": the name is not at the top");
+    assert.ok(b, r + ": no name"); assert.equal(b.word, "Qordel"); assert.equal(b.by, "Powered by OwnYourSystem"); assert.match(b.font, /^"?Ruba"?/); assert.ok(b.top < 60, r + ": the name is not at the top");
   }
   assert.equal(await p.evaluate(() => document.fonts.check('20px "Ruba"')), true, "the Ruba font did not load");
 });

@@ -1,3 +1,27 @@
+# Brand: Qordel
+
+**Decision, 2026-10-19 (fifth round):** the owner chooses **Qordel** (card in `qordel-owner-card.jpg`). It replaces Planck, which had a near-twin in the App Store ("Planch", a one-next-task app).
+
+- Tagline: **One step. In the right order.**
+- Line: A planner that adjusts to your day and shows what matters next.
+- Maker line: "Powered by OwnYourSystem" in the app (the owner asked for it on 19 October); the owner's card says "by OwnYourSystem". Either fits.
+
+## Logo
+
+- The name written in Ruba Regular, as for Planck ("the logo is the name"). Ruba is unicase, so it reads "qordel". App icons: white on Moonlit Plum. Android badge: a heavier "q".
+- Watch: in Ruba the "o" is a notched rounded box, and "qordel" can read as "qardel" at a glance. The owner's card shows QORDEL in plain capitals, which reads at once.
+- Files: `make-icons-qordel.cjs`, `qordel-icon-1024.png`, `qordel-wordmark.png`.
+
+## Name check (2026-10-19)
+
+- Domains: qordel.com, qordel.app, qordel.io, getqordel.com, qordelapp.com all free (Vercel registry). Nothing bought.
+- Web search: no app, product or company named Qordel. Only a SoundCloud playlist name and an old forum username. Nearest: "Qordle", a Wordle variant word game (different spelling and category).
+- Not final: search USPTO, EUIPO and WIPO in classes 9 and 42 before print.
+
+---
+
+# History
+
 # Brand: Planck
 
 **Decision, 2026-10-19 (fourth round):** the owner renames the app **Planck**, after Max Planck. "Powered by OwnYourSystem" stays under the name. It replaces OwnYourDay (kept below as history).
