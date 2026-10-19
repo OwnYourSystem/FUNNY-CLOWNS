@@ -1285,6 +1285,17 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 [aria-checked="true"]>.ph-rv>.ph-switch::after{transform:translateX(20px)}
 @media (prefers-reduced-motion: reduce){ .ph-switch,.ph-switch::after{transition:none} }
 .ph-empty+.ph-lab,.ph-mem+.ph-lab{display:block; margin-top:16px}
+/* the first-time guide (2026-10-19): one choice from a list is rows with a tick */
+.ph-choice{text-align:left}
+.ph-choice>span:first-child{display:flex; flex-direction:column; gap:2px}
+.ph-choice-s{font-size:.82rem; color:var(--muted)}
+.ph-tick{flex:none; width:22px; height:22px}
+.ph-choice[aria-checked="true"] .ph-tick{background:var(--ph-pri); border-radius:11px; position:relative}
+.ph-choice[aria-checked="true"] .ph-tick::after{content:""; position:absolute; left:8px; top:4px; width:5px; height:10px; border:solid var(--ph-on-pri); border-width:0 2px 2px 0; transform:rotate(45deg)}
+.ph-where{gap:10px}
+.ph-where>span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+.ph-where .ph-sel{flex:0 0 auto; width:auto; max-width:52%}
+.ph-onb .ph-h2.ph-mt{margin-top:10px}
 /* ---- OwnYourDay at the top of every page (2026-10-19) ----
    The mark (a half sun over two rising arcs) and the name in Outfit
    SemiBold (SIL Open Font License, fonts/Outfit-OFL.txt), with "Powered
@@ -8960,7 +8971,8 @@ $("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl
    Tags, Backlog, Archive and the Planner open as the old pages under a Back
    bar. "Classic view" in You turns the old phone board back on.          */
 var PH_KEY="oys-classic", PH_MQ=null, PH_ON=false, PH_DRAWN="", PH_ONB=0, PH_GOAL="";
-var PH_V={start:"07:00", end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
+var PH_GUIDE=false;
+var PH_V={days:[1,2,3,4,5], w0:"08:00", w1:"16:30", commute:"30", sharp:"morning", gym:"evening", north:"", where:"any", wh:{}, start:"07:00", end:"22:30", am:"on", amAt:"07:30", pm:"on", pmAt:"15:00", goal:"", step:""};
 /* The board's own pages a phone still shows under a Back bar. Since
    2026-10-18 Backlog, Tags, Archive and the Planner have phone pages of
    their own, so none is left; the mechanism stays for any page added later. */
@@ -9116,7 +9128,7 @@ var PH_BRAND_IN='<svg class="ph-mark" viewBox="84 156 350 246" width="40" height
 var PH_BRAND='<div class="ph-brand">'+PH_BRAND_IN+'</div>';
 function phRender(){
   if(!PH_ON) return;
-  var root=document.documentElement, r=phRoute(), onb=!state.me||!state.me.done, main=$("#ph-main");
+  var root=document.documentElement, r=phRoute(), onb=!state.me||!state.me.done||PH_GUIDE, main=$("#ph-main");
   if(!main) return;
   var old=!onb && !!PH_OLD[r], talk=!onb && r==="talk";
   root.classList.toggle("ph-onb",onb);
@@ -9156,6 +9168,12 @@ function phNow(){
     '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
     '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+
     '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div></header>');
+  /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
+  var gme=state.me||{};
+  if(gme.done && !gme.guided && gme.guideLater!==todayStr())
+    h.push('<section class="ph-card ph-guide" aria-label="Set up your week"><h2 class="ph-h2">Set up your week</h2>'+
+      '<p class="ph-why">Four short screens: your hours, your best time, what matters most, and where each goal belongs. About 2 minutes.</p>'+
+      '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="guide">Start</button><button type="button" class="ph-btn" data-ph="guide-later">Later</button></div></section>');
   if(c){
     var e=c.e, K=JR_KINDS[e.kind]||JR_KINDS.end, ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
     h.push('<a class="ph-strip" href="#/journal" data-ph="jropen"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
@@ -9772,9 +9790,23 @@ function phNewGoal(){
 }
 
 /* ---- onboarding: three screens ---- */
+/* The first-time guide (2026-10-19): the web interview's questions as phone
+   screens, one topic each, every answer filled in with a sensible default so
+   Next is one tap. 6 screens on a first open; 5 for someone who set up
+   before the guide existed (it starts at Your day and ends with where each
+   of their goals belongs). */
+var PH_ONB_LAST=5;
 function phDotsHtml(i){
-  var o=[]; for(var k=0;k<3;k++) o.push('<span class="ph-step'+(k===i?" on":"")+'"></span>');
-  return '<div class="ph-steps" aria-label="Step '+(i+1)+' of 3">'+o.join("")+'</div>';
+  var n=PH_GUIDE?PH_ONB_LAST:PH_ONB_LAST+1, at=PH_GUIDE?i-1:i, o=[];
+  for(var k=0;k<n;k++) o.push('<span class="ph-step'+(k===at?" on":"")+'"></span>');
+  return '<div class="ph-steps" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
+}
+/* one choice from a short list, as rows with a tick: the iOS way */
+function phChoice(k,list,v,label){
+  return '<div class="ph-grp" role="radiogroup" aria-label="'+esc(label)+'">'+list.map(function(o){
+    return '<button type="button" class="ph-rowb ph-choice" role="radio" aria-checked="'+(v===o[0])+'" data-ph="onb-pick" data-k="'+k+'" data-v="'+esc(o[0])+'">'+
+      '<span>'+esc(o[1])+(o[2]?'<span class="ph-choice-s">'+esc(o[2])+'</span>':'')+'</span><span class="ph-tick" aria-hidden="true"></span></button>';
+  }).join("")+'</div>';
 }
 function phOnbHtml(){
   var v=PH_V;
@@ -9788,11 +9820,11 @@ function phOnbHtml(){
     var tg=function(k){ return '<span class="ph-sw" role="group" aria-label="'+(k==="am"?"Morning brief":"Afternoon check")+'">'+
       '<button type="button" data-ph="tog" data-k="'+k+'" data-v="on" aria-pressed="'+(v[k]==="on")+'">On</button>'+
       '<button type="button" data-ph="tog" data-k="'+k+'" data-v="off" aria-pressed="'+(v[k]==="off")+'">Off</button></span>'; };
-    return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
-      '<h1 class="ph-h1 ph-mt">Your day</h1><p class="ph-lede">Two questions. Everything else the board asks later, when it matters.</p>'+
+    return '<div class="ph-onb">'+(PH_GUIDE?'<button type="button" class="ph-link" data-ph="guide-later">Later</button>':'<button type="button" class="ph-link" data-ph="onb-back">Back</button>')+
+      '<h1 class="ph-h1 ph-mt">Your day</h1><p class="ph-lede">When it starts and ends, and how it may remind you. The next screens fill in the rest.</p>'+
       '<div class="ph-grp"><label class="ph-rowf"><span>My day starts at</span><input class="ph-time" type="time" id="ph-start" value="'+esc(v.start)+'"></label>'+
       '<label class="ph-rowf"><span>My day ends at</span><input class="ph-time" type="time" id="ph-end" value="'+esc(v.end)+'"></label></div>'+
-      '<p class="ph-note">Nothing reaches you after this time.</p>'+
+      '<p class="ph-note">Nothing reaches you before the start or after the end.</p>'+
       '<h2 class="ph-k ph-gk">Reminders, at most 2 a day</h2><div class="ph-grp">'+
       '<div class="ph-rowf"><span>Morning brief</span>'+tg("am")+'</div>'+
       '<label class="ph-rowf"><span class="ph-sub">at</span><input class="ph-time" type="time" id="ph-am" value="'+esc(v.amAt)+'"></label>'+
@@ -9802,14 +9834,57 @@ function phOnbHtml(){
       '<div class="ph-fill"></div>'+phDotsHtml(1)+
       '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Next</button></div>';
   }
+  if(PH_ONB===2){
+    return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
+      '<h1 class="ph-h1 ph-mt">Your work</h1><p class="ph-lede">Roughly is fine. It tells the board when you are at a desk and when your time is your own.</p>'+
+      '<span class="ph-lab">Working days</span><div class="ph-segb" role="group" aria-label="Working days">'+
+        DAYS_SHORT.map(function(n,i){ return '<button type="button" data-ph="onb-day" data-day="'+i+'" aria-pressed="'+(v.days.indexOf(i)>=0)+'" aria-label="'+esc(PH_DAYS[i])+'">'+esc(n.slice(0,2))+'</button>'; }).join("")+'</div>'+
+      '<div class="ph-grp"><label class="ph-rowf"><span>Work starts</span><input class="ph-time" type="time" id="ph-w0" value="'+esc(v.w0)+'"></label>'+
+      '<label class="ph-rowf"><span>Work ends</span><input class="ph-time" type="time" id="ph-w1" value="'+esc(v.w1)+'"></label>'+
+      '<label class="ph-rowf"><span>Travel each way, minutes</span><input class="ph-time" type="number" inputmode="numeric" min="0" max="240" id="ph-commute" value="'+esc(v.commute)+'"></label></div>'+
+      '<p class="ph-note" id="ph-onb-err" role="alert">No fixed work? Turn every day off.</p>'+
+      '<div class="ph-fill"></div>'+phDotsHtml(2)+
+      '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Next</button></div>';
+  }
+  if(PH_ONB===3){
+    return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
+      '<h1 class="ph-h1 ph-mt">How you work</h1>'+
+      '<h2 class="ph-h2">When is your head at its best?</h2><p class="ph-note">The hardest step goes into this window, and the easy ones go out of it.</p>'+
+      phChoice("sharp",SHARP,v.sharp,"When is your head at its best?")+
+      '<h2 class="ph-h2 ph-mt">When can you train?</h2><p class="ph-note">So it never suggests a workout when you cannot do one.</p>'+
+      phChoice("gym",GYMWIN,v.gym,"When can you train?")+
+      '<div class="ph-fill"></div>'+phDotsHtml(3)+
+      '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Next</button></div>';
+  }
+  if(PH_ONB===4){
+    return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
+      '<h1 class="ph-h1 ph-mt">What matters most</h1><p class="ph-lede">One line about the thing that matters most right now. When you and the board disagree, this is what it shows you.</p>'+
+      '<label class="ph-lab" for="ph-north">The one thing</label><input class="ph-in" id="ph-north" maxlength="120" value="'+esc(v.north)+'" placeholder="For example: Ship the tracker before the audit" enterkeyhint="next">'+
+      '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-north" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
+      '<p class="ph-note" id="ph-onb-hint" aria-live="polite">You can leave it empty and add it later in Planner.</p>'+
+      '<div class="ph-fill"></div>'+phDotsHtml(4)+
+      '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Next</button></div>';
+  }
+  if(PH_GUIDE){
+    return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
+      '<h1 class="ph-h1 ph-mt">Where each goal belongs</h1><p class="ph-lede">The board guessed. Correct anything it got wrong: this is what it leans on hardest.</p>'+
+      (state.groups.length?'<div class="ph-grp">'+state.groups.map(function(g){
+        var w=v.wh[g.id]||g.where||"any";
+        return '<label class="ph-rowf ph-where"><span>'+esc(g.name)+'</span><select class="ph-sel" data-onb-where="'+esc(g.id)+'" aria-label="Where '+esc(g.name)+' can be done">'+
+          WHERES.map(function(o){ return '<option value="'+o[0]+'"'+(w===o[0]?" selected":"")+'>'+esc(o[1])+'</option>'; }).join("")+'</select></label>';
+      }).join("")+'</div>':'<p class="ph-empty">No goals yet. Add them on Goals.</p>')+
+      '<div class="ph-fill"></div>'+phDotsHtml(5)+
+      '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="guide-done">Done</button></div>';
+  }
   return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
     '<h1 class="ph-h1 ph-mt">What are you working on?</h1><p class="ph-lede">Name one goal and its next step. Say it or type it. You can add more later.</p>'+
     '<label class="ph-lab" for="ph-goal">A goal</label><input class="ph-in" id="ph-goal" value="'+esc(v.goal)+'" placeholder="For example: Finish the SAP migration">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-goal" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
     '<label class="ph-lab" for="ph-step">Its next step</label><input class="ph-in" id="ph-step" value="'+esc(v.step)+'" placeholder="For example: Map the old reports">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-step" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
+    '<h2 class="ph-h2 ph-mt">Where can it be done?</h2>'+phChoice("where",WHERES,v.where,"Where can it be done?")+
     '<p class="ph-note" id="ph-onb-hint" aria-live="polite">Your board stays on this phone. An account to carry it to a second device is optional, in You.</p>'+
-    '<div class="ph-fill"></div>'+phDotsHtml(2)+
+    '<div class="ph-fill"></div>'+phDotsHtml(5)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-done">Show me today</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="onb-skip">Skip for now</button></div>';
 }
@@ -9819,10 +9894,48 @@ function phOnbRead(){
   if((x=g("ph-end"))!==null) PH_V.end=x;
   if((x=g("ph-am"))!==null) PH_V.amAt=x;
   if((x=g("ph-pm"))!==null) PH_V.pmAt=x;
+  if((x=g("ph-w0"))!==null) PH_V.w0=x;
+  if((x=g("ph-w1"))!==null) PH_V.w1=x;
+  if((x=g("ph-commute"))!==null) PH_V.commute=x;
+  if((x=g("ph-north"))!==null) PH_V.north=x;
+  Array.prototype.forEach.call(document.querySelectorAll("[data-onb-where]"),function(s){ PH_V.wh[s.getAttribute("data-onb-where")]=s.value; });
   if((x=g("ph-goal"))!==null) PH_V.goal=x;
   if((x=g("ph-step"))!==null) PH_V.step=x;
 }
-function phOnbStep(i){ phOnbRead(); PH_ONB=Math.max(0,Math.min(2,i)); PH_DRAWN=""; phRender(); scrollTo(0,0); }
+function phOnbStep(i){ phOnbRead(); PH_ONB=Math.max(PH_GUIDE?1:0,Math.min(PH_ONB_LAST,i)); PH_DRAWN=""; phRender(); scrollTo(0,0); }
+/* Your work is checked before it moves on: hours in order, travel in range */
+function phOnbWork(){
+  phOnbRead();
+  var v=PH_V, err=$("#ph-onb-err"), a=pTime(v.w0), b=pTime(v.w1), c=+v.commute;
+  if(v.days.length && (!a||!b)){ if(err) err.textContent="Set when work starts and ends."; return; }
+  if(v.days.length && hm(a)>=hm(b)){ if(err) err.textContent="Work has to start before it ends."; return; }
+  if(isNaN(c)||c<0||c>240){ if(err) err.textContent="Travel is 0 to 240 minutes each way."; return; }
+  phOnbStep(3);
+}
+/* what the guide learned goes into the profile, in one place */
+function phOnbApply(me){
+  var v=PH_V;
+  me.days=v.days.slice().sort(); if(pTime(v.w0)&&pTime(v.w1)) me.work=[pTime(v.w0),pTime(v.w1)];
+  me.commute=Math.max(0,Math.min(240,+v.commute||0)); me.sharp=v.sharp; me.gym=v.gym;
+  me.north=String(v.north||"").trim().slice(0,120); me.guided=true;
+}
+/* the guide for someone who set up before it existed: their own answers to start from */
+function phGuideOpen(){
+  var me=state.me||freshMe(), c=remCfg();
+  PH_V.days=me.days.slice(); PH_V.w0=me.work[0]; PH_V.w1=me.work[1]; PH_V.commute=String(+me.commute||0);
+  PH_V.sharp=me.sharp; PH_V.gym=me.gym; PH_V.north=me.north||""; PH_V.wh={};
+  PH_V.start=me.rise||"07:00"; PH_V.end=me.wind; PH_V.am=c.am?"on":"off"; PH_V.pm=c.pm?"on":"off"; PH_V.amAt=c.amAt; PH_V.pmAt=c.pmAt;
+  PH_GUIDE=true; PH_ONB=1; PH_DRAWN=""; phRender(); scrollTo(0,0);
+}
+function phGuideDone(){
+  phOnbRead();
+  var me=state.me||(state.me=freshMe());
+  phOnbApply(me);
+  state.groups.forEach(function(g){ if(PH_V.wh[g.id]) g.where=PH_V.wh[g.id]; });
+  PH_GUIDE=false; PH_ONB=0; PH_DRAWN="";
+  save(); renderAll(); phGo("now");
+  toast("","That is enough to go on. The board will plan around it.");
+}
 function phOnbDay(){
   phOnbRead();
   var me=state.me||(state.me=freshMe()), v=PH_V, err=$("#ph-onb-err");
@@ -9838,6 +9951,8 @@ function phOnbDay(){
     if(Notification.permission==="granted") go("granted");
     else { try{ var q=Notification.requestPermission(); if(q&&q.then) q.then(go); }catch(e){} }
   }
+  /* the guide saves Your day as it goes, so Later keeps it */
+  if(PH_GUIDE) save();
   phOnbStep(2);
 }
 function phOnbFinish(add){
@@ -9845,8 +9960,10 @@ function phOnbFinish(add){
   var me=state.me||(state.me=freshMe());
   if(add){
     var gn=String(PH_V.goal||"").trim(), sn=String(PH_V.step||"").trim();
-    if(gn){ try{ toolRun("add_main_task",{name:gn}); if(sn) toolRun("add_subtask",{main_task:gn,name:sn}); }catch(e){} }
+    if(gn){ try{ toolRun("add_main_task",{name:gn}); if(sn) toolRun("add_subtask",{main_task:gn,name:sn});
+      var ng=state.groups.filter(function(g){ return g.name===gn; }).pop(); if(ng) ng.where=PH_V.where; }catch(e){} }
   }
+  phOnbApply(me);
   me.done=true; PH_ONB=0; PH_DRAWN="";
   save(); renderAll(); phGo("now");
 }
@@ -9915,7 +10032,13 @@ function phOnbFinish(add){
     else if(k==="gedit") phGoalEdit();
     else if(k==="newgoal") phNewGoal();
     else if(k==="restore") $("#btn-backup").click();
-    else if(k==="onb-next"){ if(PH_ONB===1) phOnbDay(); else phOnbStep(PH_ONB+1); }
+    else if(k==="onb-next"){ if(PH_ONB===1) phOnbDay(); else if(PH_ONB===2) phOnbWork(); else phOnbStep(PH_ONB+1); }
+    else if(k==="onb-day"){ var dd=+b.getAttribute("data-day"), di=PH_V.days.indexOf(dd); if(di>=0) PH_V.days.splice(di,1); else PH_V.days.push(dd); b.setAttribute("aria-pressed",di<0?"true":"false"); }
+    else if(k==="onb-pick"){ var pk=b.getAttribute("data-k"); PH_V[pk]=b.getAttribute("data-v");
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ph=onb-pick][data-k="'+pk+'"]'),function(x){ x.setAttribute("aria-checked",x===b?"true":"false"); }); }
+    else if(k==="guide") phGuideOpen();
+    else if(k==="guide-done") phGuideDone();
+    else if(k==="guide-later"){ phOnbRead(); var gm=state.me||freshMe(); gm.guideLater=todayStr(); PH_GUIDE=false; PH_ONB=0; PH_DRAWN=""; save(); phGo("now"); }
     else if(k==="onb-back") phOnbStep(PH_ONB-1);
     else if(k==="onb-done") phOnbFinish(true);
     else if(k==="onb-skip") phOnbFinish(false);
