@@ -57,11 +57,15 @@ await ok("saving keeps the five numbers and the week's finished count, under its
   const x = await wk(); assert.equal(x.log.length, 1); const e = x.log[0]; assert.deepEqual([e.e, e.m, e.c, e.f, e.w], [3, 4, 2, 3, 5]); assert.equal(e.n, 3); assert.match(e.k, /^\d{4}-W\d\d$/);
   assert.equal(await nudge().isHidden(), true, "no longer due");
 });
-await ok("it is kept out of the board's own state, the backup text and the event log", async () => {
+await ok("it is kept out of the board's own state and the event log; the backup file carries it only while the switch is on", async () => {
   const s = await st(); assert.ok(!("week" in s)); assert.ok(!JSON.stringify(s).includes('"w":5'));
   assert.deepEqual(s.ev.filter((x) => x.k === "week"), s.ev.filter((x) => x.k === "week").map((x) => ({ t: x.t, k: "week", act: "set" })));
   await p.evaluate(() => { location.hash = "#/board"; }); await p.locator("#btn-backup").click(); await p.locator("#io-dump").click();
-  const dump = await p.locator("#io").inputValue(); assert.ok(!dump.includes(WK) && !dump.includes("Getting through"), "not in the backup text"); await p.keyboard.press("Escape"); await settle();
+  let dump = await p.locator("#io").inputValue(); assert.ok(!dump.includes(WK), "the storage key leaked");
+  assert.match(dump, /"private":\{"journal":\[[^]*"week":\[\{[^\]]*"w":5/, "the backup does not carry the check-ins with the switch on");
+  await p.locator("#io-private").uncheck(); await p.locator("#io-dump").click(); dump = await p.locator("#io").inputValue();
+  assert.ok(!dump.includes('"private"') && !dump.includes('"w":5'), "the check-ins are in the backup with the switch off");
+  await p.locator("#io-private").check(); await p.keyboard.press("Escape"); await settle();
 });
 await ok("the tutor cannot reach it: not in the snapshot, and no tool reads it", async () => {
   const r = await p.evaluate(() => { const B = window.__board, tools = B.modelTools(); const snap = tools.find((t) => t.name === "board_state").execute({}); return { snap, names: tools.map((t) => t.name) }; });

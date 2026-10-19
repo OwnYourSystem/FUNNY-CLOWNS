@@ -91,7 +91,9 @@ const botCount = (p) => p.evaluate(() => document.querySelectorAll("#bot-log .bo
   await ok("closing the form while listening stops listening", async () => {
     await p.locator("#oftad").locator("xpath=..").getByRole("button", { name: "Journal" }).click();
     const d = p.locator("dialog.ask[open]"); await d.waitFor({ state: "visible" }); await d.locator('[data-mic-to="a"]').click(); await p.waitForTimeout(50);
-    await d.getByRole("button", { name: "Not now" }).click(); await p.waitForTimeout(150);
+    await d.getByRole("button", { name: "Not now" }).click();
+    /* wait for the stop, not a fixed 150ms: under load it lands later */
+    await p.waitForFunction(() => window.__sr.length && window.__sr[window.__sr.length - 1].stopped === true, null, { timeout: 3000 }).catch(() => {});
     assert.equal(await p.evaluate(() => window.__sr[window.__sr.length - 1].stopped), true);
   });
   await ok("no page errors (computer)", async () => { assert.deepEqual(errs, []); });
