@@ -30,3 +30,15 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   sha 1daba83), READY, aliased to funny-clowns.vercel.app. Checked: the live `sw.js` is `board-v8`
   (it was `board-v5` on 14877b7).
 - Rolling back: redeploy or promote `dpl_9XwXeL5RJqjEKyJpz9DoVwmrm2D7` (commit 14877b7, 6 October).
+
+## 2026-10-19: production moved to 8db3ba2 (Daysize)
+
+- Owner: "release all, when you are done". Contains bd01e50 (the Daysize name, the mark, the
+  Android badge, the test reminder) and 8db3ba2 (name in Ruba on every page, plain greys with plum
+  on buttons only, Talk writes at the top).
+- Full regression on 8db3ba2 passed; phone-pages had one colour check still expecting plum on the
+  interview dots, updated to the owner's new rule and rerun green.
+- Production deployment `dpl_8BdQZSfY1ozbyWwh2vWpTJLKjNCJ`, READY, aliased to funny-clowns.vercel.app.
+  Checked live: manifest name "Daysize", `fonts/Ruba-Regular-LICENSE.txt` served.
+- Rolling back: `dpl_D2GtpSS9r9VdzTfB3XL7n8CT6An8` (1daba83, 18 October), or before that
+  `dpl_9XwXeL5RJqjEKyJpz9DoVwmrm2D7` (14877b7, 6 October).
