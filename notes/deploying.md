@@ -42,3 +42,13 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   Checked live: manifest name "Daysize", `fonts/Ruba-Regular-LICENSE.txt` served.
 - Rolling back: `dpl_D2GtpSS9r9VdzTfB3XL7n8CT6An8` (1daba83, 18 October), or before that
   `dpl_9XwXeL5RJqjEKyJpz9DoVwmrm2D7` (14877b7, 6 October).
+
+## 2026-10-19 (afternoon): production moved to 3aeac1e (OwnYourDay)
+
+- Owner: "Push all to prod". Contains a127f32 (OwnYourDay name and mark, "Powered by OwnYourSystem",
+  no Classic view on the phone), 4cca30e (assistant replies as cards with headings and rows) and
+  3aeac1e (day start beside day end, Sign in first on You).
+- Full regression on 3aeac1e: every suite green (purity 315).
+- Production deployment `dpl_BJFA9KkYph33MqT4zsrzYbEWqJvQ`, READY, aliased to funny-clowns.vercel.app.
+  Checked live: manifest name "OwnYourDay"; `fonts/Outfit-OFL.txt` served.
+- Rolling back: `dpl_8BdQZSfY1ozbyWwh2vWpTJLKjNCJ` (8db3ba2, Daysize, this morning).
