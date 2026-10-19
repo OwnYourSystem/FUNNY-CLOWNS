@@ -116,12 +116,13 @@ and segments that are on, the done ring. Tabs, Back, the clock, charts, labels
 and chat bubbles use the text colours, never `--ph-pri`. Red is for danger
 only. Keep text at 4.5:1 on every surface.
 
-**Brand: Qordel, powered by OwnYourSystem.** The logo is the name written in
-Ruba Regular (`fonts/Ruba-Regular.ttf`, CC BY-SA 3.0, credit kept next to it;
-unicase, so it reads "qordel"). Every phone page starts with `.ph-brand`: the
-name and "Powered by OwnYourSystem" in small muted text. App icons are the
-name in white on Moonlit Plum; the Android badge is the "q". Tagline: "One step. In the right order." The phone has no
-Classic view; `oys-classic=test` is a test-suite switch only.
+**Brand: Qordel, powered by OwnYourSystem.** The logo is the name in capitals,
+QORDEL, in the app's own Schibsted Grotesk SemiBold (letter-spacing .06em; the
+text stays "Qordel" for screen readers). Every phone page starts with
+`.ph-brand`: the name and "Powered by OwnYourSystem" in small muted text. App
+icons: QORDEL in white on Moonlit Plum; the Android badge is the "Q". Tagline:
+"One step. In the right order." The phone has no Classic view;
+`oys-classic=test` is a test-suite switch only.
 
 **Phone type and surfaces (2026-10-17, HIG review).** Size phone text in rem:
 the root is `-apple-system-body` (17px at the default), so it follows the
