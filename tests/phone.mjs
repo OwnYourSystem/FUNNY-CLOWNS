@@ -110,7 +110,7 @@ await ok("Talk is the chat as a full page with Speak, and it closes when you lea
   await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(300);
   assert.equal(await p.locator("#botsheet").isVisible(), true); assert.equal(await p.locator("#bot-mic").isVisible(), true);
   await p.fill("#bot-input", "help"); await p.press("#bot-input", "Enter"); await p.waitForTimeout(200);
-  assert.match(await p.locator("#bot-log").innerText(), /JOURNAL/);
+  assert.match(await p.locator("#bot-log").textContent(), /JOURNAL/); /* the words are unchanged; the heading shows in sentence case */
   const bx = await p.locator("#botsheet").boundingBox(); assert.ok(bx.y + bx.height <= 844 - 70, "the chat runs under the tabs");
   await p.screenshot({ path: "/tmp/claude-0/ph-test-talk.png" });
   await tap('#ph-tabs [data-tab="now"]'); await p.waitForTimeout(250); assert.equal(await p.locator("#botsheet").isVisible(), false);

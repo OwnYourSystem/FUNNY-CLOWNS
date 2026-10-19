@@ -107,6 +107,29 @@ await ok("plum is on buttons only: Send is plum, the page, the cards and your wo
     sheet: getComputedStyle(document.getElementById("botsheet")).backgroundColor, tab: getComputedStyle(document.querySelector('#ph-tabs [aria-current="page"]')).color }));
   assert.equal(c.send, "rgb(44, 19, 50)"); for (const k of ["you", "sheet", "tab"]) assert.ok(!/44, 19, 50|216, 194, 224/.test(c[k]), k + " is plum: " + c[k]);
 });
+/* 2026-10-19: replies laid out to read at a glance, with the words unchanged */
+await ok("Talk: a list reply becomes headings with counts and rows that open the step; its words are unchanged", async () => {
+  await p.evaluate(() => { const K = "oys-min-deliveries-v1"; const st = JSON.parse(localStorage.getItem(K)); const ids = Object.keys(st.subs).slice(0, 5);
+    st.oftad = ids.slice(0, 2).map((id) => ({ k: "sub", id, done: false })); st.plan = ids.slice(2).map((id) => ({ k: "sub", id, done: false })); localStorage.setItem(K, JSON.stringify(st)); });
+  await p.reload(); await p.waitForTimeout(400); await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);
+  await p.fill("#bot-input", "what is left today"); await p.keyboard.press("Enter"); await p.waitForTimeout(700);
+  const r = await p.evaluate(() => { const m = [...document.querySelectorAll("#bot-log .bot-msg.bot")].pop(); const st = JSON.parse(localStorage.getItem("oys-min-deliveries-v1"));
+    const nm = (c) => st.subs[c.id].name;
+    return { text: m.textContent, want: "Today: " + st.oftad.map(nm).join(", ") + ". Waiting: " + st.plan.map(nm).join(", ") + ".",
+      heads: [...m.querySelectorAll(".bot-lh")].map((h) => [h.firstChild.textContent, h.getAttribute("data-n")]), rows: m.querySelectorAll(".bot-row.bot-go").length,
+      rowH: Math.min(...[...m.querySelectorAll(".bot-row")].map((x) => x.getBoundingClientRect().height)), firstHref: m.querySelector(".bot-go").getAttribute("href"), firstId: st.oftad[0].id }; });
+  assert.equal(r.text, r.want); assert.deepEqual(r.heads, [["Today", "2"], ["Waiting", "3"]]); assert.equal(r.rows, 5); assert.ok(r.rowH >= 44, "row " + r.rowH);
+  assert.equal(r.firstHref, "#/step/" + encodeURIComponent(r.firstId));
+  await p.locator("#bot-log .bot-msg.bot .bot-go").last().click(); await p.waitForTimeout(300);
+  assert.match(await p.evaluate(() => location.hash), /^#\/step\//);
+});
+await ok("Talk: a help example, tapped, goes into the box", async () => {
+  await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);
+  await p.fill("#bot-input", "help"); await p.keyboard.press("Enter"); await p.waitForTimeout(700);
+  const m = p.locator("#bot-log .bot-msg.bot[data-help]").last(); assert.ok((await m.locator(".bot-h").count()) >= 3);
+  const ex = (await m.locator(".bot-row .bot-rt").first().textContent()); await m.locator(".bot-row").first().click(); await p.waitForTimeout(150);
+  assert.equal(await p.inputValue("#bot-input"), ex); await p.fill("#bot-input", "");
+});
 await ok("no page errors", async () => { assert.deepEqual(errs, []); });
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");
 await b.close(); process.exit(0);
