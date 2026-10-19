@@ -102,7 +102,12 @@ function phMini(r,onb){
   el.hidden=!on;
   if(on && el.getAttribute("data-src")!==p.src){ el.innerHTML='<img src="'+esc(p.src)+'" alt="">'; el.setAttribute("data-src",p.src); }
 }
-function phClassic(){ try{ return localStorage.getItem(PH_KEY)==="1"; }catch(e){ return false; } }
+/* A phone always gets the phone app (owner, 2026-10-19: "the mobile version
+   does not need the classic view"). The switch is kept for the test suites
+   only, which drive the desktop board at narrow widths; nothing a person
+   can press sets it. A "1" left by the old Classic view row is cleared, so
+   whoever chose it gets the phone app back.                              */
+function phClassic(){ try{ var v=localStorage.getItem(PH_KEY); if(v==="1"){ localStorage.removeItem(PH_KEY); v=null; } return v==="test"; }catch(e){ return false; } }
 function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
 function phGo(r){ if(phRoute()===r && location.hash) phRender(); else location.hash="#/"+r; }
@@ -113,7 +118,7 @@ function phSet(){
     root.classList.toggle("ph",on);
     if(!on){ root.classList.remove("ph-old","ph-talk","ph-onb"); }
   }
-  phClassicBtn(); phBarColour();
+  phBarColour();
   phRender();
 }
 /* the browser bar takes the phone's ground colour, and gets its own back on the desktop */
@@ -123,17 +128,6 @@ function phBarColour(){
     if(!m.hasAttribute("data-was")) m.setAttribute("data-was",m.getAttribute("content")||"");
     m.setAttribute("content",PH_ON&&c?c:m.getAttribute("data-was"));
   });
-}
-/* on a phone in classic view, one quiet button in the header leads back */
-function phClassicBtn(){
-  var b=$("#btn-phone");
-  if(!b){
-    var c=document.querySelector(".masthead .controls"); if(!c) return;
-    b=document.createElement("button"); b.className="btn"; b.id="btn-phone"; b.type="button"; b.textContent="Phone view";
-    b.addEventListener("click",function(){ try{ localStorage.removeItem(PH_KEY); }catch(e){} location.hash="#/now"; phSet(); });
-    c.insertBefore(b,c.firstChild);
-  }
-  b.hidden=!(PH_MQ&&PH_MQ.matches&&phClassic());
 }
 function phDoseLabel(){ var b=doseNow().band; return b==="low"?"Rough day":b==="high"?"Big day":"Normal day"; }
 /* what Now shows: the first open step in Today, else the board's pick */
@@ -157,8 +151,9 @@ function phTabsMark(r){
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
-/* the mark and the name, at the top of every page */
-var PH_BRAND='<div class="ph-brand"><img src="icon-192.png" alt="" width="28" height="28"><span class="ph-word">Daysize</span></div>';
+/* the mark, the name and who made it, at the top of every page */
+var PH_BRAND_IN='<svg class="ph-mark" viewBox="84 156 350 246" width="40" height="28" aria-hidden="true"><path d="M173 250 A86 86 0 0 1 345 250 Z" fill="#E9B949"/><path d="M92 352 Q 250 196 410 330 Q 262 272 92 352 Z" fill="#9DB59A"/><path d="M138 392 Q 290 270 426 394 Q 300 352 138 392 Z" fill="currentColor"/></svg><span class="ph-bt"><span class="ph-word">OwnYourDay</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
+var PH_BRAND='<div class="ph-brand">'+PH_BRAND_IN+'</div>';
 function phRender(){
   if(!PH_ON) return;
   var root=document.documentElement, r=phRoute(), onb=!state.me||!state.me.done, main=$("#ph-main");
@@ -584,8 +579,7 @@ function phYou(){
     phRow("week","Weekly check-in",weekDue()?"Due":"Done")+phRow("learned","What the board learned, and hints","")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
     phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+
-    phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+
-    phRow("classic","Classic view","The old board",true)+'</div>');
+    phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+'</div>');
   return h.join("");
 }
 function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
@@ -594,7 +588,7 @@ function phRow(k,t,v,noChev){ return '<button type="button" class="ph-rowb" data
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){
-  var t="A test from Daysize", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
+  var t="A test from OwnYourDay", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
   var sent=function(){ toast("","Sent. Look at the top of the screen."); };
   try{
     if(navigator.serviceWorker&&navigator.serviceWorker.controller){
@@ -802,9 +796,9 @@ function phDotsHtml(i){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-word">Daysize</div>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><img class="ph-logo" src="icon-192.png" alt="" width="64" height="64"><div class="ph-bt"><div class="ph-word">OwnYourDay</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
     '<h1 class="ph-big">One next step, every day.</h1>'+
-    '<p class="ph-lede">Daysize picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
+    '<p class="ph-lede">OwnYourDay picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Start</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="restore">I have a board already: restore it</button></div>';
@@ -918,7 +912,6 @@ function phOnbFinish(add){
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="theme"){ $("#btn-theme").click(); PH_DRAWN=""; phRender(); phBarColour(); }
-    else if(k==="classic"){ try{ localStorage.setItem(PH_KEY,"1"); }catch(er){} location.hash="#/board"; phSet(); }
     else if(k==="goal") phGoal(id);
     else if(k==="step") phStepGo(id);
     else if(k==="sset") phStepSet(b.getAttribute("data-k"),b.getAttribute("data-v"));

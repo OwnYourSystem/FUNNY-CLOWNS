@@ -116,9 +116,11 @@ and segments that are on, the done ring. Tabs, Back, the clock, charts, labels
 and chat bubbles use the text colours, never `--ph-pri`. Red is for danger
 only. Keep text at 4.5:1 on every surface.
 
-**Brand: Daysize.** Every phone page starts with `.ph-brand`: the mark
-(`icon-192.png`) and the name in Ruba Regular (`fonts/Ruba-Regular.ttf`,
-CC BY-SA 3.0, credit kept next to it). Ruba is for the name only.
+**Brand: OwnYourDay, powered by OwnYourSystem.** Every phone page starts with
+`.ph-brand`: the inline mark (a half sun over two arcs; the lower arc is
+`currentColor`), the name in Outfit SemiBold (`fonts/Outfit-SemiBold.woff2`,
+OFL), and "Powered by OwnYourSystem" in small muted text. The phone has no
+Classic view; `oys-classic=test` is a test-suite switch only.
 
 **Phone type and surfaces (2026-10-17, HIG review).** Size phone text in rem:
 the root is `-apple-system-body` (17px at the default), so it follows the

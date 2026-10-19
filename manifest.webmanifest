@@ -1,6 +1,6 @@
 {
-  "name": "Daysize",
-  "short_name": "Daysize",
+  "name": "OwnYourDay",
+  "short_name": "OwnYourDay",
   "description": "A daily planner that gets smaller when your day does.",
   "start_url": "./",
   "scope": "./",

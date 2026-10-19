@@ -8,13 +8,13 @@
 <meta name="theme-color" content="#EFEFEC" media="(prefers-color-scheme: light)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Daysize">
+<meta name="apple-mobile-web-app-title" content="OwnYourDay">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <!--ARTIFACT-START-->
-<title>Daysize</title>
+<title>OwnYourDay</title>
 <style>
 /* latin */
 @font-face {
@@ -1149,7 +1149,7 @@ html.ph[data-theme="light"]{
 #ph{display:none}
 html.ph body{background:var(--ground)}
 html.ph #ph{display:block; font-family:var(--font); color:var(--ink)}
-html.ph #river,html.ph .masthead,html.ph .tick,html.ph #rail,html.ph .view,html.ph footer>:not(dialog),html.ph #btn-phone{display:none !important}
+html.ph #river,html.ph .masthead,html.ph .tick,html.ph #rail,html.ph .view,html.ph footer>:not(dialog){display:none !important}
 html.ph.ph-old .view.is-on{display:block !important}
 html.ph.ph-old .wrap{padding-top:64px}
 #ph-back{display:none}
@@ -1251,14 +1251,17 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-add{display:flex; flex-direction:column; gap:6px}
 .ph-onb{display:flex; flex-direction:column; gap:12px; min-height:calc(100vh - 56px)}
 .ph-onb .ph-logo{width:64px; height:64px; border-radius:15px; display:block}
-/* ---- Daysize at the top of every page (2026-10-19) ----
-   The mark and the name in Ruba Regular, the font the owner chose: by
-   floor-3013, CC BY-SA 3.0 (credit in fonts/Ruba-Regular-LICENSE.txt).
-   It is used for the name only. It has one weight, so nothing is bolded. */
-@font-face{font-family:"Ruba"; src:url("fonts/Ruba-Regular.ttf") format("truetype"); font-weight:400; font-display:swap}
-.ph-word{font-family:"Ruba",var(--font); font-synthesis:none; font-size:1.45rem; font-weight:400; letter-spacing:.02em; color:var(--ink); line-height:1}
+/* ---- OwnYourDay at the top of every page (2026-10-19) ----
+   The mark (a half sun over two rising arcs) and the name in Outfit
+   SemiBold (SIL Open Font License, fonts/Outfit-OFL.txt), with "Powered
+   by OwnYourSystem" under it. The lower arc takes the text colour, so the
+   mark reads on the light and the dark page.                            */
+@font-face{font-family:"Outfit"; src:url("fonts/Outfit-SemiBold.woff2") format("woff2"); font-weight:600; font-display:swap}
+.ph-word{font-family:"Outfit",var(--font); font-size:1.18rem; font-weight:600; letter-spacing:-.01em; color:var(--ink); line-height:1.1}
+.ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
+.ph-bt{display:flex; flex-direction:column; gap:1px; min-width:0}
+.ph-mark{display:block; flex:none; color:var(--ink)}
 .ph-brand{display:flex; align-items:center; gap:10px; min-height:44px; margin:-10px 0 -4px}
-.ph-brand img{width:28px; height:28px; border-radius:7px; display:block; flex:none}
 #ph-tbrand{display:none}
 html.ph.ph-talk #ph-tbrand{display:flex; margin:0 auto 0 0}
 html.ph.ph-talk .sheet-head{justify-content:space-between}
@@ -1520,7 +1523,7 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <header class="masthead">
     <div>
-      <div class="eyebrow">Daysize &middot; Live board</div>
+      <div class="eyebrow">OwnYourDay &middot; Live board</div>
       <div class="clockline">
         <span class="dateline" id="dateline">&nbsp;</span>
         <span class="clock" id="clock">--:--:--</span>
@@ -1863,7 +1866,7 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="flashnote" role="status" aria-live="polite" hidden></div>
   <div id="botsheet" hidden>
     <div class="sheet-head">
-      <span class="ph-brand" id="ph-tbrand"><img src="icon-192.png" alt="" width="28" height="28"><span class="ph-word">Daysize</span></span>
+      <span class="ph-brand" id="ph-tbrand"><svg class="ph-mark" viewBox="84 156 350 246" width="40" height="28" aria-hidden="true"><path d="M173 250 A86 86 0 0 1 345 250 Z" fill="#E9B949"/><path d="M92 352 Q 250 196 410 330 Q 262 272 92 352 Z" fill="#9DB59A"/><path d="M138 392 Q 290 270 426 394 Q 300 352 138 392 Z" fill="currentColor"/></svg><span class="ph-bt"><span class="ph-word">OwnYourDay</span><span class="ph-by">Powered by OwnYourSystem</span></span></span>
       <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
       <span class="bot-name">Assistant</span>
       <span class="bot-tools">
