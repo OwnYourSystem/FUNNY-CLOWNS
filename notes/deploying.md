@@ -82,3 +82,11 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   fixed in the test, 3 clean runs alone).
 - Production deployment `dpl_BjsGnWWBus4J3xNUiWPPzc5ewmBj`, READY, aliased to funny-clowns.vercel.app.
 - Rolling back: `dpl_3SwciVrg7rvAm3KDePAA7h78XBz2` (3c6f71c, Qordel in capitals).
+
+## 2026-10-19 (late night): production moved to 3bcd31b (monthly backup reminder)
+
+- Owner: "release it". A "Back up your board" card on Now when there is something to lose, the board
+  is 7 days or more in use, and no backup was saved in 30 days. Later hides it for 7 days.
+  Full regression green (31 suites, backup-reminder 8 checks, purity 315).
+- Production deployment `dpl_7gWkLzqaKKfpwSYVs2N29Y2hazYK`, aliased to funny-clowns.vercel.app.
+- Rolling back: `dpl_BjsGnWWBus4J3xNUiWPPzc5ewmBj` (7b9d4cc, backup carries the private parts).
