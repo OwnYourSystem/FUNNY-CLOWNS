@@ -1,4 +1,4 @@
-/* Daysize (2026-10-19): the name, the mark, and a notification badge Android can paint. */
+/* The brand (2026-10-19): OwnYourDay, its mark, "Powered by OwnYourSystem", and a notification badge Android can paint. */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -13,17 +13,19 @@ await p.goto(URL); await p.waitForSelector("#ph-main .ph-onb");
 const shown = () => p.evaluate(async () => (await (await navigator.serviceWorker.ready).getNotifications()).map((n) => ({ title: n.title, body: n.body, icon: n.icon, badge: n.badge })));
 const closeAll = () => p.evaluate(async () => { for (const n of await (await navigator.serviceWorker.ready).getNotifications()) n.close(); });
 
-await ok("the name is Daysize: page title, home-screen title, app name", async () => {
-  assert.equal(await p.title(), "Daysize");
-  assert.equal(await p.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content"), "Daysize");
+await ok("the name is OwnYourDay: page title, home-screen title, app name", async () => {
+  assert.equal(await p.title(), "OwnYourDay");
+  assert.equal(await p.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content"), "OwnYourDay");
   const m = await p.evaluate(async () => (await fetch("manifest.webmanifest", { cache: "no-store" })).json());
-  assert.equal(m.name, "Daysize"); assert.equal(m.short_name, "Daysize"); assert.equal(m.theme_color.toUpperCase(), "#000000");
+  assert.equal(m.name, "OwnYourDay"); assert.equal(m.short_name, "OwnYourDay"); assert.equal(m.theme_color.toUpperCase(), "#000000");
   assert.ok(!/Minimum Deliveries/.test(await p.content()), "the old name is still on the page");
 });
 await ok("the welcome shows the mark and the name", async () => {
   const img = p.locator(".ph-onb .ph-logo"); assert.equal(await img.isVisible(), true);
   assert.equal(await img.evaluate((e) => e.complete && e.naturalWidth), 192);
-  assert.match(await p.locator(".ph-onb .ph-word").first().innerText(), /^Daysize$/i);
+  assert.equal(await p.locator(".ph-onb .ph-word").first().innerText(), "OwnYourDay");
+  assert.equal(await p.locator(".ph-onb .ph-by").first().innerText(), "Powered by OwnYourSystem");
+  assert.ok(!/Daysize/.test(await p.content()), "the old name Daysize is still on the page");
 });
 await ok("the badge is one colour on a see-through ground, so Android paints the mark, not a square", async () => {
   const r = await p.evaluate(async () => {
@@ -35,15 +37,15 @@ await ok("the badge is one colour on a see-through ground, so Android paints the
     return { w: im.width, corner: a(1, 1), clear, solid, other };
   });
   assert.equal(r.w, 96); assert.equal(r.corner, 0, "the corner is not see-through");
-  assert.ok(r.clear > r.solid * 0.5 && r.solid > 96 * 96 * 0.25, JSON.stringify(r)); assert.equal(r.other, 0, "the badge has colour in it");
+  assert.ok(r.clear > r.solid && r.solid > 96 * 96 * 0.12, JSON.stringify(r)); assert.equal(r.other, 0, "the badge has colour in it");
 });
-await ok("the home-screen icons are the plum mark, not the old black and red", async () => {
+await ok("the home-screen icons are the OwnYourDay mark: a sun over a sage arc, on cream", async () => {
   const px = await p.evaluate(async () => {
     const at = async (src, fx, fy) => { const im = new Image(); im.src = src + "?t=" + Date.now(); await im.decode(); const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
       const x = c.getContext("2d"); x.drawImage(im, 0, 0); return [...x.getImageData(Math.round(im.width * fx), Math.round(im.height * fy), 1, 1).data].slice(0, 3).join(","); };
-    return { corner: await at("icon-192.png", 0.02, 0.02), tag: await at("icon-192.png", 0.36, 0.42), apple: await at("apple-touch-icon.png", 0.36, 0.42) };
+    return { corner: await at("icon-192.png", 0.02, 0.02), sun: await at("icon-192.png", 0.5, 0.37), sage: await at("icon-192.png", 0.48, 0.51), apple: await at("apple-touch-icon.png", 0.5, 0.37) };
   });
-  assert.equal(px.corner, "44,19,50"); assert.equal(px.tag, "216,194,224"); assert.equal(px.apple, "216,194,224");
+  assert.equal(px.corner, "251,249,244"); assert.equal(px.sun, "233,185,73"); assert.equal(px.sage, "157,181,154"); assert.equal(px.apple, "233,185,73");
 });
 
 /* the reminder a push becomes: the worker draws it */
@@ -51,10 +53,10 @@ await p.evaluate(async () => { await navigator.serviceWorker.ready; });
 const cdp = await ctx.newCDPSession(p); let regId = null;
 cdp.on("ServiceWorker.workerRegistrationUpdated", (e) => { if (e.registrations && e.registrations.length) regId = e.registrations[0].registrationId; });
 await cdp.send("ServiceWorker.enable"); for (let i = 0; i < 50 && !regId; i++) await p.waitForTimeout(100);
-await ok("a pushed reminder carries the mark, the one-colour badge, and says Daysize when it has no summary", async () => {
+await ok("a pushed reminder carries the mark, the one-colour badge, and says OwnYourDay when it has no summary", async () => {
   await closeAll(); await cdp.send("ServiceWorker.deliverPushMessage", { origin: ORIGIN, registrationId: regId, data: JSON.stringify({ k: "am" }) }); await p.waitForTimeout(400);
   const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A new day");
-  assert.match(s[0].body, /Daysize/); assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
+  assert.match(s[0].body, /OwnYourDay/); assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
 });
 
 /* You: send a test reminder */
@@ -67,7 +69,7 @@ await ok("with reminders on, You offers a test reminder; it shows at once with t
   const row = p.locator("[data-ph=remtest]"); assert.equal(await row.isVisible(), true);
   assert.ok((await row.boundingBox()).height >= 44);
   await closeAll(); await row.click(); await p.waitForTimeout(500);
-  const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A test from Daysize");
+  const s = await shown(); assert.equal(s.length, 1); assert.equal(s[0].title, "A test from OwnYourDay");
   assert.match(s[0].icon, /icon-192\.png$/); assert.match(s[0].badge, /badge-96\.png$/);
 });
 await ok("with reminders off, there is no test row", async () => {
@@ -76,15 +78,15 @@ await ok("with reminders off, there is no test row", async () => {
   assert.equal(await p.locator("[data-ph=remtest]").count(), 0);
 });
 /* 2026-10-19: the name on every page, plum only on buttons, and Talk writes at the top */
-await ok("every page starts with the mark and the name, set in Ruba", async () => {
+await ok("every page starts with the mark, the name in Outfit, and Powered by OwnYourSystem", async () => {
   await p.evaluate(() => document.fonts.ready);
   for (const r of ["now", "journal", "you", "goals", "backlog", "planner", "talk"]) {
     await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250);
     const b = await p.evaluate(() => { const e = [...document.querySelectorAll(".ph-brand")].find((x) => x.getClientRects().length); if (!e) return null;
-      const w = e.querySelector(".ph-word"); return { word: w.textContent, font: getComputedStyle(w).fontFamily, top: e.getBoundingClientRect().top, img: e.querySelector("img").naturalWidth }; });
-    assert.ok(b, r + ": no name"); assert.equal(b.word, "Daysize"); assert.match(b.font, /^"?Ruba"?/); assert.ok(b.top < 60, r + ": the name is not at the top"); assert.equal(b.img, 192);
+      const w = e.querySelector(".ph-word"); return { word: w.textContent, by: (e.querySelector(".ph-by") || {}).textContent, font: getComputedStyle(w).fontFamily, top: e.getBoundingClientRect().top, mark: e.querySelectorAll("svg.ph-mark path").length }; });
+    assert.ok(b, r + ": no name"); assert.equal(b.word, "OwnYourDay"); assert.equal(b.by, "Powered by OwnYourSystem"); assert.match(b.font, /^"?Outfit"?/); assert.ok(b.top < 60, r + ": the name is not at the top"); assert.equal(b.mark, 3);
   }
-  assert.equal(await p.evaluate(() => document.fonts.check('20px "Ruba"')), true, "the Ruba font did not load");
+  assert.equal(await p.evaluate(() => document.fonts.check('600 20px "Outfit"')), true, "the Outfit font did not load");
 });
 await ok("Talk: a big box at the top to write in, above the chips and the answers", async () => {
   await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);

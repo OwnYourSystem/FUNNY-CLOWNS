@@ -1,3 +1,30 @@
+# Brand: OwnYourDay
+
+**Decision, 2026-10-19 (third round):** the owner renames the app **OwnYourDay**, "Powered by OwnYourSystem". It replaces Daysize (kept below as history).
+
+## The mark: "Calm progress"
+
+Chosen by Claude from the owner's 8 inspiration boards ("select the one that suits the user interface"): **Alternative 1, Calm progress**, a half sun over 2 rising arcs.
+
+- Why this one: the fewest and boldest shapes, so it stays clear at 24px in the Android status bar and at 16px; it works in one colour; it has a dark version. The road, leaf and person versions lose detail when small.
+- Colours: Warm Sun `#E9B949`, Sage `#9DB59A`, Deep Slate `#1F2A30`, Cream `#FBF9F4`.
+- App icon: cream ground, sun, sage arc, slate arc. Dark version: slate ground, cream arc. In the app the mark is drawn inline; its lower arc takes the text colour (black on light, white on dark).
+- Files: `ownyourday-icon.svg`, `ownyourday-icon-dark.svg`, `ownyourday-mark.svg`, `ownyourday-badge.svg`, previews; `make-icons-ownyourday.cjs` draws them and the app PNGs (`icon-192`, `icon-512`, `apple-touch-icon`, `icon-maskable-512`, `badge-96`).
+- Wordmark: **Outfit SemiBold** (SIL Open Font License; `fonts/Outfit-OFL.txt` in the app), the closest free match to the lettering in the inspirations. Under it, small: "Powered by OwnYourSystem". The owner wrote "OwYourSystem"; read as a typo for the company name.
+
+## Where the name is
+
+Page and home-screen titles, manifest `name` and `short_name`, every phone page (mark, name, "Powered by OwnYourSystem"), the welcome screen, the classic board's eyebrow, notifications ("Open OwnYourDay ..."), the test reminder, the tutor's prompt.
+
+## Domain and trademark (2026-10-19)
+
+- Taken: ownyourday.com, ownyourday.app, ownyourdayapp.com. Free: ownyourday.io, getownyourday.com. Nothing bought.
+- Web search found no "OwnYourDay" trademark filing for a planner. Near names: "OwnMyDay" (a children's visual schedule app on Google Play) and YourDay.com, Inc. (calendar marks). "Own your day" is a common phrase, which makes a trademark weak. Search USPTO, EUIPO and WIPO before print.
+
+---
+
+# History: Daysize (2026-10-18 to 2026-10-19)
+
 # Brand: Daysize
 
 Decision, 2026-10-18: the owner keeps **Daysize** as the working brand name for the Minimum Deliveries Board. Maker: OwnYourSystem.

@@ -3,7 +3,7 @@ const KEY='oys-min-deliveries-v1';
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   /* the classic board, which a phone-width page now shows only in Classic view */
-  const _nc = browser.newContext.bind(browser); browser.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem('oys-classic', '1'); } catch (e) {} }); return c; };
+  const _nc = browser.newContext.bind(browser); browser.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem('oys-classic', 'test'); } catch (e) {} }); return c; };
   const errs=[];
   const ctx = await browser.newContext({ viewport:{width:1280,height:1400} });
   const page = await ctx.newPage();

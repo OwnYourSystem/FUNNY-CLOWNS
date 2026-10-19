@@ -7,7 +7,7 @@ const URL = process.env.BOARD_URL || "http://localhost:8731/index.html";
 const results = []; const ok = async (n, f) => { try { await f(); results.push("PASS " + n); } catch (e) { results.push("FAIL " + n + ": " + e.message); } };
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 /* these suites test the classic board, which a phone-width page now shows only in Classic view */
-const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem("oys-classic", "1"); } catch (e) {} }); return c; };
+const _nc = b.newContext.bind(b); b.newContext = async (o) => { const c = await _nc(o); await c.addInitScript(() => { try { localStorage.setItem("oys-classic", "test"); } catch (e) {} }); return c; };
 const ctx = await b.newContext({ viewport: { width: 1280, height: 1100 } });
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message));
 await p.goto(URL); await p.waitForSelector(".row.pick");
@@ -21,7 +21,13 @@ const seed = (mut, week, done = true) => p.evaluate(([KEY, WK, mut, week, done])
 }, [KEY, WK, mut, week, done]).then(() => p.evaluate(() => { location.hash = "#/board"; })).then(() => p.reload()).then(() => p.waitForSelector(".row.pick"));
 const wk = () => p.evaluate((WK) => JSON.parse(localStorage.getItem(WK) || "null"), WK);
 const st = () => p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), KEY);
-const D = () => p.locator("dialog.ask[open]"); const settle = () => p.waitForTimeout(200);
+const D = () => p.locator("dialog.ask[open]");
+/* wait for the save, not a fixed 200ms: the sheet closes, then the stored week stops changing */
+const settle = async () => {
+  await p.waitForFunction(() => !document.querySelector("dialog.ask[open]"), null, { timeout: 1500 }).catch(() => {});
+  let a = JSON.stringify(await wk());
+  for (let i = 0; i < 20; i++) { await p.waitForTimeout(100); const b = JSON.stringify(await wk()); if (i >= 1 && a === b) break; a = b; }
+};
 const nudge = () => p.locator("#week-nudge");
 const entry = (k, d, e, m, c, f, w, n) => ({ k, d, e, m, c, f, w, n });
 const pickAll = async (v) => { for (const [k, x] of Object.entries(v)) await D().locator('[data-ak="' + k + '"] [data-av="' + x + '"]').click(); };
