@@ -1,6 +1,6 @@
 /* The board is one file, so the cache is one file plus its icons. It opens
    offline from the home screen, and picks up a new build in the background. */
-var CACHE = "board-v12";
+var CACHE = "board-v13";
 var DIGEST = "board-digest";   /* the page leaves a short summary here for the push handler; it is never cleaned away */
 var SHELL = ["./", "./index.html", "./manifest.webmanifest",
              "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./badge-96.png", "./fonts/Ruba-Regular.ttf"];
@@ -60,15 +60,15 @@ function compose(kind, dg){
   var fresh = dg && dg.d === localDay();
   if(kind === "am"){
     if(fresh && dg.am) return {tag:"oys-brief", t:clip("Today: " + dg.am.t, 40), b:clip(dg.am.b, 120)};
-    return {tag:"oys-brief", t:"A new day", b:"Open Planck to see what fits today."};
+    return {tag:"oys-brief", t:"A new day", b:"Open Qordel to see what fits today."};
   }
   if(kind === "pm"){
     if(fresh) return dg.nOpen > 0
       ? {tag:"oys-today", t:"Still open", b:clip(dg.nOpen + " still open: " + (dg.open || []).join(", "), 120)}
       : {tag:"oys-today", t:"Today is clear", b:"Nothing is open in Today."};
-    return {tag:"oys-today", t:"Check in", b:"Open Planck to see what is left today."};
+    return {tag:"oys-today", t:"Check in", b:"Open Qordel to see what is left today."};
   }
-  return {tag:"oys-brief", t:"Reminder", b:"Open Planck to see today."};
+  return {tag:"oys-brief", t:"Reminder", b:"Open Qordel to see today."};
 }
 /* A reminder stays until the person closes it (requireInteraction). It never holds the board:
    the owner asked for reminders that wait, not ones that interrupt (2026-10-15). */

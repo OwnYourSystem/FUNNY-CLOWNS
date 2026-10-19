@@ -8,13 +8,13 @@
 <meta name="theme-color" content="#EFEFEC" media="(prefers-color-scheme: light)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Planck">
+<meta name="apple-mobile-web-app-title" content="Qordel">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <!--ARTIFACT-START-->
-<title>Planck</title>
+<title>Qordel</title>
 <style>
 /* latin */
 @font-face {
@@ -1296,10 +1296,10 @@ button.ph-ring::after{content:""; position:absolute; inset:-9px}
 .ph-where>span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
 .ph-where .ph-sel{flex:0 0 auto; width:auto; max-width:52%}
 .ph-onb .ph-h2.ph-mt{margin-top:10px}
-/* ---- Planck at the top of every page (2026-10-19) ----
+/* ---- Qordel at the top of every page (2026-10-19) ----
    The logo is the name, written in Ruba Regular (floor-3013, CC BY-SA 3.0,
    credit in fonts/Ruba-Regular-LICENSE.txt), with "Powered by OwnYourSystem"
-   under it. Ruba is unicase, so it reads "planck". It has one weight.     */
+   under it. Ruba is unicase, so it reads "qordel". It has one weight.     */
 @font-face{font-family:"Ruba"; src:url("fonts/Ruba-Regular.ttf") format("truetype"); font-weight:400; font-display:swap}
 .ph-word{font-family:"Ruba",var(--font); font-synthesis:none; font-size:1.6rem; font-weight:400; letter-spacing:.01em; color:var(--ink); line-height:1}
 .ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
@@ -1570,7 +1570,7 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <header class="masthead">
     <div>
-      <div class="eyebrow">Planck &middot; Live board</div>
+      <div class="eyebrow">Qordel &middot; Live board</div>
       <div class="clockline">
         <span class="dateline" id="dateline">&nbsp;</span>
         <span class="clock" id="clock">--:--:--</span>
@@ -1913,7 +1913,7 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="flashnote" role="status" aria-live="polite" hidden></div>
   <div id="botsheet" hidden>
     <div class="sheet-head">
-      <span class="ph-brand" id="ph-tbrand"><span class="ph-bt"><span class="ph-word">Planck</span><span class="ph-by">Powered by OwnYourSystem</span></span></span>
+      <span class="ph-brand" id="ph-tbrand"><span class="ph-bt"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></span></span>
       <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
       <span class="bot-name">Assistant</span>
       <span class="bot-tools">
@@ -6471,7 +6471,7 @@ function botSnapshot(){
   return out.join("\n");
 }
 var BOT_RULES=
-"You are the tutor built into Planck, a daily planner: patient, concrete, and on the person's side. "+
+"You are the tutor built into Qordel, a daily planner: patient, concrete, and on the person's side. "+
 "You speak only about this board: "+
 "its main tasks, subtasks, progress, status, the three lists (Today, Waiting, Done today), "+
 "and what to work on next. If asked about anything else, say in one line that you only handle this board, "+
@@ -9123,7 +9123,7 @@ function phTabsMark(r){
   });
 }
 /* the mark, the name and who made it, at the top of every page */
-var PH_BRAND_IN='<span class="ph-bt"><span class="ph-word">Planck</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
+var PH_BRAND_IN='<span class="ph-bt"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
 var PH_BRAND='<div class="ph-brand">'+PH_BRAND_IN+'</div>';
 function phRender(){
   if(!PH_ON) return;
@@ -9572,7 +9572,7 @@ function phRow(k,t,v,noChev){
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){
-  var t="A test from Planck", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
+  var t="A test from Qordel", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
   var sent=function(){ toast("","Sent. Look at the top of the screen."); };
   try{
     if(navigator.serviceWorker&&navigator.serviceWorker.controller){
@@ -9810,9 +9810,9 @@ function phChoice(k,list,v,label){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Planck</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
-    '<h1 class="ph-big">One next step, every day.</h1>'+
-    '<p class="ph-lede">Planck picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Qordel</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
+    '<h1 class="ph-big">One step. In the right order.</h1>'+
+    '<p class="ph-lede">A planner that adjusts to your day and shows what matters next. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Start</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="restore">I have a board already: restore it</button></div>';

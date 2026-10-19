@@ -160,7 +160,7 @@ function phTabsMark(r){
   });
 }
 /* the mark, the name and who made it, at the top of every page */
-var PH_BRAND_IN='<span class="ph-bt"><span class="ph-word">Planck</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
+var PH_BRAND_IN='<span class="ph-bt"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></span>';
 var PH_BRAND='<div class="ph-brand">'+PH_BRAND_IN+'</div>';
 function phRender(){
   if(!PH_ON) return;
@@ -609,7 +609,7 @@ function phRow(k,t,v,noChev){
 /* a reminder now, so the person sees how one looks on this phone: the same
    icon, badge and wording as the morning brief, sent from this page */
 function phTestNote(){
-  var t="A test from Planck", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
+  var t="A test from Qordel", o={body:"Reminders come like this, at most 2 a day.", tag:"oys-test", icon:"icon-192.png", badge:"badge-96.png"};
   var sent=function(){ toast("","Sent. Look at the top of the screen."); };
   try{
     if(navigator.serviceWorker&&navigator.serviceWorker.controller){
@@ -847,9 +847,9 @@ function phChoice(k,list,v,label){
 }
 function phOnbHtml(){
   var v=PH_V;
-  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Planck</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
-    '<h1 class="ph-big">One next step, every day.</h1>'+
-    '<p class="ph-lede">Planck picks today’s one task and tells you why. On a rough day it gets smaller. You always decide.</p>'+
+  if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Qordel</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
+    '<h1 class="ph-big">One step. In the right order.</h1>'+
+    '<p class="ph-lede">A planner that adjusts to your day and shows what matters next. On a rough day it gets smaller. You always decide.</p>'+
     '<div class="ph-fill"></div>'+phDotsHtml(0)+
     '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="onb-next">Start</button>'+
     '<button type="button" class="ph-link ph-center" data-ph="restore">I have a board already: restore it</button></div>';

@@ -116,11 +116,11 @@ and segments that are on, the done ring. Tabs, Back, the clock, charts, labels
 and chat bubbles use the text colours, never `--ph-pri`. Red is for danger
 only. Keep text at 4.5:1 on every surface.
 
-**Brand: Planck, powered by OwnYourSystem.** The logo is the name written in
+**Brand: Qordel, powered by OwnYourSystem.** The logo is the name written in
 Ruba Regular (`fonts/Ruba-Regular.ttf`, CC BY-SA 3.0, credit kept next to it;
-unicase, so it reads "planck"). Every phone page starts with `.ph-brand`: the
+unicase, so it reads "qordel"). Every phone page starts with `.ph-brand`: the
 name and "Powered by OwnYourSystem" in small muted text. App icons are the
-name in white on Moonlit Plum; the Android badge is the "p". The phone has no
+name in white on Moonlit Plum; the Android badge is the "q". Tagline: "One step. In the right order." The phone has no
 Classic view; `oys-classic=test` is a test-suite switch only.
 
 **Phone type and surfaces (2026-10-17, HIG review).** Size phone text in rem:

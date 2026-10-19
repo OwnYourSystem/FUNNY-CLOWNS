@@ -1,7 +1,7 @@
 {
-  "name": "Planck",
-  "short_name": "Planck",
-  "description": "A daily planner that gets smaller when your day does.",
+  "name": "Qordel",
+  "short_name": "Qordel",
+  "description": "A planner that adjusts to your day and shows what matters next.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
