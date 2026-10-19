@@ -18,7 +18,12 @@ const seed = (mut, done = true) => p.evaluate(([KEY, mut, done]) => {
   localStorage.setItem(KEY, JSON.stringify(s));
 }, [KEY, mut, done]).then(() => p.evaluate(() => { location.hash = "#/board"; })).then(() => p.reload()).then(() => p.waitForSelector(".row.pick"));
 const st = () => p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), KEY);
-const strip = () => p.locator("#floor"); const D = () => p.locator("dialog.ask[open]"); const settle = () => p.waitForTimeout(200);
+const strip = () => p.locator("#floor"); const D = () => p.locator("dialog.ask[open]"); /* wait for the sheet to close and the strip to stop changing, not a fixed 200ms */
+const settle = async () => {
+  await p.waitForFunction(() => !document.querySelector("dialog.ask[open]"), null, { timeout: 1500 }).catch(() => {});
+  let a = await strip().innerText().catch(() => "");
+  for (let i = 0; i < 20; i++) { await p.waitForTimeout(100); const b2 = await strip().innerText().catch(() => ""); if (i >= 1 && a === b2) break; a = b2; }
+};
 const today = () => p.evaluate(() => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); return n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()); });
 const ago = (n) => p.evaluate((n) => { const d = new Date(); d.setDate(d.getDate() - n); const q = (x) => String(x).padStart(2, "0"); return d.getFullYear() + "-" + q(d.getMonth() + 1) + "-" + q(d.getDate()); }, n);
 
