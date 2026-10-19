@@ -9172,7 +9172,7 @@ function phNow(){
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())
     h.push('<section class="ph-card ph-guide" aria-label="Set up your week"><h2 class="ph-h2">Set up your week</h2>'+
-      '<p class="ph-why">Four short screens: your hours, your best time, what matters most, and where each goal belongs. About 2 minutes.</p>'+
+      '<p class="ph-why">Five short screens: your day and reminders, your work, your best time, what matters most, and where each goal belongs. About 2 minutes.</p>'+
       '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="guide">Start</button><button type="button" class="ph-btn" data-ph="guide-later">Later</button></div></section>');
   if(c){
     var e=c.e, K=JR_KINDS[e.kind]||JR_KINDS.end, ago=Math.round((new Date(c.today)-new Date(c.d))/864e5);
@@ -9790,14 +9790,15 @@ function phNewGoal(){
 }
 
 /* ---- onboarding: three screens ---- */
-/* The first-time guide (2026-10-19): the web interview's questions as phone
-   screens, one topic each, every answer filled in with a sensible default so
-   Next is one tap. 6 screens on a first open; 5 for someone who set up
-   before the guide existed (it starts at Your day and ends with where each
-   of their goals belongs). */
+/* Value first (owner, 2026-10-19, from the Apple principles check): a first
+   open is 2 screens, the welcome and the first goal, then Now with a real
+   next step. The guide (the web interview's questions as phone screens:
+   Your day with reminders, Your work, How you work, What matters most,
+   Where each goal belongs) opens from a "Set up your week" card on Now,
+   which stays until it is done so it is never overlooked. */
 var PH_ONB_LAST=5;
 function phDotsHtml(i){
-  var n=PH_GUIDE?PH_ONB_LAST:PH_ONB_LAST+1, at=PH_GUIDE?i-1:i, o=[];
+  var n=PH_GUIDE?PH_ONB_LAST:2, at=PH_GUIDE?i-1:(i===0?0:1), o=[];
   for(var k=0;k<n;k++) o.push('<span class="ph-step'+(k===at?" on":"")+'"></span>');
   return '<div class="ph-steps" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
 }
@@ -9963,7 +9964,7 @@ function phOnbFinish(add){
     if(gn){ try{ toolRun("add_main_task",{name:gn}); if(sn) toolRun("add_subtask",{main_task:gn,name:sn});
       var ng=state.groups.filter(function(g){ return g.name===gn; }).pop(); if(ng) ng.where=PH_V.where; }catch(e){} }
   }
-  phOnbApply(me);
+  /* the guide comes next, from the card on Now */
   me.done=true; PH_ONB=0; PH_DRAWN="";
   save(); renderAll(); phGo("now");
 }
@@ -10032,14 +10033,14 @@ function phOnbFinish(add){
     else if(k==="gedit") phGoalEdit();
     else if(k==="newgoal") phNewGoal();
     else if(k==="restore") $("#btn-backup").click();
-    else if(k==="onb-next"){ if(PH_ONB===1) phOnbDay(); else if(PH_ONB===2) phOnbWork(); else phOnbStep(PH_ONB+1); }
+    else if(k==="onb-next"){ if(PH_ONB===0) phOnbStep(PH_GUIDE?1:PH_ONB_LAST); else if(PH_ONB===1) phOnbDay(); else if(PH_ONB===2) phOnbWork(); else phOnbStep(PH_ONB+1); }
     else if(k==="onb-day"){ var dd=+b.getAttribute("data-day"), di=PH_V.days.indexOf(dd); if(di>=0) PH_V.days.splice(di,1); else PH_V.days.push(dd); b.setAttribute("aria-pressed",di<0?"true":"false"); }
     else if(k==="onb-pick"){ var pk=b.getAttribute("data-k"); PH_V[pk]=b.getAttribute("data-v");
       Array.prototype.forEach.call(document.querySelectorAll('[data-ph=onb-pick][data-k="'+pk+'"]'),function(x){ x.setAttribute("aria-checked",x===b?"true":"false"); }); }
     else if(k==="guide") phGuideOpen();
     else if(k==="guide-done") phGuideDone();
     else if(k==="guide-later"){ phOnbRead(); var gm=state.me||freshMe(); gm.guideLater=todayStr(); PH_GUIDE=false; PH_ONB=0; PH_DRAWN=""; save(); phGo("now"); }
-    else if(k==="onb-back") phOnbStep(PH_ONB-1);
+    else if(k==="onb-back") phOnbStep(!PH_GUIDE&&PH_ONB===PH_ONB_LAST?0:PH_ONB-1);
     else if(k==="onb-done") phOnbFinish(true);
     else if(k==="onb-skip") phOnbFinish(false);
     else if(k==="tog"){ phOnbRead(); PH_V[b.getAttribute("data-k")]=b.getAttribute("data-v"); PH_DRAWN=""; phRender(); }
