@@ -90,3 +90,16 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   Full regression green (31 suites, backup-reminder 8 checks, purity 315).
 - Production deployment `dpl_7gWkLzqaKKfpwSYVs2N29Y2hazYK`, aliased to funny-clowns.vercel.app.
 - Rolling back: `dpl_BjsGnWWBus4J3xNUiWPPzc5ewmBj` (7b9d4cc, backup carries the private parts).
+
+## 2026-10-20: production moved to b926c96 (energy, sequence, AI order suggestion)
+
+- Owner: "release it". Everything since 3bcd31b: the energy battery and easy steps; logo C (QORDEL
+  letter-spacing -0.02em, icons redrawn, cache board-v15); sequence, not deadlines (steps in their
+  order, one optional delivery day, pace); the missed delivery day asked by notification and card;
+  good day steps set by the person; AI proposes an order (Claude Haiku 5.5 behind api/order.js,
+  key QORDEL_ORDER_KEY, consent once, Undo); drag to reorder with Undo.
+- Full regression on b926c96: 37 suites, 912 checks, 0 failures.
+- Production deployment `dpl_4mVsS5tWUANNbC3A8HriCKGfjJp2`.
+- Rolling back: `dpl_7gWkLzqaKKfpwSYVs2N29Y2hazYK` (3bcd31b, the monthly backup reminder).
+- Open before the AI suggestion is promoted publicly: the privacy policy names Anthropic; region
+  decision (Anthropic API runs in the US or global, not the EU).
