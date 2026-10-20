@@ -114,7 +114,9 @@ await ok("an unreachable upstream maps to 502", () => { assert.ok([502, 429].inc
 
 await ok("logs never hold what anyone said", () => { const all = logs.join("\n"); assert.ok(!all.includes("PRIVATEWORDS") && !all.includes("SECRETWORDS") && !all.includes("when do I finish")); assert.ok(logs.length > 0); });
 
-const r7 = await call({ messages: [{ role: "user", content: "hi" }] });
+/* the limit counts per clock minute: if the calls above straddle a minute boundary the
+   counter starts again, so keep calling (at most 6 more, well inside one minute) until it bites */
+let r7; for (let i = 0; i < 7; i++) { r7 = await call({ messages: [{ role: "user", content: "hi" }] }); if (r7.code === 429) break; }
 await ok("the per-minute limit stops a runaway loop", () => { assert.equal(r7.code, 429, JSON.stringify(r7.body).slice(0,200)); assert.equal(r7.body.error.code, "rate_limited"); });
 
 // auth on

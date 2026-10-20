@@ -22,7 +22,9 @@ await p.goto(URL); await p.waitForSelector(".row.pick");
 const D = () => p.locator("dialog.ask[open]");
 const ask = (o) => p.evaluate((o) => { window.__res = undefined; const f = o.check ? new Function("v", o.check) : undefined; const q = Object.assign({}, o); if (f) q.check = f; window.__board.askUser(q).then((r) => { window.__res = r === undefined ? "undef" : r; }); }, o);
 const res = () => p.evaluate(() => window.__res);
-const settle = () => p.waitForTimeout(150);
+/* a sheet first loses [open], then its close event removes it and opens the next one; wait for the
+   removal, not a fixed time (150ms was not always enough when the full suite ran, 2026-10-20) */
+const settle = async () => { await p.waitForTimeout(60); await p.waitForFunction(() => !document.querySelector("dialog.ask:not([open]):not([id])"), null, { timeout: 5000 }); await p.waitForTimeout(60); };
 
 // ---- the helper ---------------------------------------------------------------------------------------------------
 await ok("yes resolves true; Not now resolves false", async () => {
