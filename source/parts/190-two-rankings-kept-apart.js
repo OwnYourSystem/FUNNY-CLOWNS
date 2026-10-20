@@ -27,7 +27,7 @@ var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
 function doseN(band,lvl){
   var n=Math.round(+(state.me&&state.me.normalN))||DOSE_N.normal;
-  if(lvl===2) return 2;
+  if(lvl===2) return clamp(n-1,1,2);         /* never more than a good day */
   return band==="low" ? DOSE_N.low : band==="high" ? n+2 : n;
 }
 /* The energy level (owner, 2026-10-20): four batteries the person taps, at
@@ -35,11 +35,12 @@ function doseN(band,lvl){
    very low and low are a low day (1 and 2 steps), good is a normal day,
    full is a big one. A low level also changes which steps come first: a
    step marked easy (a hobby, a small job) goes ahead of a hard one.   */
-var ENERGY=[null,
-  {band:"low",   name:"Very low", why:"You said your energy is very low, so today is one easy thing."},
-  {band:"low",   name:"Low",      why:"You said your energy is low, so today is two easier things."},
-  {band:"normal",name:"Good",     why:""},
-  {band:"high",  name:"Full",     why:"You said your energy is full, so today can carry more."}];
+var ENERGY=[null,{band:"low",name:"Very low"},{band:"low",name:"Low"},{band:"normal",name:"Good"},{band:"high",name:"Full"}];
+function energyWhy(l,n){
+  return l===1 ? "You said your energy is very low, so today is one easy thing."
+       : l===2 ? "You said your energy is low, so today is "+(n===1?"one easier thing.":"two easier things.")
+       : l===4 ? "You said your energy is full, so today can carry more." : "";
+}
 function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
 function doseEstimate(){
   var t=todayStr();
@@ -66,8 +67,8 @@ function doseEstimate(){
 function doseNow(){
   var cap=state.cap;
   if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
-    var L=ENERGY[cap.lvl];
-    return {band:L.band, n:doseN(L.band,cap.lvl), src:"you", lvl:cap.lvl, why:L.why};
+    var L=ENERGY[cap.lvl], ln=doseN(L.band,cap.lvl);
+    return {band:L.band, n:ln, src:"you", lvl:cap.lvl, why:energyWhy(cap.lvl,ln)};
   }
   if(cap && cap.d===todayStr() && DOSE_N[cap.mode]){
     return {band:cap.mode, n:doseN(cap.mode), src:"you",
@@ -123,14 +124,17 @@ function goalScore(g,c,me){
   if(g.where==="home" && c.free && !c.wound && !c.early) sc+=14;
   return sc;
 }
-/* within-goal only: which step of this goal, now */
+/* within-goal only: which step of this goal, now. The list order is the
+   sequence: the first open step comes first (owner, 2026-10-20). Three
+   things go ahead of it: a step with its own date that has come (a fixed
+   appointment), a habit due today, and a step already started, because
+   finishing beats starting.                                           */
 function subScore(s,g,moving){
-  var sc = SUB_W[s.prio||"mid"] + Math.min(ageOf(s.upd),30)*0.8;
-  var low=doseNow().band==="low";
-  sc += (low?Math.min(urgency(s),25):urgency(s))*0.5;   /* its own deadline, not the goal's */
-  if(s.rep && periodKey(s.rep)) sc+=55;     /* a habit due today still wins */
-  if(s.pct>0&&s.pct<100) sc+=low?40:22;
-  if(moving===1&&s.pct>0) sc+=18;
+  var i=g.subs.indexOf(s.id), sc=1000-(i<0?999:i)*10;
+  var n=daysLeft(s);
+  if(n!==null && n<=0) sc+=4000;            /* its own date has come */
+  if(s.rep && periodKey(s.rep)) sc+=3000;   /* a habit due today still wins */
+  if(s.pct>0&&s.pct<100) sc+=2000;
   return sc;
 }
 function subsOpen(g,taken,skip){
@@ -194,10 +198,12 @@ function verdictWhy(v){
   if(s.rep && periodKey(s.rep))
     out.push(repLabel(s.rep)+", and today is not done"+(s.streak?". You are "+s.streak+" in a row":"")+".");
   else if(n!==null&&n<0)
-    out.push(g.name+" is "+Math.abs(n)+" days past its deadline at "+groupPct(g)+"%.");
-  else if(n!==null&&n<=7)
-    out.push(g.name+" is "+dueLabel(g)+" at "+groupPct(g)+"%"+
-      (g.prio==="high"?", and you called it high priority":"")+".");
+    out.push(g.name+" is past its delivery day. Nothing is lost: pick a new day when you are ready.");
+  else if(n!==null){
+    var left=stepsLeft(g), per=Math.ceil(left/(n+1));
+    out.push(g.name+" is for "+deliveryLabel(g)+", with "+left+(left===1?" step":" steps")+" left"+
+      (per<=1?", so one step today keeps it on pace.":", so about "+per+" a day keeps it on pace."));
+  }
   else if(a>=14&&s.pct>0)
     out.push("Nothing in "+g.name+" has moved in "+a+" days, and this part is already at "+s.pct+"%.");
   else if(s.pct>0)

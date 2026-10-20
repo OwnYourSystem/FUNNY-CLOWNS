@@ -18,15 +18,29 @@ function statusOf(s){
 
    Each alarm carries the one subtask inside it that most wants doing, so
    pressing it lands you on the work rather than on the goal.          */
+/* Sequence, not deadlines (owner, 2026-10-20). A goal has at most one
+   delivery day, and its steps are done in the order they are listed. How
+   hard a goal pulls is its pace: the steps still open over the days left,
+   so four steps and four days pull as much as one step due today. It never
+   climbs past 50, and a delivery day that has passed does not shout: it
+   pulls a little and the person is asked for a new day.               */
+function stepsLeft(g){ var n=0; g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct<100&&x.status!=="done") n++; }); return n; }
 function urgency(g){
   var n=daysLeft(g);
   if(n===null) return 2;
-  if(n<0) return 100;
-  if(n<=3) return 50;
-  if(n<=7) return 25;
-  if(n<=14) return 12;
-  if(n<=30) return 6;
-  return 3;
+  if(n<0) return 6;
+  var left=g.subs?stepsLeft(g):1;
+  return clamp(Math.round(left/(n+1)*25),3,50);
+}
+function missedDelivery(g){ var n=daysLeft(g); return n!==null && n<0 && groupPct(g)<100; }
+/* the delivery day in words: "Friday" this week, "24 Oct" after it */
+function deliveryLabel(g){
+  var n=daysLeft(g); if(n===null) return "";
+  if(n<0) return "its delivery day has passed";
+  if(n===0) return "today";
+  if(n===1) return "tomorrow";
+  var d=new Date(g.due+"T00:00:00");
+  return n<7 ? DAYNAME[d.getDay()] : d.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
 }
 /* which step of this goal the alarm should land you on. A blocked one is
    named first, because that is the thing stopping the goal; otherwise it is

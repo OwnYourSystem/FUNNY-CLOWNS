@@ -63,6 +63,14 @@ function removeSub(id){
   return true;
 }
 /* a subtask goes under another goal: the drag on the board, the Goal box on the phone */
+/* the order of the steps is the sequence they are done in (2026-10-20) */
+function moveSubOrder(sid,dir){
+  var sb=state.subs[sid], g=sb&&gById(sb.gid); if(!g) return false;
+  var i=g.subs.indexOf(sid), j=i+(dir<0?-1:1);
+  if(i<0||j<0||j>=g.subs.length) return false;
+  g.subs[i]=g.subs[j]; g.subs[j]=sid; mark(g.id,"order"); touchHist();
+  return true;
+}
 function moveSub(sid,gid){
   var sb=state.subs[sid], g=gById(gid);
   if(!sb||!g||sb.gid===g.id) return false;

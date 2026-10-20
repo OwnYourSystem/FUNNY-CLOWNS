@@ -1308,7 +1308,7 @@ html.ph .io-priv{min-height:44px}
    The logo is the name in capitals, QORDEL, in the app's own Schibsted
    Grotesk SemiBold (owner: "use capitals"), with "Powered by OwnYourSystem"
    under it. The text stays "Qordel", so a screen reader says the word.  */
-.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:0; color:var(--ink); line-height:1.1}
+.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:-.02em; color:var(--ink); line-height:1.1}
 .ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
 .ph-bt{display:flex; flex-direction:column; gap:3px; min-width:0}
 .ph-onb .ph-word{font-size:2rem}
@@ -1351,6 +1351,14 @@ html.ph.ph-talk .sheet-head{position:sticky; top:-12px; z-index:3; background:va
 .ph-mic.on{border-color:var(--ph-pri); background:var(--ph-wash)}
 .ph-form{display:flex; flex-direction:column; gap:6px}
 .ph-form .ph-lab{margin-top:10px}
+/* sequence (2026-10-20): the number of each open step, Earlier and Later on a step, and More for its own date */
+.ph-ord{display:inline-block; min-width:1.6em; color:var(--muted); font-variant-numeric:tabular-nums}
+.ph-ordb{margin-top:0}
+.ph-ordb .ph-btn[disabled]{opacity:.4}
+.ph-more{margin-top:8px; border-top:1px solid var(--hair); padding-top:4px}
+.ph-more summary{min-height:44px; display:flex; align-items:center; font-size:0.8824rem; font-weight:600; color:var(--ink); cursor:pointer}
+.ph-more[open] summary{margin-bottom:4px}
+.ph-more .ph-note{margin:0 0 12px}
 .ph-segb{display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
 .ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:44px; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
 .ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
@@ -2449,15 +2457,29 @@ function statusOf(s){
 
    Each alarm carries the one subtask inside it that most wants doing, so
    pressing it lands you on the work rather than on the goal.          */
+/* Sequence, not deadlines (owner, 2026-10-20). A goal has at most one
+   delivery day, and its steps are done in the order they are listed. How
+   hard a goal pulls is its pace: the steps still open over the days left,
+   so four steps and four days pull as much as one step due today. It never
+   climbs past 50, and a delivery day that has passed does not shout: it
+   pulls a little and the person is asked for a new day.               */
+function stepsLeft(g){ var n=0; g.subs.forEach(function(id){ var x=state.subs[id]; if(x&&x.pct<100&&x.status!=="done") n++; }); return n; }
 function urgency(g){
   var n=daysLeft(g);
   if(n===null) return 2;
-  if(n<0) return 100;
-  if(n<=3) return 50;
-  if(n<=7) return 25;
-  if(n<=14) return 12;
-  if(n<=30) return 6;
-  return 3;
+  if(n<0) return 6;
+  var left=g.subs?stepsLeft(g):1;
+  return clamp(Math.round(left/(n+1)*25),3,50);
+}
+function missedDelivery(g){ var n=daysLeft(g); return n!==null && n<0 && groupPct(g)<100; }
+/* the delivery day in words: "Friday" this week, "24 Oct" after it */
+function deliveryLabel(g){
+  var n=daysLeft(g); if(n===null) return "";
+  if(n<0) return "its delivery day has passed";
+  if(n===0) return "today";
+  if(n===1) return "tomorrow";
+  var d=new Date(g.due+"T00:00:00");
+  return n<7 ? DAYNAME[d.getDay()] : d.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
 }
 /* which step of this goal the alarm should land you on. A blocked one is
    named first, because that is the thing stopping the goal; otherwise it is
@@ -4285,7 +4307,7 @@ var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
 function doseN(band,lvl){
   var n=Math.round(+(state.me&&state.me.normalN))||DOSE_N.normal;
-  if(lvl===2) return 2;
+  if(lvl===2) return clamp(n-1,1,2);         /* never more than a good day */
   return band==="low" ? DOSE_N.low : band==="high" ? n+2 : n;
 }
 /* The energy level (owner, 2026-10-20): four batteries the person taps, at
@@ -4293,11 +4315,12 @@ function doseN(band,lvl){
    very low and low are a low day (1 and 2 steps), good is a normal day,
    full is a big one. A low level also changes which steps come first: a
    step marked easy (a hobby, a small job) goes ahead of a hard one.   */
-var ENERGY=[null,
-  {band:"low",   name:"Very low", why:"You said your energy is very low, so today is one easy thing."},
-  {band:"low",   name:"Low",      why:"You said your energy is low, so today is two easier things."},
-  {band:"normal",name:"Good",     why:""},
-  {band:"high",  name:"Full",     why:"You said your energy is full, so today can carry more."}];
+var ENERGY=[null,{band:"low",name:"Very low"},{band:"low",name:"Low"},{band:"normal",name:"Good"},{band:"high",name:"Full"}];
+function energyWhy(l,n){
+  return l===1 ? "You said your energy is very low, so today is one easy thing."
+       : l===2 ? "You said your energy is low, so today is "+(n===1?"one easier thing.":"two easier things.")
+       : l===4 ? "You said your energy is full, so today can carry more." : "";
+}
 function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
 function doseEstimate(){
   var t=todayStr();
@@ -4324,8 +4347,8 @@ function doseEstimate(){
 function doseNow(){
   var cap=state.cap;
   if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
-    var L=ENERGY[cap.lvl];
-    return {band:L.band, n:doseN(L.band,cap.lvl), src:"you", lvl:cap.lvl, why:L.why};
+    var L=ENERGY[cap.lvl], ln=doseN(L.band,cap.lvl);
+    return {band:L.band, n:ln, src:"you", lvl:cap.lvl, why:energyWhy(cap.lvl,ln)};
   }
   if(cap && cap.d===todayStr() && DOSE_N[cap.mode]){
     return {band:cap.mode, n:doseN(cap.mode), src:"you",
@@ -4381,14 +4404,17 @@ function goalScore(g,c,me){
   if(g.where==="home" && c.free && !c.wound && !c.early) sc+=14;
   return sc;
 }
-/* within-goal only: which step of this goal, now */
+/* within-goal only: which step of this goal, now. The list order is the
+   sequence: the first open step comes first (owner, 2026-10-20). Three
+   things go ahead of it: a step with its own date that has come (a fixed
+   appointment), a habit due today, and a step already started, because
+   finishing beats starting.                                           */
 function subScore(s,g,moving){
-  var sc = SUB_W[s.prio||"mid"] + Math.min(ageOf(s.upd),30)*0.8;
-  var low=doseNow().band==="low";
-  sc += (low?Math.min(urgency(s),25):urgency(s))*0.5;   /* its own deadline, not the goal's */
-  if(s.rep && periodKey(s.rep)) sc+=55;     /* a habit due today still wins */
-  if(s.pct>0&&s.pct<100) sc+=low?40:22;
-  if(moving===1&&s.pct>0) sc+=18;
+  var i=g.subs.indexOf(s.id), sc=1000-(i<0?999:i)*10;
+  var n=daysLeft(s);
+  if(n!==null && n<=0) sc+=4000;            /* its own date has come */
+  if(s.rep && periodKey(s.rep)) sc+=3000;   /* a habit due today still wins */
+  if(s.pct>0&&s.pct<100) sc+=2000;
   return sc;
 }
 function subsOpen(g,taken,skip){
@@ -4452,10 +4478,12 @@ function verdictWhy(v){
   if(s.rep && periodKey(s.rep))
     out.push(repLabel(s.rep)+", and today is not done"+(s.streak?". You are "+s.streak+" in a row":"")+".");
   else if(n!==null&&n<0)
-    out.push(g.name+" is "+Math.abs(n)+" days past its deadline at "+groupPct(g)+"%.");
-  else if(n!==null&&n<=7)
-    out.push(g.name+" is "+dueLabel(g)+" at "+groupPct(g)+"%"+
-      (g.prio==="high"?", and you called it high priority":"")+".");
+    out.push(g.name+" is past its delivery day. Nothing is lost: pick a new day when you are ready.");
+  else if(n!==null){
+    var left=stepsLeft(g), per=Math.ceil(left/(n+1));
+    out.push(g.name+" is for "+deliveryLabel(g)+", with "+left+(left===1?" step":" steps")+" left"+
+      (per<=1?", so one step today keeps it on pace.":", so about "+per+" a day keeps it on pace."));
+  }
   else if(a>=14&&s.pct>0)
     out.push("Nothing in "+g.name+" has moved in "+a+" days, and this part is already at "+s.pct+"%.");
   else if(s.pct>0)
@@ -5437,6 +5465,14 @@ function removeSub(id){
   return true;
 }
 /* a subtask goes under another goal: the drag on the board, the Goal box on the phone */
+/* the order of the steps is the sequence they are done in (2026-10-20) */
+function moveSubOrder(sid,dir){
+  var sb=state.subs[sid], g=sb&&gById(sb.gid); if(!g) return false;
+  var i=g.subs.indexOf(sid), j=i+(dir<0?-1:1);
+  if(i<0||j<0||j>=g.subs.length) return false;
+  g.subs[i]=g.subs[j]; g.subs[j]=sid; mark(g.id,"order"); touchHist();
+  return true;
+}
 function moveSub(sid,gid){
   var sb=state.subs[sid], g=gById(gid);
   if(!sb||!g||sb.gid===g.id) return false;
@@ -9285,11 +9321,50 @@ function phEnergyAsk(){
   var body=["The board sizes today to your energy and puts the steps in order. Change it whenever your day changes."];
   if(dz.why) body.push((dz.src==="you"?"Now: ":"The board\u2019s guess: ")+dz.why);
   if(!ez) body.push("On a low day, steps you mark Easy come first. Mark one on its page.");
-  var more=[["1","Very low: one easy thing"],["2","Low: two easier things"],["3","Good: a normal day"],["4","Full: give me more"]];
+  var gn=doseN("normal"), ln=doseN("low",2), st=function(k){ return k+(k===1?" step":" steps"); };
+  var more=[["1","Very low: one easy thing"],["2","Low: "+(ln===1?"one easier thing":"two easier things")],["3","Good: "+st(gn)],["4","Full: "+st(doseN("high"))]];
   if(dz.src==="you") more.push(["auto","Let the board decide"]);
   askUser({title:"How is your energy?", body:body, more:more, noOk:true, cancel:"Keep it"}).then(function(v){
     if(v==="auto") setDose("auto"); else if(+v>=1&&+v<=4) setEnergy(+v); else return;
     PH_DRAWN=""; phRender(); var eb=document.querySelector("[data-ph=energy]"); if(eb) eb.focus();
+    /* the first time someone picks Good, they say what a good day is (owner, 2026-10-20) */
+    if(v==="3" && !(state.me&&state.me.goodSet)) phGoodN();
+  });
+}
+/* A delivery day that has passed (owner, 2026-10-20): the person is asked,
+   once per goal and date, in a notification and in a quiet card on Now. */
+function phMissed(){ return state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; }); }
+function phMissNote(ms){
+  var me=state.me||{}, d=new Date(), now=d.getHours()*60+d.getMinutes(), fresh=ms.filter(function(g){ return g.missNote!==g.due; });
+  if(!fresh.length || outsideDay(me,now)) return;
+  try{ if(!("Notification" in window) || Notification.permission!=="granted" || !navigator.serviceWorker) return; }catch(e){ return; }
+  fresh.forEach(function(g){ g.missNote=g.due; }); save();
+  var t=fresh.length===1?fresh[0].name+": its delivery day has passed":fresh.length+" goals passed their delivery day";
+  navigator.serviceWorker.ready.then(function(reg){
+    return reg.showNotification(t,{body:"Pick a new day? Nothing is lost.", tag:"oys-miss", icon:"icon-192.png", badge:"badge-96.png", data:{url:"./#/now"}});
+  }).catch(function(){});
+}
+/* a tap on a notification while the app is open lands on its page */
+try{ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener("message",function(e){
+  var m=e.data||{}; if(m.type==="oys-go" && /^#\/[a-z]+$/.test(m.hash||"")) location.hash=m.hash; }); }catch(e){}
+function phMissNew(id){
+  var g=gById(id); if(!g) return;
+  askUser({title:"A new delivery day", body:["For "+g.name+". The steps keep their order, and the board spreads them over the days left."],
+    fields:[{k:"d",label:"Delivery day",kind:"date",value:"",min:todayStr()}], ok:"Save", cancel:"Not now",
+    check:function(v){ return !v.d?"Pick a day.":(v.d<todayStr()?"Pick today or a later day.":""); }}).then(function(v){
+    if(!v) return; editGoal(g,"due",v.d); delete g.missAsk; delete g.missNote; save(); renderAll(); PH_DRAWN=""; phRender();
+    toast("",g.name+": delivery "+deliveryLabel(g)+".");
+  });
+}
+/* how many steps make a good day: the person decides; Low and Full follow from it */
+function phGoodN(){
+  var me=state.me||(state.me=freshMe()), cur=doseN("normal");
+  askUser({title:"How many steps make a good day?", body:["Today and every Good day after it is sized to this. Low and Full follow from it. You can change it on You."],
+    more:[["1","1 step"],["2","2 steps"],["3","3 steps"],["4","4 steps"]].map(function(o){ return [o[0],o[1]+(+o[0]===cur?" (now)":"")]; }), noOk:true, cancel:"Keep "+cur})
+  .then(function(v){
+    if(+v>=1&&+v<=4) me.normalN=+v; else if(v!==false&&v!==null&&v!==undefined) return;
+    me.goodSet=true; save(); renderAll(); PH_DRAWN=""; phRender();
+    var r=document.querySelector("[data-ph=goodn]")||document.querySelector("[data-ph=energy]"); if(r) r.focus();
   });
 }
 /* what Now shows: the first open step in Today, else the board's pick */
@@ -9384,6 +9459,16 @@ function phNow(){
       '<p class="ph-why">'+esc(not.length?not.join(" "):"Everything that can be done now is done, waiting or in Today.")+'</p>'+
       '<div class="ph-acts"><a class="ph-btn" href="#/talk">Add something</a></div></section>');
   }
+  /* a delivery day that has passed: asked here as well as in a notification */
+  var ms=phMissed();
+  if(ms.length){ var mg=ms[0], md=new Date(mg.due+"T00:00:00");
+    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed"><h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
+      '<p class="ph-why">Its delivery day, '+DAYNAME[md.getDay()]+' '+md.getDate()+' '+PH_MONTHS[md.getMonth()]+', has passed. Nothing is lost. Pick a new day, or take the date off.'+
+      (ms.length>1?' '+(ms.length-1)+' more '+(ms.length===2?"goal asks":"goals ask")+' the same after this one.':'')+'</p>'+
+      '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="missnew" data-id="'+esc(mg.id)+'">Pick a new day</button>'+
+      '<button type="button" class="ph-btn" data-ph="missoff" data-id="'+esc(mg.id)+'">No date</button></div>'+
+      '<button type="button" class="ph-link" data-ph="misskeep" data-id="'+esc(mg.id)+'">Keep it as it is</button></section>'); }
+  phMissNote(ms);
   var items=state.oftad.concat(state.done), nd=state.done.length;
   h.push('<section aria-label="Today"><div class="ph-row-h"><h2 class="ph-h2">Today</h2><span class="ph-k">'+nd+' of '+items.length+' done</span></div>');
   if(!items.length) h.push('<p class="ph-empty">Nothing in Today yet. Start the step above, or say what you want to do in Talk.</p>');
@@ -9742,6 +9827,7 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Your day</h2><div class="ph-grp">'+
     phRow("daystart","Day starts",clockLabel(me.rise||"07:00"))+
     phRow("dayend","Day ends",clockLabel(me.wind))+
+    phRow("goodn","Steps on a good day",String(doseN("normal")))+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+'</div>');
@@ -9828,8 +9914,8 @@ function phArg(){ var m=String(location.hash||"").match(/^#\/[a-z]+\/(.+)$/); tr
 function phStepFacts(s){
   var b=[], st=statusOf(s);
   if(st.k!=="done") b.push(st.label);
-  if(s.prio&&s.prio!=="mid") b.push(s.prio==="high"?"High":"Low");
-  if(daysLeft(s)!==null) b.push(dueLabel(s));
+  var dn=daysLeft(s);
+  if(dn!==null) b.push(dn<0?"Its date has passed":"On "+deliveryLabel(s));
   if(s.rep) b.push(repLabel(s.rep)+(s.streak?" · "+s.streak+"×":""));
   if(s.tag) b.push(s.tag);
   return b.join(" · ");
@@ -9846,7 +9932,7 @@ function phGoalPage(){
   var g=gById(PH_GOAL); if(!g) return phGoals();
   var p=groupPct(g), n=daysLeft(g), h=[], open=[], fin=[], meta=[];
   g.subs.forEach(function(id){ var s=state.subs[id]; if(!s) return; (s.pct>=100||s.status==="done"?fin:open).push(s); });
-  meta.push(n!==null?dueLabel(g):"No deadline");
+  meta.push(n===null?"No delivery day":n<0?"Delivery day passed":"Delivery "+deliveryLabel(g));
   if(g.prio==="high"||g.prio==="low") meta.push(g.prio==="high"?"High priority":"Low priority");
   if(g.where&&g.where!=="any") meta.push(whereLabel(g.where));
   h.push('<div style="min-width:0">'+phNav("#/goals","Goals")+'<h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>');
@@ -9857,10 +9943,10 @@ function phGoalPage(){
   if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Press Add a step.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
-    open.concat(fin).forEach(function(s){
+    open.concat(fin).forEach(function(s,i){
       var dn=s.pct>=100||s.status==="done", fx=phStepFacts(s);
       h.push('<li><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
-        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
+        '<span class="ph-goal-top"><span class="ph-goal-n">'+(dn?'':'<span class="ph-ord">'+(i+1)+'</span>')+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
         (dn?'':'<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span>')+
         (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button></li>');
     });
@@ -9892,6 +9978,7 @@ function phStepRedraw(){ PH_DRAWN=""; phRender(); }
 function phStepPage(){
   var s=state.subs[phArg()]; if(!s) return PH_GOAL&&gById(PH_GOAL)?phGoalPage():phGoals();
   var g=gById(s.gid), h=[], w=whenMap()[s.id], e=estState().items[s.id], inT=state.oftad.some(function(c){ return c.id===s.id; });
+  var opn=g?g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }):[], oi=opn.indexOf(s.id);
   PH_GOAL=s.gid;
   h.push('<div style="min-width:0">'+phNav("#/goal/"+esc(encodeURIComponent(s.gid)),g?phCut(g.name,28):"Goal")+
     '<h1 class="ph-h1" id="ph-s-h" style="overflow-wrap:anywhere">'+esc(s.name)+'</h1></div>');
@@ -9900,13 +9987,17 @@ function phStepPage(){
     '<span class="ph-lab">Status</span>'+phSegb("status",STATUSES,s.status==="done"||s.pct>=100?"done":s.status,"Status")+
     '<label class="ph-lab" for="ph-s-pct">Done: <output id="ph-s-pv" for="ph-s-pct">'+s.pct+'%</output></label>'+
     '<input class="ph-range" type="range" id="ph-s-pct" data-phed="pct" min="0" max="100" step="5" value="'+s.pct+'">'+
-    '<span class="ph-lab">Priority, inside this goal</span>'+phSegb("prio",PRIOS,s.prio||"mid","Priority")+
-    '<label class="ph-lab" for="ph-s-due">Deadline</label><div class="ph-inrow"><input class="ph-in" type="date" id="ph-s-due" data-phed="due" value="'+esc(s.due||"")+'">'+
-      (s.due?'<button type="button" class="ph-chip" data-ph="nodue">Clear</button>':'')+'</div>'+
+    (opn.length>1&&oi>=0?'<span class="ph-lab" id="ph-s-ordl">Order: step '+(oi+1)+' of '+opn.length+'</span>'+
+      '<div class="ph-acts ph-ordb" role="group" aria-labelledby="ph-s-ordl"><button type="button" class="ph-btn" data-ph="sorder" data-d="-1"'+(oi===0?' disabled':'')+'>Earlier</button>'+
+      '<button type="button" class="ph-btn" data-ph="sorder" data-d="1"'+(oi===opn.length-1?' disabled':'')+'>Later</button></div>':'')+
     '<label class="ph-lab" for="ph-s-rep">Repeats</label><select class="ph-sel" id="ph-s-rep" data-phed="rep">'+phOpts(REPEATS,s.rep||"")+'</select>'+
     '<label class="ph-lab" for="ph-s-tag">Tag</label><input class="ph-in" id="ph-s-tag" data-phed="tag" value="'+esc(s.tag||"")+'" placeholder="Planning" enterkeyhint="done">'+
     (state.groups.length>1?'<label class="ph-lab" for="ph-s-goal">Goal</label><select class="ph-sel" id="ph-s-goal" data-phmove="1">'+
       phOpts(state.groups.map(function(x){ return [x.id,x.name]; }),s.gid)+'</select>':'')+
+    '<details class="ph-more"'+(s.due||(s.prio&&s.prio!=="mid")?' open':'')+'><summary>More</summary>'+
+      '<p class="ph-note">Steps are done in their order. A date here is for a fixed appointment: the step goes first when the day comes.</p>'+
+      '<label class="ph-lab" for="ph-s-due">Own date (optional)</label><div class="ph-inrow"><input class="ph-in" type="date" id="ph-s-due" data-phed="due" value="'+esc(s.due||"")+'">'+
+      (s.due?'<button type="button" class="ph-chip" data-ph="nodue">Clear</button>':'')+'</div></details>'+
     '<p class="ph-note" id="ph-s-msg" aria-live="polite">Changes are saved as you make them.</p></section>');
   h.push('<section class="ph-grp" aria-label="More for this step">'+
     phRow("seasy","Easy, good for a low-energy day",s.easy?"On":"Off",true)+
@@ -9949,7 +10040,7 @@ function phGoalEdit(){
   var g=gById(PH_GOAL); if(!g) return;
   askUser({title:"Goal", fields:[{k:"n",label:"Name",kind:"text",value:g.name},
       {k:"p",label:"Priority",kind:"pick",row:true,opts:PRIOS,value:g.prio||"mid"},
-      {k:"d",label:"Deadline (leave empty for none)",kind:"date",value:g.due||""},
+      {k:"d",label:"Delivery day (leave empty for none)",kind:"date",value:g.due||""},
       {k:"w",label:"Where it can be done",kind:"select",opts:WHERES.map(function(x){ return [x[0],x[1]]; }),value:g.where||"any"},
       {k:"t",label:"Tags, with commas between (up to 5)",kind:"text",value:(g.tags||[]).join(", ")}],
     ok:"Save", cancel:"Close", more:[["backlog","Move it to the Backlog"],["archive","Archive this goal"],["remove","Remove this goal"]],
@@ -10202,6 +10293,10 @@ function phOnbFinish(add){
     else if(k==="account") $("#btn-account").click();
     else if(k==="daystart") phDayStart();
     else if(k==="dayend") phDayEnd();
+    else if(k==="goodn") phGoodN();
+    else if(k==="missnew") phMissNew(id);
+    else if(k==="missoff"){ var mo=gById(id); if(mo) phUndoable("No date for "+phCut(mo.name,36),function(){ editGoal(mo,"due",""); }); }
+    else if(k==="misskeep"){ var mk=gById(id); if(mk){ mk.missAsk=mk.due; save(); renderAll(); PH_DRAWN=""; phRender(); } }
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
@@ -10213,6 +10308,7 @@ function phOnbFinish(add){
     else if(k==="goal") phGoal(id);
     else if(k==="step") phStepGo(id);
     else if(k==="sset") phStepSet(b.getAttribute("data-k"),b.getAttribute("data-v"));
+    else if(k==="sorder"){ var os=state.subs[phArg()], od=+b.getAttribute("data-d"); if(os&&moveSubOrder(os.id,od)){ save(); renderAll(); phStepRedraw(); var ob=document.querySelector('#ph-main [data-ph="sorder"][data-d="'+od+'"]'); if(ob&&!ob.disabled) ob.focus(); else { ob=document.querySelector('#ph-main [data-ph="sorder"]:not([disabled])'); if(ob) ob.focus(); } var om=$("#ph-s-msg"); if(om) om.textContent="Moved "+(od<0?"earlier":"later")+"."; } }
     else if(k==="nodue"){ var du=$("#ph-s-due"); if(du){ du.value=""; phStepEdit(du); } }
     else if(k==="stoday"||k==="swhen"||k==="sest"||k==="sdone"||k==="sdel"){
       var cs=state.subs[phArg()]; if(!cs) return;

@@ -1,6 +1,6 @@
 /* The board is one file, so the cache is one file plus its icons. It opens
    offline from the home screen, and picks up a new build in the background. */
-var CACHE = "board-v14";
+var CACHE = "board-v15";
 var DIGEST = "board-digest";   /* the page leaves a short summary here for the push handler; it is never cleaned away */
 var SHELL = ["./", "./index.html", "./manifest.webmanifest",
              "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./badge-96.png"];
@@ -84,7 +84,12 @@ self.addEventListener("notificationclick", function(e){
   e.notification.close();
   var url = (e.notification.data && e.notification.data.url) || "./";
   e.waitUntil(self.clients.matchAll({type:"window", includeUncontrolled:true}).then(function(list){
-    for(var i = 0; i < list.length; i++) if("focus" in list[i]) return list[i].focus();
+    var hash = url.indexOf("#") >= 0 ? url.slice(url.indexOf("#")) : "";
+    for(var i = 0; i < list.length; i++) if("focus" in list[i]){
+      /* an open app goes to the page the notification is about */
+      if(hash) try{ list[i].postMessage({type:"oys-go", hash:hash}); }catch(x){}
+      return list[i].focus();
+    }
     return self.clients.openWindow(url);
   }));
 });

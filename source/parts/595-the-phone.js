@@ -159,11 +159,50 @@ function phEnergyAsk(){
   var body=["The board sizes today to your energy and puts the steps in order. Change it whenever your day changes."];
   if(dz.why) body.push((dz.src==="you"?"Now: ":"The board\u2019s guess: ")+dz.why);
   if(!ez) body.push("On a low day, steps you mark Easy come first. Mark one on its page.");
-  var more=[["1","Very low: one easy thing"],["2","Low: two easier things"],["3","Good: a normal day"],["4","Full: give me more"]];
+  var gn=doseN("normal"), ln=doseN("low",2), st=function(k){ return k+(k===1?" step":" steps"); };
+  var more=[["1","Very low: one easy thing"],["2","Low: "+(ln===1?"one easier thing":"two easier things")],["3","Good: "+st(gn)],["4","Full: "+st(doseN("high"))]];
   if(dz.src==="you") more.push(["auto","Let the board decide"]);
   askUser({title:"How is your energy?", body:body, more:more, noOk:true, cancel:"Keep it"}).then(function(v){
     if(v==="auto") setDose("auto"); else if(+v>=1&&+v<=4) setEnergy(+v); else return;
     PH_DRAWN=""; phRender(); var eb=document.querySelector("[data-ph=energy]"); if(eb) eb.focus();
+    /* the first time someone picks Good, they say what a good day is (owner, 2026-10-20) */
+    if(v==="3" && !(state.me&&state.me.goodSet)) phGoodN();
+  });
+}
+/* A delivery day that has passed (owner, 2026-10-20): the person is asked,
+   once per goal and date, in a notification and in a quiet card on Now. */
+function phMissed(){ return state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; }); }
+function phMissNote(ms){
+  var me=state.me||{}, d=new Date(), now=d.getHours()*60+d.getMinutes(), fresh=ms.filter(function(g){ return g.missNote!==g.due; });
+  if(!fresh.length || outsideDay(me,now)) return;
+  try{ if(!("Notification" in window) || Notification.permission!=="granted" || !navigator.serviceWorker) return; }catch(e){ return; }
+  fresh.forEach(function(g){ g.missNote=g.due; }); save();
+  var t=fresh.length===1?fresh[0].name+": its delivery day has passed":fresh.length+" goals passed their delivery day";
+  navigator.serviceWorker.ready.then(function(reg){
+    return reg.showNotification(t,{body:"Pick a new day? Nothing is lost.", tag:"oys-miss", icon:"icon-192.png", badge:"badge-96.png", data:{url:"./#/now"}});
+  }).catch(function(){});
+}
+/* a tap on a notification while the app is open lands on its page */
+try{ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener("message",function(e){
+  var m=e.data||{}; if(m.type==="oys-go" && /^#\/[a-z]+$/.test(m.hash||"")) location.hash=m.hash; }); }catch(e){}
+function phMissNew(id){
+  var g=gById(id); if(!g) return;
+  askUser({title:"A new delivery day", body:["For "+g.name+". The steps keep their order, and the board spreads them over the days left."],
+    fields:[{k:"d",label:"Delivery day",kind:"date",value:"",min:todayStr()}], ok:"Save", cancel:"Not now",
+    check:function(v){ return !v.d?"Pick a day.":(v.d<todayStr()?"Pick today or a later day.":""); }}).then(function(v){
+    if(!v) return; editGoal(g,"due",v.d); delete g.missAsk; delete g.missNote; save(); renderAll(); PH_DRAWN=""; phRender();
+    toast("",g.name+": delivery "+deliveryLabel(g)+".");
+  });
+}
+/* how many steps make a good day: the person decides; Low and Full follow from it */
+function phGoodN(){
+  var me=state.me||(state.me=freshMe()), cur=doseN("normal");
+  askUser({title:"How many steps make a good day?", body:["Today and every Good day after it is sized to this. Low and Full follow from it. You can change it on You."],
+    more:[["1","1 step"],["2","2 steps"],["3","3 steps"],["4","4 steps"]].map(function(o){ return [o[0],o[1]+(+o[0]===cur?" (now)":"")]; }), noOk:true, cancel:"Keep "+cur})
+  .then(function(v){
+    if(+v>=1&&+v<=4) me.normalN=+v; else if(v!==false&&v!==null&&v!==undefined) return;
+    me.goodSet=true; save(); renderAll(); PH_DRAWN=""; phRender();
+    var r=document.querySelector("[data-ph=goodn]")||document.querySelector("[data-ph=energy]"); if(r) r.focus();
   });
 }
 /* what Now shows: the first open step in Today, else the board's pick */
@@ -258,6 +297,16 @@ function phNow(){
       '<p class="ph-why">'+esc(not.length?not.join(" "):"Everything that can be done now is done, waiting or in Today.")+'</p>'+
       '<div class="ph-acts"><a class="ph-btn" href="#/talk">Add something</a></div></section>');
   }
+  /* a delivery day that has passed: asked here as well as in a notification */
+  var ms=phMissed();
+  if(ms.length){ var mg=ms[0], md=new Date(mg.due+"T00:00:00");
+    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed"><h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
+      '<p class="ph-why">Its delivery day, '+DAYNAME[md.getDay()]+' '+md.getDate()+' '+PH_MONTHS[md.getMonth()]+', has passed. Nothing is lost. Pick a new day, or take the date off.'+
+      (ms.length>1?' '+(ms.length-1)+' more '+(ms.length===2?"goal asks":"goals ask")+' the same after this one.':'')+'</p>'+
+      '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="missnew" data-id="'+esc(mg.id)+'">Pick a new day</button>'+
+      '<button type="button" class="ph-btn" data-ph="missoff" data-id="'+esc(mg.id)+'">No date</button></div>'+
+      '<button type="button" class="ph-link" data-ph="misskeep" data-id="'+esc(mg.id)+'">Keep it as it is</button></section>'); }
+  phMissNote(ms);
   var items=state.oftad.concat(state.done), nd=state.done.length;
   h.push('<section aria-label="Today"><div class="ph-row-h"><h2 class="ph-h2">Today</h2><span class="ph-k">'+nd+' of '+items.length+' done</span></div>');
   if(!items.length) h.push('<p class="ph-empty">Nothing in Today yet. Start the step above, or say what you want to do in Talk.</p>');
@@ -616,6 +665,7 @@ function phYou(){
   h.push('<h2 class="ph-k ph-gk">Your day</h2><div class="ph-grp">'+
     phRow("daystart","Day starts",clockLabel(me.rise||"07:00"))+
     phRow("dayend","Day ends",clockLabel(me.wind))+
+    phRow("goodn","Steps on a good day",String(doseN("normal")))+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+'</div>');
@@ -702,8 +752,8 @@ function phArg(){ var m=String(location.hash||"").match(/^#\/[a-z]+\/(.+)$/); tr
 function phStepFacts(s){
   var b=[], st=statusOf(s);
   if(st.k!=="done") b.push(st.label);
-  if(s.prio&&s.prio!=="mid") b.push(s.prio==="high"?"High":"Low");
-  if(daysLeft(s)!==null) b.push(dueLabel(s));
+  var dn=daysLeft(s);
+  if(dn!==null) b.push(dn<0?"Its date has passed":"On "+deliveryLabel(s));
   if(s.rep) b.push(repLabel(s.rep)+(s.streak?" · "+s.streak+"×":""));
   if(s.tag) b.push(s.tag);
   return b.join(" · ");
@@ -720,7 +770,7 @@ function phGoalPage(){
   var g=gById(PH_GOAL); if(!g) return phGoals();
   var p=groupPct(g), n=daysLeft(g), h=[], open=[], fin=[], meta=[];
   g.subs.forEach(function(id){ var s=state.subs[id]; if(!s) return; (s.pct>=100||s.status==="done"?fin:open).push(s); });
-  meta.push(n!==null?dueLabel(g):"No deadline");
+  meta.push(n===null?"No delivery day":n<0?"Delivery day passed":"Delivery "+deliveryLabel(g));
   if(g.prio==="high"||g.prio==="low") meta.push(g.prio==="high"?"High priority":"Low priority");
   if(g.where&&g.where!=="any") meta.push(whereLabel(g.where));
   h.push('<div style="min-width:0">'+phNav("#/goals","Goals")+'<h1 class="ph-h1" style="overflow-wrap:anywhere">'+esc(g.name)+'</h1></div>');
@@ -731,10 +781,10 @@ function phGoalPage(){
   if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Press Add a step.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
-    open.concat(fin).forEach(function(s){
+    open.concat(fin).forEach(function(s,i){
       var dn=s.pct>=100||s.status==="done", fx=phStepFacts(s);
       h.push('<li><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
-        '<span class="ph-goal-top"><span class="ph-goal-n">'+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
+        '<span class="ph-goal-top"><span class="ph-goal-n">'+(dn?'':'<span class="ph-ord">'+(i+1)+'</span>')+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
         (dn?'':'<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span>')+
         (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button></li>');
     });
@@ -766,6 +816,7 @@ function phStepRedraw(){ PH_DRAWN=""; phRender(); }
 function phStepPage(){
   var s=state.subs[phArg()]; if(!s) return PH_GOAL&&gById(PH_GOAL)?phGoalPage():phGoals();
   var g=gById(s.gid), h=[], w=whenMap()[s.id], e=estState().items[s.id], inT=state.oftad.some(function(c){ return c.id===s.id; });
+  var opn=g?g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }):[], oi=opn.indexOf(s.id);
   PH_GOAL=s.gid;
   h.push('<div style="min-width:0">'+phNav("#/goal/"+esc(encodeURIComponent(s.gid)),g?phCut(g.name,28):"Goal")+
     '<h1 class="ph-h1" id="ph-s-h" style="overflow-wrap:anywhere">'+esc(s.name)+'</h1></div>');
@@ -774,13 +825,17 @@ function phStepPage(){
     '<span class="ph-lab">Status</span>'+phSegb("status",STATUSES,s.status==="done"||s.pct>=100?"done":s.status,"Status")+
     '<label class="ph-lab" for="ph-s-pct">Done: <output id="ph-s-pv" for="ph-s-pct">'+s.pct+'%</output></label>'+
     '<input class="ph-range" type="range" id="ph-s-pct" data-phed="pct" min="0" max="100" step="5" value="'+s.pct+'">'+
-    '<span class="ph-lab">Priority, inside this goal</span>'+phSegb("prio",PRIOS,s.prio||"mid","Priority")+
-    '<label class="ph-lab" for="ph-s-due">Deadline</label><div class="ph-inrow"><input class="ph-in" type="date" id="ph-s-due" data-phed="due" value="'+esc(s.due||"")+'">'+
-      (s.due?'<button type="button" class="ph-chip" data-ph="nodue">Clear</button>':'')+'</div>'+
+    (opn.length>1&&oi>=0?'<span class="ph-lab" id="ph-s-ordl">Order: step '+(oi+1)+' of '+opn.length+'</span>'+
+      '<div class="ph-acts ph-ordb" role="group" aria-labelledby="ph-s-ordl"><button type="button" class="ph-btn" data-ph="sorder" data-d="-1"'+(oi===0?' disabled':'')+'>Earlier</button>'+
+      '<button type="button" class="ph-btn" data-ph="sorder" data-d="1"'+(oi===opn.length-1?' disabled':'')+'>Later</button></div>':'')+
     '<label class="ph-lab" for="ph-s-rep">Repeats</label><select class="ph-sel" id="ph-s-rep" data-phed="rep">'+phOpts(REPEATS,s.rep||"")+'</select>'+
     '<label class="ph-lab" for="ph-s-tag">Tag</label><input class="ph-in" id="ph-s-tag" data-phed="tag" value="'+esc(s.tag||"")+'" placeholder="Planning" enterkeyhint="done">'+
     (state.groups.length>1?'<label class="ph-lab" for="ph-s-goal">Goal</label><select class="ph-sel" id="ph-s-goal" data-phmove="1">'+
       phOpts(state.groups.map(function(x){ return [x.id,x.name]; }),s.gid)+'</select>':'')+
+    '<details class="ph-more"'+(s.due||(s.prio&&s.prio!=="mid")?' open':'')+'><summary>More</summary>'+
+      '<p class="ph-note">Steps are done in their order. A date here is for a fixed appointment: the step goes first when the day comes.</p>'+
+      '<label class="ph-lab" for="ph-s-due">Own date (optional)</label><div class="ph-inrow"><input class="ph-in" type="date" id="ph-s-due" data-phed="due" value="'+esc(s.due||"")+'">'+
+      (s.due?'<button type="button" class="ph-chip" data-ph="nodue">Clear</button>':'')+'</div></details>'+
     '<p class="ph-note" id="ph-s-msg" aria-live="polite">Changes are saved as you make them.</p></section>');
   h.push('<section class="ph-grp" aria-label="More for this step">'+
     phRow("seasy","Easy, good for a low-energy day",s.easy?"On":"Off",true)+
@@ -823,7 +878,7 @@ function phGoalEdit(){
   var g=gById(PH_GOAL); if(!g) return;
   askUser({title:"Goal", fields:[{k:"n",label:"Name",kind:"text",value:g.name},
       {k:"p",label:"Priority",kind:"pick",row:true,opts:PRIOS,value:g.prio||"mid"},
-      {k:"d",label:"Deadline (leave empty for none)",kind:"date",value:g.due||""},
+      {k:"d",label:"Delivery day (leave empty for none)",kind:"date",value:g.due||""},
       {k:"w",label:"Where it can be done",kind:"select",opts:WHERES.map(function(x){ return [x[0],x[1]]; }),value:g.where||"any"},
       {k:"t",label:"Tags, with commas between (up to 5)",kind:"text",value:(g.tags||[]).join(", ")}],
     ok:"Save", cancel:"Close", more:[["backlog","Move it to the Backlog"],["archive","Archive this goal"],["remove","Remove this goal"]],
@@ -1076,6 +1131,10 @@ function phOnbFinish(add){
     else if(k==="account") $("#btn-account").click();
     else if(k==="daystart") phDayStart();
     else if(k==="dayend") phDayEnd();
+    else if(k==="goodn") phGoodN();
+    else if(k==="missnew") phMissNew(id);
+    else if(k==="missoff"){ var mo=gById(id); if(mo) phUndoable("No date for "+phCut(mo.name,36),function(){ editGoal(mo,"due",""); }); }
+    else if(k==="misskeep"){ var mk=gById(id); if(mk){ mk.missAsk=mk.due; save(); renderAll(); PH_DRAWN=""; phRender(); } }
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
@@ -1087,6 +1146,7 @@ function phOnbFinish(add){
     else if(k==="goal") phGoal(id);
     else if(k==="step") phStepGo(id);
     else if(k==="sset") phStepSet(b.getAttribute("data-k"),b.getAttribute("data-v"));
+    else if(k==="sorder"){ var os=state.subs[phArg()], od=+b.getAttribute("data-d"); if(os&&moveSubOrder(os.id,od)){ save(); renderAll(); phStepRedraw(); var ob=document.querySelector('#ph-main [data-ph="sorder"][data-d="'+od+'"]'); if(ob&&!ob.disabled) ob.focus(); else { ob=document.querySelector('#ph-main [data-ph="sorder"]:not([disabled])'); if(ob) ob.focus(); } var om=$("#ph-s-msg"); if(om) om.textContent="Moved "+(od<0?"earlier":"later")+"."; } }
     else if(k==="nodue"){ var du=$("#ph-s-due"); if(du){ du.value=""; phStepEdit(du); } }
     else if(k==="stoday"||k==="swhen"||k==="sest"||k==="sdone"||k==="sdel"){
       var cs=state.subs[phArg()]; if(!cs) return;

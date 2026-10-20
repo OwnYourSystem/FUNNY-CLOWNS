@@ -1308,7 +1308,7 @@ html.ph .io-priv{min-height:44px}
    The logo is the name in capitals, QORDEL, in the app's own Schibsted
    Grotesk SemiBold (owner: "use capitals"), with "Powered by OwnYourSystem"
    under it. The text stays "Qordel", so a screen reader says the word.  */
-.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:0; color:var(--ink); line-height:1.1}
+.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:-.02em; color:var(--ink); line-height:1.1}
 .ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
 .ph-bt{display:flex; flex-direction:column; gap:3px; min-width:0}
 .ph-onb .ph-word{font-size:2rem}
@@ -1351,6 +1351,14 @@ html.ph.ph-talk .sheet-head{position:sticky; top:-12px; z-index:3; background:va
 .ph-mic.on{border-color:var(--ph-pri); background:var(--ph-wash)}
 .ph-form{display:flex; flex-direction:column; gap:6px}
 .ph-form .ph-lab{margin-top:10px}
+/* sequence (2026-10-20): the number of each open step, Earlier and Later on a step, and More for its own date */
+.ph-ord{display:inline-block; min-width:1.6em; color:var(--muted); font-variant-numeric:tabular-nums}
+.ph-ordb{margin-top:0}
+.ph-ordb .ph-btn[disabled]{opacity:.4}
+.ph-more{margin-top:8px; border-top:1px solid var(--hair); padding-top:4px}
+.ph-more summary{min-height:44px; display:flex; align-items:center; font-size:0.8824rem; font-weight:600; color:var(--ink); cursor:pointer}
+.ph-more[open] summary{margin-bottom:4px}
+.ph-more .ph-note{margin:0 0 12px}
 .ph-segb{display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-radius:24px; background:var(--raised)}
 .ph-segb button{flex:1 1 auto; font:inherit; font-size:0.8235rem; min-height:40px; min-width:44px; padding:0 4px; border:0; border-radius:20px; background:transparent; color:var(--ink-2)}
 .ph-segb button[aria-pressed="true"]{background:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
