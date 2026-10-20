@@ -244,10 +244,9 @@ body.flat #canvas{transform:none!important}
 /* panels */
 #canvas{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; position:relative}
 #canvas>[data-panel="kpis"],#canvas>[data-panel="oftad"],#canvas>[data-panel="alerts"],
-#canvas>[data-panel="plan"],#canvas>[data-panel="done"],#canvas>[data-panel="exp"],#canvas>[data-panel="learn"],#canvas>[data-panel="hint"],#canvas>[data-panel="barrier"]{grid-column:1/-1}
+#canvas>[data-panel="plan"],#canvas>[data-panel="done"]{grid-column:1/-1}
 .exp-panel[hidden]{display:none}
 #mem-panel .heldrow .mini{margin-left:6px}
-#hint-on[aria-pressed="true"],#hint-note[aria-pressed="true"],#bar-on[aria-pressed="true"]{color:var(--ink-2); border-color:var(--rule)}
 #mem-learn[aria-pressed="true"]{color:var(--ink-2); border-color:var(--rule)}   /* a setting that is on is not an alarm */
 .exp-do{font-size:15px; color:var(--ink); margin:2px 0 8px; line-height:1.5}
 .exp-w{font-size:12.5px; color:var(--muted); margin:0; line-height:1.6}
@@ -1306,6 +1305,8 @@ html.ph .io-priv{min-height:44px}
 .ph-choice>span:first-child{display:flex; flex-direction:column; gap:2px}
 .ph-choice-s{font-size:.82rem; color:var(--muted)}
 .ph-tick{flex:none; width:22px; height:22px}
+.ph-easy .ph-tick{border:2px solid var(--rule); border-radius:11px; box-sizing:border-box}
+.ph-easy .ph-choice[aria-checked="true"] .ph-tick{border:0}
 .ph-choice[aria-checked="true"] .ph-tick{background:var(--ph-pri); border-radius:11px; position:relative}
 .ph-choice[aria-checked="true"] .ph-tick::after{content:""; position:absolute; left:8px; top:4px; width:5px; height:10px; border:solid var(--ph-on-pri); border-width:0 2px 2px 0; transform:rotate(45deg)}
 .ph-where{gap:10px}
@@ -1693,13 +1694,6 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="dock-foot"><span id="plan-count"></span><button class="mini" id="plan-more" hidden></button><span id="plan-roll"></span></div>
   </div>
 
-  <section class="panel exp-panel" data-panel="exp" id="exp-card" aria-label="Experiment" hidden></section>
-
-  <section class="panel exp-panel" data-panel="learn" id="learn-card" aria-label="What the board noticed" hidden></section>
-
-  <section class="panel exp-panel" data-panel="barrier" id="barrier-card" aria-label="What is in the way" hidden></section>
-
-  <section class="panel exp-panel" data-panel="hint" id="hint-card" aria-label="Today's hint" hidden></section>
 
   <section class="kpis" data-panel="kpis" aria-label="Summary">
     <div class="kpi k-trend">
@@ -1838,9 +1832,9 @@ try{var _t=localStorage.getItem("oys-theme");
         <div class="plform" id="pl-form"></div>
       </section>
 
-      <section class="panel flat" aria-label="Where each goal belongs">
-        <div class="p-head"><div><div class="p-title">Where each goal belongs</div>
-          <div class="p-note">This is the fact that stops it telling you to train while you are at work.</div></div></div>
+      <section class="panel flat" aria-label="Which goals are work">
+        <div class="p-head"><div><div class="p-title">Which goals are work</div>
+          <div class="p-note">Work goals are suggested only in work hours, the others only outside them.</div></div></div>
         <div class="wherelist" id="pl-where"></div>
       </section>
     </div>
@@ -1849,16 +1843,6 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="p-head"><div><div class="p-title">Held back until later</div>
         <div class="p-note">Everything it refused in this hour, and when each one opens again.</div></div></div>
       <div id="pl-held"></div>
-    </section>
-
-    <section class="panel flat" aria-label="Daily hint" id="hint-panel">
-      <div class="p-head"><div><div class="p-title">Daily hint</div>
-        <div class="p-note">One a day at most, built from your own numbers or the library, with where it came from. It learns which kind you find helpful. A reminder only arrives while the board is open: a browser cannot wake a closed page.</div></div>
-        <div class="p-tools"><button class="mini" id="hint-on" aria-pressed="true">Hints on</button>
-        <button class="mini" id="hint-note" aria-pressed="true">Also as a reminder</button>
-        <button class="mini" id="bar-on" aria-pressed="true">Low-day check-in on</button></div></div>
-      <div id="hint-stats"></div>
-      <div class="dock-foot"><button class="mini" id="hint-reset">Forget what helps</button></div>
     </section>
 
     <section class="panel flat" aria-label="Weekly check-in" id="week-panel">
@@ -1877,17 +1861,6 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="dock-foot"><button class="mini" id="jr-erase">Delete my journal</button></div>
     </section>
 
-    <section class="panel flat" aria-label="What the board has learned about you" id="mem-panel">
-      <div class="p-head"><div><div class="p-title">What the board has learned about you</div>
-        <div class="p-note">Only what you kept. The tutor reads these when you chat with it. Anything it learned lapses after 60 days unless it shows up again.</div></div>
-        <div class="p-tools"><button class="mini" id="mem-learn" aria-pressed="true">Learning on</button></div></div>
-      <div id="mem-list"></div>
-      <div class="addrow">
-        <input class="f" id="mem-new" maxlength="140" placeholder="Tell it something lasting about how you work" aria-label="A note to remember">
-        <button class="btn" id="mem-add">Remember it</button>
-      </div>
-      <div class="dock-foot"><button class="mini" id="mem-erase">Erase everything it has learned</button></div>
-    </section>
   </section>
 
   <div id="interview" hidden>

@@ -109,26 +109,13 @@ function pPrio(t){
   if(/^(?:low|minor|someday|lowest)/.test(t)) return "low";
   return null;
 }
+/* a goal is work or it is not (2026-10-20) */
 function pWhere(t){
   t=String(t||"").toLowerCase().trim();
-  if(/^(?:any|anywhere|everywhere)/.test(t)) return "any";
-  if(/^(?:screen|a screen|desk|laptop|computer|at a screen|at a desk)/.test(t)) return "desk";
-  if(/^(?:work|the office|office|at work)/.test(t)) return "work";
-  if(/^(?:home|at home|house)/.test(t)) return "home";
-  if(/^(?:training|gym|body|exercise|workout)/.test(t)) return "body";
-  if(/^(?:out|out and about|outside|errands|shops?)/.test(t)) return "out";
+  if(/^(?:work|the office|office|at work|yes|on)$/.test(t)) return "work";
+  if(/^(?:not work|no|off|any|anywhere|anytime|other|home)$/.test(t)) return "any";
   return null;
 }
-function pGym(t){
-  t=String(t||"").toLowerCase().trim();
-  if(/before work|in the morning|^morning/.test(t)) return "morning";
-  if(/lunch/.test(t)) return "lunch";
-  if(/after work|evening|after hours|^night/.test(t)) return "evening";
-  if(/weekend/.test(t)) return "weekend";
-  if(/^(?:none|never|no|not at the moment|not now)/.test(t)) return "none";
-  return null;
-}
-function pSharp(t){ var m=String(t||"").toLowerCase().match(/\b(morning|afternoon|evening)\b/); return m?m[1]:null; }
 function onOff(t){
   t=String(t==null?"":t).toLowerCase().trim();
   if(/^(?:on|yes|true|enable|enabled|start|resume|1)$/.test(t)) return true;
@@ -150,7 +137,7 @@ function anchorFrom(t){
 }
 var VIEWS={board:"board",today:"board",planner:"planner",plan:"planner",tags:"tags",backlog:"backlog",archive:"archive"};
 var PARSE={
-  time:pTime, range:pRange, days:pDays, minutes:pMinutes, date:pDate, prio:pPrio, where:pWhere, gym:pGym, sharp:pSharp,
+  time:pTime, range:pRange, days:pDays, minutes:pMinutes, date:pDate, prio:pPrio, where:pWhere,
   onoff:onOff, theme:pTheme,
   text:function(t){ t=String(t||"").trim(); return t?t:null; },
   entry:function(t){ t=String(t||"").trim(); return t?t:null; },
@@ -179,15 +166,6 @@ function applySetting(key,val){
     case "work_days":
       x=pDays(v); if(!x) throw new Error("I could not read those days. Type it like monday to friday or mon wed fri.");
       me.days=x; return "Work days are now "+x.map(dayWord).join(", ")+".";
-    case "commute":
-      x=pMinutes(v); if(x===null||x>240) throw new Error("Give the commute in minutes, from 0 to 240.");
-      me.commute=x; return "Your commute is now "+x+" minutes each way.";
-    case "sharpest":
-      t=pSharp(v); if(!t) throw new Error("Type morning, afternoon or evening.");
-      me.sharp=t; return "You are sharpest in the "+t+". The board will put its hardest suggestions there.";
-    case "training":
-      t=pGym(v); if(!t) throw new Error("Type before work, at lunch, after work, weekends only, or not at the moment.");
-      me.gym=t; return "Training: "+GYMWIN.filter(function(o){ return o[0]===t; })[0][1].toLowerCase()+".";
     case "brief_time":
       t=pTime(v); if(!t) throw new Error("I could not read that time. Type it like 07:30 or 8am.");
       if(remCheck({am:"on",amAt:t,pm:"off"})) throw new Error(remCheck({am:"on",amAt:t,pm:"off"}));
@@ -206,14 +184,6 @@ function applySetting(key,val){
     case "north_star":
       if(!v) throw new Error("Type what matters most, in one line.");
       me.north=v.slice(0,140); return "Noted. What matters most: "+me.north;
-    case "hints":
-      b=onOff(v); if(b===null) throw new Error("Type on or off."); me.hints=b; return b?"Hints are on. At most one a day.":"Hints are off.";
-    case "hint_reminders":
-      b=onOff(v); if(b===null) throw new Error("Type on or off."); me.hintNote=b; return b?"The hint also arrives as a reminder.":"Hints no longer arrive as a reminder. The card still shows.";
-    case "low_day_question":
-      b=onOff(v); if(b===null) throw new Error("Type on or off."); me.barrier=b; return b?"After three low days in a row the board will ask what is in the way.":"The low-day question is off.";
-    case "learning":
-      b=onOff(v); if(b===null) throw new Error("Type on or off."); me.learn=b; return b?"Learning is on.":"Learning is off. What you kept stays, and nothing new is proposed.";
     case "theme":
       t=pTheme(v); if(!t) throw new Error("Type dark, light or system.");
       try{ if(t==="system") localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY,t); }catch(e){}
@@ -271,14 +241,6 @@ act({id:"attention",group:"Today",ex:"What needs attention?",kw:["due","late","o
     var al=alerts().slice(0,5);
     if(!al.length) return "No goal has a delivery day, so nothing is pressing. The order of the steps carries the rest.";
     return "Delivery days, nearest first:\n"+al.map(function(a){ return "- "+a.t+": "+a.w; }).join("\n"); }});
-act({id:"step_priority",group:"Steps",ex:"Set buy milk priority to high",kw:["priority","important"],
-  re:[/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(?:set |change |make )?(?:the )?(.+?) (?:priority|prio)(?: (?:to |is |as )?(.*))?$/,/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )make (.+?) (?:a )?(high|low|medium|middle|mid|normal|urgent|important)(?: priority)?$/],take:[["step",1],["prio",2]],
-  ask:{step:"Which step?",prio:"High, middle or low?"},
-  run:function(v){ return toolRun("set_subtask_field",{subtask:v.step,field:"priority",value:v.prio}); }});
-act({id:"step_deadline",group:"Steps",ex:"Buy milk is due friday",kw:["due","deadline","date"],loose:true,
-  re:[/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(?:remove|clear|delete) (?:the )?deadline (?:of|from|for|on) (.+)$/,/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(?:set |change )?(?:the )?deadline (?:of|for|on) (.+?)(?::| to | is )\s*(.*)$/,/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(.+?) (?:is )?due (?:on |by )?(.+)$/],
-  take:[["step",1],["date",2]],fixed:{0:{date:""}},ask:{step:"Which step?",date:"What date? Type a day like friday, tomorrow or 2026-10-12, or none."},
-  run:function(v){ return toolRun("set_subtask_field",{subtask:v.step,field:"deadline",value:v.date}); }});
 act({id:"step_tag",group:"Steps",ex:"Tag buy milk as errands",kw:["tag","label"],
   re:[/^tag (?!goal|project)(.+?) (?:as|with) (.+)$/],take:[["step",1],["text",2]],ask:{step:"Which step?",text:"Which tag?"},
   run:function(v){ return toolRun("set_subtask_field",{subtask:v.step,field:"tag",value:v.text}); }});
@@ -297,18 +259,14 @@ act({id:"step_actual",group:"Steps",ex:"It took 40 minutes",kw:["took","actually
 act({id:"goal_rename",group:"Goals",ex:"Rename goal Home to House",kw:["rename","goal"],
   re:[/^rename (?:the )?(?:goal|project|main task) (.+?) to (.+)$/],take:[["goal",1],["text",2]],ask:{goal:"Which goal?",text:"What should it be called?"},
   run:function(v){ return toolRun("set_goal_field",{main_task:v.goal,field:"name",value:v.text}); }});
-act({id:"goal_priority",group:"Goals",ex:"Set goal Home priority to high",kw:["goal","priority"],
-  re:[/^(?:set |change )?(?:the )?(?:goal|project) (.+?) (?:priority|prio)(?: (?:to |is |as )?(.*))?$/,/^make (?:the )?(?:goal|project) (.+?) (?:a )?(high|low|medium|middle|mid|normal|urgent|important)(?: priority)?$/],take:[["goal",1],["prio",2]],
-  ask:{goal:"Which goal?",prio:"High, middle or low?"},
-  run:function(v){ return toolRun("set_goal_field",{main_task:v.goal,field:"priority",value:v.prio}); }});
 act({id:"goal_deadline",group:"Goals",ex:"Goal Home is due 2026-12-01",kw:["goal","deadline","due"],
   re:[/^(?:remove|clear|delete) (?:the )?deadline (?:of|from|for|on) (?:the )?(?:goal|project) (.+)$/,/^(?:set |change )?(?:the )?(?:goal|project) (.+?) (?:deadline|due(?: date)?) (?:to |is |on |by )?(.*)$/,/^(?:the )?(?:goal|project) (.+?) is due (?:on |by )?(.+)$/],
   take:[["goal",1],["date",2]],fixed:{0:{date:""}},ask:{goal:"Which goal?",date:"What date? Type a day like friday or 2026-12-01, or none."},
   run:function(v){ return toolRun("set_goal_field",{main_task:v.goal,field:"deadline",value:v.date}); }});
-act({id:"goal_where",group:"Goals",ex:"Goal Home can only be done at home",kw:["goal","where","place"],
-  re:[/^(?:set )?(?:the )?(?:goal|project) (.+?) (?:where|place|location) (?:to |is )?(.*)$/,/^(?:the )?(?:goal|project) (.+?) (?:can only be|is only|is) done (?:at|in) (.+)$/],take:[["goal",1],["where",2]],
-  ask:{goal:"Which goal?",where:"Where? Anywhere, at a screen, at work, at home, training, or out and about."},
-  run:function(v){ return toolRun("set_goal_field",{main_task:v.goal,field:"where",value:v.where}); }});
+act({id:"goal_work",group:"Goals",ex:"Goal Report is work",kw:["goal","work"],
+  re:[/^(?:the )?(?:goal|project) (.+?) is (not )?(?:a )?work(?: goal)?$/,/^(?:make|set) (?:the )?(?:goal|project) (.+?) (?:to )?(not )?(?:a )?work(?: goal)?$/],take:[["goal",1]],
+  ask:{goal:"Which goal?"},
+  run:function(v,m){ return toolRun("set_goal_field",{main_task:v.goal,field:"where",value:m&&m[2]?"any":"work"}); }});
 act({id:"goal_tags",group:"Goals",ex:"Tag goal Home with house, q4",kw:["goal","tag"],
   re:[/^(?:tag|label) (?:the )?(?:goal|project) (.+?) (?:with|as) (.+)$/,/^set (?:the )?tags (?:of|for) (?:the )?(?:goal |project )?(.+?) to (.+)$/],take:[["goal",1],["text",2]],
   ask:{goal:"Which goal?",text:"Which tags, separated by commas?"},
@@ -337,15 +295,6 @@ act({id:"work_hours",group:"Settings",ex:"I work 8 to 4:30",kw:["work","hours","
 act({id:"work_days",group:"Settings",ex:"I work monday to friday",kw:["work","days","weekdays"],
   re:[/^(?:set )?(?:my )?work(?:ing)? days(?: to| are| is)? ?(.*)$/,/^i work (?:on )?((?:mon|tue|wed|thu|fri|sat|sun|every|week|all).*)$/],take:[["days",1]],ask:{days:"Which days do you work? For example monday to friday, or mon wed fri."},
   run:function(v){ return toolRun("set_setting",{key:"work_days",value:v.days.map(dayWord).join(" ")}); }});
-act({id:"commute",group:"Settings",ex:"My commute is 30 minutes",kw:["commute","travel"],
-  re:[/\b(?:commute|travel(?:ling)? to work)\b(?: (?:is|takes|to|=))? ?(.*)$/],take:[["minutes",1]],ask:{minutes:"How long is your commute each way, in minutes?"},
-  run:function(v){ return toolRun("set_setting",{key:"commute",value:String(v.minutes)}); }});
-act({id:"sharpest",group:"Settings",ex:"I am sharpest in the morning",kw:["sharpest","best","focus","alert"],
-  re:[/\b(?:sharpest|most focused|most alert|focus(?:ed)? best|work best|best time)\b.*?\b(morning|afternoon|evening)\b/,/\bi(?:'m| am) (?:a |an )?(morning|afternoon|evening) (?:person|type)\b/],take:[["sharp",1]],ask:{sharp:"Morning, afternoon or evening?"},
-  run:function(v){ return toolRun("set_setting",{key:"sharpest",value:v.sharp}); }});
-act({id:"training",group:"Settings",ex:"I train after work",kw:["train","gym","exercise","workout"],
-  re:[/^(?:i |i'm |i am )?(?:train|training|work out|exercise|go to the gym)\b(?: (?:at|in|during))? ?(.*)$/],take:[["gym",1]],ask:{gym:"When do you train? Before work, at lunch, after work, weekends only, or not at the moment."},
-  run:function(v){ return toolRun("set_setting",{key:"training",value:v.gym}); }});
 act({id:"rem_kind",group:"Settings",ex:"Turn the afternoon check off",kw:["brief","afternoon","check","reminder"],
   re:[/^(?:turn|switch|set) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/,/^(?:turn|switch) (on|off) (?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder)$/,/^(?:the |my )?(morning brief|afternoon check|afternoon reminder|morning reminder) (on|off)$/],
   run:function(v,m){
@@ -371,29 +320,23 @@ act({id:"reminders_off",group:"Settings",ex:"Turn reminders off",kw:["reminders"
   run:function(){
     if($("#btn-remind").getAttribute("aria-pressed")!=="true") return "Reminders are already off.";
     remOff(); return "Reminders are off."; }});
-act({id:"hint_reminders",group:"Settings",ex:"Turn hint reminders off",kw:["hint","reminder"],
-  re:[/^(?:turn |switch )?(?:the )?hint (?:reminders?|notifications?) (on|off)$/,/^(?:turn |switch )?(on|off) (?:the )?hint (?:reminders?|notifications?)$/],take:[["onoff",1]],
-  run:function(v){ return toolRun("set_setting",{key:"hint_reminders",value:v.onoff?"on":"off"}); }});
-act({id:"low_day_question",group:"Settings",ex:"Turn the low-day question off",kw:["low","question","three"],
-  re:[/^(?:turn |switch )?(?:the )?low[- ]day (?:question|check[- ]?in) (on|off)$/,/^(?:turn |switch )?(on|off) (?:the )?low[- ]day (?:question|check[- ]?in)$/],take:[["onoff",1]],
-  run:function(v){ return toolRun("set_setting",{key:"low_day_question",value:v.onoff?"on":"off"}); }});
 act({id:"theme",group:"Settings",ex:"Switch to dark mode",kw:["dark","light","theme","mode"],
   re:[/\b(dark|light|system|auto) (?:mode|theme)\b/,/\bswitch to (dark|light)\b/,/^(?:use|set) (?:the )?(dark|light|system) (?:mode|theme)$/],take:[["theme",1]],ask:{theme:"Dark, light or system?"},
   run:function(v){ return toolRun("set_setting",{key:"theme",value:v.theme}); }});
 act({id:"animation",group:"Settings",ex:"Turn the moving background off",kw:["animation","flight","background","motion"],
   re:[/\b(?:turn |switch )?(?:the )?(?:moving background|animation|flight|motion|background) (on|off)\b/,/\b(?:turn|switch) (on|off) (?:the )?(?:moving background|animation|flight|motion)\b/],take:[["onoff",1]],
   run:function(v){ return toolRun("set_setting",{key:"animation",value:v.onoff?"on":"off"}); }});
-act({id:"min_set",group:"Minimum day",ex:"My minimum day is a meal, water, a walk",kw:["minimum","floor","anchors"],
-  re:[/^(?:set )?(?:my )?minimum day (?:to|as|is|:|=|are) ?(.*)$/,/^my minimum day (.+)$/],take:[["list",1]],ask:{list:"What are your anchors? Up to four small things, separated by commas."},
+act({id:"min_set",group:"Easy things",ex:"My easy things are reading, an audiobook, a walk",kw:["easy","things","minimum","floor"],
+  re:[/^(?:set )?(?:my )?(?:easy things|minimum day) (?:to|as|is|:|=|are) ?(.*)$/,/^my (?:easy things|minimum day) (.+)$/],take:[["list",1]],ask:{list:"What do you do when your energy is low? Up to six, separated by commas."},
   run:function(v){ return toolRun("set_minimum_day",{items:v.list}); }});
-act({id:"min_show",group:"Minimum day",ex:"Show my minimum day",kw:["minimum","floor"],
-  re:[/^(?:show|what is|what's|read) (?:me )?(?:my )?minimum day$/],
+act({id:"min_show",group:"Easy things",ex:"Show my easy things",kw:["easy","things","minimum","floor"],
+  re:[/^(?:show|what is|what's|what are|read) (?:me )?(?:my )?(?:easy things|minimum day)$/],
   run:function(){
-    var f=floorState(); if(!f.items.length) return "You have not set a minimum day. Type, for example: my minimum day is a meal, water, a walk.";
+    var f=floorState(); if(!f.items.length) return "You have no easy things yet. Type, for example: my easy things are reading, an audiobook, a walk.";
     var on=floorToday();
-    return "Your minimum day ("+on.length+" of "+f.items.length+" today):\n"+f.items.map(function(x){ return (on.indexOf(x.id)>=0?"[x] ":"[ ] ")+x.t; }).join("\n"); }});
-act({id:"min_tick",group:"Minimum day",ex:"Tick a meal",kw:["tick","untick","minimum"],
-  re:[/^(un)?tick (?:off )?(.+)$/,/^(?:minimum day|floor):? (un)?tick (.+)$/],take:[["anchor",2]],ask:{anchor:"Which one of your minimum-day items?"},
+    return "Your easy things ("+on.length+" ticked today; one is enough):\n"+f.items.map(function(x){ return (on.indexOf(x.id)>=0?"[x] ":"[ ] ")+x.t; }).join("\n"); }});
+act({id:"min_tick",group:"Easy things",ex:"Tick reading",kw:["tick","untick","easy"],
+  re:[/^(un)?tick (?:off )?(.+)$/,/^(?:easy things|minimum day|floor):? (un)?tick (.+)$/],take:[["anchor",2]],ask:{anchor:"Which one of your easy things?"},
   run:function(v,m){ return toolRun("tick_minimum_day",{item:v.anchor,ticked:!(m&&m[1])}); }});
 act({id:"checkin_open",group:"Check-in",ex:"Open the weekly check-in",kw:["check","weekly","mood"],
   re:[/^(?:open |start |do )?(?:the |my )?(?:weekly )?check[- ]?in$/,/^(?:i want to |let me )?check in$/],
@@ -466,8 +409,6 @@ function assistMatch(q,strict){
   }
   return null;
 }
-/* these belong to memory, evidence and experiments, which read them first */
-var NOT_MINE=/^(?:remember|forget|try|stop experiment|start experiment|what do you know|any evidence|is there (?:any )?(?:evidence|research)|what does the (?:evidence|science|research)|what should i try)\b/;
 /* a question may depend on what was matched ("journal my morning") */
 function askOf(a,slot,vals,m){ var x=a.ask&&a.ask[slot]; return typeof x==="function"?x(vals,m):x; }
 function assist(q,strict){
@@ -479,7 +420,6 @@ function assist(q,strict){
     var raw=(SPOKE&&SPOKE.raw)||q;
     try{ ff.vals[ff.need[0]]=PARSE[ff.need[0]](raw); return ff.a.run(ff.vals,ff.m); }catch(e){ return e.message||"I could not save that."; }
   }
-  if(NOT_MINE.test(q)) return undefined;
   if(FLOW){
     var f=FLOW;
     if(/^(?:cancel|never ?mind|forget it|stop|no|leave it)$/.test(q)){ FLOW=null; return "Okay, I stopped."; }
@@ -510,44 +450,6 @@ function assist(q,strict){
 }
 
 var BRAIN=[
-  /* --- the low-day question ---------------------------------------- */
-  [/^(?:ask me why|what is in the way|why am i stuck)$/, function(){
-    var b=barState(); b.force=true; save(); renderAll();
-    return "What is closest to what is in the way? Type one: can't, afraid, don't know how, don't want to, or rough patch."; }],
-  [/^(?:it'?s |i'?m |i )?(can'?t|afraid|don'?t know how|don'?t want to|a rough patch|rough patch)$/, function(m){
-    if(!barPending()) return null;
-    var w=m[1]; var k=/^can/.test(w)?"cant":/^afraid/.test(w)?"afraid":/know how/.test(w)?"how":/want/.test(w)?"want":"patch";
-    var r=barAnswer(k); renderAll(); return r.text; }],
-  /* --- the daily hint ------------------------------------------------ */
-  [/^(?:give me a hint|any hints?|hint|what should i know today|today'?s hint)$/, function(){ return hintSay(); }],
-  [/^hint (?:was )?(helpful|not for me|later)$/, function(m){
-    return hintAnswer(m[1]==="not for me"?"no":m[1]) ? (renderAll(),"Noted: "+m[1]+".") : "There is no hint from today to answer."; }],
-  [/^(?:stop|pause) hints$/, function(){ if(!state.me) state.me=freshMe(); state.me.hints=false; save(); renderAll(); return "Hints are off."; }],
-  [/^(?:start|resume) hints$/, function(){ if(!state.me) state.me=freshMe(); state.me.hints=true; save(); renderAll(); return "Hints are on. At most one a day."; }],
-  /* --- memory -------------------------------------------------------- */
-  [/^remember (?:that )?(.{3,})$/, function(m){
-    var n=memAdd(asTyped(m[1]),"you"); save(); renderAll(); return "Kept: "+n.t+". Type forget "+memKept().length+" to remove it."; }],
-  [/^(?:what do you know about me|what have you learned(?: about me)?|show (?:my )?memory|what do you remember)$/, function(){ return memSay(); }],
-  [/^(?:forget|delete) (?:note |item |memory )?(\d{1,2})$/, function(m){
-    var k=memKept(), t=k[+m[1]-1]; if(!t) return "There is no note "+m[1]+". Type what do you know about me to see them.";
-    memDrop(t.id,false); save(); renderAll(); return "Forgotten: "+t.t; }],
-  [/^(?:forget everything|erase (?:my )?memory|erase everything)$/, function(){
-    if(Date.now()-MEM_ARM>20000){ MEM_ARM=Date.now(); return "That erases everything I have learned or been told, and puts any learned setting back. Type it again within 20 seconds to confirm."; }
-    MEM_ARM=0; memErase(); save(); renderAll(); return "Erased. I know nothing about you now except what the board itself holds."; }],
-  [/^what have you noticed$/, function(){
-    var f=memTick(true); if(f) return "I noticed this, and nothing is changed until you say so: "+f.t+" "+(f.evid||"");
-    var p=memProposed(); if(p) return "Already waiting for your answer: "+p.t;
-    return "Nothing new that I am sure enough about."; }],
-  [/^(?:stop|pause) learning$/, function(){ if(!state.me) state.me=freshMe(); state.me.learn=false; save(); renderAll(); return "Learning is off. What you kept stays, and nothing new is proposed."; }],
-  [/^(?:start|resume) learning$/, function(){ if(!state.me) state.me=freshMe(); state.me.learn=true; save(); renderAll(); return "Learning is on."; }],
-  /* --- experiments --------------------------------------------------- */
-  [/^(?:try|start|run|begin) (?:the )?(?:experiment )?(e-[a-z0-9]+-\d\d)$/, function(m){ return expStart(m[1].toUpperCase()); }],
-  [/^(?:stop|end|cancel|drop) (?:the |my )?experiment$/, function(){ return expStopMsg(); }],
-  [/^(?:how(?:'s| is| am i doing on)|what(?:'s| is)) (?:the |my )?experiment(?: going)?$|^(?:experiment|experiment status)$/, function(){ return expStatusMsg(); }],
-  /* --- what the library says, answered with no model and no network --- */
-  [/\bwhat (?:does|do) (?:the )?(?:evidence|research|science|studies) (?:say|show)(?: about| on| for)? ?(.*)$/, function(m){ return libSay(m[1]); }],
-  [/\b(?:is there|any|got any) (?:evidence|research|science)(?: for| on| about)? ?(.*)$/, function(m){ return libSay(m[1]); }],
-  [/^(?:what should i try|what can i try|any tips|any advice|give me a tip|give me a hint)\b/, function(){ return libSay(""); }],
   /* --- what the history says, answered with no model and no network --- */
   [/\b(?:most productive|work best|best time|when do i (?:finish|get|do))\b/, function(){ return evSayWhen(); }],
   [/\bwhat do i (?:skip|dodge|avoid)\b|\bwhy do i skip\b|\bwhat (?:am i|do i keep) skipping\b/, function(){ return evSaySkips(); }],
@@ -687,17 +589,14 @@ var BRAIN=[
 /* one hook, so the command engine can be exercised by a test */
 try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); }, energy:function(l){ setEnergy(l); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
-  lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
-  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, remCheck:remCheck, askUser:askUser,
+  check:replyCheck,
+  toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, rest:function(d){ return restWhy(nowCtx(d),doseNow(),state.me); }, remCheck:remCheck, askUser:askUser,
   push:{state:function(){ return PUSH; }, digest:digestWrite, sync:pushSync, brief:briefText},
   when:{set:whenSet, map:whenMap, tidy:whenTidy},
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
   journal:{add:jrAdd, data:jrData, check:jrCheckpoint, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
-  bar:{streak:barStreak, pending:barPending, answer:barAnswer, status:barStatus, touch:barTouch},
-  hint:{cands:hintCands, choose:hintChoose, stats:hintStats, tick:hintTick, say:hintSay, answer:hintAnswer},
-  mem:{list:memList, kept:memKept, tick:memTick, find:memFindings, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow},
-  exp:{start:expStart, stop:expStopMsg, status:expStatus, test:expTest, say:expSay, tick:expTick, result:expResult}}; }catch(e){}
+  mem:{snap:botSnapshot, dose:doseNow}}; }catch(e){}
 /* When no pattern fits, read the sentence for what it is plainly asking.
    Speech does not arrive in the shape a pattern expects, so this reads the
    verb and takes whatever is left as the name.                            */

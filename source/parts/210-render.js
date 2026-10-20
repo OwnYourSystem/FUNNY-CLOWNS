@@ -27,7 +27,6 @@ function goalRow(g){
   return '<div class="row pick'+(sel?" sel":"")+'" data-group="'+g.id+'" data-tip="'+esc(g.name)+"|"+p+"% · "+groupDone(g)+" of "+g.subs.length+' done">'+
     '<div class="rhead"><button class="grip" data-grip="task:'+g.id+'" aria-label="Drag '+esc(g.name)+'">'+GRIP+'</button>'+
     '<span class="rname">'+esc(g.name)+'</span>'+
-    '<span class="pill pr-'+g.prio+'"><i></i>'+g.prio.toUpperCase()+'</span>'+
     (n!==null?'<span class="pill due'+(late?" late":(soon?" soon":""))+'">'+esc(dueLabel(g))+'</span>':"")+
     '<span class="rmeta">'+groupDone(g)+"/"+g.subs.length+'</span>'+
     '<span class="rval '+b+'">'+p+'%</span>'+
@@ -69,9 +68,7 @@ function goalEditor(g){
   return '<div class="editor">'+
     '<label class="wide">Goal<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
     '<label>Delivery day<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
-    '<label>Priority<select class="f" data-ged="prio">'+PRIOS.map(function(o){
-      return '<option value="'+o[0]+'"'+(g.prio===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
-    '<label>Where<select class="f" data-ged="where">'+WHERES.map(function(o){
+    '<label>Work goal<select class="f" data-ged="where">'+WHERES.map(function(o){
       return '<option value="'+o[0]+'"'+((g.where||"any")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label class="wide">Tags, up to five, separated by commas'+
       '<input class="f" data-ged="tags" value="'+esc(g.tags.join(", "))+'" placeholder="sap, migration, q4"></label>'+
@@ -106,10 +103,9 @@ function renderSubs(){
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
   var nOpen=g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }).length, k=0;
-  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span>'+
-      '<button class="btn" data-aiorder-d="'+g.id+'">Suggest an order</button></div>':"")+subsShown(g).map(function(id){
+  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span></div>':"")+subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), n=daysLeft(s), dn=s.pct>=100||s.status==="done";
+    var st=statusOf(s), dn=s.pct>=100||s.status==="done";
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
       (dn?"":'<span class="ord">'+(++k)+'</span>')+
@@ -118,7 +114,6 @@ function renderSubs(){
       (s.rep?'<span class="pill rep">'+esc(repLabel(s.rep))+'</span>':"")+
       (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
-      (n!==null?'<span class="pill due sub">'+esc(n<0?"Its date has passed":"On "+deliveryLabel(s))+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -142,9 +137,6 @@ function subEditor(s){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
-    '<details class="more wide"'+(s.due?" open":"")+'><summary>More</summary>'+
-      '<p class="hint">Steps are done in their order. A date here is for a fixed appointment: the step goes first when the day comes.</p>'+
-      '<label>Own date (optional)<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label></details>'+
     '<div class="acts"><button class="btn" data-sorder-d="-1" data-sid="'+s.id+'">Earlier</button><button class="btn" data-sorder-d="1" data-sid="'+s.id+'">Later</button>'+
       '<button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
     '<span style="font-size:12px;color:var(--muted)">Drag this row up or down to change the order, or onto another main task to move it there.</span></div>'+

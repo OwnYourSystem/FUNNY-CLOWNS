@@ -20,9 +20,9 @@ function keep(req,res){
 self.addEventListener("fetch", function(e){
   var req = e.request;
   if(req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
-  /* The news call carries what it wants in the query string, and the cache
-     lookup below ignores query strings, so a cached answer for one set of
-     topics would be served for every other set. It is live or nothing. */
+  /* The server call (the tutor) is live or nothing: the cache
+     lookup below ignores query strings, so a cached answer could be served
+     for a different question. */
   if(new URL(req.url).pathname.indexOf("/api/") === 0) return;
   /* The board itself comes from the network whenever there is one, so a new
      build shows on the first open rather than the second. The cache is what

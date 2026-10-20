@@ -45,7 +45,7 @@ function recordTools(tools){
       /* the tutor can ask for these, never do them: the person presses a button */
       var out=PEND_TOOLS[t.name] ? pendStage(t,a||{}) : t.execute(a);
       TURN_OUT+=" "+String(out==null?"":out);
-      if(/^(stats|compare|trend|events|find_evidence|experiment_status|get_hint|barrier_status)$/.test(t.name)) TURN_HIST=true;
+      if(/^(stats|compare|trend|events)$/.test(t.name)) TURN_HIST=true;
       return out;
     };
     return c;

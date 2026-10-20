@@ -13,29 +13,13 @@ function renderPlanner(){
           n.slice(0,2)+"</button>"; }).join("")+'</span></label>'+
     '<label>Starts<input class="f" type="time" data-me="w0" value="'+esc(me.work[0])+'"></label>'+
     '<label>Ends<input class="f" type="time" data-me="w1" value="'+esc(me.work[1])+'"></label>'+
-    '<label>Each way, in minutes<input class="f" type="number" min="0" max="240" data-me="commute" value="'+
-      (+me.commute||0)+'"></label>'+
     '<label>Your day starts at<input class="f" type="time" data-me="rise" value="'+esc(me.rise||"07:00")+'"></label>'+
     '<label>Your day ends at<input class="f" type="time" data-me="wind" value="'+esc(me.wind)+'"></label>'+
-    '<label>Sharpest<select class="f" data-me="sharp">'+SHARP.map(function(o){
-      return '<option value="'+o[0]+'"'+(me.sharp===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
-      '</select></label>'+
-    '<label>Training fits<select class="f" data-me="gym">'+GYMWIN.map(function(o){
-      return '<option value="'+o[0]+'"'+(me.gym===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+
-      '</select></label>'+
     '<label class="wide">The one thing that matters most right now'+
       '<input class="f" data-me="north" value="'+esc(me.north||"")+'" placeholder="Ship the tracker before the audit"></label>'+
-    '<label class="wide">Never schedule over'+
-      '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>'+
     '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
     '<label>Steps on a good day<select class="f" data-me="normalN">'+[1,2,3,4].map(function(n){
       return '<option value="'+n+'"'+(doseN("normal")===n?" selected":"")+">"+n+(n===1?" step":" steps")+"</option>"; }).join("")+'</select></label>'+
-    '<label class="wide">Order suggestions by AI<span class="dayrow"><button type="button" id="pl-aiok" aria-pressed="'+(!!me.aiOrderOk)+'">'+
-      (me.aiOrderOk?"On":"Off")+'</button></span><span class="pl-note">When on, Suggest an order sends a goal\u2019s name and its open step names to Anthropic, an AI company. Nothing else leaves this device.</span></label>'+
-    '<label class="wide">News in the banner<span class="dayrow feedrow" id="pl-feeds">'+
-      FEEDS.map(function(f){
-        return '<button type="button" data-feed="'+f[0]+'" aria-pressed="'+
-          ((me.feeds||[]).indexOf(f[0])>=0)+'">'+esc(f[1])+"</button>"; }).join("")+'</span></label>'+
     '<div class="wide iconrow"><span class="prev">'+plannerIcon()+'</span>'+
       '<p>The planner badge on the board wears this. Choose one from your phone or your computer.</p>'+
       '<button class="btn" id="pl-icon-pick">Choose a picture</button>'+
@@ -65,7 +49,6 @@ function meSet(k,v){
   var me=state.me||(state.me=freshMe());
   if(k==="w0") me.work[0]=v;
   else if(k==="w1") me.work[1]=v;
-  else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
   else if(k==="normalN"){ me.normalN=clamp(Math.round(+v)||3,1,4); me.goodSet=true; }
   else me[k]=v;
   if(k==="rise"){ var moved=remFitDay(me); if(moved) toast("",moved); }
@@ -89,21 +72,6 @@ $("#pl-form").addEventListener("click",function(e){
   var on=meDay(+b.dataset.day); save();
   b.setAttribute("aria-pressed", on ? "true":"false");
   renderVerdict(); renderPlanner2();
-});
-$("#pl-form").addEventListener("click",function(e){
-  if(!e.target.closest("#pl-aiok")) return;
-  e.preventDefault();
-  var me=state.me||(state.me=freshMe());
-  if(me.aiOrderOk){ delete me.aiOrderOk; save(); renderPlanner(); var b=$("#pl-aiok"); if(b) b.focus(); }
-  else phAiConsent().then(function(){ renderPlanner(); var b2=$("#pl-aiok"); if(b2) b2.focus(); });
-});
-$("#pl-form").addEventListener("click",function(e){
-  var f=e.target.closest("[data-feed]"); if(!f) return;
-  var k=f.dataset.feed, me=state.me, at=(me.feeds||[]).indexOf(k);
-  if(at>=0) me.feeds.splice(at,1); else me.feeds.push(k);
-  me.done=true; save();
-  f.setAttribute("aria-pressed", me.feeds.indexOf(k)>=0 ? "true":"false");
-  loadNews(true);
 });
 /* The picture is squared off and shrunk to 128px before it is kept, because
    a photo straight off a phone is three megabytes and this has to fit in

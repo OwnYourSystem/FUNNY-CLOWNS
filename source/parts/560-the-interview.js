@@ -1,5 +1,5 @@
 /* ---------------- the interview ----------------
-   Eight questions, one screen each. Nothing is written to the board until
+   Five questions, one screen each. Nothing is written to the board until
    the last one is answered, so leaving halfway changes nothing.         */
 var IV=null;
 var IVQ=[
@@ -9,33 +9,19 @@ var IVQ=[
   {k:"work", q:"What hours, on one of those days?",
    n:"Roughly is fine. It is used to work out whether you are at a desk or free, not to time you.",
    kind:"hours"},
-  {k:"commute", q:"How long is the journey, each way?",
-   n:"This is the difference between being home at five and being home at six. It decides whether an evening thing is really possible.",
-   kind:"num", ph:"30"},
-  {k:"sharp", q:"When is your head at its best?",
-   n:"The hardest thing on the board gets pushed into this window, and the easy ones get pushed out of it.",
-   kind:"pick", opts:SHARP},
-  {k:"gym", q:"When can you train?",
-   n:"This is the one that stops it telling you to get on an airbike at one o\u2019clock on a Monday.",
-   kind:"pick", opts:GYMWIN},
   {k:"wind", q:"When does your day start, and when does it end?",
-   n:"Outside these times it will only offer you something quiet, and it will say so. Nothing reaches you before the start or after the end.",
+   n:"Outside these times, and in the last ninety minutes of your day, it asks for nothing. Nothing reaches you before the start or after the end.",
    kind:"time", ph:"22:30"},
   {k:"north", q:"What is the one thing that matters most right now?",
-   n:"One line. It does not score anything on its own; it is what you are shown when the board argues with you.",
+   n:"One line. When no goal has a delivery day, the goal this names comes first.",
    kind:"text", ph:"Ship the tracker before the audit"},
-  {k:"feeds", q:"Should the banner carry the news as well?",
-   n:"The strip across the top already runs. Pick nothing and it carries only your own board. Pick a few and they ride along between your alarms.",
-   kind:"multi", opts:FEEDS},
-  {k:"where", q:"Last one. Where does each goal belong?",
-   n:"The planner guessed. Correct anything it got wrong, because this is the fact it leans on hardest.",
+  {k:"where", q:"Last one. Which goals are work?",
+   n:"Work goals are suggested only in work hours, the others only outside them. The planner guessed; correct it.",
    kind:"where"}
 ];
 function ivOpen(){
   var me=state.me||freshMe();
-  IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), commute:me.commute,
-              sharp:me.sharp, gym:me.gym, rise:me.rise||"07:00", wind:me.wind, north:me.north||"",
-              feeds:(me.feeds||[]).slice(), where:{}}};
+  IV={i:0, a:{days:me.days.slice(), work:me.work.slice(), rise:me.rise||"07:00", wind:me.wind, north:me.north||"", where:{}}};
   state.groups.forEach(function(g){ IV.a.where[g.id]=g.where||"any"; });
   $("#interview").hidden=false;
   pageLockOn($("#interview"));
@@ -61,9 +47,6 @@ function ivPaint(){
   else if(q.kind==="hours")
     h='<div class="two"><label>Starts<input class="f" type="time" data-iv="w0" value="'+esc(a.work[0])+'"></label>'+
       '<label>Ends<input class="f" type="time" data-iv="w1" value="'+esc(a.work[1])+'"></label></div>';
-  else if(q.kind==="num")
-    h='<label>Minutes<input class="f" type="number" min="0" max="240" data-iv="commute" value="'+
-      (+a.commute||0)+'" placeholder="'+esc(q.ph||"")+'"></label>';
   else if(q.kind==="time")
     h='<div class="two"><label>Starts<input class="f" type="time" data-iv="rise" value="'+esc(a.rise)+'"></label>'+
       '<label>Ends<input class="f" type="time" data-iv="wind" value="'+esc(a.wind)+'"></label></div>';
@@ -92,12 +75,10 @@ function ivSave(){
   var a=IV.a, me=state.me;
   me.days=a.days.slice().sort(); if(!me.days.length) me.days=[];
   me.work=[a.work[0]||"08:00", a.work[1]||"16:30"];
-  me.commute=Math.max(0,Math.min(240,+a.commute||0));
-  me.sharp=a.sharp; me.gym=a.gym; me.rise=a.rise||"07:00"; me.wind=a.wind||"22:30"; me.north=a.north||"";
-  me.feeds=(a.feeds||[]).slice(0,6);
+  me.rise=a.rise||"07:00"; me.wind=a.wind||"22:30"; me.north=a.north||"";
   me.done=true;
   state.groups.forEach(function(g){ if(a.where[g.id]) g.where=a.where[g.id]; });
-  save(); ivClose(); renderAll(); loadNews(true);
+  save(); ivClose(); renderAll();
   if(typeof toast==="function") toast("That is enough to go on. The board will tell you what to do now.");
 }
 (function(){

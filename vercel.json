@@ -44,9 +44,6 @@
   "functions": {
     "api/tutor.js": {
       "maxDuration": 60
-    },
-    "api/order.js": {
-      "maxDuration": 30
     }
   }
 }

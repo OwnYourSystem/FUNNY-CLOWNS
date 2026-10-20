@@ -46,13 +46,6 @@ function checkRemind(at){
     fire("Today: "+br.t, br.b, "oys-brief");
     return;
   }
-  /* then the hint, on the next tick, so it does not replace the brief. Only if the card has not already been answered. */
-  if(!state.told.hint && (state.told.am||!c.am) && me.done && hintOn() && me.hintNote!==false){
-    state.told.hint=true; hintTick(); save();
-    var h=state.hint;
-    if(h && h.d===today && !hintDone(h)) fire("Today\u2019s hint", hintPlain(h.t), "oys-hint");
-    return;
-  }
   /* and the afternoon check on what was actually taken on, at the person's time */
   var open=state.oftad;                              /* Today only: Waiting is not today's job */
   if(c.pm && !state.told.pm && mins>=hm(c.pmAt) && open.length){

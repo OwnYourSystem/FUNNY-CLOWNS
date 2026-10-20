@@ -10,41 +10,22 @@ var PRIO_W={high:3, mid:2, low:1};
 var SUB_W={high:66, mid:44, low:22};
 /* which page is showing. Declared here because the first render reads it. */
 var curView="board";
+/* a goal is work or it is not (2026-10-20): rule 5 is the only place rule */
 var WHERES=[
-  ["any",  "Anywhere",        "nothing stops it"],
-  ["desk", "At a screen",     "a laptop and quiet"],
-  ["work", "At work",         "only on the clock, in the office"],
-  ["home", "At home",         "only off the clock"],
-  ["body", "Training",        "a gym, a bike, a road, and energy"],
-  ["out",  "Out and about",   "shops, offices, other people's hours"]
+  ["any",  "Not work"],
+  ["work", "Work"]
 ];
-function whereLabel(w){
-  for(var i=0;i<WHERES.length;i++) if(WHERES[i][0]===w) return WHERES[i][1];
-  return "Anywhere";
-}
+function whereLabel(w){ return w==="work"?"Work":"Not work"; }
 var DAYS_SHORT=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-var SHARP=[["morning","Morning"],["afternoon","Afternoon"],["evening","Evening"]];
 /* The banner already runs. Once it is running, the cheapest thing it can
    also carry is what is happening outside the board, so the same strip
    does both. It is off until someone asks for it in the interview.     */
-var FEEDS=[["tech","Tech"],["finance","Finance"],["football","Football"],
-           ["world","World"],["science","Science"],["denmark","Denmark"]];
-function feedLabel(k){
-  for(var i=0;i<FEEDS.length;i++) if(FEEDS[i][0]===k) return FEEDS[i][1];
-  return "News";
-}
-var GYMWIN=[["morning","Before work"],["lunch","At lunch"],["evening","After work"],
-            ["weekend","Weekends only"],["none","Not at the moment"]];
 /* A first guess, so nobody has to label fifteen goals before the board is
    useful. Every one of these is editable, and the interview shows them all
    at the end and asks you to correct it. */
 function guessWhere(name){
   var n=String(name||"").toLowerCase();
-  if(/shred|airbike|air bike|run|gym|workout|train|lift|cardio|swim|walk|yoga|stretch/.test(n)) return "body";
-  if(/shop|buy|bank|doctor|dentist|post|collect|pick up|errand|appointment|visit/.test(n)) return "out";
-  if(/sap|client|service desk|stakeholder|colleague|team|meeting|onboard|migration|datasphere|power platform|azure|databricks|adf/.test(n)) return "work";
-  if(/read|book|chapter|course|write|study|learn|app|code|build|design|tracker|certificate/.test(n)) return "desk";
-  return "any";
+  return /sap|client|service desk|stakeholder|colleague|team|meeting|onboard|migration|datasphere|power platform|azure|databricks|adf|work|office/.test(n) ? "work" : "any";
 }
 /* Three places used to build a goal by hand and they drifted apart: the
    assistant's was missing prio, so the next render threw on prio.toUpperCase

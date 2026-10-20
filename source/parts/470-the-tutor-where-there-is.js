@@ -1,3 +1,27 @@
+/* What the tutor may not say (2026-10-20, kept when the evidence library
+   went): a clinical word, a claim about what research shows (the board holds
+   no research to cite), or, when it answered from history, a number no tool
+   returned. It cannot tell whether a true sentence is wise. It can tell
+   whether a claim came from somewhere.                                  */
+var CHK_BAN=/\b(diagnos\w*|disorders?|depress(?:ed|ion|ive)|adhd|bipolar|ptsd|medication\w*|prescri\w*|psychiatr\w*|mental illness)\b/i;
+var CHK_SAYS=/\b(studies|research|science|scientists|meta-?analys\w*|clinical\w*|proven|evidence)\b[^.!?]*\b(show|shows|showed|found|find|prove|proves|proved|suggest|suggests|indicate|indicates|confirm\w*)\b|\baccording to\b/i;
+function chkNums(text){
+  return (String(text||"").match(/\d+(?:[.,]\d+)?/g)||[]).map(function(n){ return n.replace(",","."); });
+}
+function replyCheck(text,ctx){
+  var t=String(text||""), why=[];
+  if(CHK_BAN.test(t)) why.push("it used a clinical word, and I do not diagnose");
+  if(CHK_SAYS.test(t)) why.push("it said what research shows, and the board holds no research to cite");
+  if(ctx && ctx.history){
+    var have={}, src=String(ctx.src||"");
+    (src.match(/\d+(?:[.,]\d+)?/g)||[]).forEach(function(n){
+      n=n.replace(",","."); have[n]=1;
+      var f=parseFloat(n); if(f>0 && f<=1) have[String(Math.round(f*100))]=1;   /* a share of 0.72 may be said as 72% */
+    });
+    chkNums(t).forEach(function(n){ if(!have[n] && !have[String(parseFloat(n))]) why.push("it quoted "+n+", which no tool returned"); });
+  }
+  return {ok:!why.length, why:why.join("; ")};
+}
 /* ---------------- the tutor where there is no Claude in the page ----------------
    The artifact can ask Claude directly. Anywhere else the board asks its own
    /api/tutor, which holds the key, the rules and the model, and refuses any
@@ -166,7 +190,7 @@ async function botAsk(text,opts){
       : await proxyChat(said,{signal:botCtl.signal,tools:recordTools(botTools())});
     var nowD=new Date(), chk=replyCheck(res.text,{history:TURN_HIST,
       src:TURN_OUT+" "+said+" "+todayStr()+" "+pad2(nowD.getHours())+":"+pad2(nowD.getMinutes())});
-    if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your numbers and the library."};
+    if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your own numbers."};
     botTurns.push({role:"assistant",content:res.text});
     botRender();
     try{ $("#bot-input").focus(); }catch(e){}
@@ -210,13 +234,6 @@ $("#bot-input").addEventListener("keydown",function(e){
   if(e.key==="Enter"){ e.preventDefault(); var v=this.value.trim(); if(v) botAsk(v); }
 });
 $("#bot-stop").addEventListener("click",function(e){ e.stopPropagation(); if(botCtl) botCtl.abort(); });
-function memAddFromBox(){
-  var i=$("#mem-new"), v=(i.value||"").trim(); if(!v) return;
-  try{ memAdd(v,"you"); i.value=""; save(); renderAll(); }catch(er){ toast("Memory",er.message); }
-}
-$("#bar-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.barrier=!barOn(); save(); renderAll(); });
-$("#hint-on").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hints=!hintOn(); save(); renderAll(); });
-$("#hint-note").addEventListener("click",function(){ if(!state.me) state.me=freshMe(); state.me.hintNote=(state.me.hintNote===false); save(); renderAll(); });
 $("#week-erase").addEventListener("click",function(e){
   e.stopPropagation();
   var n=weekData().log.length;
@@ -235,29 +252,6 @@ $("#jr-erase").addEventListener("click",function(e){
     ok:"Delete them", cancel:"Keep them", danger:true}).then(function(yes){
     if(!yes) return;
     jrClear(); renderAll();
-  });
-});
-$("#hint-reset").addEventListener("click",function(e){
-  e.stopPropagation();
-  askUser({title:"Forget which hints helped?", body:["The board will clear its record of the hints you answered, and start from nothing about which kind helps you.","Your goals, steps and notes are not touched."],
-    ok:"Forget it", cancel:"Keep it", danger:true}).then(function(yes){
-    if(!yes) return;
-    state.hintLog=[]; state.hint=null; state.hintAt=todayStr(); save(); renderAll();
-  });
-});
-$("#mem-add").addEventListener("click",memAddFromBox);
-$("#mem-new").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); memAddFromBox(); } });
-$("#mem-learn").addEventListener("click",function(){
-  if(!state.me) state.me=freshMe();
-  state.me.learn=!memLearnOn(); save(); renderAll();
-});
-$("#mem-erase").addEventListener("click",function(e){
-  e.stopPropagation();
-  var n=memList().length;
-  askUser({title:"Erase everything the board has learned?", body:["This removes all "+n+" note"+(n===1?"":"s")+" it keeps about how you work, the ones you typed as well. A setting that a note changed goes back to what it was.","The board starts learning again from today unless learning is switched off."],
-    ok:"Erase it all", cancel:"Keep them", danger:true}).then(function(yes){
-    if(!yes) return;
-    memErase(); save(); renderAll();
   });
 });
 $("#bot-clear").addEventListener("click",function(e){

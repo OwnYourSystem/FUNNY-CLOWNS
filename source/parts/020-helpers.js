@@ -7,3 +7,4 @@ function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,
 function clamp(n,a,b){ return n<a?a:(n>b?b:n); }
 function uid(p){ return p+Math.random().toString(36).slice(2,8); }
 
+function addDays(str,n){ var p=str.split("-"); return dstr(new Date(+p[0],+p[1]-1,+p[2]+n)); }

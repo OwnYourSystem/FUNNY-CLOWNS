@@ -160,17 +160,6 @@ document.addEventListener("click",function(e){
     });
     return;
   }
-  if(memRoute(e)) return;
-  if(barRoute(e)) return;
-  if(hintRoute(e)) return;
-  var xs=e.target.closest("[data-exp-stop]");
-  if(xs){ if(!armGate("expstop",xs,"Stop it?")) return; expStopMsg(); return; }
-  var xr=e.target.closest("[data-exp-read]");
-  if(xr){ expRead(); return; }
-  var xa=e.target.closest("[data-exp-ack]");
-  if(xa){ expState().unseen=false; save(); renderAll(); return; }
-  var swb=e.target.closest("[data-skipwhy]");
-  if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
   /* the same answers as the phone (2026-10-20): a passed delivery day, the energy, the order */
   var mn=e.target.closest("[data-miss-new]");
   if(mn){ phMissNew(mn.dataset.missNew); return; }
@@ -199,8 +188,6 @@ document.addEventListener("click",function(e){
   if(so){ var ss=state.subs[so.dataset.sid], sd=+so.dataset.sorderD;
     if(ss) phUndoable("Moved "+(sd<0?"earlier":"later")+": "+phCut(ss.name,32),function(){ if(!moveSubOrder(ss.id,sd)) throw new Error(sd<0?"It is already first.":"It is already last."); });
     var sb2=document.querySelector('[data-sorder-d="'+sd+'"][data-sid="'+so.dataset.sid+'"]'); if(sb2) sb2.focus(); return; }
-  var ai=e.target.closest("[data-aiorder-d]");
-  if(ai){ phAiOrder(ai.dataset.aiorderD,ai); return; }
   var o=e.target.closest("[data-ed-open]");
   if(o){ openEd = openEd===o.dataset.edOpen ? "" : o.dataset.edOpen; renderSubs(); return; }
   var d=e.target.closest("[data-del]");

@@ -9,9 +9,8 @@
    next hour. It is filled in by an interview, changed on the Planner page,
    and it never leaves this browser.                                     */
 function freshMe(){
-  return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"], commute:30,
-          sharp:"morning", gym:"evening", rise:"07:00", wind:"22:30", north:"", never:"",
-          feeds:[], brief:"07:30", icon:""};
+  return {done:false, days:[1,2,3,4,5], work:["08:00","16:30"],
+          rise:"07:00", wind:"22:30", north:"", brief:"07:30", icon:""};
 }
 function toGoals(){
   if(!state.archive) state.archive=[];
@@ -23,14 +22,13 @@ function toGoals(){
   for(var k in d) if(me[k]===undefined) me[k]=d[k];
   if(!Array.isArray(me.days)) me.days=d.days;
   if(!Array.isArray(me.work)||me.work.length!==2) me.work=d.work;
-  if(!Array.isArray(me.feeds)) me.feeds=[];
-  me.feeds=me.feeds.filter(function(k){ return FEEDS.some(function(f){ return f[0]===k; }); });
   state.groups.concat(state.archive, state.backlog.filter(function(b){ return b.goal; }).map(function(b){ return b.goal; })).forEach(function(g){
     if(g.due===undefined) g.due="";
     if(!g.prio) g.prio="mid";
     if(!Array.isArray(g.tags)) g.tags=[];
     if(g.tags.length>5) g.tags=g.tags.slice(0,5);
     if(!g.where) g.where=guessWhere(g.name);
+    if(g.where!=="work") g.where="any";       /* a goal is work or it is not (2026-10-20) */
     g.subs.forEach(function(id){
       var x=state.subs[id];
       if(!x) return;

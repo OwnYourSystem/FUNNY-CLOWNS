@@ -164,7 +164,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderExp(); renderLearn(); renderBarrier(); renderMemList(); renderHint(); renderHintPanel(); renderJournal(); phRender();
+  renderVerdict(); renderFollow(); renderFloor(); renderWeek(); renderJournal(); phRender();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();

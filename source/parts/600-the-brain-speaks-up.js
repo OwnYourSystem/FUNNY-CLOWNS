@@ -30,8 +30,6 @@ setTimeout(nudge,1600);
 setInterval(nudge,1800000);
 
 /* the banner fills with the board at once and the world a moment later */
-loadNews();
-setInterval(function(){ loadNews(); }, 300000);
-addEventListener("visibilitychange",function(){ if(!document.hidden) loadNews(); });
+
 
 })();
