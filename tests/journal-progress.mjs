@@ -156,7 +156,7 @@ await ok("photo: the small photo is at the top right of every page, leads to You
     await go(r); const m = await mini(); assert.ok(m && m.img, "no photo on " + r);
     assert.ok(m.w >= 44 && m.h >= 44, r + " target " + m.w + "x" + m.h); assert.ok(m.x > 390 - 70 && m.y < 90, r + " not top right: " + JSON.stringify(m));
     const boxes = await p.evaluate((sels) => sels.map((sel) => [sel, [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden")
-      .map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })]), ["#ph-clock", "#bot-clear", ".ph-nav", "#ph-back-t", "[data-ph=dose]"]);
+      .map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; })]), ["#ph-clock", "#bot-clear", ".ph-nav", "#ph-back-t", "[data-ph=energy]"]);
     for (const [sel, list] of boxes) for (const bx of list) assert.ok(!overlaps(m, bx), r + ": the photo covers " + sel);
   }
   await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); assert.ok((await mini()).img, "no photo on a goal");

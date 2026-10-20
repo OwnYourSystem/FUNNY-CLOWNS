@@ -90,9 +90,10 @@ await ok("Start it puts the step in Today; Done ticks it off and counts it", asy
   const s = await st(); assert.equal(s.done.length, 1); assert.match(await p.locator("section[aria-label=Today] .ph-k").innerText(), /1 of 1 done/i);
   assert.equal(await p.locator(".ph-item.is-done").count(), 1);
 });
-await ok("the day-size button makes today a rough day", async () => {
-  await tap("[data-ph=dose]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Rough day/ }).click(); await p.waitForTimeout(300);
-  assert.equal(await p.locator("[data-ph=dose]").innerText(), "Rough day");
+await ok("the energy battery: Very low makes today one thing", async () => {
+  await tap("[data-ph=energy]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /^Very low/ }).click(); await p.waitForTimeout(300);
+  assert.equal(await p.locator("[data-ph=energy]").getAttribute("data-l"), "1");
+  assert.equal((await p.evaluate(() => window.__board.dose())).n, 1);
 });
 await ok("Journal: write the end of the day with the dialog, and it is listed with its time", async () => {
   await tap('#ph-tabs [data-tab="journal"]'); await p.waitForTimeout(250);
@@ -425,11 +426,11 @@ await ok("nav: a ticked step reopens from its ring, with Undo", async () => {
 });
 await ok("nav: Undo refuses when something else changed in between, and keeps the later change", async () => {
   await p.locator(".ph-item", { hasText: "Sand the door" }).locator("[data-ph=done]").click(); await p.waitForTimeout(300);
-  await tap("[data-ph=dose]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Big day/ }).click(); await p.waitForTimeout(250);
+  await tap("[data-ph=energy]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /^Full/ }).click(); await p.waitForTimeout(250);
   await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300);
   assert.equal((await sub("Sand the door")).status, "done", "undo went through over a later change");
-  assert.equal(await p.locator("[data-ph=dose]").innerText(), "Big day");
-  await tap("[data-ph=dose]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Let the board decide/ }).click(); await p.waitForTimeout(200);
+  assert.equal(await p.locator("[data-ph=energy]").getAttribute("data-l"), "4");
+  await tap("[data-ph=energy]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Let the board decide/ }).click(); await p.waitForTimeout(200);
 });
 await ok("nav: archiving a goal can be undone, and Undo hides by itself after 6 seconds", async () => {
   await go("goals"); const name = (await p.locator(".ph-goal .ph-goal-n").first().innerText()).trim(), n = (await st()).groups.length;
