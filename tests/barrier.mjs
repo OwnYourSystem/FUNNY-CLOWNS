@@ -68,7 +68,9 @@ await ok("'I don't want to' tells you a goal can go to the Backlog", async () =>
 });
 await ok("Try it starts the offered experiment; Got it would have cleared the card; the question is not asked again for 14 days", async () => {
   await seed(); await card().waitFor({ state: "visible", timeout: 3000 }); await p.locator('[data-bar="cant"]').click(); await p.waitForTimeout(200);
-  await p.locator("[data-bar-try]").click(); await p.locator("dialog.ask[open] [data-aok]").waitFor(); await p.locator("dialog.ask[open] [data-aok]").click(); await p.waitForTimeout(250);
+  await p.locator("[data-bar-try]").click(); await p.locator("dialog.ask[open] [data-aok]").waitFor(); await p.locator("dialog.ask[open] [data-aok]").click();
+  /* wait for the save, not a fixed time (it lagged once in a full run, 2026-10-20) */
+  await p.waitForFunction((K) => { const s = JSON.parse(localStorage.getItem(K) || "null"); return !!(s && s.exp && s.exp.active && s.exp.active.ev); }, KEY);
   const s = await st(); assert.equal(s.exp.active.ev, "E-CAP-01"); assert.equal(s.barrier.show, null); assert.equal(await card().isHidden(), true);
   await p.reload(); await p.waitForSelector(".row.pick"); assert.equal(await card().isHidden(), true);
 });

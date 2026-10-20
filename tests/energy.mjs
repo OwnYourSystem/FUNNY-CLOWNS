@@ -18,7 +18,9 @@ const st = () => p.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), KEY)
 const dose = () => p.evaluate(() => window.__board.dose());
 const E = () => p.locator("[data-ph=energy]");
 const D = () => p.locator("dialog.ask[open]");
-const set = async (re) => { await E().click(); await D().waitFor(); await D().getByRole("button", { name: re }).click(); await p.waitForTimeout(250); };
+/* the first Good asks how many steps make a good day; keep 3 unless a test says otherwise */
+const set = async (re) => { await E().click(); await D().waitFor(); await D().getByRole("button", { name: re }).click(); await p.waitForTimeout(250);
+  if (await D().count() && /good day/.test(await D().innerText())) { await D().getByRole("button", { name: /^Keep 3$/ }).click(); await p.waitForTimeout(250); } };
 const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250); };
 const pick = () => p.locator("[aria-label='Do this now'] .ph-task").innerText();
 

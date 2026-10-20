@@ -162,11 +162,12 @@ await ok("Add a step is a sheet with Speak; Add and Enter both add, a repeat is 
   assert.match(await p.locator("[data-ph=step]", { hasText: "Oil the hinges" }).innerText(), /Monthly/);
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
 });
-await ok("a step opens its own page with every field the classic editor has", async () => {
+await ok("a step opens its own page: every field except priority (the order replaces it, 2026-10-20); its own date sits under More", async () => {
   await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await p.waitForTimeout(300);
   assert.match(await p.evaluate(() => location.hash), /^#\/step\/.+/);
   for (const sel of ["#ph-s-name", "#ph-s-pct", "#ph-s-due", "#ph-s-rep", "#ph-s-tag", "#ph-s-goal"]) assert.equal(await p.locator(sel).count(), 1, sel);
-  assert.equal(await p.locator('[data-ph=sset][data-k=status]').count(), 4); assert.equal(await p.locator('[data-ph=sset][data-k=prio]').count(), 3);
+  assert.equal(await p.locator('[data-ph=sset][data-k=status]').count(), 4); assert.equal(await p.locator('[data-ph=sset][data-k=prio]').count(), 0);
+  assert.equal(await p.evaluate(() => !!document.querySelector("#ph-s-due").closest("details.ph-more:not([open])")), true, "the date is not folded under More");
   for (const k of ["stoday", "swhen", "sest", "sdone", "sdel"]) assert.equal(await p.locator(`[data-ph=${k}]`).count(), 1, k);
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-step.png", fullPage: true });
 });
@@ -189,9 +190,9 @@ await ok("status and percent follow the same rules as the classic editor", async
   await tap('[data-ph=sset][data-k=status][data-v=todo]'); await p.waitForTimeout(200); const s = await sub(N); assert.equal(s.status, "todo"); assert.equal(s.pct, 95);
   assert.equal(await p.locator('[data-ph=sset][data-k=status][data-v=todo]').getAttribute("aria-pressed"), "true");
 });
-await ok("priority, deadline (and Clear), and repeats are saved", async () => {
+await ok("its own date (under More, and Clear) and repeats are saved", async () => {
   const N = "Lay the concrete base";
-  await tap('[data-ph=sset][data-k=prio][data-v=high]'); await p.waitForTimeout(200); assert.equal((await sub(N)).prio, "high");
+  await tap(".ph-more summary"); await p.waitForTimeout(150);
   await p.fill("#ph-s-due", "2027-02-01"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "2027-02-01");
   await tap("[data-ph=nodue]"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "");
   await p.selectOption("#ph-s-rep", "weekly"); await p.waitForTimeout(250); const s = await sub(N); assert.equal(s.rep, "weekly"); assert.equal(s.pct, 0); assert.equal(s.status, "todo");
