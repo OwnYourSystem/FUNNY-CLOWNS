@@ -71,6 +71,17 @@ function moveSubOrder(sid,dir){
   g.subs[i]=g.subs[j]; g.subs[j]=sid; mark(g.id,"order"); touchHist();
   return true;
 }
+/* a new order for the open steps of a goal: they take the places the open
+   steps held, so finished steps stay where they were. false if the ids are
+   not exactly the open steps. */
+function setOpenOrder(g,order){
+  var pos=[], open=[];
+  g.subs.forEach(function(id,i){ var x=state.subs[id]; if(x&&x.pct<100&&x.status!=="done"){ pos.push(i); open.push(id); } });
+  var a=open.slice().sort(), b=order.slice().sort();
+  if(a.length!==b.length||a.some(function(x,i){ return x!==b[i]; })) return false;
+  pos.forEach(function(p,k){ g.subs[p]=order[k]; }); mark(g.id,"order"); touchHist();
+  return true;
+}
 function moveSub(sid,gid){
   var sb=state.subs[sid], g=gById(gid);
   if(!sb||!g||sb.gid===g.id) return false;
