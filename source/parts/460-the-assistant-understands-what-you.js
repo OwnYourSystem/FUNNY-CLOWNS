@@ -232,6 +232,12 @@ function prioWord(p){ return p==="high"?"high":p==="low"?"low":"middle"; }
    runs. "loose" ones read free text, so they stand down when a model is there. */
 var ACT=[];
 function act(o){ ACT.push(o); }
+act({id:"energy",group:"Today",ex:"My energy is low",kw:["energy","battery"],
+  re:[/\b(?:my )?(?:energy|battery)(?: level)? (?:is |at |today is )?(very low|low|good|ok|okay|full|high|[1-4])\b/],
+  run:function(v,m){
+    var w=m&&m[1]||"", l={"very low":1,low:2,good:3,ok:3,okay:3,full:4,high:4}[w]||+w;
+    return toolRun("set_energy",{level:l});
+  }});
 act({id:"dose_low",group:"Today",ex:"Make today a rough day",kw:["rough","tired","low","exhausted","small"],
   re:[/\b(?:rough|bad|tough|hard|slow) (?:day|one)\b/,/\bmake (?:today|it) (?:a |an )?(?:rough|low|light|easy|small)\b/,/\bi(?:'m| am) (?:worn out|exhausted|wiped out|shattered|knackered)\b/],
   run:function(){ return toolRun("set_dose",{mode:"rough"}); }});
@@ -679,7 +685,7 @@ var BRAIN=[
 ];
 
 /* one hook, so the command engine can be exercised by a test */
-try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); },
+try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); }, energy:function(l){ setEnergy(l); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, remCheck:remCheck, askUser:askUser,

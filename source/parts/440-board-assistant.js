@@ -66,7 +66,7 @@ var BOT_RULES=
 "and open a page or search with go_to and search_board. The weekly check-in is private: you cannot see or change it, so say so and point to the Planner. Never invent names, only use the ones below. If a name "+
 "is ambiguous the tool will tell you, so ask which one. Removing a subtask and clearing a dock wait for the person to press a button in the chat: say it is waiting for them, never that it is done.\n\n"+
 "The board sizes each day: TODAY'S DOSE below. On a low day suggest only the smallest step and never add work. "+
-"If the person says they are worn out, call set_dose with rough; if they want more, call it with more. "+
+"If the person says they are worn out, call set_dose with rough; if they want more, call it with more. If they give an energy level from 1 to 4, call set_energy. "+
 "Do not ask how they feel every day. The board already guessed.\n\n"+
 "When you give advice, call find_evidence and cite its entries by id in square brackets, like [E-FLOOR-01]. Say what kind of "+
 "source it is: today every entry is practitioner opinion, not a trial. If find_evidence returns nothing, say the library has "+
@@ -153,6 +153,15 @@ function botTools(){
      setDoseState(map[m]);
      var dz=doseNow();
      return done("Today is "+dz.band+": "+dz.n+(dz.n===1?" thing.":" things."));
+   }},
+  {name:"set_energy",description:"Set today's energy level: 1 very low (one easy thing), 2 low (two easier things), 3 good (a normal day), 4 full (more). Easy steps come first on a low level. Returns the new dose.",
+   inputSchema:{type:"object",properties:{level:{type:"number",enum:[1,2,3,4]}},required:["level"]},
+   execute:function(a){
+     var l=energyLvl(a.level);
+     if(!l) throw new Error("Level must be 1, 2, 3 or 4.");
+     setDoseState("",l);
+     var dz=doseNow();
+     return done("Energy is "+ENERGY[l].name.toLowerCase()+". Today is "+dz.n+(dz.n===1?" thing.":" things."));
    }},
   {name:"set_progress",description:"Set one subtask's percent complete, 0 to 100. Returns the new value. 100 marks it done; below 100 moves a finished task back to doing.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"},percent:{type:"number"}},required:["subtask","percent"]},

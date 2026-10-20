@@ -25,10 +25,22 @@ function goalAge(g){
    an overdue goal stays on the board, it just stops shouting.          */
 var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
-function doseN(band){
+function doseN(band,lvl){
   var n=Math.round(+(state.me&&state.me.normalN))||DOSE_N.normal;
+  if(lvl===2) return 2;
   return band==="low" ? DOSE_N.low : band==="high" ? n+2 : n;
 }
+/* The energy level (owner, 2026-10-20): four batteries the person taps, at
+   the start of the day or any time in it. It is the same dose underneath:
+   very low and low are a low day (1 and 2 steps), good is a normal day,
+   full is a big one. A low level also changes which steps come first: a
+   step marked easy (a hobby, a small job) goes ahead of a hard one.   */
+var ENERGY=[null,
+  {band:"low",   name:"Very low", why:"You said your energy is very low, so today is one easy thing."},
+  {band:"low",   name:"Low",      why:"You said your energy is low, so today is two easier things."},
+  {band:"normal",name:"Good",     why:""},
+  {band:"high",  name:"Full",     why:"You said your energy is full, so today can carry more."}];
+function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
 function doseEstimate(){
   var t=todayStr();
   var days=(state.dayLog||[]).filter(function(d){ return d.planned>0 && ageOf(d.d)<=7; }).slice(0,3);
@@ -53,6 +65,10 @@ function doseEstimate(){
 }
 function doseNow(){
   var cap=state.cap;
+  if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
+    var L=ENERGY[cap.lvl];
+    return {band:L.band, n:doseN(L.band,cap.lvl), src:"you", lvl:cap.lvl, why:L.why};
+  }
   if(cap && cap.d===todayStr() && DOSE_N[cap.mode]){
     return {band:cap.mode, n:doseN(cap.mode), src:"you",
       why: cap.mode==="low" ? "You called today a rough one."
@@ -60,17 +76,23 @@ function doseNow(){
   }
   return doseEstimate();
 }
-function setDoseState(mode){
+function setDoseState(mode,lvl){
   var t=todayStr();
+  lvl=energyLvl(lvl); if(lvl) mode=ENERGY[lvl].band;
   if(!state.capLog) state.capLog=[];
   state.capLog=state.capLog.filter(function(x){ return x.d!==t; });
   if(mode==="auto" || !DOSE_N[mode]){ state.cap=null; evAdd({t:Date.now(),k:"dose",you:"auto"}); return; }
-  state.capLog.unshift({d:t, est:doseEstimate().band, you:mode});
-  evAdd({t:Date.now(),k:"dose",you:mode,est:doseEstimate().band});
+  var log={d:t, est:doseEstimate().band, you:mode}, ev={t:Date.now(),k:"dose",you:mode,est:doseEstimate().band};
+  if(lvl){ log.lvl=lvl; ev.lvl=lvl; }
+  state.capLog.unshift(log);
+  evAdd(ev);
   if(state.capLog.length>60) state.capLog.pop();
-  state.cap={d:t, mode:mode};
+  state.cap=lvl?{d:t, mode:mode, lvl:lvl}:{d:t, mode:mode};
 }
-function setDose(mode){ setDoseState(mode); save(); renderAll(); }
+function setDose(mode,lvl){ setDoseState(mode,lvl); save(); renderAll(); }
+function setEnergy(lvl){ setDose("",lvl); }
+/* an open step the person marked easy */
+function easyOpen(s){ return !!(s && s.easy && s.status!=="done" && s.pct<100); }
 function doseMet(dz){ return dz.band==="low" && state.done.length>=dz.n; }
 /* which of the quiet overrides to offer. The board asks nothing; these
    only exist for when it guessed wrong.                              */
@@ -131,11 +153,15 @@ function verdict(){
   var covered={};
   state.oftad.forEach(function(x){ taken[x.id]=1; covered[cardGid(x)]=1; });
   var best=null, blocked=[], soft=null;
+  /* On a low day an easy step that can be done now goes first, whatever
+     else scores higher (owner, 2026-10-20). With none, nothing changes. */
+  var low=doseNow().band==="low", easy=null;
   state.groups.forEach(function(g){
     if(!g.subs.length||groupPct(g)>=100) return;
     if(covered[g.id]) return;               /* Today holds one step per goal, so suggest from another goal */
     var s2=bestSub(g,taken,skip);
     if(!s2) return;                          /* nothing left in it to do */
+    if(low){ var e2=subsOpen(g,taken,skip).filter(function(o){ return easyOpen(o.s); })[0]; if(e2) s2=e2.s; }
     var f=feasible(g,c), sc=goalScore(g,c,me);
     if(!f.ok){
       if(!blocked.length||sc>blocked[0].sc) blocked.unshift({sc:sc,g:g,s:s2,why:f.why});
@@ -147,9 +173,11 @@ function verdict(){
        the board arguing with a decision that was already made. It still
        cannot beat a veto: what is impossible this hour stays impossible. */
     if(northHit(g,me,s2)) sc=sc*1.5+70;
+    if(low && easyOpen(s2) && (!easy||sc>easy.sc)) easy={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why};
     if(!best||sc>best.sc){ if(best) soft=best; best={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why}; }
     else if(!soft||sc>soft.sc) soft={sc:sc,g:g,s:s2};
   });
+  if(easy && easy.g!==best.g){ soft=best; best=easy; }
   if(!best) return {c:c, none:true, blocked:blocked};
   return {c:c, g:best.g, s:best.s, soft:best.soft, sw:best.sw, next:soft,
           blocked:blocked.filter(function(b,i){ return i<2; })};
@@ -178,7 +206,7 @@ function verdictWhy(v){
     out.push(g.name+" is at "+groupPct(g)+"% and this is its first step.");
   if(northHit(g,state.me,s)) out.push("It is also the thing you said matters most.");
   var dz=doseNow();
-  if(dz.band==="low") out.push(dz.why+" Do the smallest version of it, five minutes, then stop.");
+  if(dz.band==="low") out.push(dz.why+(easyOpen(s)?" You marked this step easy.":"")+" Do the smallest version of it, five minutes, then stop.");
   else if(dz.band==="high") out.push(dz.why+" Do not borrow from tomorrow.");
   if(v.soft&&v.sw) out.push("Mind that "+v.sw+". Keep it short.");
   return out.join(" ");

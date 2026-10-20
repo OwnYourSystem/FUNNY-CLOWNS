@@ -1152,6 +1152,7 @@ html.ph{
   --ink:#FFFFFF; --ink-2:#D1D1D6; --muted:#98989F;
   --hair:rgba(255,255,255,.1); --rule:rgba(255,255,255,.22);
   --ph-pri:#D8C2E0; --ph-on-pri:#2C1332; --ph-wash:rgba(255,255,255,.1);
+  --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
   --nm-bg:#121214; --nm-hi:rgba(255,255,255,.05); --nm-lo:rgba(0,0,0,.6);
 }
 @media (prefers-color-scheme: light){
@@ -1161,6 +1162,7 @@ html.ph{
     --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
     --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
     --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+    --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
   }
 }
@@ -1170,6 +1172,7 @@ html.ph[data-theme="light"]{
   --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
   --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
   --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
 }
 #ph{display:none}
@@ -1305,7 +1308,7 @@ html.ph .io-priv{min-height:44px}
    The logo is the name in capitals, QORDEL, in the app's own Schibsted
    Grotesk SemiBold (owner: "use capitals"), with "Powered by OwnYourSystem"
    under it. The text stays "Qordel", so a screen reader says the word.  */
-.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink); line-height:1.1}
+.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:0; color:var(--ink); line-height:1.1}
 .ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
 .ph-bt{display:flex; flex-direction:column; gap:3px; min-width:0}
 .ph-onb .ph-word{font-size:2rem}
@@ -1470,6 +1473,22 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 /* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
 .ph-today{display:flex; flex-direction:column; gap:2px}
 .ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+/* the energy level: one battery beside the date (owner, 2026-10-20). Its
+   colour is the only colour on Now besides the buttons, and it has its own
+   number of bars and its own word, so colour is never the only sign. */
+.ph-enb{font:inherit; display:inline-flex; align-items:center; gap:8px; min-height:52px; padding:4px 14px 4px 10px; border-radius:26px;
+  border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer; text-align:left}
+.ph-enb .ph-bat{width:20px; height:32px; flex:none}
+.ph-enb-t{display:flex; flex-direction:column; line-height:1.2}
+.ph-enb-n{font-size:0.8824rem; font-weight:600}
+.ph-enb-s{font-size:0.7059rem; color:var(--muted)}
+.ph-bat .body{fill:none; stroke-width:2.4}
+.ph-bat .cap{stroke:none}
+.ph-bat .off{fill:none}
+.ph-bat1 .body{stroke:var(--bat1)} .ph-bat1 .cap,.ph-bat1 .on{fill:var(--bat1)}
+.ph-bat2 .body{stroke:var(--bat2)} .ph-bat2 .cap,.ph-bat2 .on{fill:var(--bat2)}
+.ph-bat3 .body{stroke:var(--bat3)} .ph-bat3 .cap,.ph-bat3 .on{fill:var(--bat3)}
+.ph-bat4 .body{stroke:var(--bat4)} .ph-bat4 .cap,.ph-bat4 .on{fill:var(--bat4)}
 .ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ink); letter-spacing:.04em}
 .ph-week{display:flex; flex-direction:column; gap:10px}
 .ph-week .ph-row-h{padding-bottom:0}
@@ -4264,10 +4283,22 @@ function goalAge(g){
    an overdue goal stays on the board, it just stops shouting.          */
 var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
-function doseN(band){
+function doseN(band,lvl){
   var n=Math.round(+(state.me&&state.me.normalN))||DOSE_N.normal;
+  if(lvl===2) return 2;
   return band==="low" ? DOSE_N.low : band==="high" ? n+2 : n;
 }
+/* The energy level (owner, 2026-10-20): four batteries the person taps, at
+   the start of the day or any time in it. It is the same dose underneath:
+   very low and low are a low day (1 and 2 steps), good is a normal day,
+   full is a big one. A low level also changes which steps come first: a
+   step marked easy (a hobby, a small job) goes ahead of a hard one.   */
+var ENERGY=[null,
+  {band:"low",   name:"Very low", why:"You said your energy is very low, so today is one easy thing."},
+  {band:"low",   name:"Low",      why:"You said your energy is low, so today is two easier things."},
+  {band:"normal",name:"Good",     why:""},
+  {band:"high",  name:"Full",     why:"You said your energy is full, so today can carry more."}];
+function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
 function doseEstimate(){
   var t=todayStr();
   var days=(state.dayLog||[]).filter(function(d){ return d.planned>0 && ageOf(d.d)<=7; }).slice(0,3);
@@ -4292,6 +4323,10 @@ function doseEstimate(){
 }
 function doseNow(){
   var cap=state.cap;
+  if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
+    var L=ENERGY[cap.lvl];
+    return {band:L.band, n:doseN(L.band,cap.lvl), src:"you", lvl:cap.lvl, why:L.why};
+  }
   if(cap && cap.d===todayStr() && DOSE_N[cap.mode]){
     return {band:cap.mode, n:doseN(cap.mode), src:"you",
       why: cap.mode==="low" ? "You called today a rough one."
@@ -4299,17 +4334,23 @@ function doseNow(){
   }
   return doseEstimate();
 }
-function setDoseState(mode){
+function setDoseState(mode,lvl){
   var t=todayStr();
+  lvl=energyLvl(lvl); if(lvl) mode=ENERGY[lvl].band;
   if(!state.capLog) state.capLog=[];
   state.capLog=state.capLog.filter(function(x){ return x.d!==t; });
   if(mode==="auto" || !DOSE_N[mode]){ state.cap=null; evAdd({t:Date.now(),k:"dose",you:"auto"}); return; }
-  state.capLog.unshift({d:t, est:doseEstimate().band, you:mode});
-  evAdd({t:Date.now(),k:"dose",you:mode,est:doseEstimate().band});
+  var log={d:t, est:doseEstimate().band, you:mode}, ev={t:Date.now(),k:"dose",you:mode,est:doseEstimate().band};
+  if(lvl){ log.lvl=lvl; ev.lvl=lvl; }
+  state.capLog.unshift(log);
+  evAdd(ev);
   if(state.capLog.length>60) state.capLog.pop();
-  state.cap={d:t, mode:mode};
+  state.cap=lvl?{d:t, mode:mode, lvl:lvl}:{d:t, mode:mode};
 }
-function setDose(mode){ setDoseState(mode); save(); renderAll(); }
+function setDose(mode,lvl){ setDoseState(mode,lvl); save(); renderAll(); }
+function setEnergy(lvl){ setDose("",lvl); }
+/* an open step the person marked easy */
+function easyOpen(s){ return !!(s && s.easy && s.status!=="done" && s.pct<100); }
 function doseMet(dz){ return dz.band==="low" && state.done.length>=dz.n; }
 /* which of the quiet overrides to offer. The board asks nothing; these
    only exist for when it guessed wrong.                              */
@@ -4370,11 +4411,15 @@ function verdict(){
   var covered={};
   state.oftad.forEach(function(x){ taken[x.id]=1; covered[cardGid(x)]=1; });
   var best=null, blocked=[], soft=null;
+  /* On a low day an easy step that can be done now goes first, whatever
+     else scores higher (owner, 2026-10-20). With none, nothing changes. */
+  var low=doseNow().band==="low", easy=null;
   state.groups.forEach(function(g){
     if(!g.subs.length||groupPct(g)>=100) return;
     if(covered[g.id]) return;               /* Today holds one step per goal, so suggest from another goal */
     var s2=bestSub(g,taken,skip);
     if(!s2) return;                          /* nothing left in it to do */
+    if(low){ var e2=subsOpen(g,taken,skip).filter(function(o){ return easyOpen(o.s); })[0]; if(e2) s2=e2.s; }
     var f=feasible(g,c), sc=goalScore(g,c,me);
     if(!f.ok){
       if(!blocked.length||sc>blocked[0].sc) blocked.unshift({sc:sc,g:g,s:s2,why:f.why});
@@ -4386,9 +4431,11 @@ function verdict(){
        the board arguing with a decision that was already made. It still
        cannot beat a veto: what is impossible this hour stays impossible. */
     if(northHit(g,me,s2)) sc=sc*1.5+70;
+    if(low && easyOpen(s2) && (!easy||sc>easy.sc)) easy={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why};
     if(!best||sc>best.sc){ if(best) soft=best; best={sc:sc,g:g,s:s2,soft:f.soft,sw:f.why}; }
     else if(!soft||sc>soft.sc) soft={sc:sc,g:g,s:s2};
   });
+  if(easy && easy.g!==best.g){ soft=best; best=easy; }
   if(!best) return {c:c, none:true, blocked:blocked};
   return {c:c, g:best.g, s:best.s, soft:best.soft, sw:best.sw, next:soft,
           blocked:blocked.filter(function(b,i){ return i<2; })};
@@ -4417,7 +4464,7 @@ function verdictWhy(v){
     out.push(g.name+" is at "+groupPct(g)+"% and this is its first step.");
   if(northHit(g,state.me,s)) out.push("It is also the thing you said matters most.");
   var dz=doseNow();
-  if(dz.band==="low") out.push(dz.why+" Do the smallest version of it, five minutes, then stop.");
+  if(dz.band==="low") out.push(dz.why+(easyOpen(s)?" You marked this step easy.":"")+" Do the smallest version of it, five minutes, then stop.");
   else if(dz.band==="high") out.push(dz.why+" Do not borrow from tomorrow.");
   if(v.soft&&v.sw) out.push("Mind that "+v.sw+". Keep it short.");
   return out.join(" ");
@@ -5343,6 +5390,7 @@ function editSub(s,k,v){
   else if(k==="tag") s.tag=v.trim();
   else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
   else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
+  else if(k==="easy"){ if(v==="1"||v==="true") s.easy=true; else delete s.easy; mark(s.id,"easy"); }
   else return false;
   touchHist(); return true;
 }
@@ -6584,7 +6632,7 @@ var BOT_RULES=
 "and open a page or search with go_to and search_board. The weekly check-in is private: you cannot see or change it, so say so and point to the Planner. Never invent names, only use the ones below. If a name "+
 "is ambiguous the tool will tell you, so ask which one. Removing a subtask and clearing a dock wait for the person to press a button in the chat: say it is waiting for them, never that it is done.\n\n"+
 "The board sizes each day: TODAY'S DOSE below. On a low day suggest only the smallest step and never add work. "+
-"If the person says they are worn out, call set_dose with rough; if they want more, call it with more. "+
+"If the person says they are worn out, call set_dose with rough; if they want more, call it with more. If they give an energy level from 1 to 4, call set_energy. "+
 "Do not ask how they feel every day. The board already guessed.\n\n"+
 "When you give advice, call find_evidence and cite its entries by id in square brackets, like [E-FLOOR-01]. Say what kind of "+
 "source it is: today every entry is practitioner opinion, not a trial. If find_evidence returns nothing, say the library has "+
@@ -6671,6 +6719,15 @@ function botTools(){
      setDoseState(map[m]);
      var dz=doseNow();
      return done("Today is "+dz.band+": "+dz.n+(dz.n===1?" thing.":" things."));
+   }},
+  {name:"set_energy",description:"Set today's energy level: 1 very low (one easy thing), 2 low (two easier things), 3 good (a normal day), 4 full (more). Easy steps come first on a low level. Returns the new dose.",
+   inputSchema:{type:"object",properties:{level:{type:"number",enum:[1,2,3,4]}},required:["level"]},
+   execute:function(a){
+     var l=energyLvl(a.level);
+     if(!l) throw new Error("Level must be 1, 2, 3 or 4.");
+     setDoseState("",l);
+     var dz=doseNow();
+     return done("Energy is "+ENERGY[l].name.toLowerCase()+". Today is "+dz.n+(dz.n===1?" thing.":" things."));
    }},
   {name:"set_progress",description:"Set one subtask's percent complete, 0 to 100. Returns the new value. 100 marks it done; below 100 moves a finished task back to doing.",
    inputSchema:{type:"object",properties:{subtask:{type:"string"},percent:{type:"number"}},required:["subtask","percent"]},
@@ -7230,6 +7287,12 @@ function prioWord(p){ return p==="high"?"high":p==="low"?"low":"middle"; }
    runs. "loose" ones read free text, so they stand down when a model is there. */
 var ACT=[];
 function act(o){ ACT.push(o); }
+act({id:"energy",group:"Today",ex:"My energy is low",kw:["energy","battery"],
+  re:[/\b(?:my )?(?:energy|battery)(?: level)? (?:is |at |today is )?(very low|low|good|ok|okay|full|high|[1-4])\b/],
+  run:function(v,m){
+    var w=m&&m[1]||"", l={"very low":1,low:2,good:3,ok:3,okay:3,full:4,high:4}[w]||+w;
+    return toolRun("set_energy",{level:l});
+  }});
 act({id:"dose_low",group:"Today",ex:"Make today a rough day",kw:["rough","tired","low","exhausted","small"],
   re:[/\b(?:rough|bad|tough|hard|slow) (?:day|one)\b/,/\bmake (?:today|it) (?:a |an )?(?:rough|low|light|easy|small)\b/,/\bi(?:'m| am) (?:worn out|exhausted|wiped out|shattered|knackered)\b/],
   run:function(){ return toolRun("set_dose",{mode:"rough"}); }});
@@ -7677,7 +7740,7 @@ var BRAIN=[
 ];
 
 /* one hook, so the command engine can be exercised by a test */
-try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); },
+try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){ return botAsk(t); }, openSheet:function(){ botOpen(true); }, render:function(){ renderAll(); }, dose:function(){ return doseNow(); }, energy:function(l){ setEnergy(l); },
   stats:evStats, compare:evCompare, trend:evTrend, recent:evRecent,
   lib:libFind, say:libSay, check:replyCheck, evidence:function(){ return EVIDENCE; },
   toolRun:toolRun, modelTools:function(){ return recordTools(botTools()); }, pend:function(){ return PEND; }, remind:checkRemind, pastDayEnd:pastDayEnd, beforeDayStart:beforeDayStart, outsideDay:outsideDay, nowCtx:nowCtx, feasible:feasible, remCheck:remCheck, askUser:askUser,
@@ -9200,7 +9263,35 @@ function phBarColour(){
     m.setAttribute("content",PH_ON&&c?c:m.getAttribute("data-was"));
   });
 }
-function phDoseLabel(){ var b=doseNow().band; return b==="low"?"Rough day":b==="high"?"Big day":"Normal day"; }
+/* the energy level, as four batteries (owner, 2026-10-20). The colour is never
+   the only sign: each battery has its own number of bars and its own word. */
+function phBattery(l){
+  var bars=[], y=[33,25,17,9];
+  for(var i=0;i<4;i++) bars.push('<rect x="7" y="'+y[i]+'" width="14" height="6" rx="1.2" class="'+(i<l?"on":"off")+'"/>');
+  return '<svg class="ph-bat ph-bat'+l+'" viewBox="0 0 28 44" width="28" height="44" aria-hidden="true"><rect x="9.5" y="1" width="9" height="4" rx="1.5" class="cap"/>'+
+    '<rect x="3" y="4.5" width="22" height="38" rx="4" class="body"/>'+bars.join("")+'</svg>';
+}
+/* One battery beside the date: the level the day is sized to now. Until the
+   person sets one it shows the board's own sizing; a tap changes it, and the
+   plan is sized again at once (owner, 2026-10-20). */
+function phEnLvl(dz){ return dz.lvl || (dz.band==="low"?1:dz.band==="high"?4:3); }
+function phEnergy(){
+  var dz=doseNow(), l=phEnLvl(dz), mine=dz.src==="you", nm=ENERGY[l].name;
+  return '<button type="button" class="ph-enb" data-ph="energy" data-l="'+l+'" aria-label="Energy: '+nm+(mine?", set by you":", the board\u2019s guess")+'. Change">'+
+    phBattery(l)+'<span class="ph-enb-t"><span class="ph-enb-n">'+nm+'</span><span class="ph-enb-s">'+(mine?"Your energy":"Board\u2019s guess")+'</span></span></button>';
+}
+function phEnergyAsk(){
+  var dz=doseNow(), ez=Object.keys(state.subs).some(function(id){ return easyOpen(state.subs[id]); });
+  var body=["The board sizes today to your energy and puts the steps in order. Change it whenever your day changes."];
+  if(dz.why) body.push((dz.src==="you"?"Now: ":"The board\u2019s guess: ")+dz.why);
+  if(!ez) body.push("On a low day, steps you mark Easy come first. Mark one on its page.");
+  var more=[["1","Very low: one easy thing"],["2","Low: two easier things"],["3","Good: a normal day"],["4","Full: give me more"]];
+  if(dz.src==="you") more.push(["auto","Let the board decide"]);
+  askUser({title:"How is your energy?", body:body, more:more, noOk:true, cancel:"Keep it"}).then(function(v){
+    if(v==="auto") setDose("auto"); else if(+v>=1&&+v<=4) setEnergy(+v); else return;
+    PH_DRAWN=""; phRender(); var eb=document.querySelector("[data-ph=energy]"); if(eb) eb.focus();
+  });
+}
 /* what Now shows: the first open step in Today, else the board's pick */
 function phCurrent(){
   var cur=null;
@@ -9265,8 +9356,7 @@ function phNow(){
   /* the date with its year, the week and a running clock, as the old board had them */
   h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
     '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
-    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+
-    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div></header>');
+    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+phEnergy()+'</div></header>');
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())
@@ -9384,11 +9474,6 @@ function phReopen(id){
     toolRun("undo_done_today",{subtask:s.name});
     if(s.status==="done"||s.pct>=100) editSub(s,"status","doing");
   });
-}
-function phDose(){
-  askUser({title:"How big is today?", body:"The board sizes the day from your recent days. Change it if it guessed wrong.",
-    more:[["low","Rough day: make it smaller"],["high","Big day: give me more"],["auto","Let the board decide"]], noOk:true, cancel:"Keep it"})
-  .then(function(v){ if(v==="low"||v==="high"||v==="auto") setDose(v); });
 }
 function phElse(id){
   var p=pickToday(); if(!p) return;
@@ -9824,6 +9909,7 @@ function phStepPage(){
       phOpts(state.groups.map(function(x){ return [x.id,x.name]; }),s.gid)+'</select>':'')+
     '<p class="ph-note" id="ph-s-msg" aria-live="polite">Changes are saved as you make them.</p></section>');
   h.push('<section class="ph-grp" aria-label="More for this step">'+
+    phRow("seasy","Easy, good for a low-energy day",s.easy?"On":"Off",true)+
     '<button type="button" class="ph-rowb" data-ph="stoday"'+(inT?' disabled':'')+'><span>'+(inT?"In Today":"Put it in Today")+'</span></button>'+
     '<button type="button" class="ph-rowb" data-ph="swhen"><span>'+(w?"When":"When will you do it?")+'</span><span class="ph-v">'+(w?esc(phCut(w.t,24)):"")+'</span></button>'+
     '<button type="button" class="ph-rowb" data-ph="sest"><span>'+(e?"About how long":"How long will it take?")+'</span><span class="ph-v">'+(e?e.m+" min":"")+'</span></button>'+
@@ -10079,7 +10165,8 @@ function phOnbFinish(add){
   root.addEventListener("click",function(e){
     var b=e.target.closest("[data-ph]"); if(!b) return;
     var k=b.getAttribute("data-ph"), id=b.getAttribute("data-id");
-    if(k==="dose") phDose();
+    if(k==="energy") phEnergyAsk();
+    else if(k==="seasy"){ var es=state.subs[phArg()]; if(es){ editSub(es,"easy",es.easy?"":"1"); save(); renderAll(); phStepRedraw(); var sb=document.querySelector("[data-ph=seasy]"); if(sb) sb.focus(); } }
     else if(k==="done") phDone(id);
     else if(k==="later"){ var ls=state.subs[id]; if(ls) phUndoable("Another day: "+phCut(ls.name,40),function(){ toolRun("plan_today",{subtask:ls.name}); }); }
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }

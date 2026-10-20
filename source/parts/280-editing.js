@@ -16,6 +16,7 @@ function editSub(s,k,v){
   else if(k==="tag") s.tag=v.trim();
   else if(k==="prio") s.prio=SUB_W[v]?v:"mid";
   else if(k==="due"){ s.due=v||""; mark(s.id,"due"); }
+  else if(k==="easy"){ if(v==="1"||v==="true") s.easy=true; else delete s.easy; mark(s.id,"easy"); }
   else return false;
   touchHist(); return true;
 }

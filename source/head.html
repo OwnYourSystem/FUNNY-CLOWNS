@@ -1152,6 +1152,7 @@ html.ph{
   --ink:#FFFFFF; --ink-2:#D1D1D6; --muted:#98989F;
   --hair:rgba(255,255,255,.1); --rule:rgba(255,255,255,.22);
   --ph-pri:#D8C2E0; --ph-on-pri:#2C1332; --ph-wash:rgba(255,255,255,.1);
+  --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
   --nm-bg:#121214; --nm-hi:rgba(255,255,255,.05); --nm-lo:rgba(0,0,0,.6);
 }
 @media (prefers-color-scheme: light){
@@ -1161,6 +1162,7 @@ html.ph{
     --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
     --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
     --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+    --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
   }
 }
@@ -1170,6 +1172,7 @@ html.ph[data-theme="light"]{
   --ink:#000000; --ink-2:#3C3C43; --muted:#636366;
   --hair:rgba(0,0,0,.08); --rule:rgba(0,0,0,.2);
   --ph-pri:#2C1332; --ph-on-pri:#FFFFFF; --ph-wash:rgba(0,0,0,.06);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --nm-bg:#EDEDF0; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(0,0,0,.18);
 }
 #ph{display:none}
@@ -1305,7 +1308,7 @@ html.ph .io-priv{min-height:44px}
    The logo is the name in capitals, QORDEL, in the app's own Schibsted
    Grotesk SemiBold (owner: "use capitals"), with "Powered by OwnYourSystem"
    under it. The text stays "Qordel", so a screen reader says the word.  */
-.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink); line-height:1.1}
+.ph-word{font-family:var(--font); font-size:1.18rem; font-weight:600; text-transform:uppercase; letter-spacing:0; color:var(--ink); line-height:1.1}
 .ph-by{font-size:.706rem; color:var(--muted); line-height:1.2}
 .ph-bt{display:flex; flex-direction:column; gap:3px; min-width:0}
 .ph-onb .ph-word{font-size:2rem}
@@ -1470,6 +1473,22 @@ html.ph.ph-talk .sheet-head{justify-content:flex-end}
 /* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
 .ph-today{display:flex; flex-direction:column; gap:2px}
 .ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+/* the energy level: one battery beside the date (owner, 2026-10-20). Its
+   colour is the only colour on Now besides the buttons, and it has its own
+   number of bars and its own word, so colour is never the only sign. */
+.ph-enb{font:inherit; display:inline-flex; align-items:center; gap:8px; min-height:52px; padding:4px 14px 4px 10px; border-radius:26px;
+  border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer; text-align:left}
+.ph-enb .ph-bat{width:20px; height:32px; flex:none}
+.ph-enb-t{display:flex; flex-direction:column; line-height:1.2}
+.ph-enb-n{font-size:0.8824rem; font-weight:600}
+.ph-enb-s{font-size:0.7059rem; color:var(--muted)}
+.ph-bat .body{fill:none; stroke-width:2.4}
+.ph-bat .cap{stroke:none}
+.ph-bat .off{fill:none}
+.ph-bat1 .body{stroke:var(--bat1)} .ph-bat1 .cap,.ph-bat1 .on{fill:var(--bat1)}
+.ph-bat2 .body{stroke:var(--bat2)} .ph-bat2 .cap,.ph-bat2 .on{fill:var(--bat2)}
+.ph-bat3 .body{stroke:var(--bat3)} .ph-bat3 .cap,.ph-bat3 .on{fill:var(--bat3)}
+.ph-bat4 .body{stroke:var(--bat4)} .ph-bat4 .cap,.ph-bat4 .on{fill:var(--bat4)}
 .ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ink); letter-spacing:.04em}
 .ph-week{display:flex; flex-direction:column; gap:10px}
 .ph-week .ph-row-h{padding-bottom:0}

@@ -137,7 +137,35 @@ function phBarColour(){
     m.setAttribute("content",PH_ON&&c?c:m.getAttribute("data-was"));
   });
 }
-function phDoseLabel(){ var b=doseNow().band; return b==="low"?"Rough day":b==="high"?"Big day":"Normal day"; }
+/* the energy level, as four batteries (owner, 2026-10-20). The colour is never
+   the only sign: each battery has its own number of bars and its own word. */
+function phBattery(l){
+  var bars=[], y=[33,25,17,9];
+  for(var i=0;i<4;i++) bars.push('<rect x="7" y="'+y[i]+'" width="14" height="6" rx="1.2" class="'+(i<l?"on":"off")+'"/>');
+  return '<svg class="ph-bat ph-bat'+l+'" viewBox="0 0 28 44" width="28" height="44" aria-hidden="true"><rect x="9.5" y="1" width="9" height="4" rx="1.5" class="cap"/>'+
+    '<rect x="3" y="4.5" width="22" height="38" rx="4" class="body"/>'+bars.join("")+'</svg>';
+}
+/* One battery beside the date: the level the day is sized to now. Until the
+   person sets one it shows the board's own sizing; a tap changes it, and the
+   plan is sized again at once (owner, 2026-10-20). */
+function phEnLvl(dz){ return dz.lvl || (dz.band==="low"?1:dz.band==="high"?4:3); }
+function phEnergy(){
+  var dz=doseNow(), l=phEnLvl(dz), mine=dz.src==="you", nm=ENERGY[l].name;
+  return '<button type="button" class="ph-enb" data-ph="energy" data-l="'+l+'" aria-label="Energy: '+nm+(mine?", set by you":", the board\u2019s guess")+'. Change">'+
+    phBattery(l)+'<span class="ph-enb-t"><span class="ph-enb-n">'+nm+'</span><span class="ph-enb-s">'+(mine?"Your energy":"Board\u2019s guess")+'</span></span></button>';
+}
+function phEnergyAsk(){
+  var dz=doseNow(), ez=Object.keys(state.subs).some(function(id){ return easyOpen(state.subs[id]); });
+  var body=["The board sizes today to your energy and puts the steps in order. Change it whenever your day changes."];
+  if(dz.why) body.push((dz.src==="you"?"Now: ":"The board\u2019s guess: ")+dz.why);
+  if(!ez) body.push("On a low day, steps you mark Easy come first. Mark one on its page.");
+  var more=[["1","Very low: one easy thing"],["2","Low: two easier things"],["3","Good: a normal day"],["4","Full: give me more"]];
+  if(dz.src==="you") more.push(["auto","Let the board decide"]);
+  askUser({title:"How is your energy?", body:body, more:more, noOk:true, cancel:"Keep it"}).then(function(v){
+    if(v==="auto") setDose("auto"); else if(+v>=1&&+v<=4) setEnergy(+v); else return;
+    PH_DRAWN=""; phRender(); var eb=document.querySelector("[data-ph=energy]"); if(eb) eb.focus();
+  });
+}
 /* what Now shows: the first open step in Today, else the board's pick */
 function phCurrent(){
   var cur=null;
@@ -202,8 +230,7 @@ function phNow(){
   /* the date with its year, the week and a running clock, as the old board had them */
   h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
     '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
-    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+
-    '<button type="button" class="ph-chip" data-ph="dose">'+esc(phDoseLabel())+'</button></div></header>');
+    '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+phEnergy()+'</div></header>');
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())
@@ -321,11 +348,6 @@ function phReopen(id){
     toolRun("undo_done_today",{subtask:s.name});
     if(s.status==="done"||s.pct>=100) editSub(s,"status","doing");
   });
-}
-function phDose(){
-  askUser({title:"How big is today?", body:"The board sizes the day from your recent days. Change it if it guessed wrong.",
-    more:[["low","Rough day: make it smaller"],["high","Big day: give me more"],["auto","Let the board decide"]], noOk:true, cancel:"Keep it"})
-  .then(function(v){ if(v==="low"||v==="high"||v==="auto") setDose(v); });
 }
 function phElse(id){
   var p=pickToday(); if(!p) return;
@@ -761,6 +783,7 @@ function phStepPage(){
       phOpts(state.groups.map(function(x){ return [x.id,x.name]; }),s.gid)+'</select>':'')+
     '<p class="ph-note" id="ph-s-msg" aria-live="polite">Changes are saved as you make them.</p></section>');
   h.push('<section class="ph-grp" aria-label="More for this step">'+
+    phRow("seasy","Easy, good for a low-energy day",s.easy?"On":"Off",true)+
     '<button type="button" class="ph-rowb" data-ph="stoday"'+(inT?' disabled':'')+'><span>'+(inT?"In Today":"Put it in Today")+'</span></button>'+
     '<button type="button" class="ph-rowb" data-ph="swhen"><span>'+(w?"When":"When will you do it?")+'</span><span class="ph-v">'+(w?esc(phCut(w.t,24)):"")+'</span></button>'+
     '<button type="button" class="ph-rowb" data-ph="sest"><span>'+(e?"About how long":"How long will it take?")+'</span><span class="ph-v">'+(e?e.m+" min":"")+'</span></button>'+
@@ -1016,7 +1039,8 @@ function phOnbFinish(add){
   root.addEventListener("click",function(e){
     var b=e.target.closest("[data-ph]"); if(!b) return;
     var k=b.getAttribute("data-ph"), id=b.getAttribute("data-id");
-    if(k==="dose") phDose();
+    if(k==="energy") phEnergyAsk();
+    else if(k==="seasy"){ var es=state.subs[phArg()]; if(es){ editSub(es,"easy",es.easy?"":"1"); save(); renderAll(); phStepRedraw(); var sb=document.querySelector("[data-ph=seasy]"); if(sb) sb.focus(); } }
     else if(k==="done") phDone(id);
     else if(k==="later"){ var ls=state.subs[id]; if(ls) phUndoable("Another day: "+phCut(ls.name,40),function(){ toolRun("plan_today",{subtask:ls.name}); }); }
     else if(k==="take"){ var ts=state.subs[id]; phUndoable("Started: "+phCut(ts?ts.name:"",40),function(){ takePick(id); }); }
