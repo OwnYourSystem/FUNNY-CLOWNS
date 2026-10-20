@@ -102,3 +102,12 @@ W1 to W3 and P9 can start now, before the foundation, because they touch only th
 Notes on two of them:
 - F9: we draft the texts; a legal professional reviews them before publishing. The owner confirmed on 2026-10-06: full compliance is required.
 - P11: deferred by the owner on 2026-10-06, "not that soon". When it starts, it needs a Google Play developer account in the owner's name (a one-time fee) and a store review.
+
+## Connections: parked by the owner (2026-10-20)
+
+The owner said "keep them all parked for now" about the connection work:
+1. Push server learns the day start; news endpoint switched off.
+2. Item-by-item sync (F3).
+3. Google app verification for read-only calendar access.
+4. F10 with W5 and W6.
+Nothing in this list starts until the owner says so.
