@@ -38,7 +38,7 @@ await ok("an Assistant button in the header opens a plain chat and Escape closes
   await btn.click(); await p.locator("#botsheet").waitFor({ state: "visible" });
 });
 await ok("help lists what it can do, by group, and says check-ins are private", async () => {
-  const r = await say("help"); for (const g of ["TODAY", "STEPS", "GOALS", "SETTINGS", "MINIMUM DAY", "CHECK-IN", "JOURNAL", "GO TO"]) assert.ok(r.includes(g), g);
+  const r = await say("help"); for (const g of ["TODAY", "STEPS", "GOALS", "SETTINGS", "EASY THINGS", "CHECK-IN", "JOURNAL", "GO TO"]) assert.ok(r.includes(g), g);
   assert.match(r, /private/);
 });
 await ok("rough day and more change today's size", async () => {
@@ -55,40 +55,37 @@ await ok("day end: one sentence, and a question when the time is missing", async
   const q = await say("my day ends"); assert.match(q, /What time/);
   await say("9:30pm"); assert.equal((await st()).me.wind, "21:30");
 });
-await ok("work hours, days, commute, sharpest, training, brief, north star", async () => {
+await ok("work hours, days, brief, north star", async () => {
   await say("I work 9 to 5:30"); assert.deepEqual((await st()).me.work, ["09:00", "17:30"]);
   await say("I work monday to thursday"); assert.deepEqual((await st()).me.days, [1, 2, 3, 4]);
-  await say("my commute is 45 minutes"); assert.equal((await st()).me.commute, 45);
-  await say("I am sharpest in the afternoon"); assert.equal((await st()).me.sharp, "afternoon");
-  await say("I train at lunch"); assert.equal((await st()).me.gym, "lunch");
   await say("send my morning brief at 8am"); assert.equal((await st()).me.brief, "08:00");
   await say("what matters most is Ship the Migration"); assert.equal((await st()).me.north, "Ship the Migration");
 });
-await ok("hints, hint reminders, low-day question, learning toggle by plain words", async () => {
-  await say("turn hint reminders off"); assert.equal((await st()).me.hintNote, false);
-  await say("turn the low-day question off"); assert.equal((await st()).me.barrier, false);
-  await say("turn the low-day question on"); assert.equal((await st()).me.barrier, true);
+await ok("removed settings (commute, sharpest, training, hints, low-day question) change nothing", async () => {
+  const before = JSON.stringify((await st()).me);
+  for (const m of ["my commute is 45 minutes", "I am sharpest in the afternoon", "I train at lunch", "turn hint reminders off", "turn the low-day question off"]) {
+    const r = await say(m); assert.doesNotMatch(r, /TypeError|undefined/, m); }
+  const me = (await st()).me; assert.equal(JSON.stringify(me), before); assert.equal(me.commute, undefined); assert.equal(me.sharp, undefined); assert.equal(me.gym, undefined);
 });
 await ok("dark mode by words", async () => {
   await say("switch to dark mode"); assert.equal(await p.evaluate(() => localStorage.getItem("oys-theme")), "dark");
   await say("use the light theme"); assert.equal(await p.evaluate(() => localStorage.getItem("oys-theme")), "light");
 });
-await ok("step fields: priority, due date, tag, when, how long", async () => {
+await ok("step fields: tag, when, how long (no priority and no own date: the order and the delivery day replace them)", async () => {
   const { subs } = await names(); const n = subs[2];
-  await say("set " + n.toLowerCase() + " priority to high"); assert.equal(Object.values((await st()).subs).find((x) => x.name === n).prio, "high");
-  await say(n + " is due tomorrow"); assert.match(Object.values((await st()).subs).find((x) => x.name === n).due, /^\d{4}-\d\d-\d\d$/);
+  await say("set " + n.toLowerCase() + " priority to high"); assert.notEqual(Object.values((await st()).subs).find((x) => x.name === n).prio, "high");
   await say("tag " + n + " as errands"); assert.equal(Object.values((await st()).subs).find((x) => x.name === n).tag, "errands");
   await say("when for " + n + ": after my coffee"); const s1 = await st(); const id = Object.values(s1.subs).find((x) => x.name === n).id; assert.equal(s1.when[id].t, "after my coffee");
   await say(n + " takes 25 minutes"); assert.equal((await st()).est.items[id].m, 25);
 });
 await ok("a missing detail is asked for, the next message answers it, and cancel stops", async () => {
   const { subs } = await names(); const n = subs[3];
-  const q = await say("set " + n + " priority"); assert.match(q, /High, middle or low/);
-  await say("low"); assert.equal(Object.values((await st()).subs).find((x) => x.name === n).prio, "low");
+  const q = await say("my easy things are"); assert.match(q, /energy is low/);
+  await say("reading, a walk"); assert.deepEqual((await st()).floor.items.map((x) => x.t), ["reading", "a walk"]);
   const q2 = await say("tag " + n + " as"); // not a full command: falls to a suggestion or question, never an error
   assert.doesNotMatch(q2, /TypeError|undefined/);
-  const q3 = await say("my commute is"); assert.match(q3, /commute/i); await say("cancel");
-  assert.equal(Object.values((await st())).length > 0, true);
+  const q3 = await say("my easy things are"); assert.match(q3, /energy is low/); await say("cancel");
+  assert.equal((await st()).floor.items.length, 2);
 });
 await ok("Today and Waiting by words", async () => {
   const { subs } = await names(); const n = subs[4];
@@ -97,12 +94,12 @@ await ok("Today and Waiting by words", async () => {
   await say("move " + n + " to waiting"); const s2 = await st(); assert.ok(!s2.oftad.some((c) => c.id === id)); assert.ok(s2.plan.some((c) => c.id === id));
 });
 function await_name() { return ""; }
-await ok("goals: rename, priority, deadline, place, tags, backlog, restore, archive", async () => {
+await ok("goals: rename, delivery day, work, tags, backlog, restore, archive", async () => {
   const { groups } = await names(); const g = groups[0];
   await say("rename goal " + g + " to Brand New Goal"); assert.ok((await st()).groups.some((x) => x.name === "Brand New Goal"));
-  await say("set goal brand new goal priority to high"); assert.equal((await st()).groups.find((x) => x.name === "Brand New Goal").prio, "high");
   await say("goal brand new goal is due 2027-03-04"); assert.equal((await st()).groups.find((x) => x.name === "Brand New Goal").due, "2027-03-04");
-  await say("goal brand new goal can only be done at home"); assert.equal((await st()).groups.find((x) => x.name === "Brand New Goal").where, "home");
+  await say("goal brand new goal is work"); assert.equal((await st()).groups.find((x) => x.name === "Brand New Goal").where, "work");
+  await say("goal brand new goal is not work"); assert.equal((await st()).groups.find((x) => x.name === "Brand New Goal").where, "any");
   await say("tag goal brand new goal with house, q4"); assert.deepEqual((await st()).groups.find((x) => x.name === "Brand New Goal").tags, ["house", "q4"]);
   await say("move goal brand new goal to the backlog"); let s = await st(); assert.ok(!s.groups.some((x) => x.name === "Brand New Goal")); assert.ok(s.backlog.some((x) => x.goal && x.goal.name === "Brand New Goal"));
   await say("bring brand new goal back from the backlog"); assert.ok((await st()).groups.some((x) => x.name === "Brand New Goal"));
@@ -149,7 +146,7 @@ await ok("distress still gets the fixed calm reply, ahead of everything", async 
   const r = await say("I want to kill myself"); assert.match(r, /doctor|crisis line/);
 });
 await ok("every tool the page hands a model is in the hosted allowlist, and the reverse", async () => {
-  const names_ = await p.evaluate(() => window.__board.modelTools().map((t) => t.name)); const src = fs.readFileSync(new globalThis.URL("../api/tutor.js", import.meta.url), "utf8");
+  const names_ = await p.evaluate(() => window.__board.modelTools().map((t) => t.name)); const src = fs.readFileSync((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js", "utf8");
   const list = src.match(/export const TOOLS = \[([\s\S]*?)\];/)[1].match(/"([a-z_]+)"/g).map((x) => x.replace(/"/g, ""));
   assert.deepEqual([...names_].sort(), [...list].sort());
 });

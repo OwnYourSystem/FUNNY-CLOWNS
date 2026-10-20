@@ -31,17 +31,18 @@ await seed(null, false);
 await ok("it stays out of the way until the planner has met you", async () => { assert.equal(await strip().isHidden(), true); });
 await seed();
 await ok("empty: one quiet line offers to set it, and nothing is invented", async () => {
-  assert.equal(await strip().isVisible(), true); assert.match(await strip().innerText(), /Set a minimum day/); assert.equal(await strip().locator("[data-floor]").count(), 0);
+  assert.equal(await strip().isVisible(), true); assert.match(await strip().innerText(), /Add your easy things/); assert.equal(await strip().locator("[data-floor]").count(), 0);
   assert.deepEqual((await st()).floor === undefined ? { items: [] } : (await st()).floor.items ? { items: (await st()).floor.items } : {}, { items: [] });
 });
-await ok("the dialog has 4 boxes with suggestions; Not now changes nothing", async () => {
-  await strip().locator("[data-floor-edit]").click(); await D().waitFor(); assert.equal(await D().locator("[data-ak]").count(), 4);
-  assert.match(await D().innerText(), /these are enough/); assert.match(await D().locator('[data-ak="a0"]').getAttribute("placeholder"), /body/);
-  await p.keyboard.press("Escape"); await settle(); assert.match(await strip().innerText(), /Set a minimum day/);
+await ok("the dialog has 6 boxes with suggestions; Not now changes nothing", async () => {
+  await strip().locator("[data-floor-edit]").click(); await D().waitFor(); assert.equal(await D().locator("[data-ak]").count(), 6);
+  assert.match(await D().innerText(), /One of them counts the day/); assert.match(await D().locator('[data-ak="a0"]').getAttribute("placeholder"), /audiobook/);
+  await p.keyboard.press("Escape"); await settle(); assert.match(await strip().innerText(), /Add your easy things/);
 });
-await ok("save 3 anchors: chips in your own words, none ticked, the event log has no words", async () => {
+await ok("save 3 easy things: chips in your own words, none ticked, the event log has no words", async () => {
   await strip().locator("[data-floor-edit]").click(); await D().waitFor();
   await D().locator('[data-ak="a0"]').fill("Eat a proper meal"); await D().locator('[data-ak="a1"]').fill("Reply to the one email that matters"); await D().locator('[data-ak="a2"]').fill("Ten minutes outside"); await D().locator("[data-aok]").click(); await settle();
+  await p.waitForFunction(() => document.querySelectorAll("#floor [data-floor]").length === 3, null, { timeout: 3000 }).catch(() => {});
   assert.equal(await strip().locator("[data-floor]").count(), 3); assert.match(await strip().innerText(), /0 of 3/i); assert.equal(await strip().locator('[aria-pressed="true"]').count(), 0);
   const s = await st(); assert.deepEqual(s.floor.items.map((x) => x.t), ["Eat a proper meal", "Reply to the one email that matters", "Ten minutes outside"]);
   assert.ok(!JSON.stringify(s.ev).includes("meal")); assert.equal(s.ev.filter((e) => e.k === "floor" && e.act === "set").length, 1);
@@ -52,33 +53,35 @@ await ok("over 60 characters is refused; duplicates and blanks are dropped", asy
   await D().locator('[data-ak="a3"]').fill("ten minutes OUTSIDE"); await D().locator("[data-aok]").click(); await settle();
   assert.equal((await st()).floor.items.length, 3, "a duplicate in other case is not added");
 });
-await ok("tapping an anchor ticks it, and the count and the log follow; no words in the log", async () => {
+await ok("tapping one ticks it, and the count and the log follow; no words in the log", async () => {
   const chip = strip().locator("[data-floor]").first(); await chip.click(); await settle();
   assert.equal(await strip().locator("[data-floor]").first().getAttribute("aria-pressed"), "true"); assert.match(await strip().innerText(), /1 of 3/i);
   const s = await st(), t = await today(); assert.equal(s.floor.log[t].d.length, 1); const e = s.ev.filter((x) => x.k === "floor" && x.act === "on"); assert.equal(e.length, 1); assert.ok(!JSON.stringify(s.ev).includes("proper meal"));
 });
-await ok("all ticked: it says so and that counts; unticking takes it back", async () => {
-  for (const i of [1, 2]) { await strip().locator("[data-floor]").nth(i).click(); await settle(); }
-  assert.match(await strip().innerText(), /3 of 3/i); assert.match(await strip().innerText(), /That counts as a day, whatever else happened/); assert.equal(await p.evaluate(() => window.__board.floor.met()), true);
-  await strip().locator("[data-floor]").nth(2).click(); await settle(); assert.equal(await p.evaluate(() => window.__board.floor.met()), false); assert.ok(!/That counts as a day/.test(await strip().innerText()));
+await ok("one tick counts the day; unticking the last takes it back", async () => {
+  assert.match(await strip().innerText(), /That counts as a day, whatever else happened/); assert.equal(await p.evaluate(() => window.__board.floor.met()), true);
+  await strip().locator("[data-floor]").nth(1).click(); await settle(); assert.match(await strip().innerText(), /2 of 3/i);
+  await strip().locator("[data-floor]").nth(1).click(); await strip().locator("[data-floor]").nth(0).click(); await settle();
+  assert.equal(await p.evaluate(() => window.__board.floor.met()), false); assert.ok(!/That counts as a day/.test(await strip().innerText()));
+  for (const i of [0, 1]) { await strip().locator("[data-floor]").nth(i).click(); await settle(); }
 });
 await ok("it survives a reload with today's ticks", async () => { await p.reload(); await p.waitForSelector(".row.pick"); assert.match(await strip().innerText(), /2 of 3/i); });
-await ok("editing keeps the ticks of anchors whose words did not change, and drops a removed anchor from the count", async () => {
+await ok("editing keeps the ticks of the ones whose words did not change, and drops a removed one from the count", async () => {
   await strip().locator("[data-floor-edit]").click(); await D().waitFor(); await D().locator('[data-ak="a2"]').fill(""); await D().locator("[data-aok]").click(); await settle();
   assert.match(await strip().innerText(), /2 of 2/i); assert.equal(await strip().locator('[aria-pressed="true"]').count(), 2);
   await strip().locator("[data-floor-edit]").click(); await D().waitFor(); await D().locator('[data-ak="a0"]').fill("Eat a proper meal"); await D().locator('[data-ak="a2"]').fill("A new one"); await D().locator("[data-aok]").click(); await settle();
   assert.match(await strip().innerText(), /2 of 3/i);
 });
-await ok("a low day says these are enough; a normal day does not", async () => {
+await ok("a low day says one is enough; a normal day does not", async () => {
   assert.ok(!/low day/i.test(await strip().innerText()));
-  await seed(`(s) => { s.floor = { items: [{ id: "f1", t: "Water" }], log: {} }; const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; }`);
-  assert.match(await strip().innerText(), /A low day: these are enough/);
+  await seed(`(s) => { s.floor = { items: [{ id: "f1", t: "Water" }], log: {} }; const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low", lvl: 2 }; }`);
+  assert.match(await strip().innerText(), /Low energy: one of these is enough/);
 });
-await ok("the last 14 days: only days it was opened count, and only complete days are met", async () => {
+await ok("the last 14 days: only days it was opened count, and one tick meets a day", async () => {
   const d = [await ago(1), await ago(2), await ago(3), await ago(4), await ago(20)];
   await seed(`(s) => { s.floor = { items: [{ id: "a", t: "A" }, { id: "b", t: "B" }], log: { "${d[0]}": { d: ["a", "b"], n: 2 }, "${d[1]}": { d: ["a"], n: 2 }, "${d[2]}": { d: ["a", "b"], n: 2 }, "${d[4]}": { d: ["a", "b"], n: 2 } } }; }`);
-  assert.match(await strip().innerText(), /Met on 2 of the last 14 days/);
-  const r = await p.evaluate(() => window.__board.floor.days(14)); assert.deepEqual(r, { met: 2, seen: 3 });
+  assert.match(await strip().innerText(), /Met on 3 of the last 14 days/);
+  const r = await p.evaluate(() => window.__board.floor.days(14)); assert.deepEqual(r, { met: 3, seen: 3 });
 });
 await ok("a day it was not opened is not a failure: no log, no number", async () => {
   await seed(`(s) => { s.floor = { items: [{ id: "a", t: "A" }], log: {} }; }`); assert.ok(!/Met on/.test(await strip().innerText()));
@@ -91,10 +94,10 @@ await ok("old days are dropped after 60", async () => {
 await ok("clearing every box switches it off", async () => {
   await seed(`(s) => { s.floor = { items: [{ id: "a", t: "A" }], log: {} }; }`);
   await strip().locator("[data-floor-edit]").click(); await D().waitFor(); await D().locator('[data-ak="a0"]').fill(""); await D().locator("[data-aok]").click(); await settle();
-  assert.match(await strip().innerText(), /Set a minimum day/); assert.deepEqual((await st()).floor.items, []);
+  assert.match(await strip().innerText(), /Add your easy things/); assert.deepEqual((await st()).floor.items, []);
 });
-await ok("an unknown anchor id is refused", async () => { assert.match(await p.evaluate(() => { try { window.__board.floor.toggle("nope"); return "ok"; } catch (e) { return e.message; } }), /not on your minimum day/); });
-await ok("anchors are escaped, and the strip and dialog fit a phone", async () => {
+await ok("an unknown id is refused", async () => { assert.match(await p.evaluate(() => { try { window.__board.floor.toggle("nope"); return "ok"; } catch (e) { return e.message; } }), /not one of your easy things/); });
+await ok("easy things are escaped, and the strip and dialog fit a phone", async () => {
   await seed(`(s) => { s.floor = { items: [{ id: "a", t: "<img src=x onerror=window.__x=1> and a long long long anchor to wrap" }, { id: "b", t: "Second" }], log: {} }; }`);
   assert.equal(await strip().locator("img").count(), 0); assert.equal(await p.evaluate(() => window.__x), undefined);
   await p.setViewportSize({ width: 412, height: 820 }); await settle();

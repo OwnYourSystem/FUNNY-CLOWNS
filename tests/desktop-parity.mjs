@@ -1,6 +1,6 @@
 /* The board (desktop) at the phone's level (owner, 2026-10-20: "keep both on the same level, with different interfaces"):
-   steps in their order, no step priority, own date under More, Easy, Earlier/Later and drag with Undo, the energy battery,
-   steps on a good day, Delivery days instead of Needs attention, the passed-day question, and Suggest an order. */
+   steps in their order, no step priority and no own date, Easy, Earlier/Later and drag with Undo, the energy battery,
+   steps on a good day, Delivery days instead of Needs attention, and the passed-day question. The AI order is gone (2026-10-20). */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -34,10 +34,10 @@ await ok("the subtask list is the sequence: open steps in their order, numbered,
   assert.deepEqual(await p.locator("#sub-bars .rhead .ord").allInnerTexts(), ["1", "2", "3"]);
   assert.match(await p.locator("#sub-bars .seqline").innerText(), /Done from top to bottom\. Drag a step to change the order\./);
 });
-await ok("the step editor has no priority; its own date sits under More; Easy is a checkbox that saves", async () => {
+await ok("the step editor has no priority and no own date; Easy is a checkbox that saves", async () => {
   await openEd("gS1");
   assert.equal(await p.locator('#sub-bars .editor [data-ed="prio"]').count(), 0);
-  assert.equal(await p.locator('#sub-bars .editor details.more:not([open]) [data-ed="due"]').count(), 1);
+  assert.equal(await p.locator('#sub-bars .editor [data-ed="due"]').count(), 0);
   await p.locator('#sub-bars [data-ed-easy="gS1"]').check(); await p.waitForTimeout(250);
   assert.equal((await st()).subs.gS1.easy, true); assert.match(await p.locator('#sub-bars .row[data-sub="gS1"] .rhead').innerText(), /Easy/i);
 });
@@ -57,13 +57,15 @@ await ok("dragging a step onto another step puts it there, with Undo", async () 
   assert.deepEqual(await subs(), ["gS0", "gS3", "gS1", "gS2"]);
   await p.locator("#dk-undo-b").click(); await p.waitForTimeout(300); assert.deepEqual(await subs(), ["gS0", "gS1", "gS2", "gS3"]);
 });
-await ok("the battery on the Do this now strip opens the same energy sheet; Very low sizes the day to one easy thing", async () => {
-  const e = p.locator("#now-badge [data-energy-open]"); assert.match(await e.getAttribute("aria-label"), /Energy: Good, the board.s guess/);
+await ok("the battery on the Do this now strip opens the same energy sheet; Very low asks for nothing; Low offers only the Easy step", async () => {
+  const e = p.locator("#now-badge [data-energy-open]"); assert.match(await e.getAttribute("aria-label"), /Energy: Good, not set today/);
   await e.click(); await D().waitFor(); assert.match(await D().innerText(), /How is your energy/);
   await D().getByRole("button", { name: /^Very low/ }).click(); await p.waitForTimeout(300);
   assert.equal((await st()).cap.lvl, 1); assert.match(await p.locator("#now-badge [data-energy-open]").getAttribute("aria-label"), /Very low, set by you/);
   assert.match(await p.locator("#oftad-count").innerText(), /of today.s 1 · energy very low/);
-  assert.match(await p.locator("#now-badge").innerText(), /Lay the base/, "the easy step did not come first");
+  assert.match(await p.locator("#now-badge").innerText(), /Nothing is needed now/); assert.doesNotMatch(await p.locator("#now-badge").innerText(), /Lay the base/);
+  await p.locator("#now-badge [data-energy-open]").click(); await D().waitFor(); await D().getByRole("button", { name: /^Low/ }).click(); await p.waitForTimeout(300);
+  assert.match(await p.locator("#now-badge").innerText(), /Lay the base/, "the Easy step was not offered");
 });
 await ok("the first Good asks how many steps make a good day; the Planner can change it", async () => {
   await p.locator("#now-badge [data-energy-open]").click(); await D().waitFor(); await D().getByRole("button", { name: /^Good/ }).click(); await p.waitForTimeout(300);
@@ -73,20 +75,9 @@ await ok("the first Good asks how many steps make a good day; the Planner can ch
   const sel = p.locator('#pl-form [data-me="normalN"]'); assert.equal(await sel.inputValue(), "2");
   await sel.selectOption("4"); await p.waitForTimeout(250); assert.equal((await st()).me.normalN, 4);
 });
-await ok("the Planner has the AI switch: on asks for consent first, off withdraws it", async () => {
-  const sw = p.locator("#pl-aiok"); assert.equal(await sw.getAttribute("aria-pressed"), "false");
-  await sw.click(); await D().waitFor(); assert.match(await D().innerText(), /Anthropic/); await D().getByRole("button", { name: "Send" }).click(); await p.waitForTimeout(300);
-  assert.ok((await st()).me.aiOrderOk); assert.equal(await p.locator("#pl-aiok").getAttribute("aria-pressed"), "true");
-  await p.locator("#pl-aiok").click(); await p.waitForTimeout(250); assert.equal((await st()).me.aiOrderOk, undefined);
-});
-await ok("Suggest an order on the board: consent, the suggestion labelled AI, Use this order, Undo", async () => {
-  await seed();
-  await p.locator("#sub-bars [data-aiorder-d]").click(); await D().waitFor(); await D().getByRole("button", { name: "Send" }).click();
-  await D().waitFor(); assert.deepEqual(sent.pop(), { goal: "Shed", steps: [{ id: "gS1", name: "Lay the base" }, { id: "gS2", name: "Buy timber" }, { id: "gS3", name: "Build the walls" }] });
-  assert.match(await D().innerText(), /Suggested by AI[\s\S]*1\. Build the walls/);
-  await D().getByRole("button", { name: "Use this order" }).click(); await p.waitForTimeout(300);
-  assert.deepEqual(await subs(), ["gS0", "gS3", "gS1", "gS2"]); assert.match(await p.locator("#dk-undo-t").innerText(), /New order for Shed/);
-  await p.locator("#dk-undo-b").click(); await p.waitForTimeout(300); assert.deepEqual(await subs(), ["gS0", "gS1", "gS2", "gS3"]);
+await ok("no AI order: no switch on the Planner, no Suggest button, and nothing is sent", async () => {
+  assert.equal(await p.locator("#pl-aiok").count(), 0);
+  await seed(); assert.equal(await p.locator("#sub-bars [data-aiorder-d], [data-ph=aiorder]").count(), 0); assert.equal(sent.length, 0);
 });
 await ok("Delivery days: the strip, the count and the panel speak of pace; a passed day asks, and Keep, No date (with Undo) and Pick a new day answer it", async () => {
   await seed((s, a) => { s.groups[0].due = a[0]; s.groups[1].due = a[1]; }, [day(-2), day(3)]);

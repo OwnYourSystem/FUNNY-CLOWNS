@@ -26,14 +26,10 @@ const KEY='oys-min-deliveries-v1';
   // take + skip + dose via UI
   await page.click('#oftad-pick [data-pick-skip]').catch(()=>{});
   await page.waitForTimeout(300);
-  console.log('WHY_CHIPS='+await page.locator('[data-skipwhy]').count());
-  await page.locator('#oftad-pick [data-skipwhy="too big"]').first().click().catch(async()=>{ await page.locator('[data-skipwhy="too big"]').first().click(); });
-  await page.waitForTimeout(300);
   await page.click('#now-badge [data-energy-open]'); await page.waitForSelector('dialog.ask[open]'); await page.locator('dialog.ask[open]').getByRole('button',{name:/^Very low/}).click();
   await page.waitForTimeout(300);
   e=await evs();
   console.log('SKIP_EV='+JSON.stringify(e.filter(x=>x.k==='skip'))+' DOSE_EV='+JSON.stringify(e.filter(x=>x.k==='dose')));
-  console.log('CHIPS_AFTER_TAP='+await page.locator('[data-skipwhy]').count());
 
   // 2. golden dataset: known pattern, compare engine against independent arithmetic
   const gold=await page.evaluate(KEY=>{

@@ -60,17 +60,17 @@ await ok("a card the board suggested and you took keeps the board's reason; one 
   await p.evaluate(() => { const sub = Object.values(JSON.parse(localStorage.getItem("oys-min-deliveries-v1")).subs).find((q) => q.gid !== JSON.parse(localStorage.getItem("oys-min-deliveries-v1")).oftad[0] && true); window.__board.toolRun("focus_today", { subtask: Object.values(JSON.parse(localStorage.getItem("oys-min-deliveries-v1")).subs).filter((q) => q.id !== JSON.parse(localStorage.getItem("oys-min-deliveries-v1")).oftad[0].id).slice(-1)[0].name }); }); await settle();
   assert.match(await p.locator("#oftad").innerText(), /You chose this for today/);
 });
-await ok("on a low day (dose 1) the suggestion stops once Today holds one thing; the footer says so", async () => {
-  await seed(`(s) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; }`);
+await ok("on a low day only a step marked Easy is offered, and the offer stops once it is taken; the footer says so", async () => {
+  await seed(`(s, ids) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low", lvl: 2 }; Object.values(s.subs).forEach((x) => { x.easy = false; }); const id = ids.find((i) => s.groups.find((g) => g.id === s.subs[i].gid).where !== "work" && s.subs[i].status !== "done"); s.subs[id].easy = true; }`);
   assert.equal(await p.locator("#oftad-pick").isVisible(), true); await p.locator("#oftad-pick [data-pick-take]").click(); await settle();
-  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /1 of today.s 1 · energy very low/);
+  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /1 of today.s 2 · energy low/);
 });
 await ok("on a normal day (dose 3) it keeps offering until Today holds three", async () => {
   await seed(); for (let i = 1; i <= 3; i++) { assert.equal(await p.locator("#oftad-pick").isVisible(), true, "offer " + i); assert.match(await p.locator("#oftad-count").innerText(), new RegExp((i - 1) + " of today.s 3 · energy good")); await p.locator("#oftad-pick [data-pick-take]").click(); await settle(); }
   assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /3 of today.s 3 · energy good/);
 });
 await ok("past the dose, it says so and leaves the choice to you", async () => {
-  await seed(`(s, ids) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; s.oftad = [{ k: "sub", id: ids[0], done: false }, { k: "sub", id: ids[5], done: false }]; }`);
+  await seed(`(s, ids) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low", lvl: 1 }; s.oftad = [{ k: "sub", id: ids[0], done: false }, { k: "sub", id: ids[5], done: false }]; }`);
   assert.match(await p.locator("#oftad-count").innerText(), /over the dose, your call/);
 });
 await ok("Done today counts Today and finished cards, not Waiting", async () => {

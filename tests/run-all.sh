@@ -4,13 +4,15 @@
 #   (cd "$APP_ROOT" && python3 -m http.server 8731 &) ; APP_ROOT=/path/to/app bash tests/run-all.sh
 # EXTRA="journal-progress" adds suites that only a feature branch passes; BOARD_URL
 # points the browser suites at another server (default :8731).
-# Known debt: modals, inputs, hints, barrier and floor can fail on timing in a
+# Every browser starts today at 18:00 (tests/_clock.mjs); TEST_CLOCK=off uses the real time.
+# Known debt: modals, inputs and floor can fail on timing in a
 # full run; run the suite alone before calling it a break.
 T=$(cd "$(dirname "$0")" && pwd)
 : "${APP_ROOT:?set APP_ROOT to a checkout of the app branch}"; export APP_ROOT
+export NODE_OPTIONS="--import $T/_clock.mjs $NODE_OPTIONS"
 C=$(mktemp -d)
 cd "$T"
-for f in evidence experiments memory hints safety barrier reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor journal-progress phone-pages brand day-start hig2 guide backup backup-reminder energy sequence order-api order-ui drag desktop-parity $EXTRA; do
+for f in safety reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor journal-progress phone-pages brand day-start hig2 guide backup backup-reminder energy sequence drag desktop-parity rules $EXTRA; do
   [ -f $f.mjs ] || continue
   echo "== $f"; timeout 280 node $f.mjs 2>&1 | grep -E "^(PASS|FAIL)" | awk '/FAIL/{print substr($0,1,300)} {c[$1]++} END{print c["PASS"]+0" pass, "c["FAIL"]+0" fail"}'
 done

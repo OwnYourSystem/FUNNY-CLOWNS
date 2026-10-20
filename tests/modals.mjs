@@ -106,16 +106,9 @@ await ok("reset really resets when confirmed", async () => {
   await Promise.all([p.waitForNavigation(), p.locator("dialog.ask[open]:not(#backup) [data-aok]").click()]); await p.waitForSelector(".row.pick");
   assert.equal(await p.evaluate((K) => JSON.parse(localStorage.getItem(K)).marker, KEY), undefined);
 });
-await ok("erase memory and forget hints ask first, and change nothing on Not now", async () => {
-  await p.evaluate((K) => { const s = JSON.parse(localStorage.getItem(K)); s.mem = [{ id: "m1", st: "kept", t: "I work best in the morning", src: "you", at: "2026-10-01" }]; s.hintLog = [{ d: "2026-10-01", type: "progress", key: "k", ans: "helpful" }]; localStorage.setItem(K, JSON.stringify(s)); }, KEY);
-  await p.reload(); await p.waitForSelector(".row.pick");
-  const st = () => p.evaluate((K) => { const s = JSON.parse(localStorage.getItem(K)); return { mem: s.mem.length, log: s.hintLog.length }; }, KEY);
+await ok("the memory and hint resets are gone with the right column", async () => {
   await p.evaluate(() => { location.hash = "#/planner"; }); await p.waitForTimeout(300);
-  await p.locator("#mem-erase").click(); await D().waitFor(); assert.match(await D().innerText(), /Erase everything/); assert.match(await D().innerText(), /1 note/);
-  await p.keyboard.press("Escape"); await settle(); assert.equal((await st()).mem, 1);
-  await p.locator("#hint-reset").click(); await D().waitFor(); assert.match(await D().innerText(), /Forget which hints helped/); await p.keyboard.press("Escape"); await settle(); assert.equal((await st()).log, 1);
-  await p.locator("#mem-erase").click(); await D().waitFor(); await D().locator("[data-aok]").click(); await settle(); assert.equal((await st()).mem, 0);
-  await p.locator("#hint-reset").click(); await D().waitFor(); await D().locator("[data-aok]").click(); await settle(); assert.equal((await st()).log, 0);
+  assert.equal(await p.locator("#mem-erase, #hint-reset").count(), 0);
 });
 await ok("reminders: the explainer comes before the browser's prompt, and Not now never reaches it", async () => {
   await p.evaluate(() => { sessionStorage.setItem("perm", "default"); location.hash = "#/board"; }); await p.reload(); await p.waitForSelector(".row.pick");

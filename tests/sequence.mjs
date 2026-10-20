@@ -27,9 +27,9 @@ const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; },
 const D = () => p.locator("dialog.ask[open]");
 const pick = () => p.locator("[aria-label='Do this now'] .ph-task").innerText();
 const why = () => p.locator("[aria-label='Do this now'] .ph-why").innerText();
-/* a clean board with two goals that can be done anywhere: Shed (3 steps, no date) and Report (no steps yet) */
+/* a clean board with two goals that are not work, and no work days (rule 5 stays out of the way): Shed (3 steps, no date) and Report (no steps yet) */
 const mk = (s, a) => {
-  s.groups = []; s.subs = {}; s.oftad = []; s.plan = []; s.done = []; s.me.guided = true; s.me.wind = "23:59"; s.me.rise = "00:30";
+  s.groups = []; s.subs = {}; s.oftad = []; s.plan = []; s.done = []; s.me.guided = true; s.me.wind = "23:59"; s.me.rise = "00:30"; s.me.days = [];
   const g = (id, name, steps, due) => { s.groups.push({ id, name, subs: steps.map((n, i) => id + i), prio: "mid", where: "any", due: due || "", tags: [] });
     steps.forEach((n, i) => { s.subs[id + i] = { id: id + i, gid: id, name: n, pct: 0, status: "todo", tag: "", upd: a.today }; }); };
   g("gS", "Shed", ["Buy timber", "Lay the base", "Build the walls"]);
@@ -50,19 +50,19 @@ await ok("the goal page numbers the open steps, and a step page moves one Earlie
   assert.deepEqual((await st()).groups.find((g) => g.id === "gS").subs, ["gS1", "gS0", "gS2"]);
   await go("now"); assert.equal(await pick(), "Lay the base");
 });
-await ok("a step already started goes first, because finishing beats starting", async () => {
+await ok("a later step already started does not jump ahead: the list order decides", async () => {
   await put((s) => { s.subs.gS2.pct = 30; s.subs.gS2.status = "doing"; }, {});
-  assert.equal(await pick(), "Build the walls");
+  assert.equal(await pick(), "Lay the base");
   await put((s) => { s.subs.gS2.pct = 0; s.subs.gS2.status = "todo"; }, {});
 });
-await ok("a step's own date (a fixed appointment) puts it first in its goal when the day comes", async () => {
-  await put((s, a) => { s.subs.gS2.due = a; }, day(0)); assert.equal(await pick(), "Build the walls");
+await ok("a step date left from before changes nothing: steps have no own date now", async () => {
+  await put((s, a) => { s.subs.gS2.due = a; }, day(0)); assert.equal(await pick(), "Lay the base");
   await put((s) => { s.subs.gS2.due = ""; }, {});
 });
 await ok("pace: four steps and three days to the delivery day pull ahead of a goal with no date, and Now says the pace, not a deadline", async () => {
   await put((s, a) => { s.groups.find((g) => g.id === "gR").due = a; }, day(2));
   assert.equal(await pick(), "Collect numbers");
-  const w = await why(); assert.match(w, /Report is for \w+, with 4 steps left, so about 2 a day keeps it on pace\./); assert.doesNotMatch(w, /deadline|overdue|days over/i);
+  const w = await why(); assert.match(w, /Report is for \w+, with 4 steps left, about 2 a day; this is its next step\./); assert.doesNotMatch(w, /deadline|overdue|days over/i);
   await go("goal/gR"); assert.match(await p.locator(".ph-row-h").first().innerText(), /Delivery \w+/);
 });
 await ok("a far delivery day pulls less than a near one", async () => {
@@ -109,7 +109,7 @@ await ok("the first time Good is picked, the person says how many steps make a g
   const me = (await st()).me; assert.equal(me.normalN, 2); assert.equal(me.goodSet, true);
   const n = await p.evaluate(() => window.__board.dose().n); assert.equal(n, 2);
   await p.locator("[data-ph=energy]").click(); await D().waitFor();
-  const t = await D().innerText(); assert.match(t, /Low: one easier thing/); assert.match(t, /Good: 2 steps/); assert.match(t, /Full: 4 steps/);
+  const t = await D().innerText(); assert.match(t, /Low: easy things only/); assert.match(t, /Very low: nothing is needed/); assert.match(t, /Good: 2 steps/); assert.match(t, /Full: 4 steps/);
   await D().getByRole("button", { name: /^Good/ }).click(); await p.waitForTimeout(300); assert.equal(await D().count(), 0, "it asked again");
 });
 await ok("You has a Steps on a good day row that asks the same question", async () => {

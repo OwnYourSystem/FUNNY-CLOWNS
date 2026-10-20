@@ -70,7 +70,6 @@ await ok("it is kept out of the board's own state and the event log; the backup 
 await ok("the tutor cannot reach it: not in the snapshot, and no tool reads it", async () => {
   const r = await p.evaluate(() => { const B = window.__board, tools = B.modelTools(); const snap = tools.find((t) => t.name === "board_state").execute({}); return { snap, names: tools.map((t) => t.name) }; });
   assert.ok(!/check-in|calm|getting through|mattered/i.test(r.snap), "snapshot"); assert.ok(!r.names.some((n) => /week|checkin|mood/i.test(n)));
-  const mem = await p.evaluate(() => window.__board.modelTools().find((t) => t.name === "get_memory").execute({})); assert.ok(!/check-in|calm|mood/i.test(mem));
 });
 await ok("the planner shows the table; a second check-in the same week replaces the first", async () => {
   await p.evaluate(() => { location.hash = "#/planner"; }); await settle();

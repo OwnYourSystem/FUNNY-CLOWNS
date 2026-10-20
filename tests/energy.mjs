@@ -1,5 +1,5 @@
 /* The energy level on Now (owner, 2026-10-20): one battery beside the date shows the level the day is sized to.
-   Until the person sets it, it is the board's own sizing; a change re-sizes the plan at once. A low level puts easy steps first. */
+   Rule 1: until the person sets it, it is Good (the board does not guess). Very low asks for nothing; low shows only easy things and steps marked Easy. */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -24,18 +24,18 @@ const set = async (re) => { await E().click(); await D().waitFor(); await D().ge
 const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250); };
 const pick = () => p.locator("[aria-label='Do this now'] .ph-task").innerText();
 
-await ok("Now shows one battery beside the date: the board's own sizing until you set it, 44px or more, named for screen readers", async () => {
+await ok("Now shows one battery beside the date: Good until you set it, 44px or more, named for screen readers", async () => {
   assert.equal(await E().count(), 1);
   const r = await p.evaluate(() => { const e = document.querySelector("[data-ph=energy]"), h = document.querySelector(".ph-head h1");
     return { inHead: !!e.closest(".ph-head"), h: e.getBoundingClientRect().height, l: e.dataset.l, bars: e.querySelectorAll("rect.on").length, label: e.getAttribute("aria-label"), text: e.textContent }; });
   assert.ok(r.inHead); assert.ok(r.h >= 44); assert.equal(r.l, "3"); assert.equal(r.bars, 3);
-  assert.match(r.label, /^Energy: Good, the board.s guess\. Change$/); assert.match(r.text, /Good.*Board.s guess/);
+  assert.match(r.label, /^Energy: Good, not set today\. Change$/); assert.match(r.text, /Good.*Tap to set/);
 });
-await ok("the board's guess follows its own sizing: after rough days it shows Very low, without anyone setting it", async () => {
+await ok("rule 1: rough days before do not change it; not set today is Good, and the board never guesses", async () => {
   await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); const d = (n) => { const x = new Date(Date.now() - n * 864e5); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
     s.capLog = [{ d: d(1), est: "normal", you: "low" }, { d: d(2), est: "normal", you: "low" }]; s.cap = null; localStorage.setItem(KEY, JSON.stringify(s)); }, KEY);
   await p.reload(); await p.waitForSelector("[data-ph=energy]");
-  assert.equal(await E().getAttribute("data-l"), "1"); assert.match(await E().getAttribute("aria-label"), /board.s guess/); assert.equal((await dose()).src, "auto");
+  assert.equal(await E().getAttribute("data-l"), "3"); assert.match(await E().getAttribute("aria-label"), /not set today/); assert.equal((await dose()).src, "default");
   await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); s.capLog = []; localStorage.setItem(KEY, JSON.stringify(s)); }, KEY);
   await p.reload(); await p.waitForSelector("[data-ph=energy]");
 });
@@ -49,11 +49,10 @@ await ok("tapping it opens a sheet with the four levels; each one re-sizes the d
   const s = await st(); assert.equal(s.cap.lvl, 4); assert.equal(s.capLog[0].lvl, 4); assert.equal(s.capLog.filter((x) => x.d === s.cap.d).length, 1, "one entry a day");
   assert.equal(await p.evaluate(() => document.activeElement && document.activeElement.getAttribute("data-ph")), "energy", "focus did not come back");
 });
-await ok("Keep it changes nothing; Let the board decide is offered only once you set it, and clears it", async () => {
-  await E().click(); await D().waitFor(); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200); assert.equal((await st()).cap.lvl, 4);
-  await set(/Let the board decide/); assert.equal((await st()).cap, null); assert.match(await E().getAttribute("aria-label"), /board.s guess/);
+await ok("Keep it changes nothing, and there is no Let the board decide", async () => {
   await E().click(); await D().waitFor(); assert.equal(await D().getByRole("button", { name: /Let the board decide/ }).count(), 0);
-  await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
+  assert.match(await D().innerText(), /stays at Good/);
+  await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200); assert.equal((await st()).cap.lvl, 4);
 });
 await ok("a step can be marked Easy on its page, as a switch, and turned off again", async () => {
   const id = await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); return Object.values(s.subs).find((x) => x.name === "Buy the timber").id; }, KEY);
@@ -64,24 +63,26 @@ await ok("a step can be marked Easy on its page, as a switch, and turned off aga
   await p.locator("[data-ph=seasy]").click(); await p.waitForTimeout(250); assert.equal("easy" in (await st()).subs[id], false);
   await p.locator("[data-ph=seasy]").click(); await p.waitForTimeout(250);
 });
-await ok("on a low level the easy step comes first, and says why; on a full one it does not jump the queue", async () => {
+await ok("on Low only the Easy step is offered, and says why; Very low offers no task; Full does not jump the queue", async () => {
   await go("now"); await set(/^Full/); const full = await pick();
-  await set(/^Very low/); assert.equal(await pick(), "Buy the timber", "very low did not pick the easy step");
-  await set(/^Low/); assert.equal(await pick(), "Buy the timber", "low did not pick the easy step");
+  await set(/^Very low/); assert.equal(await p.locator("[aria-label='Do this now'] .ph-task").count(), 0, "very low offered a task"); assert.match(await p.locator(".ph-rest").innerText(), /Nothing is needed now/);
+  await set(/^Low/); assert.equal(await pick(), "Buy the timber", "low did not pick the easy step"); assert.match(await p.locator("[aria-label='Do this now'] .ph-why").innerText(), /you marked this step Easy/);
   assert.notEqual(full, "Buy the timber", "the seeded board should have a harder step first on a full day");
   assert.match(await p.evaluate(() => window.__board.dose().why), /energy is low/);
 });
-await ok("with no easy step the sheet says how to mark one; with one it does not", async () => {
-  await E().click(); await D().waitFor(); assert.doesNotMatch(await D().innerText(), /Mark one on its page/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
+await ok("the sheet points to easy things when there are none, and to marking a step Easy when there is none", async () => {
+  await E().click(); await D().waitFor(); assert.match(await D().innerText(), /Add them on You/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
+  await p.evaluate(() => { window.__board.floor.set(["Read before sleep"]); });
+  await E().click(); await D().waitFor(); assert.doesNotMatch(await D().innerText(), /Mark one on its page|Add them on You/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
   await p.waitForFunction((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); return s.cap && s.cap.lvl === 2; }, KEY);
-  await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); Object.values(s.subs).forEach((x) => delete x.easy); localStorage.setItem(KEY, JSON.stringify(s)); }, KEY);
+  await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); Object.values(s.subs).forEach((x) => delete x.easy); s.floor = { items: [{ id: "f1", t: "Read before sleep" }], log: {} }; localStorage.setItem(KEY, JSON.stringify(s)); }, KEY);
   await p.reload(); await p.waitForSelector("[data-ph=energy]");
   assert.equal(await E().getAttribute("data-l"), "2", "the level did not last a reload");
   await E().click(); await D().waitFor(); assert.match(await D().innerText(), /Mark one on its page/); await D().getByRole("button", { name: "Keep it" }).click(); await p.waitForTimeout(200);
 });
-await ok("a level you set is for today only; tomorrow starts from the board's guess", async () => {
+await ok("a level you set is for today only; tomorrow starts at Good, not set", async () => {
   await p.evaluate((KEY) => { const s = JSON.parse(localStorage.getItem(KEY)); s.cap.d = "2000-01-01"; localStorage.setItem(KEY, JSON.stringify(s)); }, KEY);
-  await p.reload(); await p.waitForSelector("[data-ph=energy]"); assert.match(await E().getAttribute("aria-label"), /board.s guess/);
+  await p.reload(); await p.waitForSelector("[data-ph=energy]"); assert.match(await E().getAttribute("aria-label"), /Good, not set today/);
 });
 await ok("the assistant sets it in plain words, and the battery follows", async () => {
   await go("talk"); await p.fill("#bot-input", "my energy is very low"); await p.keyboard.press("Enter"); await p.waitForTimeout(600);

@@ -103,23 +103,24 @@ await ok("Tags: chips with count and progress; picking narrows the goals to thos
 /* ---------- Planner ---------- */
 await ok("Planner is a phone page: every fact of the week is there and saves as it changes, through the board's meSet", async () => {
   await go("planner"); assert.equal((await p.locator("#ph-main h1").innerText()).trim(), "Planner"); assert.equal(await p.locator("#v-planner").isVisible(), false);
-  for (const k of ["w0", "w1", "commute", "wind", "sharp", "gym", "brief", "north", "never"]) assert.equal(await p.locator(`[data-pme=${k}]`).count(), 1, k);
-  await p.locator("[data-pme=w0]").fill("09:15"); await p.locator("[data-pme=commute]").fill("45"); await p.locator("[data-pme=commute]").press("Enter");
-  await p.locator("[data-pme=sharp]").selectOption("evening"); await p.locator("[data-pme=north]").fill("Ship the audit"); await p.locator("[data-pme=north]").press("Enter"); await p.waitForTimeout(250);
-  const me = (await st()).me; assert.equal(me.work[0], "09:15"); assert.equal(me.commute, 45); assert.equal(me.sharp, "evening"); assert.equal(me.north, "Ship the audit");
-  await p.locator("[data-pme=commute]").fill("999"); await p.locator("[data-pme=commute]").press("Enter"); await p.waitForTimeout(200); assert.equal((await st()).me.commute, 240);
+  for (const k of ["w0", "w1", "rise", "wind", "brief", "north"]) assert.equal(await p.locator(`[data-pme=${k}]`).count(), 1, k);
+  for (const k of ["commute", "sharp", "gym", "never"]) assert.equal(await p.locator(`[data-pme=${k}]`).count(), 0, k + " is gone");
+  await p.locator("[data-pme=w0]").fill("09:15"); await p.locator("[data-pme=north]").fill("Ship the audit"); await p.locator("[data-pme=north]").press("Enter"); await p.waitForTimeout(250);
+  const me = (await st()).me; assert.equal(me.work[0], "09:15"); assert.equal(me.north, "Ship the audit");
 });
 await ok("Planner: working days toggle; a typed field survives a background redraw", async () => {
   const before = (await st()).me.days.includes(6);
   await p.locator("[data-ph=pday][data-day='6']").click(); await p.waitForTimeout(200);
   assert.equal((await st()).me.days.includes(6), !before); assert.equal(await p.locator("[data-ph=pday][data-day='6']").getAttribute("aria-pressed"), String(!before));
   await p.locator("[data-ph=pday][data-day='6']").click(); await p.waitForTimeout(150);
-  await p.locator("[data-pme=never]").fill("Sunday mornings"); await p.evaluate(() => window.__board.render()); assert.equal(await p.locator("[data-pme=never]").inputValue(), "Sunday mornings");
+  await p.locator("[data-pme=north]").fill("Sunday mornings"); await p.evaluate(() => window.__board.render()); assert.equal(await p.locator("[data-pme=north]").inputValue(), "Sunday mornings");
 });
-await ok("Planner: where each goal can be done saves, and the held-back list answers at once", async () => {
+await ok("Planner: which goals are work saves, and the held-back list answers at once", async () => {
   const g = (await st()).groups[0];
-  await p.locator(`[data-pwhere="${g.id}"]`).selectOption("body"); await p.waitForTimeout(250);
-  assert.equal((await st()).groups[0].where, "body");
+  await p.locator(`[data-pwhere="${g.id}"]`).selectOption("work"); await p.waitForTimeout(250);
+  assert.equal((await st()).groups[0].where, "work");
+  await p.locator(`[data-pwhere="${g.id}"]`).selectOption("any"); await p.waitForTimeout(250);
+  assert.equal((await st()).groups[0].where, "any");
   assert.ok(await p.locator("#ph-held").count());
 });
 await ok("Planner: Interview me again opens the interview, plum on its button only, and Leave it closes it", async () => {
@@ -132,36 +133,17 @@ await ok("Planner: Interview me again opens the interview, plum on its button on
   await p.locator("#iv-quit").click(); await p.waitForTimeout(300); assert.equal(await p.locator("#interview").isVisible(), false);
 });
 
-/* ---------- What the board learned ---------- */
-await ok("You's private row opens What the board learned, a phone page", async () => {
+/* ---------- the weekly check-in (What the board learned is gone, 2026-10-20) ---------- */
+await ok("You's private row opens the weekly check-in, a phone page", async () => {
   await go("you"); await p.locator("[data-ph=learned]").click(); await p.waitForTimeout(300);
-  assert.equal(await p.evaluate(() => location.hash), "#/learned"); assert.match(await p.locator("#ph-main h1").innerText(), /What the board learned/);
+  assert.equal(await p.evaluate(() => location.hash), "#/learned"); assert.match(await p.locator("#ph-main h1").innerText(), /Weekly check-in/);
+  assert.equal(await p.locator("[data-ph=memadd], [data-ph=memlearn], [data-ph=hinton], [data-ph=baron], [data-ph=memerase]").count(), 0);
 });
-await ok("Learned: a note is kept with Remember it (and Enter), shown, and removed", async () => {
-  await p.fill("#ph-memnew", "Mornings are for deep work"); await p.click("[data-ph=memadd]"); await p.waitForTimeout(300);
-  assert.match(await main(), /Mornings are for deep work/); assert.ok((await st()).mem.some((m) => m.t === "Mornings are for deep work" && m.st === "kept"));
-  await p.fill("#ph-memnew", "Calls go after lunch"); await p.press("#ph-memnew", "Enter"); await p.waitForTimeout(300);
-  assert.match(await main(), /Calls go after lunch/);
-  await p.locator(".ph-mem", { hasText: "Calls go after lunch" }).locator("[data-ph=memdel]").click(); await p.waitForTimeout(300);
-  assert.doesNotMatch(await main(), /Calls go after lunch/);
-});
-await ok("Learned: the switches are the board's own (Learning, Hints, Also as a reminder, Low-day check-in)", async () => {
-  const flip = async (k, field, want) => { await p.locator(`[data-ph=${k}]`).click(); await p.waitForTimeout(250); assert.equal((await st()).me[field], want, k); assert.match(await p.locator(`[data-ph=${k}]`).innerText(), want ? /On/ : /Off/); };
-  await flip("memlearn", "learn", false); await flip("memlearn", "learn", true);
-  await flip("hinton", "hints", false); await flip("hinton", "hints", true);
-  await flip("hintnote", "hintNote", false); await flip("hintnote", "hintNote", true);
-  await flip("baron", "barrier", false); await flip("baron", "barrier", true);
-});
-await ok("Learned: Check in opens the weekly sheet; the page lists the check-in after saving", async () => {
+await ok("Check in opens the weekly sheet; the page lists the check-in after saving", async () => {
   await p.locator("[data-ph=week]").click(); await D().waitFor({ state: "visible" });
   for (const k of ["e", "m", "c", "f", "w"]) await D().locator(`[data-ak="${k}"] [data-av="4"]`).click();
   await D().locator("[data-aok]").click(); await p.waitForTimeout(400);
   assert.match(await main(), /Week \d+ · [^\n]+\s+Average 4 of 5/); assert.equal(await p.locator("[data-ph=weekerase]").count(), 1);
-});
-await ok("Learned: Erase everything asks first (the board's own confirmation) and clears the notes", async () => {
-  await p.locator("[data-ph=memerase]").click(); await D().waitFor({ state: "visible" }); assert.match(await D().innerText(), /Erase everything/);
-  await D().getByRole("button", { name: "Erase it all" }).click(); await p.waitForTimeout(500);
-  assert.equal((await st()).mem.filter((m) => m.st === "kept").length, 0); assert.match(await main(), /Nothing kept yet/);
   assert.equal(await sideways(), false);
 });
 await ok("no page errors (phone)", async () => { assert.deepEqual(errs, []); });
@@ -186,7 +168,7 @@ await ctx.close();
     await q.evaluate(() => { location.hash = "#/planner"; }); await q.waitForTimeout(300);
     const before = (await qs()).me.days.includes(0); await q.locator("#pl-days [data-day='0']").click(); await q.waitForTimeout(150);
     assert.equal((await qs()).me.days.includes(0), !before);
-    await q.locator('#pl-form [data-me="commute"]').fill("20"); await q.waitForTimeout(150); assert.equal((await qs()).me.commute, 20);
+    await q.locator('#pl-form [data-me="north"]').fill("Ship it"); await q.locator('#pl-form [data-me="north"]').press("Tab"); await q.waitForTimeout(150); assert.equal((await qs()).me.north, "Ship it");
   });
   await ok("no page errors (classic)", async () => { assert.deepEqual(qe, []); });
   await dc.close();

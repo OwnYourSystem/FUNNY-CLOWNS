@@ -46,9 +46,6 @@ const KEY='oys-min-deliveries-v1';
   console.log('C_NOW_TAIL='+JSON.stringify(a.now.slice(-200))+' BTNS='+JSON.stringify(a.btns));
   let st=await p.evaluate(KEY=>{const s=JSON.parse(localStorage.getItem(KEY)); return {cap:s.cap,capLog:s.capLog};},KEY);
   console.log('C_STATE='+JSON.stringify(st));
-  await p.evaluate(()=>document.querySelector('#now-card-2 [data-dose="auto"]').click()); await p.waitForTimeout(300);
-  st=await p.evaluate(KEY=>{const s=JSON.parse(localStorage.getItem(KEY)); return {cap:s.cap,capLog:s.capLog};},KEY);
-  console.log('C_AFTER_AUTO='+JSON.stringify(st));
   // D. rough-day tap from normal, dock overfill note
   p=await open(`s=>{ s.dayLog=[]; s.capLog=[]; s.cap=null; s.plan=[]; s.done=[]; }`);
   await p.click('#now-badge [data-energy-open]'); await p.waitForSelector('dialog.ask[open]'); await p.locator('dialog.ask[open]').getByRole('button',{name:/^Very low/}).click(); await p.waitForTimeout(300);

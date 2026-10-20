@@ -18,7 +18,7 @@ await p.reload(); await p.waitForTimeout(500);
 const go = async (r) => { await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(300); };
 
 await ok("On/Off rows are switches: role switch, aria-checked, a track that moves, 44px or more, and the word for screen readers", async () => {
-  for (const [route, k] of [["you", "phshow"], ["learned", "memlearn"], ["learned", "hinton"]]) {
+  for (const [route, k] of [["you", "phshow"]]) {
     await go(route);
     const s = await p.evaluate((k) => { const e = document.querySelector(`[data-ph=${k}]`); const t = e.querySelector(".ph-switch");
       return { role: e.getAttribute("role"), checked: e.getAttribute("aria-checked"), track: !!t, h: e.getBoundingClientRect().height, word: e.querySelector(".ph-sr").textContent, bg: t && getComputedStyle(t).backgroundColor }; }, k);
@@ -49,10 +49,9 @@ await ok("Talk: your photo sits level with Clear and covers nothing", async () =
     return { dy: Math.abs((a.top + a.height / 2) - (c.top + c.height / 2)), overlap: !(a.left >= c.right || a.right <= c.left || a.top >= c.bottom || a.bottom <= c.top) }; });
   assert.ok(r.dy <= 2, "off by " + r.dy); assert.equal(r.overlap, false);
 });
-await ok("What the board learned: the label after the empty card has room above it", async () => {
+await ok("the weekly check-in page fits: no sideways scroll", async () => {
   await go("learned");
-  const gap = await p.evaluate(() => { const l = document.querySelector('label[for="ph-memnew"]'), prev = l.previousElementSibling; return l.getBoundingClientRect().top - prev.getBoundingClientRect().bottom; });
-  assert.ok(gap >= 12, "gap " + gap);
+  assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 });
 await ok("no page errors", async () => { assert.deepEqual(errs, []); });
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");

@@ -45,12 +45,13 @@ await ok("before the day starts the board stays quiet, and says why; after it st
     const me = JSON.parse(localStorage.getItem(KEY)).me;
     const at = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return window.__board.nowCtx(d); };
     const early = at(5, 30), later = at(9, 30);
-    return { early: early.early, later: later.early, body: window.__board.feasible({ where: "body" }, early), any: window.__board.feasible({ where: "any" }, early),
+    const dt = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+    return { early: early.early, later: later.early, restEarly: window.__board.rest(dt(5, 30)), restLater: window.__board.rest(dt(9, 30)), any: window.__board.feasible({ where: "any" }, early),
       outside5: window.__board.outsideDay(me, 5 * 60), outside10: window.__board.outsideDay(me, 10 * 60), small: window.__board.outsideDay(me, 2 * 60) };
   }, KEY);
   assert.equal(r.early, true); assert.equal(r.later, false);
-  assert.equal(r.body.ok, false); assert.match(r.body.why, /your day starts at 06:00/);
-  assert.equal(r.any.ok, true); assert.equal(r.any.soft, true);
+  assert.match(r.restEarly, /Your day starts at 06:00/); assert.equal(r.restLater, "");
+  assert.equal(r.any.ok, true);
   assert.equal(r.outside5, true); assert.equal(r.outside10, false); assert.equal(r.small, true);
 });
 await ok("a start at or before 04:00 has no early quiet", async () => {

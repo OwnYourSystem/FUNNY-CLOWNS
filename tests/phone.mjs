@@ -76,10 +76,10 @@ await ok("Now shows one task with its reason, and fits the screen above the tabs
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-now.png" });
 });
 let first = "";
-await ok("Something else gives the full reason and can show the next one", async () => {
+await ok("the full reason is on the card, and Skip shows the next one", async () => {
   first = await p.locator(".ph-task").innerText();
-  await tap("[data-ph=else]"); await D().waitFor({ state: "visible" }); assert.match(await D().innerText(), /Why this one/);
-  await D().getByRole("button", { name: "Show me the next one" }).click(); await p.waitForTimeout(300);
+  assert.ok((await p.locator("[aria-label='Do this now'] .ph-why").innerText()).length > 20); assert.equal(await p.locator("[data-ph=why], [data-ph=else]").count(), 0);
+  await tap("[data-ph=skip]"); await p.waitForTimeout(300);
   assert.notEqual(await p.locator(".ph-task").innerText(), first);
 });
 await ok("Start it puts the step in Today; Done ticks it off and counts it", async () => {
@@ -162,12 +162,11 @@ await ok("Add a step is a sheet with Speak; Add and Enter both add, a repeat is 
   assert.match(await p.locator("[data-ph=step]", { hasText: "Oil the hinges" }).innerText(), /Monthly/);
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-goal.png", fullPage: true });
 });
-await ok("a step opens its own page: every field except priority (the order replaces it, 2026-10-20); its own date sits under More", async () => {
+await ok("a step opens its own page: every field except priority and its own date (the order and the delivery day replace them, 2026-10-20)", async () => {
   await p.locator("[data-ph=step]", { hasText: "Lay the base" }).click(); await p.waitForTimeout(300);
   assert.match(await p.evaluate(() => location.hash), /^#\/step\/.+/);
-  for (const sel of ["#ph-s-name", "#ph-s-pct", "#ph-s-due", "#ph-s-rep", "#ph-s-tag", "#ph-s-goal"]) assert.equal(await p.locator(sel).count(), 1, sel);
+  for (const sel of ["#ph-s-name", "#ph-s-pct", "#ph-s-rep", "#ph-s-tag", "#ph-s-goal"]) assert.equal(await p.locator(sel).count(), 1, sel); assert.equal(await p.locator("#ph-s-due").count(), 0);
   assert.equal(await p.locator('[data-ph=sset][data-k=status]').count(), 4); assert.equal(await p.locator('[data-ph=sset][data-k=prio]').count(), 0);
-  assert.equal(await p.evaluate(() => !!document.querySelector("#ph-s-due").closest("details.ph-more:not([open])")), true, "the date is not folded under More");
   for (const k of ["stoday", "swhen", "sest", "sdone", "sdel"]) assert.equal(await p.locator(`[data-ph=${k}]`).count(), 1, k);
   assert.equal(await sideways(), false); await p.screenshot({ path: "/tmp/claude-0/ph-test-step.png", fullPage: true });
 });
@@ -190,11 +189,8 @@ await ok("status and percent follow the same rules as the classic editor", async
   await tap('[data-ph=sset][data-k=status][data-v=todo]'); await p.waitForTimeout(200); const s = await sub(N); assert.equal(s.status, "todo"); assert.equal(s.pct, 95);
   assert.equal(await p.locator('[data-ph=sset][data-k=status][data-v=todo]').getAttribute("aria-pressed"), "true");
 });
-await ok("its own date (under More, and Clear) and repeats are saved", async () => {
+await ok("repeats are saved", async () => {
   const N = "Lay the concrete base";
-  await tap(".ph-more summary"); await p.waitForTimeout(150);
-  await p.fill("#ph-s-due", "2027-02-01"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "2027-02-01");
-  await tap("[data-ph=nodue]"); await p.waitForTimeout(250); assert.equal((await sub(N)).due, "");
   await p.selectOption("#ph-s-rep", "weekly"); await p.waitForTimeout(250); const s = await sub(N); assert.equal(s.rep, "weekly"); assert.equal(s.pct, 0); assert.equal(s.status, "todo");
   await p.selectOption("#ph-s-rep", ""); await p.waitForTimeout(250); assert.equal((await sub(N)).rep, "");
 });
@@ -227,15 +223,15 @@ await ok("Remove this step asks first; Keep it keeps it; Remove it removes it an
   await tap("[data-ph=sdel]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: "Remove it" }).click(); await p.waitForTimeout(400);
   assert.equal(await sub("Lay the concrete base"), undefined); assert.match(await p.evaluate(() => location.hash), /^#\/goal\//);
 });
-await ok("Edit changes the goal's name, priority, deadline, place and tags", async () => {
+await ok("Edit changes the goal's name, delivery day, work and tags", async () => {
   await tap("[data-ph=gedit]"); await D().waitFor({ state: "visible" });
   assert.equal(await D().getByRole("button", { name: "Move it to the Backlog" }).count(), 1);
-  await D().locator('[data-ak="n"]').fill("Garden Shed 2027"); await D().getByRole("button", { name: "High" }).click();
-  await D().locator('[data-ak="d"]').fill("2027-03-01"); await D().locator('[data-ak="w"]').selectOption("home"); await D().locator('[data-ak="t"]').fill("Home, DIY");
+  await D().locator('[data-ak="n"]').fill("Garden Shed 2027"); assert.equal(await D().getByRole("button", { name: "High" }).count(), 0);
+  await D().locator('[data-ak="d"]').fill("2027-03-01"); await D().locator('[data-ak="w"]').selectOption("work"); await D().locator('[data-ak="t"]').fill("Home, DIY");
   await D().getByRole("button", { name: "Save" }).click(); await p.waitForTimeout(300);
   const g = (await st()).groups.find((x) => x.name === "Garden Shed 2027"); assert.ok(g, "not renamed");
-  assert.equal(g.prio, "high"); assert.equal(g.due, "2027-03-01"); assert.equal(g.where, "home"); assert.deepEqual(g.tags, ["home", "diy"]);
-  const t = await p.locator("#ph-main").innerText(); assert.match(t, /at home/i); assert.match(t, /#diy/);
+  assert.equal(g.due, "2027-03-01"); assert.equal(g.where, "work"); assert.deepEqual(g.tags, ["home", "diy"]);
+  const t = await p.locator("#ph-main").innerText(); assert.match(t, /Work/); assert.match(t, /#diy/);
 });
 await ok("a Today item on Now opens its step page", async () => {
   await go("now"); const it = p.locator(".ph-item-b").first(); const nm = (await it.innerText()).trim();
@@ -323,7 +319,7 @@ const redsIn = (sel) => p.evaluate(([sel, REDS]) => [...document.querySelectorAl
   .flatMap((e) => { const c = getComputedStyle(e); return ["color", "backgroundColor", "borderTopColor"].filter((k) => REDS.includes(c[k]) && !(k === "borderTopColor" && c.borderTopWidth === "0px")).map((k) => (e.id || e.className || e.tagName) + " " + k); }), [sel, REDS]);
 const moulded = (sel) => p.evaluate((sel) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && /inset|-6px -6px|-3px -3px/.test(getComputedStyle(e).boxShadow)).map((e) => e.id || e.className), sel);
 await ok("plum: labels are sentence case in the body font, 13px or more, and Do this now is in the text colour", async () => {
-  await go("now");
+  await p.evaluate(() => { window.__board.energy(3); }); await go("now"); assert.ok(await p.locator(".ph-hot").count(), "Now shows: " + (await p.locator("#ph-main").innerText()).slice(0, 300));
   const k = await p.evaluate(() => [...document.querySelectorAll(".ph-k")].filter((e) => e.getClientRects().length).map((e) => { const c = getComputedStyle(e); return [c.textTransform, c.fontFamily.includes("DM Mono"), parseFloat(c.fontSize)]; }));
   assert.ok(k.length > 0); for (const [t, mono, fs] of k) { assert.equal(t, "none"); assert.equal(mono, false); assert.ok(fs >= 13, "label " + fs + "px"); }
   assert.equal(await p.locator(".ph-hot").first().evaluate((e) => getComputedStyle(e).color), "rgb(0, 0, 0)");
@@ -377,7 +373,7 @@ await ok("nav: Back is a chevron and the page it returns to, the same on Goals, 
 await ok("nav: rows that open something end in a chevron; rows that switch at once do not", async () => {
   await go("you");
   assert.equal(await p.locator(".ph-tile .ph-chev").count(), 4);
-  for (const k of ["dayend", "remind", "planner", "week", "account", "backup"]) assert.ok(await p.locator(`[data-ph=${k}] .ph-chev`).count() >= 1, k);
+  for (const k of ["dayend", "goodn", "easyedit", "remind", "planner", "learned", "account", "backup"]) assert.ok(await p.locator(`[data-ph=${k}] .ph-chev`).count() >= 1, k);
   for (const k of ["theme", "classic"]) assert.equal(await p.locator(`[data-ph=${k}] .ph-chev`).count(), 0, k);
   await go("goals"); assert.equal(await p.locator(".ph-goal .ph-chev").count(), await p.locator(".ph-goal").count());
   await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250); assert.equal(await p.locator("[data-ph=step] .ph-chev").count(), await p.locator("[data-ph=step]").count());
@@ -431,7 +427,7 @@ await ok("nav: Undo refuses when something else changed in between, and keeps th
   await p.locator("#ph-undo-b").click(); await p.waitForTimeout(300);
   assert.equal((await sub("Sand the door")).status, "done", "undo went through over a later change");
   assert.equal(await p.locator("[data-ph=energy]").getAttribute("data-l"), "4");
-  await tap("[data-ph=energy]"); await D().waitFor({ state: "visible" }); await D().getByRole("button", { name: /Let the board decide/ }).click(); await p.waitForTimeout(200);
+  await p.evaluate(() => { window.__board.energy(3); window.__board.render(); }); await go("now"); assert.equal(await p.locator("[data-ph=energy]").getAttribute("data-l"), "3");
 });
 await ok("nav: archiving a goal can be undone, and Undo hides by itself after 6 seconds", async () => {
   await go("goals"); const name = (await p.locator(".ph-goal .ph-goal-n").first().innerText()).trim(), n = (await st()).groups.length;

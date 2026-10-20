@@ -22,14 +22,14 @@ await ok("Add makes a step with the chosen repeat", async () => {
   await p.fill("#ns-name", "Classic step"); await set("#ns-rep", "weekly"); await p.click("#ns-add"); await p.waitForTimeout(250);
   const s = await sub("Classic step"); assert.ok(s); assert.equal(s.rep, "weekly"); assert.equal(s.prio, "mid"); assert.equal(s.streak, 0); assert.ok(s.period);
 });
-await ok("the editor saves name, tag and the step's own date (under More); priority is gone, the order replaces it (2026-10-20)", async () => {
+await ok("the editor saves name and tag; priority and the step's own date are gone, the order and the delivery day replace them (2026-10-20)", async () => {
   const id = (await sub("Classic step")).id;
   await p.click(`#sub-bars [data-ed-open="${id}"]`); await p.waitForSelector(ed("name"));
   await set(ed("name"), "Classic step two"); await p.waitForTimeout(150);
   if (!(await p.locator(ed("tag")).count())) await p.click(`#sub-bars [data-ed-open="${id}"]`);
   assert.equal(await p.locator(ed("prio")).count(), 0, "priority is still offered");
-  await set(ed("tag"), " Admin "); await p.locator("#sub-bars .editor .more summary").click(); await set(ed("due"), "2027-01-15"); await p.waitForTimeout(150);
-  const s = await sub("Classic step two"); assert.ok(s, "not renamed"); assert.equal(s.tag, "Admin"); assert.equal(s.due, "2027-01-15");
+  await set(ed("tag"), " Admin "); await p.waitForTimeout(150); assert.equal(await p.locator(ed("due")).count(), 0, "the step's own date is still offered");
+  const s = await sub("Classic step two"); assert.ok(s, "not renamed"); assert.equal(s.tag, "Admin");
 });
 await ok("an empty name is refused", async () => {
   await set(ed("name"), "   "); await p.waitForTimeout(150); assert.ok(await sub("Classic step two"));
@@ -43,14 +43,14 @@ await ok("percent rounds to 5 and moves the status; status moves the percent", a
 await ok("a repeat starts the step again from zero", async () => {
   await set(ed("rep"), "daily"); await p.waitForTimeout(150); const s = await sub("Classic step two"); assert.equal(s.rep, "daily"); assert.equal(s.pct, 0); assert.equal(s.status, "todo");
 });
-await ok("the goal editor saves name, deadline, priority, where and tags", async () => {
+await ok("the goal editor saves name, delivery day, work and tags; no priority", async () => {
   const gid = (await sub("Classic step two")).gid;
   await p.click(`[data-gedit="${gid}"]`); await p.waitForSelector('.mains .editor [data-ged="tags"]');
   await set('.mains .editor [data-ged="tags"]', "Ops, ops, Q4"); await p.waitForTimeout(150);
-  await set('.mains .editor [data-ged="where"]', "desk"); await set('.mains .editor [data-ged="prio"]', "low"); await set('.mains .editor [data-ged="due"]', "2027-06-30");
+  await set('.mains .editor [data-ged="where"]', "work"); assert.equal(await p.locator('.mains .editor [data-ged="prio"]').count(), 0); await set('.mains .editor [data-ged="due"]', "2027-06-30");
   await set('.mains .editor [data-ged="name"]', "Classic goal"); await p.waitForTimeout(150);
   const g = (await st()).groups.find((x) => x.id === gid); assert.equal(g.name, "Classic goal"); assert.deepEqual(g.tags, ["ops", "q4"]);
-  assert.equal(g.where, "desk"); assert.equal(g.prio, "low"); assert.equal(g.due, "2027-06-30");
+  assert.equal(g.where, "work"); assert.equal(g.due, "2027-06-30");
 });
 await ok("Remove subtask asks once, then removes it for good", async () => {
   const id = (await sub("Classic step two")).id;

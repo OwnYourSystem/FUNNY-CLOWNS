@@ -103,3 +103,17 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Rolling back: `dpl_7gWkLzqaKKfpwSYVs2N29Y2hazYK` (3bcd31b, the monthly backup reminder).
 - Open before the AI suggestion is promoted publicly: the privacy policy names Anthropic; region
   decision (Anthropic API runs in the US or global, not the EU).
+
+## 2026-10-20 (evening): preview 4e80a03 (five rules, right column removed), NOT in production
+
+- Owner: "the rules are fine, remove the right column". The five rules decide the next step; hints,
+  the evidence library, the low-day question, experiments, What the board learned, news, the step's
+  own date, goal priority, commute, sharpest, training, Never plan over and the AI order suggestion
+  are gone (api/order.js and api/news.js deleted). The minimum day is now My easy things.
+- Preview deployment `dpl_5kHLr9TqaKeFHkjPs9FAydbLabgh` (funny-clowns-git-app-oys-s-projects.vercel.app).
+  Production stays on b926c96 until the owner says "release it". 7d04733 (desktop parity) is in it.
+- The tests now run on one clock: tests/_clock.mjs starts every page today at 18:00 (rule 2 rests the
+  board after 21:00, so a night run saw a different board). TEST_CLOCK=off uses the real time.
+- Full regression: 32 browser suites, 695 of 696 checks on the run before the last fix (floor counted
+  the chips before the strip redrew; it now waits), purity 216, dose and events clean.
+- QORDEL_ORDER_KEY in Vercel is no longer used by any code; the owner can delete it.
