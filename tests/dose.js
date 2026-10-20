@@ -41,7 +41,7 @@ const KEY='oys-min-deliveries-v1';
   const lowPick=await p.evaluate(()=>document.querySelector('#now-card-2 .now-n').textContent);
   console.log('B_PICK='+lowPick+' (base '+baseVerdict+')');
   // C. override "More" from the card, check log + persistence
-  await p.click('#now-badge [data-dose="high"]'); await p.waitForTimeout(300);
+  await p.click('#now-badge [data-energy-open]'); await p.waitForSelector('dialog.ask[open]'); await p.locator('dialog.ask[open]').getByRole('button',{name:/^Full/}).click(); await p.waitForTimeout(300);
   a=await snap(p);
   console.log('C_NOW_TAIL='+JSON.stringify(a.now.slice(-200))+' BTNS='+JSON.stringify(a.btns));
   let st=await p.evaluate(KEY=>{const s=JSON.parse(localStorage.getItem(KEY)); return {cap:s.cap,capLog:s.capLog};},KEY);
@@ -51,7 +51,7 @@ const KEY='oys-min-deliveries-v1';
   console.log('C_AFTER_AUTO='+JSON.stringify(st));
   // D. rough-day tap from normal, dock overfill note
   p=await open(`s=>{ s.dayLog=[]; s.capLog=[]; s.cap=null; s.plan=[]; s.done=[]; }`);
-  await p.click('#now-badge [data-dose="low"]'); await p.waitForTimeout(300);
+  await p.click('#now-badge [data-energy-open]'); await p.waitForSelector('dialog.ask[open]'); await p.locator('dialog.ask[open]').getByRole('button',{name:/^Very low/}).click(); await p.waitForTimeout(300);
   a=await snap(p);
   console.log('D_BADGE='+JSON.stringify(a.badge)+' PLAN='+a.plan);
   // E. quota met: mark one item done today in low day

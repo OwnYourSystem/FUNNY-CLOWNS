@@ -29,7 +29,7 @@ const KEY='oys-min-deliveries-v1';
   console.log('WHY_CHIPS='+await page.locator('[data-skipwhy]').count());
   await page.locator('#oftad-pick [data-skipwhy="too big"]').first().click().catch(async()=>{ await page.locator('[data-skipwhy="too big"]').first().click(); });
   await page.waitForTimeout(300);
-  await page.click('#now-badge [data-dose="low"]');
+  await page.click('#now-badge [data-energy-open]'); await page.waitForSelector('dialog.ask[open]'); await page.locator('dialog.ask[open]').getByRole('button',{name:/^Very low/}).click();
   await page.waitForTimeout(300);
   e=await evs();
   console.log('SKIP_EV='+JSON.stringify(e.filter(x=>x.k==='skip'))+' DOSE_EV='+JSON.stringify(e.filter(x=>x.k==='dose')));

@@ -63,11 +63,11 @@ await ok("a card the board suggested and you took keeps the board's reason; one 
 await ok("on a low day (dose 1) the suggestion stops once Today holds one thing; the footer says so", async () => {
   await seed(`(s) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; }`);
   assert.equal(await p.locator("#oftad-pick").isVisible(), true); await p.locator("#oftad-pick [data-pick-take]").click(); await settle();
-  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /1 of today.s dose of 1 \(low day\)/);
+  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /1 of today.s 1 · energy very low/);
 });
 await ok("on a normal day (dose 3) it keeps offering until Today holds three", async () => {
-  await seed(); for (let i = 1; i <= 3; i++) { assert.equal(await p.locator("#oftad-pick").isVisible(), true, "offer " + i); assert.match(await p.locator("#oftad-count").innerText(), new RegExp((i - 1) + " of today.s dose of 3")); await p.locator("#oftad-pick [data-pick-take]").click(); await settle(); }
-  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /3 of today.s dose of 3/);
+  await seed(); for (let i = 1; i <= 3; i++) { assert.equal(await p.locator("#oftad-pick").isVisible(), true, "offer " + i); assert.match(await p.locator("#oftad-count").innerText(), new RegExp((i - 1) + " of today.s 3 · energy good")); await p.locator("#oftad-pick [data-pick-take]").click(); await settle(); }
+  assert.equal(await p.locator("#oftad-pick").isHidden(), true); assert.match(await p.locator("#oftad-count").innerText(), /3 of today.s 3 · energy good/);
 });
 await ok("past the dose, it says so and leaves the choice to you", async () => {
   await seed(`(s, ids) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; s.oftad = [{ k: "sub", id: ids[0], done: false }, { k: "sub", id: ids[5], done: false }]; }`);
@@ -88,11 +88,15 @@ await ok("a carried pile no longer makes every day look low", async () => {
   await seed(`(s, ids) => { s.dayLog = [{ d: "${d1}", done: 1, planned: 1, items: [] }, { d: "${d2}", done: 1, planned: 1, items: [] }, { d: "${d3}", done: 1, planned: 1, items: [] }]; s.plan = ids.slice(0, 10).map((id) => ({ k: "sub", id, done: false, carried: true })); }`);
   assert.equal(await p.evaluate(() => window.__board.dose ? window.__board.dose().band : "x"), "normal");
 });
-await ok("Needs attention: new name; on a low day no count and no siren", async () => {
-  await seed(); assert.equal(await p.locator(".k-label", { hasText: "Needs attention" }).count(), 1); assert.equal(await p.locator(".k-label", { hasText: /^Alarm$/ }).count(), 0);
-  assert.match(await p.locator('[data-panel="alerts"] .p-title').innerText(), /Needs attention/);
-  await seed(`(s) => { const n = new Date(), q = (x) => String(x).padStart(2, "0"); s.cap = { d: n.getFullYear() + "-" + q(n.getMonth() + 1) + "-" + q(n.getDate()), mode: "low" }; }`);
-  assert.equal((await p.locator("#kpi-alert").innerText()).trim(), "–"); assert.equal(await p.locator("#kpi-alert-sub").innerText(), "paused on a low day"); assert.equal(await p.evaluate(() => document.querySelector('[data-panel="alerts"]').classList.contains("siren")), false);
+await ok("Delivery days replace Needs attention: only goals with a delivery day, a pace line, no siren, even past the day (2026-10-20)", async () => {
+  await seed(); assert.equal(await p.locator(".k-label", { hasText: "Delivery days" }).count(), 1); assert.equal(await p.locator(".k-label", { hasText: "Needs attention" }).count(), 0);
+  assert.match(await p.locator('[data-panel="alerts"] .p-title').innerText(), /Delivery days/);
+  assert.equal((await p.locator("#kpi-alert").innerText()).trim(), "0"); assert.equal(await p.locator("#kpi-alert-sub").innerText(), "none set");
+  await seed(`(s) => { const d = (n) => { const x = new Date(Date.now() + n * 864e5), q = (y) => String(y).padStart(2, "0"); return x.getFullYear() + "-" + q(x.getMonth() + 1) + "-" + q(x.getDate()); }; s.groups[0].due = d(-2); s.groups[1].due = d(3); }`);
+  await p.waitForFunction(() => document.querySelector("#kpi-alert").textContent.trim() === "2", null, { timeout: 5000 }); assert.match(await p.locator("#kpi-alert-sub").innerText(), /1 has passed and asks for a new day/);
+  assert.equal(await p.evaluate(() => document.querySelector('[data-panel="alerts"]').classList.contains("siren")), false);
+  assert.match(await p.locator("#alerts").innerText(), /steps? left/); assert.doesNotMatch(await p.locator("#alerts").innerText(), /deadline|overdue|days over/i);
+  assert.equal(await p.locator("#alerts [data-miss-new]").count(), 1);
 });
 await ok("the tutor knows the new names", async () => {
   const r = await p.evaluate(() => ({ snap: window.__board.modelTools().find((t) => t.name === "board_state").execute({}), rules: window.__board.rules, brain: window.__board.brain("what is left today") })); assert.match(r.snap, /TODAY \(what the person is doing today/); assert.match(r.snap, /WAITING \(queued or carried over/); assert.ok(!/ONE TASK A DAY|TODAY'S PLAN/.test(r.snap)); assert.match(r.rules, /three lists \(Today, Waiting, Done today\)/);

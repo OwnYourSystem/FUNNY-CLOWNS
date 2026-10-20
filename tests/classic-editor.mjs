@@ -22,13 +22,14 @@ await ok("Add makes a step with the chosen repeat", async () => {
   await p.fill("#ns-name", "Classic step"); await set("#ns-rep", "weekly"); await p.click("#ns-add"); await p.waitForTimeout(250);
   const s = await sub("Classic step"); assert.ok(s); assert.equal(s.rep, "weekly"); assert.equal(s.prio, "mid"); assert.equal(s.streak, 0); assert.ok(s.period);
 });
-await ok("the editor saves name, tag, priority and deadline", async () => {
+await ok("the editor saves name, tag and the step's own date (under More); priority is gone, the order replaces it (2026-10-20)", async () => {
   const id = (await sub("Classic step")).id;
   await p.click(`#sub-bars [data-ed-open="${id}"]`); await p.waitForSelector(ed("name"));
   await set(ed("name"), "Classic step two"); await p.waitForTimeout(150);
   if (!(await p.locator(ed("tag")).count())) await p.click(`#sub-bars [data-ed-open="${id}"]`);
-  await set(ed("tag"), " Admin "); await set(ed("prio"), "high"); await set(ed("due"), "2027-01-15"); await p.waitForTimeout(150);
-  const s = await sub("Classic step two"); assert.ok(s, "not renamed"); assert.equal(s.tag, "Admin"); assert.equal(s.prio, "high"); assert.equal(s.due, "2027-01-15");
+  assert.equal(await p.locator(ed("prio")).count(), 0, "priority is still offered");
+  await set(ed("tag"), " Admin "); await p.locator("#sub-bars .editor .more summary").click(); await set(ed("due"), "2027-01-15"); await p.waitForTimeout(150);
+  const s = await sub("Classic step two"); assert.ok(s, "not renamed"); assert.equal(s.tag, "Admin"); assert.equal(s.due, "2027-01-15");
 });
 await ok("an empty name is refused", async () => {
   await set(ed("name"), "   "); await p.waitForTimeout(150); assert.ok(await sub("Classic step two"));

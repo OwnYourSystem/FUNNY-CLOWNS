@@ -23,7 +23,8 @@ const card = () => p.locator("#oftad-pick"); const follow = () => p.locator("#es
 const D = () => p.locator("dialog.ask[open]");
 const stepId = () => card().locator("[data-pick-take]").getAttribute("data-pick-take");
 const stepName = () => card().locator(".pick-n").innerText();
-const settle = () => p.waitForTimeout(200);
+/* wait for a closing sheet to be removed, not a fixed time (200ms was not always enough in a full run, 2026-10-20) */
+const settle = async () => { await p.waitForTimeout(80); await p.waitForFunction(() => !document.querySelector("dialog.ask:not([open]):not([id])"), null, { timeout: 5000 }); await p.waitForTimeout(80); };
 
 await seed();
 await ok("the card offers When? and How long? beside the step", async () => {

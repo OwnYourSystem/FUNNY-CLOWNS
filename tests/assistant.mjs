@@ -49,7 +49,7 @@ await ok("rough day and more change today's size", async () => {
 await ok("how am I doing this week answers from the records, not an error", async () => {
   const r = await say("how am I doing this week"); assert.doesNotMatch(r, /No subtask|could not/i); assert.ok(r.length > 20);
 });
-await ok("what needs attention answers", async () => { const r = await say("what needs attention?"); assert.match(r, /Needs attention|Nothing needs attention/); });
+await ok("what needs attention answers", async () => { const r = await say("what needs attention?"); assert.match(r, /Delivery days, nearest first|No goal has a delivery day/); assert.doesNotMatch(r, /deadline|overdue/i); });
 await ok("day end: one sentence, and a question when the time is missing", async () => {
   await say("set my day end to 21:00"); assert.equal((await st()).me.wind, "21:00");
   const q = await say("my day ends"); assert.match(q, /What time/);
