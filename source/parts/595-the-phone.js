@@ -194,6 +194,47 @@ function phMissNew(id){
     toast("",g.name+": delivery "+deliveryLabel(g)+".");
   });
 }
+/* Drag the handle to reorder the open steps of a goal (2026-10-20). The rows
+   move under the finger; on release the new order is saved with Undo. The
+   handle is hidden from screen readers: Earlier and Later on the step page
+   do the same job there. */
+var PH_GRIP='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h10M3 8h10M3 11h10"/></svg>';
+(function(){
+  var root=$("#ph"); if(!root) return;
+  var d=null;
+  function reset(){ if(!d) return; d.items.forEach(function(li){ li.style.transform=""; li.classList.remove("is-drag","is-shift"); }); d=null; }
+  root.addEventListener("pointerdown",function(e){
+    var gp=e.target.closest(".ph-grip"); if(!gp||d) return;
+    var li=gp.closest(".ph-dli"), ul=li&&li.parentNode; if(!ul) return;
+    var items=Array.prototype.filter.call(ul.children,function(x){ return x.classList.contains("ph-dli"); });
+    d={li:li, items:items, from:items.indexOf(li), to:items.indexOf(li), y0:e.clientY, h:li.getBoundingClientRect().height,
+       mids:items.map(function(x){ var r=x.getBoundingClientRect(); return r.top+r.height/2; })};
+    li.classList.add("is-drag"); try{ gp.setPointerCapture(e.pointerId); }catch(er){}
+    e.preventDefault();
+  });
+  root.addEventListener("pointermove",function(e){
+    if(!d) return;
+    var dy=e.clientY-d.y0, y=d.mids[d.from]+dy, to=0;
+    d.mids.forEach(function(m,j){ if(j!==d.from && m<y) to++; });
+    d.to=to; d.li.style.transform="translateY("+dy+"px)";
+    d.items.forEach(function(x,j){
+      if(j===d.from) return;
+      var sh=(d.from<to&&j>d.from&&j<=to)?-d.h:(d.from>to&&j>=to&&j<d.from)?d.h:0;
+      x.style.transform=sh?"translateY("+sh+"px)":""; x.classList.toggle("is-shift",!!sh);
+    });
+  });
+  function end(){
+    if(!d) return;
+    var from=d.from, to=d.to, ids=d.items.map(function(x){ return x.getAttribute("data-sid"); }), s=state.subs[ids[from]];
+    reset();
+    if(to===from||!s) return;
+    var g=gById(s.gid); if(!g) return;
+    ids.splice(to,0,ids.splice(from,1)[0]);
+    phUndoable("Moved: "+phCut(s.name,40),function(){ if(!setOpenOrder(g,ids)) throw new Error("The steps changed meanwhile."); });
+  }
+  root.addEventListener("pointerup",end);
+  root.addEventListener("pointercancel",reset);
+})();
 /* AI proposes an order (owner, 2026-10-20). Only the goal's name and its
    open step names are sent, after the person agreed once; the answer is a
    suggestion they can use or leave, and Undo takes it back. */
@@ -822,16 +863,19 @@ function phGoalPage(){
     '<span class="ph-bar"><span style="width:'+p+'%"></span></span>'+
     ((g.tags||[]).length?'<p class="ph-note" style="margin-top:8px">'+esc(g.tags.map(function(t){ return "#"+t; }).join(" "))+'</p>':'')+'</div>');
   h.push('<section aria-label="Steps"><div class="ph-row-h"><h2 class="ph-h2">Steps</h2>'+
-    (open.length>1?'<button type="button" class="ph-link" data-ph="aiorder" data-id="'+esc(g.id)+'">Suggest an order</button>':'')+'</div>');
+    (open.length>1?'<button type="button" class="ph-link" data-ph="aiorder" data-id="'+esc(g.id)+'">Suggest an order</button>':'')+'</div>'+
+    (open.length>1?'<p class="ph-note ph-seqnote">Done from top to bottom. Drag the handle to change the order.</p>':''));
   if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Press Add a step.</p>');
   else {
     h.push('<ul class="ph-list ph-goals">');
     open.concat(fin).forEach(function(s,i){
       var dn=s.pct>=100||s.status==="done", fx=phStepFacts(s);
-      h.push('<li><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
+      var drag=!dn&&open.length>1;
+      h.push('<li'+(drag?' class="ph-dli" data-sid="'+esc(s.id)+'"':'')+'><button type="button" class="ph-goal'+(dn?" is-done":"")+'" data-ph="step" data-id="'+esc(s.id)+'">'+
         '<span class="ph-goal-top"><span class="ph-goal-n">'+(dn?'':'<span class="ph-ord">'+(i+1)+'</span>')+esc(s.name)+'</span><span class="ph-k">'+(dn?"Done":s.pct+"%")+'</span>'+PH_CHEV+'</span>'+
         (dn?'':'<span class="ph-bar"><span style="width:'+s.pct+'%"></span></span>')+
-        (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button></li>');
+        (fx?'<span class="ph-goal-x">'+esc(fx)+'</span>':'')+'</button>'+
+        (drag?'<span class="ph-grip" aria-hidden="true">'+PH_GRIP+'</span>':'')+'</li>');
     });
     h.push('</ul>');
   }
@@ -1195,7 +1239,7 @@ function phOnbFinish(add){
     else if(k==="goal") phGoal(id);
     else if(k==="step") phStepGo(id);
     else if(k==="sset") phStepSet(b.getAttribute("data-k"),b.getAttribute("data-v"));
-    else if(k==="sorder"){ var os=state.subs[phArg()], od=+b.getAttribute("data-d"); if(os&&moveSubOrder(os.id,od)){ save(); renderAll(); phStepRedraw(); var ob=document.querySelector('#ph-main [data-ph="sorder"][data-d="'+od+'"]'); if(ob&&!ob.disabled) ob.focus(); else { ob=document.querySelector('#ph-main [data-ph="sorder"]:not([disabled])'); if(ob) ob.focus(); } var om=$("#ph-s-msg"); if(om) om.textContent="Moved "+(od<0?"earlier":"later")+"."; } }
+    else if(k==="sorder"){ var os=state.subs[phArg()], od=+b.getAttribute("data-d"); if(os&&phUndoable("Moved "+(od<0?"earlier":"later")+": "+phCut(os.name,32),function(){ return moveSubOrder(os.id,od); })){ phStepRedraw(); var ob=document.querySelector('#ph-main [data-ph="sorder"][data-d="'+od+'"]'); if(ob&&!ob.disabled) ob.focus(); else { ob=document.querySelector('#ph-main [data-ph="sorder"]:not([disabled])'); if(ob) ob.focus(); } var om=$("#ph-s-msg"); if(om) om.textContent="Moved "+(od<0?"earlier":"later")+"."; } }
     else if(k==="nodue"){ var du=$("#ph-s-due"); if(du){ du.value=""; phStepEdit(du); } }
     else if(k==="stoday"||k==="swhen"||k==="sest"||k==="sdone"||k==="sdel"){
       var cs=state.subs[phArg()]; if(!cs) return;
