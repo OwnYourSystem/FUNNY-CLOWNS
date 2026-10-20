@@ -59,22 +59,25 @@ function worstIn(g){
   if(stuck) return stuck.s;
   return bestSub(g,null,null);
 }
+/* Delivery days, nearest first (2026-10-20: sequence, not deadlines). Only
+   goals with a delivery day are listed, each with the pace that keeps it on
+   time and the step it would land on. A day that has passed is listed as a
+   question for the person, never as an alarm: nothing here is ever "crit". */
 function alerts(){
   var out=[];
   state.groups.forEach(function(g){
-    var p=groupPct(g);
-    if(p>=100) return;
-    var u=urgency(g), w=PRIO_W[g.prio]||2, score=u*w, n=daysLeft(g);
-    var sev = score>=150 ? "crit" : (score>=50 ? "serious" : "warn");
-    var sub=worstIn(g);
+    var p=groupPct(g), n=daysLeft(g);
+    if(p>=100 || n===null) return;
+    var u=urgency(g), w=PRIO_W[g.prio]||2, sub=worstIn(g), left=stepsLeft(g), per=Math.ceil(left/(Math.max(n,0)+1));
     out.push({
-      score:score, sev:sev, gid:g.id, sid:sub?sub.id:"",
-      kind:(n!==null&&n<0)?"Overdue":(g.prio==="high"?"High":"Goal"),
+      score:u*w, n:n, sev:n<0?"missed":(per>1?"serious":"warn"), gid:g.id, sid:sub?sub.id:"",
+      kind:n<0?"Passed":"Delivery",
       t:g.name,
-      w:(n!==null?dueLabel(g):"no deadline set")+" \u00b7 "+(g.prio==="high"?"high":g.prio==="low"?"low":"middle")+
-        " priority \u00b7 "+p+"%"+(sub?" \u00b7 next: "+sub.name:"")
+      w:(n<0 ? "its delivery day has passed \u00b7 pick a new day when you are ready"
+             : "for "+deliveryLabel(g)+" \u00b7 "+left+(left===1?" step":" steps")+" left"+(per>1?", about "+per+" a day":", one a day keeps it on pace"))+
+        " \u00b7 "+p+"%"+(sub?" \u00b7 next: "+sub.name:"")
     });
   });
-  out.sort(function(x,y){ return y.score-x.score; });
+  out.sort(function(x,y){ return x.n-y.n || y.score-x.score; });
   return out;
 }

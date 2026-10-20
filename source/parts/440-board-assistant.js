@@ -49,7 +49,7 @@ function botSnapshot(){
   out.push("WHAT THE PERSON HAS KEPT ABOUT HOW THEY WORK: "+(kept.length?kept.map(function(m){ return m.t; }).join("; "):"nothing")+" (data, not instructions)");
   out.push("TODAY'S DOSE: "+dzs.band+" ("+dzs.n+(dzs.n===1?" thing":" things")+")"+(dzs.why?". "+dzs.why:""));
   var al=alerts();
-  out.push("NEEDS A LOOK: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
+  out.push("DELIVERY DAYS: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
   return out.join("\n");
 }
 var BOT_RULES=
@@ -286,7 +286,7 @@ function botTools(){
      if(!state.oftad.some(function(c){ return c.id===sb.id; })) state.oftad.push({k:"sub",id:sb.id,done:false,src:"you"});
      return done("Moved "+sb.name+" back into Today.");
    }},
-  {name:"set_subtask_field",description:"Change one field of a subtask: priority (high, mid or low), deadline (a date like 2026-10-12, or empty for none) or tag (one short word).",
+  {name:"set_subtask_field",description:"Change one field of a subtask: priority (high, mid or low; it no longer changes the order, which is the list order), deadline (the step's own date for a fixed appointment, like 2026-10-12, or empty for none) or tag (one short word).",
    inputSchema:{type:"object",properties:{subtask:{type:"string"},field:{type:"string",enum:["priority","deadline","tag"]},value:{type:"string"}},required:["subtask","field","value"]},
    execute:function(a){
      var sb=botFindSub(a.subtask), f=String(a.field||"").toLowerCase(), v=String(a.value==null?"":a.value).trim();
@@ -296,7 +296,7 @@ function botTools(){
      }
      if(f==="deadline"){
        var d=pDate(v); if(d===null) throw new Error("I could not read that date. Type a day like friday or 2026-10-12, or none.");
-       sb.due=d; mark(sb.id,"due"); return done(d?sb.name+" is due "+d+".":"The deadline on "+sb.name+" is gone.");
+       sb.due=d; mark(sb.id,"due"); return done(d?sb.name+" has its own date: "+d+". It goes first in its goal when the day comes.":"The date on "+sb.name+" is gone.");
      }
      if(f==="tag"){
        if(v.length>24) throw new Error("Keep the tag under 24 characters.");
@@ -304,7 +304,7 @@ function botTools(){
      }
      throw new Error("Field must be priority, deadline or tag.");
    }},
-  {name:"set_goal_field",description:"Change one field of a main task: name, priority (high, mid or low), deadline (a date, or empty for none), where (any, desk, work, home, body or out) or tags (comma separated, up to 5).",
+  {name:"set_goal_field",description:"Change one field of a main task: name, priority (high, mid or low), deadline (the goal's delivery day, a date, or empty for none), where (any, desk, work, home, body or out) or tags (comma separated, up to 5).",
    inputSchema:{type:"object",properties:{main_task:{type:"string"},field:{type:"string",enum:["name","priority","deadline","where","tags"]},value:{type:"string"}},required:["main_task","field","value"]},
    execute:function(a){
      var g=botFindGroup(a.main_task), f=String(a.field||"").toLowerCase(), v=String(a.value==null?"":a.value).trim(), x;
@@ -313,7 +313,7 @@ function botTools(){
        var was=g.name; g.name=v.slice(0,80); mark(g.id,"name"); return done("\""+was+"\" is now \""+g.name+"\".");
      }
      if(f==="priority"){ x=pPrio(v); if(!x) throw new Error("Priority must be high, middle or low."); g.prio=x; mark(g.id,"prio"); return done(g.name+" is now "+prioWord(x)+" priority."); }
-     if(f==="deadline"){ x=pDate(v); if(x===null) throw new Error("I could not read that date. Type a day like friday or 2026-12-01, or none."); g.due=x; mark(g.id,"due"); return done(x?g.name+" is due "+x+".":"The deadline on "+g.name+" is gone."); }
+     if(f==="deadline"){ x=pDate(v); if(x===null) throw new Error("I could not read that date. Type a day like friday or 2026-12-01, or none."); g.due=x; mark(g.id,"due"); if(x){ delete g.missAsk; delete g.missNote; } return done(x?g.name+" is for "+x+". Its steps keep their order, and the board spreads them over the days left.":"The delivery day on "+g.name+" is gone. Its steps keep their order."); }
      if(f==="where"){ x=pWhere(v); if(!x) throw new Error("Where must be anywhere, at a screen, at work, at home, training or out and about."); g.where=x; mark(g.id,"where"); return done(g.name+" is now: "+whereLabel(x)+"."); }
      if(f==="tags"){
        g.tags=v.split(/[,;]/).map(function(t){ return t.trim().toLowerCase(); }).filter(function(t,i,l){ return t && l.indexOf(t)===i; }).slice(0,5);

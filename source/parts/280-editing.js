@@ -171,6 +171,14 @@ document.addEventListener("click",function(e){
   if(xa){ expState().unseen=false; save(); renderAll(); return; }
   var swb=e.target.closest("[data-skipwhy]");
   if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
+  /* the same answers as the phone (2026-10-20): a passed delivery day, the energy, the order */
+  var mn=e.target.closest("[data-miss-new]");
+  if(mn){ phMissNew(mn.dataset.missNew); return; }
+  var mo=e.target.closest("[data-miss-off]");
+  if(mo){ var mg=gById(mo.dataset.missOff); if(mg) phUndoable("No date for "+phCut(mg.name,36),function(){ editGoal(mg,"due",""); }); return; }
+  var mk=e.target.closest("[data-miss-keep]");
+  if(mk){ var kg=gById(mk.dataset.missKeep); if(kg){ kg.missAsk=kg.due; save(); renderAll(); } return; }
+  if(e.target.closest("[data-energy-open]")){ phEnergyAsk(); return; }
   var dzb=e.target.closest("[data-dose]");
   if(dzb){ setDose(dzb.dataset.dose); return; }
   if(e.target.closest("[data-week-open]")){ weekAsk(); return; }
@@ -187,6 +195,12 @@ document.addEventListener("click",function(e){
   if(tk){ takePick(tk.dataset.pickTake); return; }
   var sk=e.target.closest("[data-pick-skip]");
   if(sk){ skipPick(sk.dataset.pickSkip); return; }
+  var so=e.target.closest("[data-sorder-d]");
+  if(so){ var ss=state.subs[so.dataset.sid], sd=+so.dataset.sorderD;
+    if(ss) phUndoable("Moved "+(sd<0?"earlier":"later")+": "+phCut(ss.name,32),function(){ if(!moveSubOrder(ss.id,sd)) throw new Error(sd<0?"It is already first.":"It is already last."); });
+    var sb2=document.querySelector('[data-sorder-d="'+sd+'"][data-sid="'+so.dataset.sid+'"]'); if(sb2) sb2.focus(); return; }
+  var ai=e.target.closest("[data-aiorder-d]");
+  if(ai){ phAiOrder(ai.dataset.aiorderD,ai); return; }
   var o=e.target.closest("[data-ed-open]");
   if(o){ openEd = openEd===o.dataset.edOpen ? "" : o.dataset.edOpen; renderSubs(); return; }
   var d=e.target.closest("[data-del]");
@@ -207,6 +221,7 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("change",function(e){
   var f=e.target;
+  if(f.dataset.edEasy){ var es=state.subs[f.dataset.edEasy]; if(es){ editSub(es,"easy",f.checked?"1":""); save(); renderAll(); } return; }
   var ed=f.closest("[data-ed-for]");
   if(ed && f.dataset.ed){
     var s=state.subs[ed.dataset.edFor]; if(!s) return;

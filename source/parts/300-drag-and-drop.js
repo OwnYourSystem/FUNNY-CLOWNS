@@ -141,6 +141,20 @@ document.addEventListener("pointerup",function(e){
   if(z){ addCard(z,c,insertPos(z,e.clientX,e.clientY)); save(); renderKpis(); renderAlerts(); renderDocks(); return; }
   var row=rowAt(e.clientX,e.clientY);
   if(!row) return;
+  /* a step dropped on a step: the order is the sequence (2026-10-20), so it
+     takes that place, in the same goal or in the other one, with Undo */
+  if(c.k==="sub"&&row.dataset.sub&&row.dataset.sub!==c.id){
+    var ms=state.subs[c.id], ts=state.subs[row.dataset.sub], tg=ts&&gById(ts.gid);
+    if(!ms||!tg) return;
+    var before=(function(){ var r=row.getBoundingClientRect(); return e.clientY<r.top+r.height/2; })();
+    phUndoable("Moved: "+phCut(ms.name,40),function(){
+      if(ms.gid!==tg.id) moveSub(ms.id,tg.id);
+      var at=tg.subs.indexOf(ms.id); tg.subs.splice(at,1);
+      var ti=tg.subs.indexOf(ts.id); tg.subs.splice(before?ti:ti+1,0,ms.id);
+      mark(tg.id,"order"); touchHist();
+    });
+    return;
+  }
   if(c.k==="sub"&&row.dataset.group){
     var sb=state.subs[c.id], g=gById(row.dataset.group);
     if(sb&&g&&moveSub(sb.id,g.id)){ save(); renderAll(); }

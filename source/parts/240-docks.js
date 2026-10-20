@@ -56,7 +56,7 @@ function renderDocks(){
     : '<p class="hint">Empty</p>';
   renderPick();
   var dz0=doseNow(), todayN=state.oftad.length+state.done.length;
-  $("#oftad-count").textContent=todayN+" of today\u2019s dose of "+dz0.n+(dz0.band==="low"?" (low day)":"")+
+  $("#oftad-count").textContent=todayN+" of today\u2019s "+dz0.n+" \u00b7 energy "+ENERGY[phEnLvl(dz0)].name.toLowerCase()+(dz0.src==="you"?"":" (the board\u2019s guess)")+
     (todayN>dz0.n?" \u00b7 over the dose, your call":"");
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
   var pc=state.plan.length?state.plan.length+" waiting":"Nothing waiting";
@@ -92,4 +92,10 @@ function armGate(key,btn,label){
     if(btn.dataset.lbl) btn.textContent=btn.dataset.lbl;
   },4000);
   return false;
+}
+/* the energy on the board: the same battery and sheet as the phone (2026-10-20) */
+function nbEnergy(dz){
+  var l=phEnLvl(dz), mine=dz.src==="you", nm=ENERGY[l].name;
+  return '<button class="nb-dose nb-en" data-energy-open="1" aria-label="Energy: '+nm+(mine?", set by you":", the board\u2019s guess")+'. Change">'+
+    phBattery(l)+'<span>'+nm+(mine?"":'<span class="nb-dx"> \u00b7 guess</span>')+'</span></button>';
 }

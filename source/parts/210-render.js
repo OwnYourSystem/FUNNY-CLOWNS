@@ -68,7 +68,7 @@ function renderMain(){
 function goalEditor(g){
   return '<div class="editor">'+
     '<label class="wide">Goal<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
-    '<label>Deadline<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
+    '<label>Delivery day<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
     '<label>Priority<select class="f" data-ged="prio">'+PRIOS.map(function(o){
       return '<option value="'+o[0]+'"'+(g.prio===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Where<select class="f" data-ged="where">'+WHERES.map(function(o){
@@ -89,15 +89,13 @@ function showPicked(){
   if(!el||!el.scrollIntoView) return;
   try{ el.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }catch(e){}
 }
-/* Furthest along first. g.subs itself keeps insertion order, since that is
-   what subScore and the rest of the ranking read; only what is shown here
-   is sorted, so the list reads as progress without touching the planner.
-   The sort is stable, so two subtasks at the same percent keep their
-   relative order instead of reshuffling on every render.               */
+/* The order of g.subs is the sequence the steps are done in (2026-10-20),
+   so the list shows it as it is: open steps first, numbered, then the
+   finished ones. A search only filters; it never reorders.            */
 function subsShown(g){
-  var q=searchQ();
-  return g.subs.filter(function(id){ var x=state.subs[id]; return x && hit(x.name,q); })
-    .sort(function(a,b){ return (state.subs[b].pct||0)-(state.subs[a].pct||0); });
+  var q=searchQ(), open=[], fin=[];
+  g.subs.forEach(function(id){ var x=state.subs[id]; if(!x||!hit(x.name,q)) return; (x.pct>=100||x.status==="done"?fin:open).push(id); });
+  return open.concat(fin);
 }
 function renderSubs(){
   var g=gById(state.sel);
@@ -107,19 +105,20 @@ function renderSubs(){
   $("#group-editor").innerHTML="";
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
-  $("#sub-bars").innerHTML=subsShown(g).map(function(id){
+  var nOpen=g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }).length, k=0;
+  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span>'+
+      '<button class="btn" data-aiorder-d="'+g.id+'">Suggest an order</button></div>':"")+subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), n=daysLeft(s);
-    var late=(n!==null&&n<0), soon=(n!==null&&n>=0&&n<=3);
+    var st=statusOf(s), n=daysLeft(s), dn=s.pct>=100||s.status==="done";
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
+      (dn?"":'<span class="ord">'+(++k)+'</span>')+
       '<span class="rname">'+esc(s.name)+'</span>'+
+      (s.easy?'<span class="pill">Easy</span>':"")+
       (s.rep?'<span class="pill rep">'+esc(repLabel(s.rep))+'</span>':"")+
       (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
-      ((s.prio&&s.prio!=="mid")?'<span class="pill pr-'+s.prio+' sub"><i></i>'+
-        s.prio.toUpperCase()+'</span>':"")+
-      (n!==null?'<span class="pill due sub'+(late?" late":(soon?" soon":""))+'">'+esc(dueLabel(s))+'</span>':"")+
+      (n!==null?'<span class="pill due sub">'+esc(n<0?"Its date has passed":"On "+deliveryLabel(s))+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -138,15 +137,17 @@ function subEditor(s){
     '<label class="wide">Name<input class="f" data-ed="name" value="'+esc(s.name)+'"></label>'+
     '<label>Status<select class="f" data-ed="status">'+STATUSES.map(function(o){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
-    '<label>Priority, inside this goal<select class="f" data-ed="prio">'+PRIOS.map(function(o){
-      return '<option value="'+o[0]+'"'+((s.prio||"mid")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
-    '<label>Deadline<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label>'+
+    '<label class="chk wide"><input type="checkbox" data-ed-easy="'+s.id+'"'+(s.easy?" checked":"")+'> Easy, good for a low-energy day</label>'+
     '<label>Repeats<select class="f" data-ed="rep">'+REPEATS.map(function(o){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
-    '<div class="acts"><button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
-    '<span style="font-size:12px;color:var(--muted)">Drag this row onto another main task to move it there.</span></div>'+
+    '<details class="more wide"'+(s.due?" open":"")+'><summary>More</summary>'+
+      '<p class="hint">Steps are done in their order. A date here is for a fixed appointment: the step goes first when the day comes.</p>'+
+      '<label>Own date (optional)<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label></details>'+
+    '<div class="acts"><button class="btn" data-sorder-d="-1" data-sid="'+s.id+'">Earlier</button><button class="btn" data-sorder-d="1" data-sid="'+s.id+'">Later</button>'+
+      '<button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
+    '<span style="font-size:12px;color:var(--muted)">Drag this row up or down to change the order, or onto another main task to move it there.</span></div>'+
   '</div>';
 }
 function tbl(rows,head){
@@ -160,16 +161,10 @@ function renderKpis(){
   ease($("#kpi-overall"),o,1,"%");
   ease($("#kpi-done"),done,0,"");
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
-  var al=alerts();
-  var hot=al.filter(function(a){ return a.score>=150; }).length;
-  /* on a low day the board does not push, so it does not count what it would push on */
-  if(doseNow().band==="low"){
-    $("#kpi-alert").textContent="\u2013";
-    $("#kpi-alert-sub").textContent="paused on a low day";
-  } else {
-    ease($("#kpi-alert"),hot,0,"");
-    $("#kpi-alert-sub").textContent=hot?"past or near a deadline you called important":"nothing needs attention";
-  }
+  /* how many goals have a delivery day, and how many of those days passed and wait for an answer */
+  var al=alerts(), passed=screaming();
+  ease($("#kpi-alert"),al.length,0,"");
+  $("#kpi-alert-sub").textContent=!al.length?"none set":passed?(passed===1?"1 has passed and asks for a new day":passed+" have passed and ask for a new day"):"each with its pace";
   var planned=state.oftad.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";

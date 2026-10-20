@@ -252,7 +252,7 @@ act({id:"explain",group:"Today",ex:"Why this one?",kw:["why","reason","criteria"
   run:function(){
     var p=pickToday();
     if(!p) return "There is nothing to explain: no step is being suggested right now.";
-    return "I suggest "+p.s.name+" ("+p.g.name+"). "+p.why+" I look at the time and your hours, how close the deadline is and how important you called it, whether the step is already started, and how big today is."; }});
+    return "I suggest "+p.s.name+" ("+p.g.name+"). "+p.why+" I look at the time and your hours, the order of the steps, the pace to a delivery day, whether a step is already started, and your energy today."; }});
 act({id:"into_today",group:"Today",ex:"Put buy milk in today",kw:["today","focus","pull"],
   re:[/^(?:put|add|move|pull|bring|take) (.+?) (?:in|into|to|onto|in to) today$/,/^(?:do|work on) (.+?) today$/],take:[["step",1]],ask:{step:"Which step do you want in Today?"},
   run:function(v){ return toolRun("focus_today",{subtask:v.step}); }});
@@ -269,8 +269,8 @@ act({id:"attention",group:"Today",ex:"What needs attention?",kw:["due","late","o
   re:[/^(?:what(?:'s| is| are)? )?(?:due|late|overdue|urgent|close|needs? (?:attention|a look))(?: soon)?$/,/\bwhat needs (?:attention|a look)\b/,/\bwhat(?:'s| is) (?:due|late|overdue|urgent)\b/],
   run:function(){
     var al=alerts().slice(0,5);
-    if(!al.length) return "Nothing needs attention right now.";
-    return "Needs attention:\n"+al.map(function(a){ return "- "+a.t+": "+a.w; }).join("\n"); }});
+    if(!al.length) return "No goal has a delivery day, so nothing is pressing. The order of the steps carries the rest.";
+    return "Delivery days, nearest first:\n"+al.map(function(a){ return "- "+a.t+": "+a.w; }).join("\n"); }});
 act({id:"step_priority",group:"Steps",ex:"Set buy milk priority to high",kw:["priority","important"],
   re:[/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(?:set |change |make )?(?:the )?(.+?) (?:priority|prio)(?: (?:to |is |as )?(.*))?$/,/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )make (.+?) (?:a )?(high|low|medium|middle|mid|normal|urgent|important)(?: priority)?$/],take:[["step",1],["prio",2]],
   ask:{step:"Which step?",prio:"High, middle or low?"},
@@ -665,7 +665,7 @@ var BRAIN=[
      return d?"Done today: "+d+".":"Nothing logged as done today yet."; }],
   [/^(?:what needs a look|what(?:'s| is) stuck|what(?:'s| is) blocked|what am i behind on|where am i behind)$/,
    function(){ var al=alerts();
-     if(!al.length) return "Nothing needs a look. Everything moved recently.";
+     if(!al.length) return "No goal has a delivery day, so nothing is pressing.";
      return al.slice(0,5).map(function(a){ return a.t+" ("+a.kind+")"; }).join("; ")+"."; }],
   [/^(?:how am i doing|status|progress|overall|where am i)$/,
    function(){

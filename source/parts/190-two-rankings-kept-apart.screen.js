@@ -32,9 +32,7 @@ function renderBadge(){
     '<button class="nb-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'" title="'+
       esc(verdictWhy(v))+'">'+esc(v.s.name)+'</button>'+
     '<span class="nb-where">'+esc(whereLabel(v.g.where))+'</span>'+
-    '<button class="nb-dose" data-dose="'+doseBtns(dz)[0][0]+'">'+
-      (dz.band==="low"?'<span class="nb-dx">Low day \u00b7 </span>More'
-        :dz.band==="high"?'<span class="nb-dx">More \u00b7 </span>Rough day':"Rough day")+'</button>'+
+    nbEnergy(dz)+
     '<button class="nb-go" data-goto-view="planner" aria-label="Why this one">'+I_ARROW+'</button>';
 }
 function renderVerdict(){

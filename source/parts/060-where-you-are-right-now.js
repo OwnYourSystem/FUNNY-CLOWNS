@@ -84,7 +84,9 @@ function feasible(g,c){
   return {ok:true};
 }
 /* the siren: only the ones that genuinely cannot wait */
-function screaming(){ return alerts().filter(function(a){ return a.score>=150; }).length; }
+/* nothing on the board screams any more (2026-10-20); what is left is the
+   number of delivery days that have passed and still wait for an answer */
+function screaming(){ return state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; }).length; }
 
 
 /* A copy of the whole board, once a day, for the last 7 days. It does not

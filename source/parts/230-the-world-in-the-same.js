@@ -42,15 +42,15 @@ var TICK_SPEED=80; /* pixels a second */
    would land on is left out, because pressing it is how you find that.  */
 function tickWhy(a){
   var g=gById(a.gid); if(!g) return a.w;
-  var n=daysLeft(g);
-  return (n!==null?dueLabel(g):"no deadline")+" \u00b7 "+groupPct(g)+"%";
+  var n=daysLeft(g), left=stepsLeft(g);
+  return (n<0?"its day has passed":"for "+deliveryLabel(g)+" \u00b7 "+left+(left===1?" step":" steps")+" left")+" \u00b7 "+groupPct(g)+"%";
 }
 function tickItem(a){
   if(a.news)
     return '<span class="tick-item news"><span class="tk">'+esc(a.kind)+'</span>'+
       '<b>'+esc(a.t)+'</b>'+(a.w?'<span>'+esc(a.w)+'</span>':"")+
       '<span class="tick-sep"></span></span>';
-  return '<button class="tick-item'+(a.score>=150?" crit":"")+'" data-goto-goal="'+a.gid+
+  return '<button class="tick-item" data-goto-goal="'+a.gid+
     '" data-goto-sub="'+esc(a.sid)+'"><span class="tk">'+esc(a.kind)+'</span>'+
     '<b>'+esc(a.t)+'</b><span>'+esc(tickWhy(a))+'</span><span class="tick-sep"></span></button>';
 }
@@ -63,10 +63,8 @@ function renderTick(){
   var al=alerts();
   if(!al.length && !newsItems().length){ bar.hidden=true; run.innerHTML=""; return; }
   bar.hidden=false;
-  var hot=screaming()>0;
-  bar.classList.toggle("hot",hot);
-  $("#tick-tag").textContent = hot ? "Needs a look now"
-    : (alerts().length ? "Needs a look" : "Live");
+  bar.classList.remove("hot");
+  $("#tick-tag").textContent = al.length ? "Delivery days" : "Live";
   var strip=al.slice(0,8).concat(newsItems()).slice(0,20).map(tickItem).join("");
   run.innerHTML=strip+strip;              /* twice, so -50% lands on the seam */
   /* the run is two copies, so one lap is half of what the browser measures */
@@ -79,11 +77,16 @@ function renderAlerts(){
   var q=searchQ();
   var al=alerts().filter(function(a){ return hit(a.t+" "+a.w,q); });
   var box=$("#alerts"), panel=$('[data-panel="alerts"]');
-  if(panel) panel.classList.toggle("siren", screaming()>0 && !q && doseNow().band!=="low");
-  if(!al.length){ box.innerHTML='<p class="calm">Nothing needs attention.</p>'; return; }
+  if(panel) panel.classList.remove("siren");
+  if(typeof phMissNote==="function") phMissNote(phMissed());
+  if(!al.length){ box.innerHTML='<p class="calm">No goal has a delivery day. Give one a day in its details, or let the order carry it.</p>'; return; }
   box.innerHTML=al.slice(0,8).map(function(a){
-    return '<button class="alert'+(a.score>=150?" hot":"")+'" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
+    var g=gById(a.gid), ask=a.sev==="missed" && g && g.missAsk!==g.due;
+    return '<div class="alert-w"><button class="alert" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
       '<span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
-      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+esc(a.kind)+"</span></button>"; }).join("");
+      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+esc(a.kind)+"</span></button>"+
+      (ask?'<div class="a-acts"><button class="btn take" data-miss-new="'+a.gid+'">Pick a new day</button>'+
+        '<button class="btn" data-miss-off="'+a.gid+'">No date</button><button class="btn" data-miss-keep="'+a.gid+'">Keep it as it is</button></div>':"")+
+      "</div>"; }).join("");
 }
 

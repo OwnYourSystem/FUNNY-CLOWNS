@@ -61,6 +61,7 @@
   --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#61616C;
   --hair:rgba(255,255,255,.075); --rule:rgba(255,255,255,.17);
   --accent:#FF3B30; --accent-ink:#FF7A72; --accent-wash:rgba(255,59,48,.10);
+  --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
   --glow:0 0 20px -4px rgba(255,59,48,.55);
   /* Progress is not an alarm. Work under way is orange, work finished is
      green, and red is kept for the things that actually want you.      */
@@ -91,6 +92,7 @@
     --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
     --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
     --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --glow:0 0 18px -6px rgba(228,36,24,.5);
     --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
@@ -105,6 +107,7 @@
   --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
   --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
   --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --glow:0 0 18px -6px rgba(228,36,24,.5);
   --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
@@ -165,9 +168,9 @@ body.flat #canvas{transform:none!important}
   transition:border-color .3s var(--ease)}
 .tick[hidden]{display:none}
 .tick-badge{flex:none; display:flex; align-items:center; gap:9px; padding:0 17px;
-  background:var(--accent); color:#fff; font-family:var(--mono); font-size:11px;
+  background:var(--inset); color:var(--ink-2); font-family:var(--mono); font-size:11px;
   letter-spacing:.2em; text-transform:uppercase; white-space:nowrap}
-.tick-dot{width:7px; height:7px; border-radius:50%; background:#fff}
+.tick-dot{width:7px; height:7px; border-radius:50%; background:var(--muted)}
 .tick.hot .tick-dot{animation:tickblink 1s steps(1,end) infinite}
 @keyframes tickblink{0%,49%{opacity:1} 50%,100%{opacity:.15}}
 .tick.hot{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
@@ -576,8 +579,13 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 }
 .sev{width:2px; flex:none; border-radius:2px}
 .sev.crit{background:var(--accent); box-shadow:var(--glow)}
-.sev.warn{background:linear-gradient(var(--accent),var(--accent)) 0 0/100% 50% no-repeat, var(--hair)}
+/* calm marks (2026-10-20): on pace, a busy pace, and a passed day that asks a question; no red */
+.sev.warn{background:var(--hair)}
 .sev.serious{background:var(--rule)}
+.sev.missed{background:var(--ink-2)}
+.alert-w{border-bottom:1px solid var(--hair)}
+.alert-w .alert{border-bottom:0}
+.a-acts{display:flex; flex-wrap:wrap; gap:8px; padding:0 0 12px 16px}
 .a-body{min-width:0; flex:1}
 .a-title{font-size:14px; font-weight:450; overflow-wrap:anywhere; letter-spacing:-.01em}
 .a-why{font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; margin-top:1px}
@@ -1470,6 +1478,22 @@ html.ph.ph-old #ph-back{gap:8px}
   background:linear-gradient(to bottom, color-mix(in srgb, var(--ground) 0%, transparent), var(--ground) 20px)}
 html.ph :is(.ph-btn,.ph-chip,.ph-rowb,.ph-goal,.ph-tile,.ph-strip,.ph-item-b,.ph-segb button,.ph-seg a,.ph-nav,.ph-mic,.ph-sw button,.ph-ring):active{background:var(--ph-wash)}
 html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed="true"]:active{background:var(--ph-pri); opacity:.82}
+/* the board's own Undo bar (2026-10-20): the same Undo as the phone, at the bottom of the screen */
+/* the sequence on the board (2026-10-20) */
+.seqline{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:4px 0 10px; font-size:12.5px; color:var(--muted)}
+.rhead .ord{font-family:var(--mono); font-size:11px; color:var(--muted); min-width:1.4em; text-align:right}
+.editor label.chk{display:flex; flex-direction:row; align-items:center; gap:10px; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:13.5px; color:var(--ink); min-height:40px}
+.editor label.chk input{width:18px; height:18px; margin:0}
+.plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
+.editor .more summary{cursor:pointer; font-size:13px; color:var(--ink-2); padding:6px 0}
+.editor .more .hint{font-size:12px; color:var(--muted); margin:2px 0 8px}
+.nb-en{display:inline-flex; align-items:center; gap:6px}
+.nb-en .ph-bat{width:14px; height:22px}
+#dk-undo{display:none}
+html:not(.ph) #dk-undo:not([hidden]){display:flex; align-items:center; gap:14px; position:fixed; z-index:60; left:50%; bottom:24px; transform:translateX(-50%);
+  max-width:min(560px,calc(100vw - 32px)); padding:8px 8px 8px 18px; border-radius:14px; background:var(--ink); color:var(--panel); font-size:14px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#dk-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#dk-undo-b{flex:none; min-height:40px}
 #ph-undo{display:none}
 html.ph #ph-undo:not([hidden]){display:flex; position:fixed; z-index:58; left:12px; right:12px; bottom:calc(80px + env(safe-area-inset-bottom,0px));
   align-items:center; gap:12px; min-height:52px; box-sizing:border-box; padding:4px 6px 4px 16px; border-radius:16px;
@@ -1590,6 +1614,7 @@ try{var _t=localStorage.getItem("oys-theme");
 </script>
 <div id="sbar" aria-hidden="true"></div>
 <canvas id="river" aria-hidden="true"></canvas>
+<div id="dk-undo" role="status" aria-live="polite" hidden><span id="dk-undo-t"></span><button type="button" class="btn" id="dk-undo-b">Undo</button></div>
 <div id="ph">
   <div id="ph-back"><a class="ph-nav" href="#/you" aria-label="Back to You"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg><span>You</span></a><span id="ph-back-t"></span></div>
   <a id="ph-mini" href="#/you" aria-label="You" hidden></a>
@@ -1623,8 +1648,8 @@ try{var _t=localStorage.getItem("oys-theme");
     </div>
   </header>
 
-  <div class="tick" id="tick" hidden aria-label="What needs a look">
-    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Needs a look</span></div>
+  <div class="tick" id="tick" hidden aria-label="Delivery days">
+    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Delivery days</span></div>
     <div class="tick-win"><div class="tick-run" id="tick-run"></div></div>
     <button class="tick-hold" id="tick-hold" aria-pressed="false" aria-label="Hold the banner">
       <svg class="stop" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="3.4" height="10" rx="1"/><rect x="8.6" y="2" width="3.4" height="10" rx="1"/></svg>
@@ -1689,9 +1714,9 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="k-sub" id="kpi-done-sub">of 0</div>
     </div>
     <div class="kpi">
-      <div class="k-label">Needs attention</div>
+      <div class="k-label">Delivery days</div>
       <div class="k-val" id="kpi-alert">0</div>
-      <div class="k-sub" id="kpi-alert-sub">past or near a deadline</div>
+      <div class="k-sub" id="kpi-alert-sub">none set</div>
     </div>
     <div class="kpi">
       <div class="k-label">Done today</div>
@@ -1757,8 +1782,8 @@ try{var _t=localStorage.getItem("oys-theme");
   <section class="panel" data-panel="alerts">
     <div class="p-head">
       <div>
-        <div class="p-title">Needs attention</div>
-        <div class="p-note">Deadlines that are close or past. Quiet on a low day.</div>
+        <div class="p-title">Delivery days</div>
+        <div class="p-note">Goals with a delivery day, nearest first, and the pace that keeps each on time. A day that has passed asks you for a new one.</div>
       </div>
     </div>
     <div class="alerts" id="alerts"></div>

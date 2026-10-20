@@ -46,21 +46,25 @@ function phParent(){
    can never throw away a later change.                                */
 var PH_UNDO=null, PH_JR_OPEN=false;
 function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k==="savedAt")?undefined:v; }); }
+/* the phone shows Undo above its tabs, the board at the bottom of the screen */
+function phUndoShow(label){
+  var p=PH_ON?"#ph-undo":"#dk-undo", b=$(p), t=$(p+"-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+}
 function phUndoable(label,fn){
   var snap=JSON.stringify(state), r;
   try{ r=fn(); }catch(e){ toast("",e.message); return; }
   save(); renderAll(); PH_DRAWN=""; phRender();
   if(PH_UNDO) clearTimeout(PH_UNDO.t);
   PH_UNDO={snap:snap, fp:phFp(), t:setTimeout(phUndoHide,6000)};
-  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+  phUndoShow(label);
   return r;
 }
-function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; var b=$("#ph-undo"); if(b) b.hidden=true; }
+function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; ["#ph-undo","#dk-undo"].forEach(function(x){ var b=$(x); if(b) b.hidden=true; }); }
 /* Undo for something that is not the board's state (a cleared conversation) */
 function phUndoFn(label,restore){
   if(PH_UNDO) clearTimeout(PH_UNDO.t);
   PH_UNDO={fn:restore, t:setTimeout(phUndoHide,6000)};
-  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+  phUndoShow(label);
 }
 function phUndo(){
   var u=PH_UNDO; if(!u) return; phUndoHide();
@@ -247,13 +251,13 @@ function phAiConsent(){
     var me=state.me||(state.me=freshMe()); me.aiOrderOk=todayStr(); save(); return true;
   });
 }
-function phAiOrder(gid){
+function phAiOrder(gid,from){
   var g=gById(gid); if(!g) return;
   var open=g.subs.map(function(id){ return state.subs[id]; }).filter(function(x){ return x&&x.pct<100&&x.status!=="done"; });
   if(open.length<2) return;
   ((state.me&&state.me.aiOrderOk)?Promise.resolve(true):phAiConsent()).then(function(ok){
     if(!ok) return;
-    var btn=document.querySelector('[data-ph="aiorder"]');
+    var btn=from&&document.contains(from)?from:document.querySelector('[data-ph="aiorder"]');
     if(btn){ btn.disabled=true; btn.setAttribute("aria-busy","true"); btn.textContent="Asking\u2026"; }
     var done=function(){ if(btn){ btn.disabled=false; btn.removeAttribute("aria-busy"); btn.textContent="Suggest an order"; } };
     var ctl=window.AbortController?new AbortController():null, tm=setTimeout(function(){ if(ctl) ctl.abort(); },25000);
@@ -1279,6 +1283,7 @@ function phOnbFinish(add){
   addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
   setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
   var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);
+  var db=$("#dk-undo-b"); if(db) db.addEventListener("click",phUndo);
   /* A swipe in from the left edge goes Back, as in every iPhone app. Only
      the app opened from the home screen needs this: in a browser tab, Safari
      and Chrome have their own edge swipe, and two Backs would fight. It only

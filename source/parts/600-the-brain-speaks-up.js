@@ -6,13 +6,13 @@
    the bell count changes. The words stay in the cards on the board.       */
 var saidWhat="";
 function nudge(){
-  var hot=alerts().filter(function(a){ return a.score>=150; });
+  /* the bell counts delivery days that have passed and still wait for an answer */
+  var hot=state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; });
   var msg="", key="";
   if(hot.length){
-    key="hot:"+hot[0].gid;
-    msg=hot.length===1
-      ? hot[0].t+" needs you: "+hot[0].w.split(" \\u00b7 ").slice(0,2).join(", ")+"."
-      : hot.length+" goals are past or nearly past their deadline. "+hot[0].t+" is the worst.";
+    key="hot:"+hot[0].id;
+    msg=hot.length===1 ? hot[0].name+": its delivery day has passed. Pick a new day when you are ready."
+      : hot.length+" goals passed their delivery day. Pick new days when you are ready.";
   } else if(!state.oftad.length){
     var pk=pickToday();
     if(pk){ key="pick:"+pk.s.id; msg="Today: "+pk.s.name+". "+pk.why; }

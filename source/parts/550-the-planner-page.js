@@ -28,6 +28,10 @@ function renderPlanner(){
     '<label class="wide">Never schedule over'+
       '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>'+
     '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
+    '<label>Steps on a good day<select class="f" data-me="normalN">'+[1,2,3,4].map(function(n){
+      return '<option value="'+n+'"'+(doseN("normal")===n?" selected":"")+">"+n+(n===1?" step":" steps")+"</option>"; }).join("")+'</select></label>'+
+    '<label class="wide">Order suggestions by AI<span class="dayrow"><button type="button" id="pl-aiok" aria-pressed="'+(!!me.aiOrderOk)+'">'+
+      (me.aiOrderOk?"On":"Off")+'</button></span><span class="pl-note">When on, Suggest an order sends a goal\u2019s name and its open step names to Anthropic, an AI company. Nothing else leaves this device.</span></label>'+
     '<label class="wide">News in the banner<span class="dayrow feedrow" id="pl-feeds">'+
       FEEDS.map(function(f){
         return '<button type="button" data-feed="'+f[0]+'" aria-pressed="'+
@@ -62,6 +66,7 @@ function meSet(k,v){
   if(k==="w0") me.work[0]=v;
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
+  else if(k==="normalN"){ me.normalN=clamp(Math.round(+v)||3,1,4); me.goodSet=true; }
   else me[k]=v;
   if(k==="rise"){ var moved=remFitDay(me); if(moved) toast("",moved); }
   me.done=true;
@@ -84,6 +89,13 @@ $("#pl-form").addEventListener("click",function(e){
   var on=meDay(+b.dataset.day); save();
   b.setAttribute("aria-pressed", on ? "true":"false");
   renderVerdict(); renderPlanner2();
+});
+$("#pl-form").addEventListener("click",function(e){
+  if(!e.target.closest("#pl-aiok")) return;
+  e.preventDefault();
+  var me=state.me||(state.me=freshMe());
+  if(me.aiOrderOk){ delete me.aiOrderOk; save(); renderPlanner(); var b=$("#pl-aiok"); if(b) b.focus(); }
+  else phAiConsent().then(function(){ renderPlanner(); var b2=$("#pl-aiok"); if(b2) b2.focus(); });
 });
 $("#pl-form").addEventListener("click",function(e){
   var f=e.target.closest("[data-feed]"); if(!f) return;

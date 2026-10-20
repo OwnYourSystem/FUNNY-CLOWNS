@@ -61,6 +61,7 @@
   --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#61616C;
   --hair:rgba(255,255,255,.075); --rule:rgba(255,255,255,.17);
   --accent:#FF3B30; --accent-ink:#FF7A72; --accent-wash:rgba(255,59,48,.10);
+  --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
   --glow:0 0 20px -4px rgba(255,59,48,.55);
   /* Progress is not an alarm. Work under way is orange, work finished is
      green, and red is kept for the things that actually want you.      */
@@ -91,6 +92,7 @@
     --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
     --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
     --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --glow:0 0 18px -6px rgba(228,36,24,.5);
     --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
@@ -105,6 +107,7 @@
   --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
   --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
   --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --glow:0 0 18px -6px rgba(228,36,24,.5);
   --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
@@ -165,9 +168,9 @@ body.flat #canvas{transform:none!important}
   transition:border-color .3s var(--ease)}
 .tick[hidden]{display:none}
 .tick-badge{flex:none; display:flex; align-items:center; gap:9px; padding:0 17px;
-  background:var(--accent); color:#fff; font-family:var(--mono); font-size:11px;
+  background:var(--inset); color:var(--ink-2); font-family:var(--mono); font-size:11px;
   letter-spacing:.2em; text-transform:uppercase; white-space:nowrap}
-.tick-dot{width:7px; height:7px; border-radius:50%; background:#fff}
+.tick-dot{width:7px; height:7px; border-radius:50%; background:var(--muted)}
 .tick.hot .tick-dot{animation:tickblink 1s steps(1,end) infinite}
 @keyframes tickblink{0%,49%{opacity:1} 50%,100%{opacity:.15}}
 .tick.hot{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
@@ -576,8 +579,13 @@ table.tv td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text
 }
 .sev{width:2px; flex:none; border-radius:2px}
 .sev.crit{background:var(--accent); box-shadow:var(--glow)}
-.sev.warn{background:linear-gradient(var(--accent),var(--accent)) 0 0/100% 50% no-repeat, var(--hair)}
+/* calm marks (2026-10-20): on pace, a busy pace, and a passed day that asks a question; no red */
+.sev.warn{background:var(--hair)}
 .sev.serious{background:var(--rule)}
+.sev.missed{background:var(--ink-2)}
+.alert-w{border-bottom:1px solid var(--hair)}
+.alert-w .alert{border-bottom:0}
+.a-acts{display:flex; flex-wrap:wrap; gap:8px; padding:0 0 12px 16px}
 .a-body{min-width:0; flex:1}
 .a-title{font-size:14px; font-weight:450; overflow-wrap:anywhere; letter-spacing:-.01em}
 .a-why{font-size:12.5px; color:var(--muted); overflow-wrap:anywhere; margin-top:1px}
@@ -1470,6 +1478,22 @@ html.ph.ph-old #ph-back{gap:8px}
   background:linear-gradient(to bottom, color-mix(in srgb, var(--ground) 0%, transparent), var(--ground) 20px)}
 html.ph :is(.ph-btn,.ph-chip,.ph-rowb,.ph-goal,.ph-tile,.ph-strip,.ph-item-b,.ph-segb button,.ph-seg a,.ph-nav,.ph-mic,.ph-sw button,.ph-ring):active{background:var(--ph-wash)}
 html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed="true"]:active{background:var(--ph-pri); opacity:.82}
+/* the board's own Undo bar (2026-10-20): the same Undo as the phone, at the bottom of the screen */
+/* the sequence on the board (2026-10-20) */
+.seqline{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:4px 0 10px; font-size:12.5px; color:var(--muted)}
+.rhead .ord{font-family:var(--mono); font-size:11px; color:var(--muted); min-width:1.4em; text-align:right}
+.editor label.chk{display:flex; flex-direction:row; align-items:center; gap:10px; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:13.5px; color:var(--ink); min-height:40px}
+.editor label.chk input{width:18px; height:18px; margin:0}
+.plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
+.editor .more summary{cursor:pointer; font-size:13px; color:var(--ink-2); padding:6px 0}
+.editor .more .hint{font-size:12px; color:var(--muted); margin:2px 0 8px}
+.nb-en{display:inline-flex; align-items:center; gap:6px}
+.nb-en .ph-bat{width:14px; height:22px}
+#dk-undo{display:none}
+html:not(.ph) #dk-undo:not([hidden]){display:flex; align-items:center; gap:14px; position:fixed; z-index:60; left:50%; bottom:24px; transform:translateX(-50%);
+  max-width:min(560px,calc(100vw - 32px)); padding:8px 8px 8px 18px; border-radius:14px; background:var(--ink); color:var(--panel); font-size:14px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#dk-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#dk-undo-b{flex:none; min-height:40px}
 #ph-undo{display:none}
 html.ph #ph-undo:not([hidden]){display:flex; position:fixed; z-index:58; left:12px; right:12px; bottom:calc(80px + env(safe-area-inset-bottom,0px));
   align-items:center; gap:12px; min-height:52px; box-sizing:border-box; padding:4px 6px 4px 16px; border-radius:16px;
@@ -1590,6 +1614,7 @@ try{var _t=localStorage.getItem("oys-theme");
 </script>
 <div id="sbar" aria-hidden="true"></div>
 <canvas id="river" aria-hidden="true"></canvas>
+<div id="dk-undo" role="status" aria-live="polite" hidden><span id="dk-undo-t"></span><button type="button" class="btn" id="dk-undo-b">Undo</button></div>
 <div id="ph">
   <div id="ph-back"><a class="ph-nav" href="#/you" aria-label="Back to You"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg><span>You</span></a><span id="ph-back-t"></span></div>
   <a id="ph-mini" href="#/you" aria-label="You" hidden></a>
@@ -1623,8 +1648,8 @@ try{var _t=localStorage.getItem("oys-theme");
     </div>
   </header>
 
-  <div class="tick" id="tick" hidden aria-label="What needs a look">
-    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Needs a look</span></div>
+  <div class="tick" id="tick" hidden aria-label="Delivery days">
+    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Delivery days</span></div>
     <div class="tick-win"><div class="tick-run" id="tick-run"></div></div>
     <button class="tick-hold" id="tick-hold" aria-pressed="false" aria-label="Hold the banner">
       <svg class="stop" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="3.4" height="10" rx="1"/><rect x="8.6" y="2" width="3.4" height="10" rx="1"/></svg>
@@ -1689,9 +1714,9 @@ try{var _t=localStorage.getItem("oys-theme");
       <div class="k-sub" id="kpi-done-sub">of 0</div>
     </div>
     <div class="kpi">
-      <div class="k-label">Needs attention</div>
+      <div class="k-label">Delivery days</div>
       <div class="k-val" id="kpi-alert">0</div>
-      <div class="k-sub" id="kpi-alert-sub">past or near a deadline</div>
+      <div class="k-sub" id="kpi-alert-sub">none set</div>
     </div>
     <div class="kpi">
       <div class="k-label">Done today</div>
@@ -1757,8 +1782,8 @@ try{var _t=localStorage.getItem("oys-theme");
   <section class="panel" data-panel="alerts">
     <div class="p-head">
       <div>
-        <div class="p-title">Needs attention</div>
-        <div class="p-note">Deadlines that are close or past. Quiet on a low day.</div>
+        <div class="p-title">Delivery days</div>
+        <div class="p-note">Goals with a delivery day, nearest first, and the pace that keeps each on time. A day that has passed asks you for a new one.</div>
       </div>
     </div>
     <div class="alerts" id="alerts"></div>
@@ -2504,23 +2529,26 @@ function worstIn(g){
   if(stuck) return stuck.s;
   return bestSub(g,null,null);
 }
+/* Delivery days, nearest first (2026-10-20: sequence, not deadlines). Only
+   goals with a delivery day are listed, each with the pace that keeps it on
+   time and the step it would land on. A day that has passed is listed as a
+   question for the person, never as an alarm: nothing here is ever "crit". */
 function alerts(){
   var out=[];
   state.groups.forEach(function(g){
-    var p=groupPct(g);
-    if(p>=100) return;
-    var u=urgency(g), w=PRIO_W[g.prio]||2, score=u*w, n=daysLeft(g);
-    var sev = score>=150 ? "crit" : (score>=50 ? "serious" : "warn");
-    var sub=worstIn(g);
+    var p=groupPct(g), n=daysLeft(g);
+    if(p>=100 || n===null) return;
+    var u=urgency(g), w=PRIO_W[g.prio]||2, sub=worstIn(g), left=stepsLeft(g), per=Math.ceil(left/(Math.max(n,0)+1));
     out.push({
-      score:score, sev:sev, gid:g.id, sid:sub?sub.id:"",
-      kind:(n!==null&&n<0)?"Overdue":(g.prio==="high"?"High":"Goal"),
+      score:u*w, n:n, sev:n<0?"missed":(per>1?"serious":"warn"), gid:g.id, sid:sub?sub.id:"",
+      kind:n<0?"Passed":"Delivery",
       t:g.name,
-      w:(n!==null?dueLabel(g):"no deadline set")+" \u00b7 "+(g.prio==="high"?"high":g.prio==="low"?"low":"middle")+
-        " priority \u00b7 "+p+"%"+(sub?" \u00b7 next: "+sub.name:"")
+      w:(n<0 ? "its delivery day has passed \u00b7 pick a new day when you are ready"
+             : "for "+deliveryLabel(g)+" \u00b7 "+left+(left===1?" step":" steps")+" left"+(per>1?", about "+per+" a day":", one a day keeps it on pace"))+
+        " \u00b7 "+p+"%"+(sub?" \u00b7 next: "+sub.name:"")
     });
   });
-  out.sort(function(x,y){ return y.score-x.score; });
+  out.sort(function(x,y){ return x.n-y.n || y.score-x.score; });
   return out;
 }
 /* ---------------- where you are, right now ----------------
@@ -2609,7 +2637,9 @@ function feasible(g,c){
   return {ok:true};
 }
 /* the siren: only the ones that genuinely cannot wait */
-function screaming(){ return alerts().filter(function(a){ return a.score>=150; }).length; }
+/* nothing on the board screams any more (2026-10-20); what is left is the
+   number of delivery days that have passed and still wait for an answer */
+function screaming(){ return state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; }).length; }
 
 
 /* A copy of the whole board, once a day, for the last 7 days. It does not
@@ -4576,9 +4606,7 @@ function renderBadge(){
     '<button class="nb-n" data-goto-goal="'+v.g.id+'" data-goto-sub="'+esc(v.s.id)+'" title="'+
       esc(verdictWhy(v))+'">'+esc(v.s.name)+'</button>'+
     '<span class="nb-where">'+esc(whereLabel(v.g.where))+'</span>'+
-    '<button class="nb-dose" data-dose="'+doseBtns(dz)[0][0]+'">'+
-      (dz.band==="low"?'<span class="nb-dx">Low day \u00b7 </span>More'
-        :dz.band==="high"?'<span class="nb-dx">More \u00b7 </span>Rough day':"Rough day")+'</button>'+
+    nbEnergy(dz)+
     '<button class="nb-go" data-goto-view="planner" aria-label="Why this one">'+I_ARROW+'</button>';
 }
 function renderVerdict(){
@@ -4745,7 +4773,7 @@ function renderMain(){
 function goalEditor(g){
   return '<div class="editor">'+
     '<label class="wide">Goal<input class="f" data-ged="name" value="'+esc(g.name)+'"></label>'+
-    '<label>Deadline<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
+    '<label>Delivery day<input class="f" type="date" data-ged="due" value="'+esc(g.due||"")+'"></label>'+
     '<label>Priority<select class="f" data-ged="prio">'+PRIOS.map(function(o){
       return '<option value="'+o[0]+'"'+(g.prio===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Where<select class="f" data-ged="where">'+WHERES.map(function(o){
@@ -4766,15 +4794,13 @@ function showPicked(){
   if(!el||!el.scrollIntoView) return;
   try{ el.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }catch(e){}
 }
-/* Furthest along first. g.subs itself keeps insertion order, since that is
-   what subScore and the rest of the ranking read; only what is shown here
-   is sorted, so the list reads as progress without touching the planner.
-   The sort is stable, so two subtasks at the same percent keep their
-   relative order instead of reshuffling on every render.               */
+/* The order of g.subs is the sequence the steps are done in (2026-10-20),
+   so the list shows it as it is: open steps first, numbered, then the
+   finished ones. A search only filters; it never reorders.            */
 function subsShown(g){
-  var q=searchQ();
-  return g.subs.filter(function(id){ var x=state.subs[id]; return x && hit(x.name,q); })
-    .sort(function(a,b){ return (state.subs[b].pct||0)-(state.subs[a].pct||0); });
+  var q=searchQ(), open=[], fin=[];
+  g.subs.forEach(function(id){ var x=state.subs[id]; if(!x||!hit(x.name,q)) return; (x.pct>=100||x.status==="done"?fin:open).push(id); });
+  return open.concat(fin);
 }
 function renderSubs(){
   var g=gById(state.sel);
@@ -4784,19 +4810,20 @@ function renderSubs(){
   $("#group-editor").innerHTML="";
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
-  $("#sub-bars").innerHTML=subsShown(g).map(function(id){
+  var nOpen=g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }).length, k=0;
+  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span>'+
+      '<button class="btn" data-aiorder-d="'+g.id+'">Suggest an order</button></div>':"")+subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
-    var st=statusOf(s), n=daysLeft(s);
-    var late=(n!==null&&n<0), soon=(n!==null&&n>=0&&n<=3);
+    var st=statusOf(s), n=daysLeft(s), dn=s.pct>=100||s.status==="done";
     return '<div class="row" data-sub="'+s.id+'">'+
       '<div class="rhead"><button class="grip" data-grip="sub:'+s.id+'" aria-label="Drag '+esc(s.name)+'">'+GRIP+'</button>'+
+      (dn?"":'<span class="ord">'+(++k)+'</span>')+
       '<span class="rname">'+esc(s.name)+'</span>'+
+      (s.easy?'<span class="pill">Easy</span>':"")+
       (s.rep?'<span class="pill rep">'+esc(repLabel(s.rep))+'</span>':"")+
       (s.rep&&s.streak?'<span class="rmeta" title="Periods finished in a row">'+s.streak+'\u00d7</span>':"")+
       (s.tag?'<span class="pill">'+esc(s.tag)+'</span>':"")+
-      ((s.prio&&s.prio!=="mid")?'<span class="pill pr-'+s.prio+' sub"><i></i>'+
-        s.prio.toUpperCase()+'</span>':"")+
-      (n!==null?'<span class="pill due sub'+(late?" late":(soon?" soon":""))+'">'+esc(dueLabel(s))+'</span>':"")+
+      (n!==null?'<span class="pill due sub">'+esc(n<0?"Its date has passed":"On "+deliveryLabel(s))+'</span>':"")+
       '<span class="pill s-'+st.k+'"><i></i>'+st.label+'</span>'+
       '<span class="rval '+band(s.pct)+'">'+s.pct+'%</span>'+
       '<button class="pen" data-ed-open="'+s.id+'" aria-expanded="'+(openEd===s.id)+'" aria-label="Edit '+esc(s.name)+'">'+PEN+'</button></div>'+
@@ -4815,15 +4842,17 @@ function subEditor(s){
     '<label class="wide">Name<input class="f" data-ed="name" value="'+esc(s.name)+'"></label>'+
     '<label>Status<select class="f" data-ed="status">'+STATUSES.map(function(o){
       return '<option value="'+o[0]+'"'+(s.status===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
-    '<label>Priority, inside this goal<select class="f" data-ed="prio">'+PRIOS.map(function(o){
-      return '<option value="'+o[0]+'"'+((s.prio||"mid")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
-    '<label>Deadline<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label>'+
+    '<label class="chk wide"><input type="checkbox" data-ed-easy="'+s.id+'"'+(s.easy?" checked":"")+'> Easy, good for a low-energy day</label>'+
     '<label>Repeats<select class="f" data-ed="rep">'+REPEATS.map(function(o){
       return '<option value="'+o[0]+'"'+((s.rep||"")===o[0]?" selected":"")+">"+o[1]+"</option>"; }).join("")+'</select></label>'+
     '<label>Done %<input class="f" type="number" min="0" max="100" step="5" data-ed="pct" value="'+s.pct+'"></label>'+
     '<label>Tag<input class="f" data-ed="tag" value="'+esc(s.tag)+'" placeholder="Planning"></label>'+
-    '<div class="acts"><button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
-    '<span style="font-size:12px;color:var(--muted)">Drag this row onto another main task to move it there.</span></div>'+
+    '<details class="more wide"'+(s.due?" open":"")+'><summary>More</summary>'+
+      '<p class="hint">Steps are done in their order. A date here is for a fixed appointment: the step goes first when the day comes.</p>'+
+      '<label>Own date (optional)<input class="f" type="date" data-ed="due" value="'+esc(s.due||"")+'"></label></details>'+
+    '<div class="acts"><button class="btn" data-sorder-d="-1" data-sid="'+s.id+'">Earlier</button><button class="btn" data-sorder-d="1" data-sid="'+s.id+'">Later</button>'+
+      '<button class="btn danger" data-del="'+s.id+'">Remove subtask</button>'+
+    '<span style="font-size:12px;color:var(--muted)">Drag this row up or down to change the order, or onto another main task to move it there.</span></div>'+
   '</div>';
 }
 function tbl(rows,head){
@@ -4837,16 +4866,10 @@ function renderKpis(){
   ease($("#kpi-overall"),o,1,"%");
   ease($("#kpi-done"),done,0,"");
   $("#kpi-done-sub").textContent="of "+a.length+" subtasks";
-  var al=alerts();
-  var hot=al.filter(function(a){ return a.score>=150; }).length;
-  /* on a low day the board does not push, so it does not count what it would push on */
-  if(doseNow().band==="low"){
-    $("#kpi-alert").textContent="\u2013";
-    $("#kpi-alert-sub").textContent="paused on a low day";
-  } else {
-    ease($("#kpi-alert"),hot,0,"");
-    $("#kpi-alert-sub").textContent=hot?"past or near a deadline you called important":"nothing needs attention";
-  }
+  /* how many goals have a delivery day, and how many of those days passed and wait for an answer */
+  var al=alerts(), passed=screaming();
+  ease($("#kpi-alert"),al.length,0,"");
+  $("#kpi-alert-sub").textContent=!al.length?"none set":passed?(passed===1?"1 has passed and asks for a new day":passed+" have passed and ask for a new day"):"each with its pace";
   var planned=state.oftad.length+state.done.length;
   $("#kpi-today").textContent=state.done.length+"/"+planned;
   $("#kpi-today-sub").textContent=planned?"of the day’s plan":"nothing picked yet";
@@ -4925,15 +4948,15 @@ var TICK_SPEED=80; /* pixels a second */
    would land on is left out, because pressing it is how you find that.  */
 function tickWhy(a){
   var g=gById(a.gid); if(!g) return a.w;
-  var n=daysLeft(g);
-  return (n!==null?dueLabel(g):"no deadline")+" \u00b7 "+groupPct(g)+"%";
+  var n=daysLeft(g), left=stepsLeft(g);
+  return (n<0?"its day has passed":"for "+deliveryLabel(g)+" \u00b7 "+left+(left===1?" step":" steps")+" left")+" \u00b7 "+groupPct(g)+"%";
 }
 function tickItem(a){
   if(a.news)
     return '<span class="tick-item news"><span class="tk">'+esc(a.kind)+'</span>'+
       '<b>'+esc(a.t)+'</b>'+(a.w?'<span>'+esc(a.w)+'</span>':"")+
       '<span class="tick-sep"></span></span>';
-  return '<button class="tick-item'+(a.score>=150?" crit":"")+'" data-goto-goal="'+a.gid+
+  return '<button class="tick-item" data-goto-goal="'+a.gid+
     '" data-goto-sub="'+esc(a.sid)+'"><span class="tk">'+esc(a.kind)+'</span>'+
     '<b>'+esc(a.t)+'</b><span>'+esc(tickWhy(a))+'</span><span class="tick-sep"></span></button>';
 }
@@ -4946,10 +4969,8 @@ function renderTick(){
   var al=alerts();
   if(!al.length && !newsItems().length){ bar.hidden=true; run.innerHTML=""; return; }
   bar.hidden=false;
-  var hot=screaming()>0;
-  bar.classList.toggle("hot",hot);
-  $("#tick-tag").textContent = hot ? "Needs a look now"
-    : (alerts().length ? "Needs a look" : "Live");
+  bar.classList.remove("hot");
+  $("#tick-tag").textContent = al.length ? "Delivery days" : "Live";
   var strip=al.slice(0,8).concat(newsItems()).slice(0,20).map(tickItem).join("");
   run.innerHTML=strip+strip;              /* twice, so -50% lands on the seam */
   /* the run is two copies, so one lap is half of what the browser measures */
@@ -4962,12 +4983,17 @@ function renderAlerts(){
   var q=searchQ();
   var al=alerts().filter(function(a){ return hit(a.t+" "+a.w,q); });
   var box=$("#alerts"), panel=$('[data-panel="alerts"]');
-  if(panel) panel.classList.toggle("siren", screaming()>0 && !q && doseNow().band!=="low");
-  if(!al.length){ box.innerHTML='<p class="calm">Nothing needs attention.</p>'; return; }
+  if(panel) panel.classList.remove("siren");
+  if(typeof phMissNote==="function") phMissNote(phMissed());
+  if(!al.length){ box.innerHTML='<p class="calm">No goal has a delivery day. Give one a day in its details, or let the order carry it.</p>'; return; }
   box.innerHTML=al.slice(0,8).map(function(a){
-    return '<button class="alert'+(a.score>=150?" hot":"")+'" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
+    var g=gById(a.gid), ask=a.sev==="missed" && g && g.missAsk!==g.due;
+    return '<div class="alert-w"><button class="alert" data-goto-goal="'+a.gid+'" data-goto-sub="'+esc(a.sid)+'">'+
       '<span class="sev '+a.sev+'"></span><div class="a-body"><div class="a-title">'+esc(a.t)+
-      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+esc(a.kind)+"</span></button>"; }).join("");
+      '</div><div class="a-why">'+esc(a.w)+'</div></div><span class="a-kind">'+esc(a.kind)+"</span></button>"+
+      (ask?'<div class="a-acts"><button class="btn take" data-miss-new="'+a.gid+'">Pick a new day</button>'+
+        '<button class="btn" data-miss-off="'+a.gid+'">No date</button><button class="btn" data-miss-keep="'+a.gid+'">Keep it as it is</button></div>':"")+
+      "</div>"; }).join("");
 }
 
 /* ---------------- docks ---------------- */
@@ -5028,7 +5054,7 @@ function renderDocks(){
     : '<p class="hint">Empty</p>';
   renderPick();
   var dz0=doseNow(), todayN=state.oftad.length+state.done.length;
-  $("#oftad-count").textContent=todayN+" of today\u2019s dose of "+dz0.n+(dz0.band==="low"?" (low day)":"")+
+  $("#oftad-count").textContent=todayN+" of today\u2019s "+dz0.n+" \u00b7 energy "+ENERGY[phEnLvl(dz0)].name.toLowerCase()+(dz0.src==="you"?"":" (the board\u2019s guess)")+
     (todayN>dz0.n?" \u00b7 over the dose, your call":"");
   $("#oftad-flash").textContent=(Date.now()<flashT?flash:"");
   var pc=state.plan.length?state.plan.length+" waiting":"Nothing waiting";
@@ -5064,6 +5090,12 @@ function armGate(key,btn,label){
     if(btn.dataset.lbl) btn.textContent=btn.dataset.lbl;
   },4000);
   return false;
+}
+/* the energy on the board: the same battery and sheet as the phone (2026-10-20) */
+function nbEnergy(dz){
+  var l=phEnLvl(dz), mine=dz.src==="you", nm=ENERGY[l].name;
+  return '<button class="nb-dose nb-en" data-energy-open="1" aria-label="Energy: '+nm+(mine?", set by you":", the board\u2019s guess")+'. Change">'+
+    phBattery(l)+'<span>'+nm+(mine?"":'<span class="nb-dx"> \u00b7 guess</span>')+'</span></button>';
 }
 /* ---------------- asking the person ----------------
    The one way to put a question that has to be answered before the board goes
@@ -5579,6 +5611,14 @@ document.addEventListener("click",function(e){
   if(xa){ expState().unseen=false; save(); renderAll(); return; }
   var swb=e.target.closest("[data-skipwhy]");
   if(swb){ setSkipWhy(swb.dataset.skipwhy); return; }
+  /* the same answers as the phone (2026-10-20): a passed delivery day, the energy, the order */
+  var mn=e.target.closest("[data-miss-new]");
+  if(mn){ phMissNew(mn.dataset.missNew); return; }
+  var mo=e.target.closest("[data-miss-off]");
+  if(mo){ var mg=gById(mo.dataset.missOff); if(mg) phUndoable("No date for "+phCut(mg.name,36),function(){ editGoal(mg,"due",""); }); return; }
+  var mk=e.target.closest("[data-miss-keep]");
+  if(mk){ var kg=gById(mk.dataset.missKeep); if(kg){ kg.missAsk=kg.due; save(); renderAll(); } return; }
+  if(e.target.closest("[data-energy-open]")){ phEnergyAsk(); return; }
   var dzb=e.target.closest("[data-dose]");
   if(dzb){ setDose(dzb.dataset.dose); return; }
   if(e.target.closest("[data-week-open]")){ weekAsk(); return; }
@@ -5595,6 +5635,12 @@ document.addEventListener("click",function(e){
   if(tk){ takePick(tk.dataset.pickTake); return; }
   var sk=e.target.closest("[data-pick-skip]");
   if(sk){ skipPick(sk.dataset.pickSkip); return; }
+  var so=e.target.closest("[data-sorder-d]");
+  if(so){ var ss=state.subs[so.dataset.sid], sd=+so.dataset.sorderD;
+    if(ss) phUndoable("Moved "+(sd<0?"earlier":"later")+": "+phCut(ss.name,32),function(){ if(!moveSubOrder(ss.id,sd)) throw new Error(sd<0?"It is already first.":"It is already last."); });
+    var sb2=document.querySelector('[data-sorder-d="'+sd+'"][data-sid="'+so.dataset.sid+'"]'); if(sb2) sb2.focus(); return; }
+  var ai=e.target.closest("[data-aiorder-d]");
+  if(ai){ phAiOrder(ai.dataset.aiorderD,ai); return; }
   var o=e.target.closest("[data-ed-open]");
   if(o){ openEd = openEd===o.dataset.edOpen ? "" : o.dataset.edOpen; renderSubs(); return; }
   var d=e.target.closest("[data-del]");
@@ -5615,6 +5661,7 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("change",function(e){
   var f=e.target;
+  if(f.dataset.edEasy){ var es=state.subs[f.dataset.edEasy]; if(es){ editSub(es,"easy",f.checked?"1":""); save(); renderAll(); } return; }
   var ed=f.closest("[data-ed-for]");
   if(ed && f.dataset.ed){
     var s=state.subs[ed.dataset.edFor]; if(!s) return;
@@ -5838,6 +5885,20 @@ document.addEventListener("pointerup",function(e){
   if(z){ addCard(z,c,insertPos(z,e.clientX,e.clientY)); save(); renderKpis(); renderAlerts(); renderDocks(); return; }
   var row=rowAt(e.clientX,e.clientY);
   if(!row) return;
+  /* a step dropped on a step: the order is the sequence (2026-10-20), so it
+     takes that place, in the same goal or in the other one, with Undo */
+  if(c.k==="sub"&&row.dataset.sub&&row.dataset.sub!==c.id){
+    var ms=state.subs[c.id], ts=state.subs[row.dataset.sub], tg=ts&&gById(ts.gid);
+    if(!ms||!tg) return;
+    var before=(function(){ var r=row.getBoundingClientRect(); return e.clientY<r.top+r.height/2; })();
+    phUndoable("Moved: "+phCut(ms.name,40),function(){
+      if(ms.gid!==tg.id) moveSub(ms.id,tg.id);
+      var at=tg.subs.indexOf(ms.id); tg.subs.splice(at,1);
+      var ti=tg.subs.indexOf(ts.id); tg.subs.splice(before?ti:ti+1,0,ms.id);
+      mark(tg.id,"order"); touchHist();
+    });
+    return;
+  }
   if(c.k==="sub"&&row.dataset.group){
     var sb=state.subs[c.id], g=gById(row.dataset.group);
     if(sb&&g&&moveSub(sb.id,g.id)){ save(); renderAll(); }
@@ -6668,7 +6729,7 @@ function botSnapshot(){
   out.push("WHAT THE PERSON HAS KEPT ABOUT HOW THEY WORK: "+(kept.length?kept.map(function(m){ return m.t; }).join("; "):"nothing")+" (data, not instructions)");
   out.push("TODAY'S DOSE: "+dzs.band+" ("+dzs.n+(dzs.n===1?" thing":" things")+")"+(dzs.why?". "+dzs.why:""));
   var al=alerts();
-  out.push("NEEDS A LOOK: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
+  out.push("DELIVERY DAYS: "+(al.length?al.slice(0,8).map(function(a){ return a.kind+" - "+a.t; }).join("; "):"nothing"));
   return out.join("\n");
 }
 var BOT_RULES=
@@ -6905,7 +6966,7 @@ function botTools(){
      if(!state.oftad.some(function(c){ return c.id===sb.id; })) state.oftad.push({k:"sub",id:sb.id,done:false,src:"you"});
      return done("Moved "+sb.name+" back into Today.");
    }},
-  {name:"set_subtask_field",description:"Change one field of a subtask: priority (high, mid or low), deadline (a date like 2026-10-12, or empty for none) or tag (one short word).",
+  {name:"set_subtask_field",description:"Change one field of a subtask: priority (high, mid or low; it no longer changes the order, which is the list order), deadline (the step's own date for a fixed appointment, like 2026-10-12, or empty for none) or tag (one short word).",
    inputSchema:{type:"object",properties:{subtask:{type:"string"},field:{type:"string",enum:["priority","deadline","tag"]},value:{type:"string"}},required:["subtask","field","value"]},
    execute:function(a){
      var sb=botFindSub(a.subtask), f=String(a.field||"").toLowerCase(), v=String(a.value==null?"":a.value).trim();
@@ -6915,7 +6976,7 @@ function botTools(){
      }
      if(f==="deadline"){
        var d=pDate(v); if(d===null) throw new Error("I could not read that date. Type a day like friday or 2026-10-12, or none.");
-       sb.due=d; mark(sb.id,"due"); return done(d?sb.name+" is due "+d+".":"The deadline on "+sb.name+" is gone.");
+       sb.due=d; mark(sb.id,"due"); return done(d?sb.name+" has its own date: "+d+". It goes first in its goal when the day comes.":"The date on "+sb.name+" is gone.");
      }
      if(f==="tag"){
        if(v.length>24) throw new Error("Keep the tag under 24 characters.");
@@ -6923,7 +6984,7 @@ function botTools(){
      }
      throw new Error("Field must be priority, deadline or tag.");
    }},
-  {name:"set_goal_field",description:"Change one field of a main task: name, priority (high, mid or low), deadline (a date, or empty for none), where (any, desk, work, home, body or out) or tags (comma separated, up to 5).",
+  {name:"set_goal_field",description:"Change one field of a main task: name, priority (high, mid or low), deadline (the goal's delivery day, a date, or empty for none), where (any, desk, work, home, body or out) or tags (comma separated, up to 5).",
    inputSchema:{type:"object",properties:{main_task:{type:"string"},field:{type:"string",enum:["name","priority","deadline","where","tags"]},value:{type:"string"}},required:["main_task","field","value"]},
    execute:function(a){
      var g=botFindGroup(a.main_task), f=String(a.field||"").toLowerCase(), v=String(a.value==null?"":a.value).trim(), x;
@@ -6932,7 +6993,7 @@ function botTools(){
        var was=g.name; g.name=v.slice(0,80); mark(g.id,"name"); return done("\""+was+"\" is now \""+g.name+"\".");
      }
      if(f==="priority"){ x=pPrio(v); if(!x) throw new Error("Priority must be high, middle or low."); g.prio=x; mark(g.id,"prio"); return done(g.name+" is now "+prioWord(x)+" priority."); }
-     if(f==="deadline"){ x=pDate(v); if(x===null) throw new Error("I could not read that date. Type a day like friday or 2026-12-01, or none."); g.due=x; mark(g.id,"due"); return done(x?g.name+" is due "+x+".":"The deadline on "+g.name+" is gone."); }
+     if(f==="deadline"){ x=pDate(v); if(x===null) throw new Error("I could not read that date. Type a day like friday or 2026-12-01, or none."); g.due=x; mark(g.id,"due"); if(x){ delete g.missAsk; delete g.missNote; } return done(x?g.name+" is for "+x+". Its steps keep their order, and the board spreads them over the days left.":"The delivery day on "+g.name+" is gone. Its steps keep their order."); }
      if(f==="where"){ x=pWhere(v); if(!x) throw new Error("Where must be anywhere, at a screen, at work, at home, training or out and about."); g.where=x; mark(g.id,"where"); return done(g.name+" is now: "+whereLabel(x)+"."); }
      if(f==="tags"){
        g.tags=v.split(/[,;]/).map(function(t){ return t.trim().toLowerCase(); }).filter(function(t,i,l){ return t && l.indexOf(t)===i; }).slice(0,5);
@@ -7360,7 +7421,7 @@ act({id:"explain",group:"Today",ex:"Why this one?",kw:["why","reason","criteria"
   run:function(){
     var p=pickToday();
     if(!p) return "There is nothing to explain: no step is being suggested right now.";
-    return "I suggest "+p.s.name+" ("+p.g.name+"). "+p.why+" I look at the time and your hours, how close the deadline is and how important you called it, whether the step is already started, and how big today is."; }});
+    return "I suggest "+p.s.name+" ("+p.g.name+"). "+p.why+" I look at the time and your hours, the order of the steps, the pace to a delivery day, whether a step is already started, and your energy today."; }});
 act({id:"into_today",group:"Today",ex:"Put buy milk in today",kw:["today","focus","pull"],
   re:[/^(?:put|add|move|pull|bring|take) (.+?) (?:in|into|to|onto|in to) today$/,/^(?:do|work on) (.+?) today$/],take:[["step",1]],ask:{step:"Which step do you want in Today?"},
   run:function(v){ return toolRun("focus_today",{subtask:v.step}); }});
@@ -7377,8 +7438,8 @@ act({id:"attention",group:"Today",ex:"What needs attention?",kw:["due","late","o
   re:[/^(?:what(?:'s| is| are)? )?(?:due|late|overdue|urgent|close|needs? (?:attention|a look))(?: soon)?$/,/\bwhat needs (?:attention|a look)\b/,/\bwhat(?:'s| is) (?:due|late|overdue|urgent)\b/],
   run:function(){
     var al=alerts().slice(0,5);
-    if(!al.length) return "Nothing needs attention right now.";
-    return "Needs attention:\n"+al.map(function(a){ return "- "+a.t+": "+a.w; }).join("\n"); }});
+    if(!al.length) return "No goal has a delivery day, so nothing is pressing. The order of the steps carries the rest.";
+    return "Delivery days, nearest first:\n"+al.map(function(a){ return "- "+a.t+": "+a.w; }).join("\n"); }});
 act({id:"step_priority",group:"Steps",ex:"Set buy milk priority to high",kw:["priority","important"],
   re:[/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )(?:set |change |make )?(?:the )?(.+?) (?:priority|prio)(?: (?:to |is |as )?(.*))?$/,/^(?!(?:(?:set|change|make|remove|clear|delete) )?(?:the )?(?:deadline (?:of|from|for|on) )?(?:the )?(?:goal|project) )make (.+?) (?:a )?(high|low|medium|middle|mid|normal|urgent|important)(?: priority)?$/],take:[["step",1],["prio",2]],
   ask:{step:"Which step?",prio:"High, middle or low?"},
@@ -7773,7 +7834,7 @@ var BRAIN=[
      return d?"Done today: "+d+".":"Nothing logged as done today yet."; }],
   [/^(?:what needs a look|what(?:'s| is) stuck|what(?:'s| is) blocked|what am i behind on|where am i behind)$/,
    function(){ var al=alerts();
-     if(!al.length) return "Nothing needs a look. Everything moved recently.";
+     if(!al.length) return "No goal has a delivery day, so nothing is pressing.";
      return al.slice(0,5).map(function(a){ return a.t+" ("+a.kind+")"; }).join("; ")+"."; }],
   [/^(?:how am i doing|status|progress|overall|where am i)$/,
    function(){
@@ -8842,6 +8903,10 @@ function renderPlanner(){
     '<label class="wide">Never schedule over'+
       '<input class="f" data-me="never" value="'+esc(me.never||"")+'" placeholder="Thursday evenings, and Sunday before noon"></label>'+
     '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
+    '<label>Steps on a good day<select class="f" data-me="normalN">'+[1,2,3,4].map(function(n){
+      return '<option value="'+n+'"'+(doseN("normal")===n?" selected":"")+">"+n+(n===1?" step":" steps")+"</option>"; }).join("")+'</select></label>'+
+    '<label class="wide">Order suggestions by AI<span class="dayrow"><button type="button" id="pl-aiok" aria-pressed="'+(!!me.aiOrderOk)+'">'+
+      (me.aiOrderOk?"On":"Off")+'</button></span><span class="pl-note">When on, Suggest an order sends a goal\u2019s name and its open step names to Anthropic, an AI company. Nothing else leaves this device.</span></label>'+
     '<label class="wide">News in the banner<span class="dayrow feedrow" id="pl-feeds">'+
       FEEDS.map(function(f){
         return '<button type="button" data-feed="'+f[0]+'" aria-pressed="'+
@@ -8876,6 +8941,7 @@ function meSet(k,v){
   if(k==="w0") me.work[0]=v;
   else if(k==="w1") me.work[1]=v;
   else if(k==="commute") me.commute=Math.max(0,Math.min(240,+v||0));
+  else if(k==="normalN"){ me.normalN=clamp(Math.round(+v)||3,1,4); me.goodSet=true; }
   else me[k]=v;
   if(k==="rise"){ var moved=remFitDay(me); if(moved) toast("",moved); }
   me.done=true;
@@ -8898,6 +8964,13 @@ $("#pl-form").addEventListener("click",function(e){
   var on=meDay(+b.dataset.day); save();
   b.setAttribute("aria-pressed", on ? "true":"false");
   renderVerdict(); renderPlanner2();
+});
+$("#pl-form").addEventListener("click",function(e){
+  if(!e.target.closest("#pl-aiok")) return;
+  e.preventDefault();
+  var me=state.me||(state.me=freshMe());
+  if(me.aiOrderOk){ delete me.aiOrderOk; save(); renderPlanner(); var b=$("#pl-aiok"); if(b) b.focus(); }
+  else phAiConsent().then(function(){ renderPlanner(); var b2=$("#pl-aiok"); if(b2) b2.focus(); });
 });
 $("#pl-form").addEventListener("click",function(e){
   var f=e.target.closest("[data-feed]"); if(!f) return;
@@ -9225,21 +9298,25 @@ function phParent(){
    can never throw away a later change.                                */
 var PH_UNDO=null, PH_JR_OPEN=false;
 function phFp(){ return JSON.stringify(state,function(k,v){ return (k==="ev"||k==="savedAt")?undefined:v; }); }
+/* the phone shows Undo above its tabs, the board at the bottom of the screen */
+function phUndoShow(label){
+  var p=PH_ON?"#ph-undo":"#dk-undo", b=$(p), t=$(p+"-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+}
 function phUndoable(label,fn){
   var snap=JSON.stringify(state), r;
   try{ r=fn(); }catch(e){ toast("",e.message); return; }
   save(); renderAll(); PH_DRAWN=""; phRender();
   if(PH_UNDO) clearTimeout(PH_UNDO.t);
   PH_UNDO={snap:snap, fp:phFp(), t:setTimeout(phUndoHide,6000)};
-  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+  phUndoShow(label);
   return r;
 }
-function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; var b=$("#ph-undo"); if(b) b.hidden=true; }
+function phUndoHide(){ if(PH_UNDO) clearTimeout(PH_UNDO.t); PH_UNDO=null; ["#ph-undo","#dk-undo"].forEach(function(x){ var b=$(x); if(b) b.hidden=true; }); }
 /* Undo for something that is not the board's state (a cleared conversation) */
 function phUndoFn(label,restore){
   if(PH_UNDO) clearTimeout(PH_UNDO.t);
   PH_UNDO={fn:restore, t:setTimeout(phUndoHide,6000)};
-  var b=$("#ph-undo"), t=$("#ph-undo-t"); if(t) t.textContent=label; if(b) b.hidden=false;
+  phUndoShow(label);
 }
 function phUndo(){
   var u=PH_UNDO; if(!u) return; phUndoHide();
@@ -9426,13 +9503,13 @@ function phAiConsent(){
     var me=state.me||(state.me=freshMe()); me.aiOrderOk=todayStr(); save(); return true;
   });
 }
-function phAiOrder(gid){
+function phAiOrder(gid,from){
   var g=gById(gid); if(!g) return;
   var open=g.subs.map(function(id){ return state.subs[id]; }).filter(function(x){ return x&&x.pct<100&&x.status!=="done"; });
   if(open.length<2) return;
   ((state.me&&state.me.aiOrderOk)?Promise.resolve(true):phAiConsent()).then(function(ok){
     if(!ok) return;
-    var btn=document.querySelector('[data-ph="aiorder"]');
+    var btn=from&&document.contains(from)?from:document.querySelector('[data-ph="aiorder"]');
     if(btn){ btn.disabled=true; btn.setAttribute("aria-busy","true"); btn.textContent="Asking\u2026"; }
     var done=function(){ if(btn){ btn.disabled=false; btn.removeAttribute("aria-busy"); btn.textContent="Suggest an order"; } };
     var ctl=window.AbortController?new AbortController():null, tm=setTimeout(function(){ if(ctl) ctl.abort(); },25000);
@@ -10458,6 +10535,7 @@ function phOnbFinish(add){
   addEventListener("hashchange",function(){ if(PH_ON){ if(phRoute()!=="journal") PH_JR_OPEN=false; PH_DRAWN=""; phRender(); scrollTo(0,0); } });
   setInterval(function(){ var c=document.getElementById("ph-clock"); if(c && PH_ON) c.textContent=phClock(new Date()); },1000);
   var ub=$("#ph-undo-b"); if(ub) ub.addEventListener("click",phUndo);
+  var db=$("#dk-undo-b"); if(db) db.addEventListener("click",phUndo);
   /* A swipe in from the left edge goes Back, as in every iPhone app. Only
      the app opened from the home screen needs this: in a browser tab, Safari
      and Chrome have their own edge swipe, and two Backs would fight. It only
@@ -10499,13 +10577,13 @@ function phOnbFinish(add){
    the bell count changes. The words stay in the cards on the board.       */
 var saidWhat="";
 function nudge(){
-  var hot=alerts().filter(function(a){ return a.score>=150; });
+  /* the bell counts delivery days that have passed and still wait for an answer */
+  var hot=state.groups.filter(function(g){ return missedDelivery(g) && g.missAsk!==g.due; });
   var msg="", key="";
   if(hot.length){
-    key="hot:"+hot[0].gid;
-    msg=hot.length===1
-      ? hot[0].t+" needs you: "+hot[0].w.split(" \\u00b7 ").slice(0,2).join(", ")+"."
-      : hot.length+" goals are past or nearly past their deadline. "+hot[0].t+" is the worst.";
+    key="hot:"+hot[0].id;
+    msg=hot.length===1 ? hot[0].name+": its delivery day has passed. Pick a new day when you are ready."
+      : hot.length+" goals passed their delivery day. Pick new days when you are ready.";
   } else if(!state.oftad.length){
     var pk=pickToday();
     if(pk){ key="pick:"+pk.s.id; msg="Today: "+pk.s.name+". "+pk.why; }
