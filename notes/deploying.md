@@ -206,7 +206,7 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Edge functions: push (version 3) and alert. The repo now holds both as they are live; the push
   function's new address rule (flaw 12) is in the repo, NOT deployed.
 
-## 2026-10-21: preview 8d16e70 (flaws 2, 12, 5 AI notice, 7), NOT in production
+## 2026-10-21: preview e9ff565 (flaws 2, 12, 5 AI notice, 7), NOT in production
 
 - Owner: "release it, then do 2, 3 and 4". The app part (AI notice, AI label, Speak wording) is in the
   preview. The server parts wait for the owner: 2 migrations (record, tighten grants) and the push
