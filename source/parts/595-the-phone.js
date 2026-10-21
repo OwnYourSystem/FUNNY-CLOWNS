@@ -773,7 +773,7 @@ function phYou(){
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
-    phRow("calendar","Google Calendar",!calSetUp()?"Not set up":calOn()?"Connected":"Connect")+'</div>');
+    phRow("calendar","Google Calendar",!calSetUp()?"Coming soon":calOn()?"Connected":"Connect")+'</div>');
   if(phIsWeb()) h.push('<h2 class="ph-k ph-gk">On this computer</h2><div class="ph-grp">'+phRow("classic","Classic board","The old board with panels")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');

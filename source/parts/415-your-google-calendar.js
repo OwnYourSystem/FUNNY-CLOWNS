@@ -156,7 +156,7 @@ function calBody(ph){
   var B=ph?"ph-btn":"btn", P=ph?"ph-btn ph-pri":"btn take", G=ph?"ph-grp cal-grp":"cal-grp", h=[];
   var msg='<p class="cal-msg" role="status" aria-live="polite">'+esc(calMsg)+'</p>';
   if(!calSetUp()){
-    h.push('<p class="cal-lede">Google Calendar is not set up for Qordel yet. The owner adds Google’s client id first (notes/calendar.md).</p>');
+    h.push('<p class="cal-lede">Google Calendar is coming to Qordel soon. Your board works as before until then.</p>');
     return '<div class="cal">'+h.join("")+'</div>';
   }
   if(!calOn()){
@@ -277,7 +277,7 @@ function calPropose(a){
 }
 /* Talk, without the AI: what is on today */
 function calSpeak(){
-  if(!calSetUp()) return "Google Calendar is not set up for Qordel yet.";
+  if(!calSetUp()) return "Google Calendar is coming to Qordel soon.";
   if(!calOn()) return "Your Google Calendar is not connected. Open You, then Calendar, to connect it.";
   var ev=calOnDay(calEvents(),dstr(new Date()));
   if(!ev.length) return "Nothing is booked in your calendar today.";
