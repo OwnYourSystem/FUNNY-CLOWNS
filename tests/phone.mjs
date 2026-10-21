@@ -473,10 +473,11 @@ await ok("nav: a swipe in from the left edge goes Back; a swipe that starts mid-
   } finally { await sb.close(); }
 });
 /* ---------- the tab bar, the iOS way (2026-10-17) ---------- */
+/* only the tabs a phone shows: Calendar and Goals are in the markup for the web sidebar and hidden here */
 await ok("tabs: the selected tab is the text colour with a filled icon and no pill; the rest are grey outlines; the bar is see-through", async () => {
   for (const [route, tab] of [["now", "now"], ["journal", "journal"], ["goals", "you"]]) {
     await go(route);
-    const t = await p.evaluate(() => [...document.querySelectorAll("#ph-tabs a")].map((a) => { const c = getComputedStyle(a), o = a.querySelector(".ti-o"), f = a.querySelector(".ti-f");
+    const t = await p.evaluate(() => [...document.querySelectorAll("#ph-tabs a")].filter((a) => a.offsetParent).map((a) => { const c = getComputedStyle(a), o = a.querySelector(".ti-o"), f = a.querySelector(".ti-f");
       return { tab: a.dataset.tab, cur: a.getAttribute("aria-current"), color: c.color, bg: c.backgroundColor, o: getComputedStyle(o).display !== "none", f: getComputedStyle(f).display !== "none", h: a.getBoundingClientRect().height }; }));
     for (const x of t) {
       assert.ok(x.h >= 44, x.tab + " is " + x.h + "px");

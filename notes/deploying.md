@@ -268,3 +268,10 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Full suite on calendar-test: 42 suites, 894 checks, 0 failures (tests/calendar.mjs, 22 checks).
 - Rule 6 (owner: "keep the simple one and do it"): bookings come first, booked hours shrink the day, a Now line,
   every calendar shown in Google. Full suite: 42 suites, 906 checks, 0 failures (calendar.mjs, 26 checks).
+
+## 2026-10-21: Qordel web on the test branch `web-test`, NOT in production
+
+- Owner: the web version "on the same level" as the phone app, Qordel web with its own design (notes/web.md).
+- Built on calendar-test, so it carries the Calendar page and rule 6.
+- The panel board stays as Classic board on You; the older suites test it through that choice.
+- Full suite on web-test: 43 suites, 919 checks, 0 failures (tests/web.mjs, 13 checks with axe).

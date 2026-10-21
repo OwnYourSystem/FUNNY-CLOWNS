@@ -26,3 +26,17 @@ if (process.env.TEST_SAMPLE !== "off") {
     return b;
   };
 }
+/* Qordel web (2026-10-21): a big screen now gets the new web design. The suites written for the panel board keep
+   testing it, as Classic board, which a person can still choose on You; TEST_WEB=on gives a suite the web design. */
+if (process.env.TEST_WEB !== "on") {
+  const launch2 = pw.chromium.launch.bind(pw.chromium);
+  pw.chromium.launch = async (...a) => {
+    const b = await launch2(...a), nc = b.newContext.bind(b);
+    b.newContext = async (...o) => {
+      const c = await nc(...o);
+      await c.addInitScript(() => { try { if (!localStorage.getItem("oys-web")) localStorage.setItem("oys-web", "classic"); } catch (e) {} });
+      return c;
+    };
+    return b;
+  };
+}
