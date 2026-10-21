@@ -1,4 +1,5 @@
-/* The phone side of "AI proposes an order" (2026-10-20): consent once, only the goal and step names sent, a suggestion to use or keep, Undo, and a switch on You. */
+/* The phone side of "AI proposes an order" (2026-10-20): consent once, only the goal and step names sent, a suggestion to use or keep, Undo, and a switch on You.
+   Since 2026-10-21 (flaw 1) it needs a signed-in person: signed out, it asks to sign in and sends nothing; signed in, it sends the session token. */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -11,7 +12,9 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile
 const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message));
 /* the stand-in for api/order: what the page sent, and what to answer */
 let sent = [], reply = { status: 200, body: { ok: true, order: ["gS2", "gS1", "gS3"], why: "Timber first, because the base needs it." } }, hold = null;
-await p.route("**/api/order", async (r) => { sent.push({ body: JSON.parse(r.request().postData() || "{}"), type: r.request().headers()["content-type"] });
+/* a signed-in board talks to Supabase; a stand-in answers so nothing leaves the test */
+await p.route(/supabase\.co\//, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+await p.route("**/api/order", async (r) => { sent.push({ body: JSON.parse(r.request().postData() || "{}"), type: r.request().headers()["content-type"], auth: r.request().headers()["authorization"] });
   if (hold) await hold; await r.fulfill({ status: reply.status, contentType: "application/json", body: JSON.stringify(reply.body) }); });
 await p.goto(URL); await p.waitForSelector("#ph-main .ph-onb");
 await p.locator("[data-ph=onb-next]").click(); await p.waitForTimeout(250);
@@ -30,6 +33,15 @@ const btn = () => p.locator("[data-ph=aiorder]");
 const subs = async () => (await st()).groups.find((g) => g.id === "gS").subs;
 const toastText = () => p.evaluate(() => document.body.innerText);
 
+await ok("signed out: Suggest an order asks to sign in first, and sends nothing", async () => {
+  await btn().click(); await D().waitFor(); const t = await D().innerText();
+  assert.match(t, /Sign in to get suggestions/); assert.match(t, /Your board stays on this device/);
+  await D().getByRole("button", { name: "Not now" }).click(); await p.waitForTimeout(300); assert.equal(sent.length, 0);
+});
+/* sign in for the rest */
+await p.evaluate((KEY) => localStorage.setItem(KEY + ".account", JSON.stringify({ access_token: "session-tok", refresh_token: "", at: Date.now(), email: "t@t", uid: "u1" })), KEY);
+await p.reload(); await p.waitForSelector("[data-ph=step]");
+
 await ok("a goal with 2 or more open steps offers Suggest an order, 44px or more; a goal with one does not", async () => {
   assert.equal(await btn().isVisible(), true); assert.ok((await btn().boundingBox()).height >= 44);
   await p.evaluate(() => { location.hash = "#/goal/gO"; }); await p.waitForTimeout(250); assert.equal(await btn().count(), 0);
@@ -41,11 +53,11 @@ await ok("the first time it asks for consent, says what leaves the phone, and No
   await D().getByRole("button", { name: "Not now" }).click(); await p.waitForTimeout(300);
   assert.equal(sent.length, 0); assert.equal((await st()).me.aiOrderOk, undefined);
 });
-await ok("Send: only the goal name and the open steps' ids and names leave the phone, as JSON", async () => {
+await ok("Send: only the goal name and the open steps' ids and names leave the phone, as JSON, with the session token", async () => {
   await btn().click(); await D().waitFor(); await D().getByRole("button", { name: "Send" }).click();
   await D().waitFor(); assert.equal(sent.length, 1);
   assert.deepEqual(sent[0].body, { goal: "Shed", steps: [{ id: "gS1", name: "Lay the base" }, { id: "gS2", name: "Buy timber" }, { id: "gS3", name: "Build the walls" }] });
-  assert.equal(sent[0].type, "application/json");
+  assert.equal(sent[0].type, "application/json"); assert.equal(sent[0].auth, "Bearer session-tok");
   for (const w of ["PRIVATE-NOTE", "JOURNAL-SECRET", "DONE clear"]) assert.equal(JSON.stringify(sent[0]).includes(w), false, w);
   assert.ok((await st()).me.aiOrderOk, "consent was not kept");
 });

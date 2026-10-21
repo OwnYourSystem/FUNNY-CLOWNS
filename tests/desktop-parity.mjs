@@ -83,6 +83,9 @@ await ok("the Planner has the AI switch: on asks for consent first, off withdraw
   await p.locator("#pl-aiok").click(); await p.waitForTimeout(250); assert.equal((await st()).me.aiOrderOk, undefined);
 });
 await ok("Suggest an order on the board: consent, the suggestion labelled AI, Use this order, Undo", async () => {
+  /* it needs a signed-in person (2026-10-21, flaw 1); a stand-in answers Supabase */
+  await p.route(/supabase\.co\//, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+  await p.evaluate((KEY) => localStorage.setItem(KEY + ".account", JSON.stringify({ access_token: "tok", refresh_token: "", at: Date.now(), email: "t@t", uid: "u1" })), KEY);
   await seed();
   await p.locator("#sub-bars [data-aiorder-d]").click(); await D().waitFor(); await D().getByRole("button", { name: "Send" }).click();
   await D().waitFor(); assert.deepEqual(sent.pop(), { goal: "Shed", steps: [{ id: "gS1", name: "Lay the base" }, { id: "gS2", name: "Buy timber" }, { id: "gS3", name: "Build the walls" }] });

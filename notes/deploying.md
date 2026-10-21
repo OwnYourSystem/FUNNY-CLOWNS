@@ -178,3 +178,12 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Full regression on 6f03082: 39 browser suites, 836 checks, 0 failures; purity 239.
 - Production deployment `dpl_EseVHrUjcKtivGaVajkPcthtdzYE`.
 - Rolling back: `dpl_6CE4wi89HY9VitjytKRJFNCqF7BQ` (666544d, What changed card and demo board).
+
+## 2026-10-21: preview (flaw 1 closed: Suggest an order needs sign-in), NOT in production
+
+- Owner: "yes, fix flaw 1". api/order.js answers only a signed-in person; limits per person.
+- The migration `supabase/migrations/20261021_ai_use.sql` is written and NOT applied. It makes the
+  limits durable. Applying it is the owner's call (new table; Security Review and Compliance per the
+  agent plan). Until then each server instance counts per person.
+- Also on the owner: a monthly spend limit on QORDEL_ORDER_KEY in the Anthropic console.
+- Full regression: 39 browser suites, 840 checks, 0 failures.
