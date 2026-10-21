@@ -158,3 +158,12 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 
 - Owner: "do 1 and 2". The What changed card for boards from before the release, and the demo board
   (?demo=session) for the user sessions. Full regression: 38 browser suites, 830 checks, 0 failures.
+
+## 2026-10-21: production moved to 666544d (What changed card, demo board)
+
+- Owner: "Release all". On top of abeed3e: the What changed card for boards set up before
+  2026-10-21, and the demo board (?demo=session) for the user sessions.
+- Full regression on 666544d: 38 browser suites, 830 checks, 0 failures; purity 239.
+- Production deployment `dpl_6CE4wi89HY9VitjytKRJFNCqF7BQ`.
+- Rolling back: `dpl_AmgQNBgD9ux5mQa3SvYBTeLFuwne` (abeed3e, read aloud and the WCAG fixes).
+- Still open: confirm ANTHROPIC_API_KEY is set for the tutor.
