@@ -12,7 +12,7 @@ T=$(cd "$(dirname "$0")" && pwd)
 export NODE_OPTIONS="--import $T/_clock.mjs $NODE_OPTIONS"
 C=$(mktemp -d)
 cd "$T"
-for f in safety reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor journal-progress phone-pages brand day-start hig2 guide backup backup-reminder energy sequence drag desktop-parity rules memory order-api order-ui read-aloud a11y what-changed-demo $EXTRA; do
+for f in safety reminders modals inputs pending floor week today assistant push push-schedule notices journal voice phone classic-editor journal-progress phone-pages brand day-start hig2 guide backup backup-reminder energy sequence drag desktop-parity rules memory order-api order-ui read-aloud a11y what-changed-demo examples $EXTRA; do
   [ -f $f.mjs ] || continue
   echo "== $f"; timeout 280 node $f.mjs 2>&1 | grep -E "^(PASS|FAIL)" | awk '/FAIL/{print substr($0,1,300)} {c[$1]++} END{print c["PASS"]+0" pass, "c["FAIL"]+0" fail"}'
 done

@@ -167,3 +167,7 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Production deployment `dpl_6CE4wi89HY9VitjytKRJFNCqF7BQ`.
 - Rolling back: `dpl_AmgQNBgD9ux5mQa3SvYBTeLFuwne` (abeed3e, read aloud and the WCAG fixes).
 - Still open: confirm ANTHROPIC_API_KEY is set for the tutor.
+
+## 2026-10-21: preview (example goals to tap), NOT in production
+
+- Owner: "do 3, example goals to tap". Full regression: 39 browser suites, 836 checks, 0 failures.
