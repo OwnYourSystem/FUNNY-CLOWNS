@@ -1,3 +1,5 @@
+> **Superseded on 2026-10-21** by `qordel-investor-flyer-prompt.md`. Old name and old features; kept as history.
+
 # Prompt: investor flyer and pitch for the Minimum Deliveries Board
 
 Copy everything below the line into the other AI.

@@ -1,3 +1,5 @@
+> **Superseded on 2026-10-21** by `qordel-flyer-prompt.md`. Old name and old features; kept as history.
+
 # Prompt: Daysize marketing flyer
 
 Copy everything below the line into the other AI or give it to a designer.

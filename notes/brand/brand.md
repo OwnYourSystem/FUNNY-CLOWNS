@@ -8,10 +8,18 @@
 
 ## Logo
 
-- **The name in capitals, QORDEL** (owner: "use capitals", after the Ruba version could read as "qardel"). Set in the app's own Schibsted Grotesk SemiBold, letter-spacing 0.06em, so the logo, the text and the icons are one family on every device. In the app the text stays "Qordel" (shown in capitals by CSS), so a screen reader says the word.
+- **The name in capitals, QORDEL** (owner: "use capitals", after the Ruba version could read as "qardel"). Set in the app's own Schibsted Grotesk SemiBold. Letter-spacing **-0.02em, slightly tight** (logo C, owner's choice on 2026-10-20; it replaced 0.06em), so the logo, the text and the icons are one family on every device. In the app the text stays "Qordel" (shown in capitals by CSS), so a screen reader says the word.
 - App icons: QORDEL in white on Moonlit Plum `#2C1332`. Android status-bar badge: the "Q".
 - Ruba Regular is no longer used; its file and credit were removed.
-- Files: `make-icons-qordel.cjs` (draws every icon from the app font; needs the font's data URI in `schibsted-600.txt` beside it), `qordel-icon-1024.png`, `qordel-wordmark.png`.
+- Files: `make-icons-qordel-c.cjs` (logo C, current), `make-icons-qordel.cjs` (the 0.06em version) (draws every icon from the app font; needs the font's data URI in `schibsted-600.txt` beside it), `qordel-icon-1024.png`, `qordel-wordmark.png`.
+
+## Flyer prompts (2026-10-21)
+
+- `qordel-investor-flyer-prompt.md`: the investor flyer, the 90-second pitch, a 6-slide outline and a claims list.
+- `qordel-flyer-prompt.md`: the marketing flyer, "stepping stones" concept.
+- Both use only what is true of the live build 6f03082 and mark the rest as placeholders. The hosted AI
+  tutor is a placeholder until its key is confirmed in production. Update both when the product changes.
+- The older `investor-flyer-prompt.md` and `daysize-flyer-prompt.md` are history: old names, old features.
 
 ## Name check (2026-10-19)
 
