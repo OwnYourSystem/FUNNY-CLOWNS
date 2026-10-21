@@ -306,7 +306,7 @@ function phCurrent(){
 /* rules 2 and 3 on Now: the person's own easy things, ticked here */
 function phEasyCard(head,text){
   var f=floorState(), on=floorToday();
-  return '<section class="ph-card ph-rest" aria-label="'+esc(head)+'"><h2 class="ph-h2">'+esc(head)+'</h2><p class="ph-why">'+esc(text)+'</p>'+
+  return '<section class="ph-card ph-rest" aria-label="'+esc(head)+'">'+sayBtn("ph-say","Read this card aloud")+'<h2 class="ph-h2">'+esc(head)+'</h2><p class="ph-why">'+esc(text)+'</p>'+
     (f.items.length
       ? '<div class="ph-easy" role="group" aria-label="My easy things">'+f.items.map(function(x){
           return '<button type="button" class="ph-rowb ph-choice" role="checkbox" aria-checked="'+(on.indexOf(x.id)>=0)+'" data-ph="easytick" data-id="'+esc(x.id)+'"><span>'+esc(x.t)+'</span><span class="ph-tick" aria-hidden="true"></span></button>'; }).join("")+'</div>'+
@@ -384,7 +384,7 @@ function phNow(){
       '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
   if(cur){
-    h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
+    h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
       '<h2 class="ph-task">'+esc(cur.s.name)+'</h2>'+
       '<p class="ph-why">'+esc(cur.g?cur.g.name:"")+(cur.why?" · "+esc(cur.why):"")+'</p>'+
       '<div class="ph-acts">'+
@@ -397,14 +397,14 @@ function phNow(){
     var v=verdict(), not=v&&v.none?(v.blocked||[]).map(function(b){ return b.g.name+" waits: "+b.why+"."; }):[];
     if(v.rest) h.push(phEasyCard("Nothing is needed now",v.why+" If you want, one easy thing:"));
     else if(v.low) h.push(phEasyCard("Your energy is low","One easy thing is enough. Or mark a step Easy on its page, and it will show here."));
-    else h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k">Nothing fits this hour</div>'+
+    else h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k">Nothing fits this hour</div>'+
       '<p class="ph-why">'+esc(not.length?not.join(" "):"Everything that can be done now is done, waiting or in Today.")+'</p>'+
       '<div class="ph-acts"><a class="ph-btn" href="#/talk">Add something</a></div></section>');
   }
   /* a delivery day that has passed: asked here as well as in a notification */
   var ms=phMissed();
   if(ms.length){ var mg=ms[0], md=new Date(mg.due+"T00:00:00");
-    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed"><h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
+    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed">'+sayBtn("ph-say","Read this card aloud")+'<h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
       '<p class="ph-why">Its delivery day, '+DAYNAME[md.getDay()]+' '+md.getDate()+' '+PH_MONTHS[md.getMonth()]+', has passed. Nothing is lost. Pick a new day, or take the date off.'+
       (ms.length>1?' '+(ms.length-1)+' more '+(ms.length===2?"goal asks":"goals ask")+' the same after this one.':'')+'</p>'+
       '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="missnew" data-id="'+esc(mg.id)+'">Pick a new day</button>'+
@@ -413,7 +413,7 @@ function phNow(){
   phMissNote(ms);
   /* something the board learned from what the person did: asked once, kept only on Keep (2026-10-21) */
   var lm=memTick();
-  if(lm) h.push('<section class="ph-card ph-learn" aria-label="Something I noticed"><div class="ph-k">Something I noticed</div>'+
+  if(lm) h.push('<section class="ph-card ph-learn" aria-label="Something I noticed">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k">Something I noticed</div>'+
     '<p class="ph-task" style="font-size:1.0625rem">'+esc(lm.t)+'</p>'+(lm.evid?'<p class="ph-why">'+esc(lm.evid)+'</p>':'')+
     '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="learnkeep" data-id="'+esc(lm.id)+'">Keep it</button>'+
     '<button type="button" class="ph-btn" data-ph="learnno" data-id="'+esc(lm.id)+'">Not now</button></div></section>');
@@ -491,8 +491,7 @@ function phWeekCard(dy){
       '<span class="ph-col-x">'+(today?"Today":PH_DAYS[x.day.getDay()].slice(0,3))+'</span></button>');
   });
   h.push('</div></div>');
-  /* the same numbers as a table, for a screen reader */
-  h.push('<table class="ph-sr"><caption>Steps finished each day</caption><tbody>'+wk.map(function(x){ return '<tr><th scope="row">'+esc(PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()])+'</th><td>'+x.c+'</td></tr>'; }).join("")+'</tbody></table>');
+  /* no second copy as a table (2026-10-21): each column already says its day and count, so a screen reader heard them twice */
   h.push('</section>');
   return h.join("");
 }
@@ -715,11 +714,12 @@ function phYou(){
   var th=(function(){ try{ return localStorage.getItem(THEME_KEY)||"system"; }catch(e){ return "system"; } })();
   var ph=phPhoto();
   /* the photo is a label for the file box: one tap opens the phone's picker */
-  h.push('<div class="ph-head ph-me"><label class="ph-av ph-av-b" for="ph-photo-in">'+
+  /* the picture is a second tap target for the same file box; a screen reader uses the Your photo row (2026-10-21) */
+  h.push('<div class="ph-head ph-me"><label class="ph-av ph-av-b" for="ph-photo-in" aria-hidden="true">'+
     (ph?'<img src="'+esc(ph.src)+'" alt="">':'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg>'+
       '<span class="ph-av-plus" aria-hidden="true">+</span>')+
-    '<span class="ph-sr">'+(ph?"Change your photo":"Add a photo of you")+'</span></label>'+
-    '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr">'+
+    '</label>'+
+    '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr" aria-label="'+(ph?"Change your photo":"Add a photo of you")+'">'+
     '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
   /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
   h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
@@ -737,6 +737,7 @@ function phYou(){
     phRow("goodn","Steps on a good day",String(doseN("normal")))+
     phRow("aiok","Order suggestions by AI",me.aiOrderOk?"On":"Off",true)+
     phRow("learn","Learn from what I do",memLearnOn()?"On":"Off",true)+
+    (TTS?phRow("readaloud","Read answers aloud",sayOn()?"On":"Off",true):"")+
     phRow("easyedit","My easy things",floorState().items.length?String(floorState().items.length):"Add")+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -986,7 +987,7 @@ var PH_ONB_LAST=5;
 function phDotsHtml(i){
   var n=PH_GUIDE?PH_ONB_LAST:2, at=PH_GUIDE?i-1:(i===0?0:1), o=[];
   for(var k=0;k<n;k++) o.push('<span class="ph-step'+(k===at?" on":"")+'"></span>');
-  return '<div class="ph-steps" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
+  return '<div class="ph-steps" role="img" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
 }
 /* one choice from a short list, as rows with a tick: the iOS way */
 function phChoice(k,list,v,label){
@@ -1194,6 +1195,8 @@ function phOnbFinish(add){
     else if(k==="aiorder") phAiOrder(id);
     else if(k==="learnkeep"||k==="learnno"){ try{ if(k==="learnkeep") memKeep(id); else memDrop(id,true); }catch(er){ memDrop(id,false); toast("",er.message); }
       save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="readaloud"){ var rme=state.me||(state.me=freshMe()); if(sayOn()){ delete rme.readAloud; sayStop(); } else rme.readAloud=true;
+      save(); renderAll(); PH_DRAWN=""; phRender(); var rb=document.querySelector("[data-ph=readaloud]"); if(rb) rb.focus(); }
     else if(k==="learn"){ var lme=state.me||(state.me=freshMe()); lme.learn=!memLearnOn(); if(lme.learn) delete lme.learn;
       save(); renderAll(); PH_DRAWN=""; phRender(); var lb=document.querySelector("[data-ph=learn]"); if(lb) lb.focus(); }
     else if(k==="aiok"){ var am=state.me||(state.me=freshMe());

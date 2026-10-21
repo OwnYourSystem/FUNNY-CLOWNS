@@ -1,5 +1,11 @@
 /* the one line, on one line */
+/* the badge, then a speaker button that reads it (2026-10-21) */
 function renderBadge(){
+  badgeDraw();
+  var bar=$("#now-badge");
+  if(bar && !bar.hidden && state.me && state.me.done && typeof sayBtn==="function") bar.insertAdjacentHTML("beforeend",sayBtn("nb-say","Read this aloud"));
+}
+function badgeDraw(){
   var bar=$("#now-badge"); if(!bar) return;
   var me=state.me||freshMe();
   var ico='<button class="nb-ico" id="nb-ico" aria-label="Open the planner">'+plannerIcon()+'</button>';

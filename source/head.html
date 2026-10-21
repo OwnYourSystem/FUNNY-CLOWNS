@@ -58,7 +58,7 @@
 :root{
   color-scheme: dark;
   --ground:#08080A; --panel:#0F0F12; --raised:#16161B; --inset:rgba(255,255,255,.06);
-  --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#61616C;
+  --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#8A8A95;
   --hair:rgba(255,255,255,.075); --rule:rgba(255,255,255,.17);
   --accent:#FF3B30; --accent-ink:#FF7A72; --accent-wash:rgba(255,59,48,.10);
   --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
@@ -69,7 +69,7 @@
   --win:#3FCF8E; --win-glow:0 0 18px -6px rgba(63,207,142,.5);
   /* Five bands, so a glance is enough: nothing, a quarter, half, most,
      all. One hue walking from cold grey through orange into green.   */
-  --b0:#4A4A55; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
+  --b0:#85858F; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
   --grain:.05;
   /* Neumorphism: one surface, lit from the top left. The phone shell carves
      everything out of --nm-bg, so a raised thing throws a dark shadow down
@@ -89,14 +89,14 @@
   :root:not([data-theme="dark"]){
     color-scheme: light;
     --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
-    --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
+    --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
     --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
     --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
   --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --glow:0 0 18px -6px rgba(228,36,24,.5);
-    --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+    --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
-    --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
+    --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
     --grain:.03;
     --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
   }
@@ -104,14 +104,14 @@
 :root[data-theme="light"]{
   color-scheme: light;
   --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
-  --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
+  --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
   --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
   --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
   --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --glow:0 0 18px -6px rgba(228,36,24,.5);
-  --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+  --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
-  --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
+  --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
   --grain:.03;
   --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
 }
@@ -376,7 +376,9 @@ html.ph :is(.bot-go,.bot-msg[data-help] .bot-row):active{background:var(--ph-was
    bar. They are still readable and still one press away, and pointing at
    one brings it back to full strength.                                    */
 @media (min-width:821px){
-  .bars:has(.row.sel) .row.pick:not(.sel){opacity:.42; filter:saturate(.55)}
+  /* the goals that are not selected step back by colour, not by fading their words (contrast, 2026-10-21) */
+  .bars:has(.row.sel) .row.pick:not(.sel){filter:saturate(.55)}
+  .bars:has(.row.sel) .row.pick:not(.sel) .rname{color:var(--ink-2)}
   .bars:has(.row.sel) .row.pick:not(.sel):hover,
   .bars:has(.row.sel) .row.pick:not(.sel):focus-within{opacity:1; filter:none}
   .bars .row.pick{transition:opacity .28s var(--ease), filter .28s var(--ease),
@@ -1485,6 +1487,19 @@ html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed
 .rhead .ord{font-family:var(--mono); font-size:11px; color:var(--muted); min-width:1.4em; text-align:right}
 .editor label.chk{display:flex; flex-direction:row; align-items:center; gap:10px; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:13.5px; color:var(--ink); min-height:40px}
 .editor label.chk input{width:18px; height:18px; margin:0}
+/* reading aloud (2026-10-21): one speaker button, top right of a card, after each reply */
+.say-btn{display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:0; border-radius:50%; background:transparent; color:var(--muted, #6f6679); cursor:pointer; flex:none}
+.say-btn:hover{color:var(--ink, currentColor)}
+.say-btn:focus-visible{outline:2px solid currentColor; outline-offset:2px}
+.say-btn.on{color:var(--ph-pri, #2C1332); background:color-mix(in srgb, currentColor 12%, transparent)}
+.ph-card{position:relative}
+.ph-card>.ph-say{position:absolute; top:6px; right:6px}
+.ph-card:has(>.ph-say)>.ph-say+*{padding-right:44px}
+.bot-msg.bot{position:relative}
+.bot-msg.bot>.bot-say{display:flex; width:36px; height:36px; margin:2px 0 -6px -8px}
+.nowbadge>.nb-say{margin-left:4px}
+@media (prefers-reduced-motion:no-preference){ .say-btn.on svg{animation:saypulse 1.2s ease-in-out infinite} }
+@keyframes saypulse{50%{opacity:.45}}
 .learn .learn-t{margin:6px 0 2px; font-size:14.5px; line-height:1.45; color:var(--ink)}
 .learn .learn-e{margin:0 0 8px; font-size:12.5px; line-height:1.5; color:var(--muted)}
 .plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}

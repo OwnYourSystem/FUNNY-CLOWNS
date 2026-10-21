@@ -58,7 +58,7 @@
 :root{
   color-scheme: dark;
   --ground:#08080A; --panel:#0F0F12; --raised:#16161B; --inset:rgba(255,255,255,.06);
-  --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#61616C;
+  --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#8A8A95;
   --hair:rgba(255,255,255,.075); --rule:rgba(255,255,255,.17);
   --accent:#FF3B30; --accent-ink:#FF7A72; --accent-wash:rgba(255,59,48,.10);
   --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
@@ -69,7 +69,7 @@
   --win:#3FCF8E; --win-glow:0 0 18px -6px rgba(63,207,142,.5);
   /* Five bands, so a glance is enough: nothing, a quarter, half, most,
      all. One hue walking from cold grey through orange into green.   */
-  --b0:#4A4A55; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
+  --b0:#85858F; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
   --grain:.05;
   /* Neumorphism: one surface, lit from the top left. The phone shell carves
      everything out of --nm-bg, so a raised thing throws a dark shadow down
@@ -89,14 +89,14 @@
   :root:not([data-theme="dark"]){
     color-scheme: light;
     --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
-    --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
+    --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
     --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
     --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
   --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
     --glow:0 0 18px -6px rgba(228,36,24,.5);
-    --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+    --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
     --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
-    --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
+    --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
     --grain:.03;
     --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
   }
@@ -104,14 +104,14 @@
 :root[data-theme="light"]{
   color-scheme: light;
   --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
-  --ink:#0B0B0E; --ink-2:#55555F; --muted:#8A8A93;
+  --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
   --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
   --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
   --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
   --glow:0 0 18px -6px rgba(228,36,24,.5);
-  --run:#C75A00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+  --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
   --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
-  --b0:#B4B4BC; --b25:#D2401A; --b50:#C97A00; --b75:#8A8A12; --b100:#127D51;
+  --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
   --grain:.03;
   --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
 }
@@ -376,7 +376,9 @@ html.ph :is(.bot-go,.bot-msg[data-help] .bot-row):active{background:var(--ph-was
    bar. They are still readable and still one press away, and pointing at
    one brings it back to full strength.                                    */
 @media (min-width:821px){
-  .bars:has(.row.sel) .row.pick:not(.sel){opacity:.42; filter:saturate(.55)}
+  /* the goals that are not selected step back by colour, not by fading their words (contrast, 2026-10-21) */
+  .bars:has(.row.sel) .row.pick:not(.sel){filter:saturate(.55)}
+  .bars:has(.row.sel) .row.pick:not(.sel) .rname{color:var(--ink-2)}
   .bars:has(.row.sel) .row.pick:not(.sel):hover,
   .bars:has(.row.sel) .row.pick:not(.sel):focus-within{opacity:1; filter:none}
   .bars .row.pick{transition:opacity .28s var(--ease), filter .28s var(--ease),
@@ -1485,6 +1487,19 @@ html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed
 .rhead .ord{font-family:var(--mono); font-size:11px; color:var(--muted); min-width:1.4em; text-align:right}
 .editor label.chk{display:flex; flex-direction:row; align-items:center; gap:10px; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:13.5px; color:var(--ink); min-height:40px}
 .editor label.chk input{width:18px; height:18px; margin:0}
+/* reading aloud (2026-10-21): one speaker button, top right of a card, after each reply */
+.say-btn{display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:0; border-radius:50%; background:transparent; color:var(--muted, #6f6679); cursor:pointer; flex:none}
+.say-btn:hover{color:var(--ink, currentColor)}
+.say-btn:focus-visible{outline:2px solid currentColor; outline-offset:2px}
+.say-btn.on{color:var(--ph-pri, #2C1332); background:color-mix(in srgb, currentColor 12%, transparent)}
+.ph-card{position:relative}
+.ph-card>.ph-say{position:absolute; top:6px; right:6px}
+.ph-card:has(>.ph-say)>.ph-say+*{padding-right:44px}
+.bot-msg.bot{position:relative}
+.bot-msg.bot>.bot-say{display:flex; width:36px; height:36px; margin:2px 0 -6px -8px}
+.nowbadge>.nb-say{margin-left:4px}
+@media (prefers-reduced-motion:no-preference){ .say-btn.on svg{animation:saypulse 1.2s ease-in-out infinite} }
+@keyframes saypulse{50%{opacity:.45}}
 .learn .learn-t{margin:6px 0 2px; font-size:14.5px; line-height:1.45; color:var(--ink)}
 .learn .learn-e{margin:0 0 8px; font-size:12.5px; line-height:1.5; color:var(--muted)}
 .plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
@@ -3776,7 +3791,13 @@ function touchHist(){
 }
 
 /* the one line, on one line */
+/* the badge, then a speaker button that reads it (2026-10-21) */
 function renderBadge(){
+  badgeDraw();
+  var bar=$("#now-badge");
+  if(bar && !bar.hidden && state.me && state.me.done && typeof sayBtn==="function") bar.insertAdjacentHTML("beforeend",sayBtn("nb-say","Read this aloud"));
+}
+function badgeDraw(){
   var bar=$("#now-badge"); if(!bar) return;
   var me=state.me||freshMe();
   var ico='<button class="nb-ico" id="nb-ico" aria-label="Open the planner">'+plannerIcon()+'</button>';
@@ -5586,6 +5607,86 @@ function micInto(el,btn,say){
   var b=$("#bot-mic"); if(!b) return;
   b.addEventListener("click",function(e){ e.stopPropagation(); micInto($("#bot-input"),b,note); });
 })();
+/* ---------------- reading aloud ----------------
+   Put back on 2026-10-21 (owner: "close the 3 gaps, start with read aloud"),
+   for people who cannot read well, see poorly, or are too tired to read.
+   The 2026-10-02 version read every reply aloud by default and listened
+   again by itself; this one is calm and asked for. A speaker button on each
+   tutor reply and on the cards on Now reads that one thing; pressed again it
+   stops. "Read answers aloud" (off by default) reads each new reply by
+   itself. The phone's own voice does the speaking (Apple's or Google's); no
+   sound leaves the device and nothing is kept. Where the browser has no
+   voice, no button is shown.                                              */
+var TTS=!!(window.speechSynthesis && window.SpeechSynthesisUtterance), SAY_BTN=null;
+var I_SPEAK='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="currentColor"/><path d="M15.2 9a4.2 4.2 0 0 1 0 6M17.8 6.6a7.6 7.6 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+function sayOn(){ return !!(state.me && state.me.readAloud); }
+function sayMark(btn,on){
+  if(!btn) return;
+  btn.setAttribute("aria-pressed",on?"true":"false");
+  btn.setAttribute("aria-label",on?"Stop reading":(btn.getAttribute("data-say-label")||"Read this aloud"));
+  btn.classList.toggle("on",on);
+}
+function sayStop(){
+  if(!TTS) return;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  sayMark(SAY_BTN,false); SAY_BTN=null;
+}
+/* the words as a person would say them: no list dashes, no ids in brackets, a pause at each line */
+function sayClean(t){
+  return String(t||"").replace(/\[[A-Z0-9-]+\]/g,"").replace(/^\s*[-•]\s*/gm,"").replace(/\s*\n+\s*/g,". ")
+    .replace(/\.\s*\./g,".").replace(/\s{2,}/g," ").trim();
+}
+function sayText(text,btn){
+  if(!TTS) return false;
+  var again=btn && btn===SAY_BTN;
+  sayStop();
+  if(again) return false;
+  var t=sayClean(text); if(!t) return false;
+  var u=new SpeechSynthesisUtterance(t);
+  u.lang=micLang(); u.rate=0.95;
+  u.onend=u.onerror=function(){ if(SAY_BTN===btn){ sayMark(btn,false); SAY_BTN=null; } };
+  SAY_BTN=btn||null; sayMark(btn,true);
+  try{ speechSynthesis.speak(u); }catch(e){ sayMark(btn,false); SAY_BTN=null; return false; }
+  return true;
+}
+/* what a card says: its own text, in order, without its buttons' words (an easy thing's name is kept) */
+function sayFrom(el){
+  if(!el) return "";
+  var c=el.cloneNode(true);
+  Array.prototype.forEach.call(c.querySelectorAll(".say-btn, .ph-say, .ph-acts, .ph-link, .nb-ico, .nb-go, .nb-dose, .ph-tick, svg, [aria-hidden=true]"),function(x){ x.remove(); });
+  var parts=[];
+  (function walk(n){
+    Array.prototype.forEach.call(n.childNodes,function(k){
+      if(k.nodeType===3){ var s=k.textContent.replace(/\s+/g," ").trim(); if(s) parts.push(s); }
+      else if(k.nodeType===1) walk(k);
+    });
+  })(c);
+  return parts.join(". ").replace(/([.!?:])\.\s/g,"$1 ");
+}
+function sayBtn(cls,label){
+  if(!TTS) return "";
+  return '<button type="button" class="say-btn '+(cls||"")+'" data-sayit="1" data-say-label="'+esc(label)+'" aria-pressed="false" aria-label="'+esc(label)+'">'+I_SPEAK+'</button>';
+}
+/* every reply in Talk gets a speaker button (Talk is drawn again from its turns, so this runs often) */
+function sayReply(d){
+  if(!TTS || !d) return;
+  var w=document.createElement("div"); w.innerHTML=sayBtn("bot-say","Read this answer aloud"); d.appendChild(w.firstChild);
+}
+/* a reply that just arrived is read at once when the person asked for that; called once per new reply */
+function sayLatest(){
+  if(!TTS || !sayOn()) return;
+  var all=document.querySelectorAll("#bot-log .bot-msg.bot"), d=all[all.length-1]; if(!d) return;
+  sayText(d.getAttribute("data-say-text")||sayFrom(d), d.querySelector("[data-sayit]"));
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("[data-sayit]"); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  var box=b.closest(".bot-msg, .ph-card, #now-badge");
+  var text=box && box.classList.contains("bot-msg") ? (box.getAttribute("data-say-text")||sayFrom(box)) : sayFrom(box);
+  sayText(text,b);
+},true);
+/* leaving a page stops the voice */
+window.addEventListener("hashchange",function(){ sayStop(); });
 /* ---------------- the board follows you ----------------
    Opened from the claude.ai link, the whole board is kept in this
    artifact's own store, which is yours and reaches every device you open
@@ -6756,8 +6857,14 @@ function assist(q,strict){
   return hit.a.run(hit.vals,hit.m);
 }
 
-var MEM_CMD=/^(?:remember|forget|delete note|what do you know|what have you (?:learned|noticed)|what do you remember|show (?:my )?memory|erase (?:my )?memory|(?:stop|pause|start|resume) learning)\b/, MEM_ARM=0;
+var MEM_CMD=/^(?:(?:start |stop |turn on |turn off )?read(?:ing)? (?:the |my )?(?:answers|replies) aloud|read aloud (?:on|off)|remember|forget|delete note|what do you know|what have you (?:learned|noticed)|what do you remember|show (?:my )?memory|erase (?:my )?memory|(?:stop|pause|start|resume) learning)\b/, MEM_ARM=0;
 var BRAIN=[
+  /* --- reading aloud (2026-10-21) ------------------------------------------ */
+  [/^(?:(?:start|turn on) )?read(?:ing)? (?:the |my )?(?:answers|replies) aloud(?: on)?$|^read aloud on$/, function(){
+    if(!TTS) return "This browser has no voice to read aloud with.";
+    var me=state.me||(state.me=freshMe()); me.readAloud=true; save(); renderAll(); return "From now on I read each answer aloud. Type stop reading answers aloud to stop."; }],
+  [/^(?:stop|turn off|do not|don'?t) read(?:ing)? (?:the |my )?(?:answers|replies) aloud$|^read aloud off$/, function(){
+    var me=state.me||(state.me=freshMe()); delete me.readAloud; sayStop(); save(); renderAll(); return "I stopped reading answers aloud. The speaker button on each answer still reads it."; }],
   /* --- what the tutor remembers (restored 2026-10-21) ------------------- */
   [/^remember (?:that )?(.{3,})$/, function(m){
     var n=memAdd(asTyped(m[1]),"you"); save(); renderAll(); return "Kept: "+n.t+". Type forget "+memKept().length+" to remove it."; }],
@@ -7016,13 +7123,15 @@ function modelThere(){ return !!botSample || (proxyReady() && !!(acct&&acct.acce
 function botBubble(cls,text){
   var log=$("#bot-log"), d=document.createElement("div");
   d.className="bot-msg "+cls;
-  if(cls==="bot") botRich(d,text); else d.textContent=text;
+  if(cls==="bot"){ botRich(d,text); d.setAttribute("data-say-text",String(text)); }
+  else d.textContent=text;
   /* a question opens a turn and its answers join it, so the phone can show
      the newest turn first and keep each answer under its question */
   var turn=log.lastElementChild;
   if(cls==="you"||!turn||!turn.classList.contains("bot-turn")){ turn=document.createElement("div"); turn.className="bot-turn"; log.appendChild(turn); }
   turn.appendChild(d); log.scrollTop=log.scrollHeight;
   if(document.documentElement.classList.contains("ph-talk")){ var sh=$("#botsheet"); if(sh) sh.scrollTop=0; }
+  if(cls==="bot" && typeof sayReply==="function") sayReply(d);
   return d;
 }
 /* ---- a reply laid out to read at a glance (2026-10-19) ----
@@ -7337,7 +7446,7 @@ async function botAsk(text,opts){
     botTurns.push({role:"user",content:said});
     botTurns.push({role:"assistant",content:reply});
     if(botTurns.length>14) botTurns=botTurns.slice(-14);
-    botRender();
+    botRender(); sayLatest();
     if(!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
     return;
   }
@@ -7360,7 +7469,7 @@ async function botAsk(text,opts){
       src:TURN_OUT+" "+said+" "+todayStr()+" "+pad2(nowD.getHours())+":"+pad2(nowD.getMinutes())});
     if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your own numbers."};
     botTurns.push({role:"assistant",content:res.text});
-    botRender();
+    botRender(); sayLatest();
     try{ $("#bot-input").focus(); }catch(e){}
   }catch(e){
     var msg=BOT_ERR[e&&e.code]||("Something went wrong"+(e&&e.code?" ("+e.code+")":"")+".");
@@ -7943,6 +8052,8 @@ function renderPlanner(){
     '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
     '<label>Steps on a good day<select class="f" data-me="normalN">'+[1,2,3,4].map(function(n){
       return '<option value="'+n+'"'+(doseN("normal")===n?" selected":"")+">"+n+(n===1?" step":" steps")+"</option>"; }).join("")+'</select></label>'+
+    (TTS?'<label class="wide">Read answers aloud<span class="dayrow"><button type="button" id="pl-read" aria-pressed="'+sayOn()+'">'+
+      (sayOn()?"On":"Off")+'</button></span><span class="pl-note">When on, each new answer in the assistant is read aloud by this device\u2019s own voice. Every answer and the Do this now card also have a speaker button.</span></label>':'')+
     '<label class="wide">Learn from what I do<span class="dayrow"><button type="button" id="pl-learn" aria-pressed="'+memLearnOn()+'">'+
       (memLearnOn()?"On":"Off")+'</button></span><span class="pl-note">When on, the board looks at what you finish and skip, and once in a while asks whether to keep what it noticed. Nothing is kept without your yes.</span></label>'+
     '<label class="wide">Order suggestions by AI<span class="dayrow"><button type="button" id="pl-aiok" aria-pressed="'+(!!me.aiOrderOk)+'">'+
@@ -7955,7 +8066,7 @@ function renderPlanner(){
   var wl=$("#pl-where");
   wl.innerHTML = state.groups.length ? state.groups.map(function(g){
     return '<div class="whererow"><span class="wn">'+esc(g.name)+'</span>'+
-      '<select class="f" data-where="'+g.id+'">'+WHERES.map(function(o){
+      '<select class="f" data-where="'+g.id+'" aria-label="Is '+esc(g.name)+' work?">'+WHERES.map(function(o){
         return '<option value="'+o[0]+'"'+((g.where||"any")===o[0]?" selected":"")+">"+o[1]+"</option>";
       }).join("")+'</select></div>';
   }).join("") : '<p class="calm">No goals yet.</p>';
@@ -7993,6 +8104,12 @@ $("#pl-form").addEventListener("input",function(e){
 });
 $("#pl-form").addEventListener("change",function(e){
   if(e.target.dataset.me) { save(); renderVerdict(); }
+});
+$("#pl-form").addEventListener("click",function(e){
+  if(!e.target.closest("#pl-read")) return;
+  e.preventDefault();
+  var me=state.me||(state.me=freshMe()); if(sayOn()){ delete me.readAloud; sayStop(); } else me.readAloud=true;
+  save(); renderPlanner(); var b=$("#pl-read"); if(b) b.focus();
 });
 $("#pl-form").addEventListener("click",function(e){
   if(!e.target.closest("#pl-learn")) return;
@@ -8572,7 +8689,7 @@ function phCurrent(){
 /* rules 2 and 3 on Now: the person's own easy things, ticked here */
 function phEasyCard(head,text){
   var f=floorState(), on=floorToday();
-  return '<section class="ph-card ph-rest" aria-label="'+esc(head)+'"><h2 class="ph-h2">'+esc(head)+'</h2><p class="ph-why">'+esc(text)+'</p>'+
+  return '<section class="ph-card ph-rest" aria-label="'+esc(head)+'">'+sayBtn("ph-say","Read this card aloud")+'<h2 class="ph-h2">'+esc(head)+'</h2><p class="ph-why">'+esc(text)+'</p>'+
     (f.items.length
       ? '<div class="ph-easy" role="group" aria-label="My easy things">'+f.items.map(function(x){
           return '<button type="button" class="ph-rowb ph-choice" role="checkbox" aria-checked="'+(on.indexOf(x.id)>=0)+'" data-ph="easytick" data-id="'+esc(x.id)+'"><span>'+esc(x.t)+'</span><span class="ph-tick" aria-hidden="true"></span></button>'; }).join("")+'</div>'+
@@ -8650,7 +8767,7 @@ function phNow(){
       '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
   if(cur){
-    h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
+    h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
       '<h2 class="ph-task">'+esc(cur.s.name)+'</h2>'+
       '<p class="ph-why">'+esc(cur.g?cur.g.name:"")+(cur.why?" · "+esc(cur.why):"")+'</p>'+
       '<div class="ph-acts">'+
@@ -8663,14 +8780,14 @@ function phNow(){
     var v=verdict(), not=v&&v.none?(v.blocked||[]).map(function(b){ return b.g.name+" waits: "+b.why+"."; }):[];
     if(v.rest) h.push(phEasyCard("Nothing is needed now",v.why+" If you want, one easy thing:"));
     else if(v.low) h.push(phEasyCard("Your energy is low","One easy thing is enough. Or mark a step Easy on its page, and it will show here."));
-    else h.push('<section class="ph-card" aria-label="Do this now"><div class="ph-k">Nothing fits this hour</div>'+
+    else h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k">Nothing fits this hour</div>'+
       '<p class="ph-why">'+esc(not.length?not.join(" "):"Everything that can be done now is done, waiting or in Today.")+'</p>'+
       '<div class="ph-acts"><a class="ph-btn" href="#/talk">Add something</a></div></section>');
   }
   /* a delivery day that has passed: asked here as well as in a notification */
   var ms=phMissed();
   if(ms.length){ var mg=ms[0], md=new Date(mg.due+"T00:00:00");
-    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed"><h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
+    h.push('<section class="ph-card ph-miss" aria-label="A delivery day has passed">'+sayBtn("ph-say","Read this card aloud")+'<h2 class="ph-h2">'+esc(mg.name)+'</h2>'+
       '<p class="ph-why">Its delivery day, '+DAYNAME[md.getDay()]+' '+md.getDate()+' '+PH_MONTHS[md.getMonth()]+', has passed. Nothing is lost. Pick a new day, or take the date off.'+
       (ms.length>1?' '+(ms.length-1)+' more '+(ms.length===2?"goal asks":"goals ask")+' the same after this one.':'')+'</p>'+
       '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="missnew" data-id="'+esc(mg.id)+'">Pick a new day</button>'+
@@ -8679,7 +8796,7 @@ function phNow(){
   phMissNote(ms);
   /* something the board learned from what the person did: asked once, kept only on Keep (2026-10-21) */
   var lm=memTick();
-  if(lm) h.push('<section class="ph-card ph-learn" aria-label="Something I noticed"><div class="ph-k">Something I noticed</div>'+
+  if(lm) h.push('<section class="ph-card ph-learn" aria-label="Something I noticed">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k">Something I noticed</div>'+
     '<p class="ph-task" style="font-size:1.0625rem">'+esc(lm.t)+'</p>'+(lm.evid?'<p class="ph-why">'+esc(lm.evid)+'</p>':'')+
     '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="learnkeep" data-id="'+esc(lm.id)+'">Keep it</button>'+
     '<button type="button" class="ph-btn" data-ph="learnno" data-id="'+esc(lm.id)+'">Not now</button></div></section>');
@@ -8757,8 +8874,7 @@ function phWeekCard(dy){
       '<span class="ph-col-x">'+(today?"Today":PH_DAYS[x.day.getDay()].slice(0,3))+'</span></button>');
   });
   h.push('</div></div>');
-  /* the same numbers as a table, for a screen reader */
-  h.push('<table class="ph-sr"><caption>Steps finished each day</caption><tbody>'+wk.map(function(x){ return '<tr><th scope="row">'+esc(PH_DAYS[x.day.getDay()]+" "+x.day.getDate()+" "+PH_MONTHS[x.day.getMonth()])+'</th><td>'+x.c+'</td></tr>'; }).join("")+'</tbody></table>');
+  /* no second copy as a table (2026-10-21): each column already says its day and count, so a screen reader heard them twice */
   h.push('</section>');
   return h.join("");
 }
@@ -8981,11 +9097,12 @@ function phYou(){
   var th=(function(){ try{ return localStorage.getItem(THEME_KEY)||"system"; }catch(e){ return "system"; } })();
   var ph=phPhoto();
   /* the photo is a label for the file box: one tap opens the phone's picker */
-  h.push('<div class="ph-head ph-me"><label class="ph-av ph-av-b" for="ph-photo-in">'+
+  /* the picture is a second tap target for the same file box; a screen reader uses the Your photo row (2026-10-21) */
+  h.push('<div class="ph-head ph-me"><label class="ph-av ph-av-b" for="ph-photo-in" aria-hidden="true">'+
     (ph?'<img src="'+esc(ph.src)+'" alt="">':'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg>'+
       '<span class="ph-av-plus" aria-hidden="true">+</span>')+
-    '<span class="ph-sr">'+(ph?"Change your photo":"Add a photo of you")+'</span></label>'+
-    '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr">'+
+    '</label>'+
+    '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr" aria-label="'+(ph?"Change your photo":"Add a photo of you")+'">'+
     '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
   /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
   h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
@@ -9003,6 +9120,7 @@ function phYou(){
     phRow("goodn","Steps on a good day",String(doseN("normal")))+
     phRow("aiok","Order suggestions by AI",me.aiOrderOk?"On":"Off",true)+
     phRow("learn","Learn from what I do",memLearnOn()?"On":"Off",true)+
+    (TTS?phRow("readaloud","Read answers aloud",sayOn()?"On":"Off",true):"")+
     phRow("easyedit","My easy things",floorState().items.length?String(floorState().items.length):"Add")+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -9252,7 +9370,7 @@ var PH_ONB_LAST=5;
 function phDotsHtml(i){
   var n=PH_GUIDE?PH_ONB_LAST:2, at=PH_GUIDE?i-1:(i===0?0:1), o=[];
   for(var k=0;k<n;k++) o.push('<span class="ph-step'+(k===at?" on":"")+'"></span>');
-  return '<div class="ph-steps" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
+  return '<div class="ph-steps" role="img" aria-label="Step '+(at+1)+' of '+n+'">'+o.join("")+'</div>';
 }
 /* one choice from a short list, as rows with a tick: the iOS way */
 function phChoice(k,list,v,label){
@@ -9460,6 +9578,8 @@ function phOnbFinish(add){
     else if(k==="aiorder") phAiOrder(id);
     else if(k==="learnkeep"||k==="learnno"){ try{ if(k==="learnkeep") memKeep(id); else memDrop(id,true); }catch(er){ memDrop(id,false); toast("",er.message); }
       save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="readaloud"){ var rme=state.me||(state.me=freshMe()); if(sayOn()){ delete rme.readAloud; sayStop(); } else rme.readAloud=true;
+      save(); renderAll(); PH_DRAWN=""; phRender(); var rb=document.querySelector("[data-ph=readaloud]"); if(rb) rb.focus(); }
     else if(k==="learn"){ var lme=state.me||(state.me=freshMe()); lme.learn=!memLearnOn(); if(lme.learn) delete lme.learn;
       save(); renderAll(); PH_DRAWN=""; phRender(); var lb=document.querySelector("[data-ph=learn]"); if(lb) lb.focus(); }
     else if(k==="aiok"){ var am=state.me||(state.me=freshMe());

@@ -450,8 +450,14 @@ function assist(q,strict){
   return hit.a.run(hit.vals,hit.m);
 }
 
-var MEM_CMD=/^(?:remember|forget|delete note|what do you know|what have you (?:learned|noticed)|what do you remember|show (?:my )?memory|erase (?:my )?memory|(?:stop|pause|start|resume) learning)\b/, MEM_ARM=0;
+var MEM_CMD=/^(?:(?:start |stop |turn on |turn off )?read(?:ing)? (?:the |my )?(?:answers|replies) aloud|read aloud (?:on|off)|remember|forget|delete note|what do you know|what have you (?:learned|noticed)|what do you remember|show (?:my )?memory|erase (?:my )?memory|(?:stop|pause|start|resume) learning)\b/, MEM_ARM=0;
 var BRAIN=[
+  /* --- reading aloud (2026-10-21) ------------------------------------------ */
+  [/^(?:(?:start|turn on) )?read(?:ing)? (?:the |my )?(?:answers|replies) aloud(?: on)?$|^read aloud on$/, function(){
+    if(!TTS) return "This browser has no voice to read aloud with.";
+    var me=state.me||(state.me=freshMe()); me.readAloud=true; save(); renderAll(); return "From now on I read each answer aloud. Type stop reading answers aloud to stop."; }],
+  [/^(?:stop|turn off|do not|don'?t) read(?:ing)? (?:the |my )?(?:answers|replies) aloud$|^read aloud off$/, function(){
+    var me=state.me||(state.me=freshMe()); delete me.readAloud; sayStop(); save(); renderAll(); return "I stopped reading answers aloud. The speaker button on each answer still reads it."; }],
   /* --- what the tutor remembers (restored 2026-10-21) ------------------- */
   [/^remember (?:that )?(.{3,})$/, function(m){
     var n=memAdd(asTyped(m[1]),"you"); save(); renderAll(); return "Kept: "+n.t+". Type forget "+memKept().length+" to remove it."; }],
@@ -710,13 +716,15 @@ function modelThere(){ return !!botSample || (proxyReady() && !!(acct&&acct.acce
 function botBubble(cls,text){
   var log=$("#bot-log"), d=document.createElement("div");
   d.className="bot-msg "+cls;
-  if(cls==="bot") botRich(d,text); else d.textContent=text;
+  if(cls==="bot"){ botRich(d,text); d.setAttribute("data-say-text",String(text)); }
+  else d.textContent=text;
   /* a question opens a turn and its answers join it, so the phone can show
      the newest turn first and keep each answer under its question */
   var turn=log.lastElementChild;
   if(cls==="you"||!turn||!turn.classList.contains("bot-turn")){ turn=document.createElement("div"); turn.className="bot-turn"; log.appendChild(turn); }
   turn.appendChild(d); log.scrollTop=log.scrollHeight;
   if(document.documentElement.classList.contains("ph-talk")){ var sh=$("#botsheet"); if(sh) sh.scrollTop=0; }
+  if(cls==="bot" && typeof sayReply==="function") sayReply(d);
   return d;
 }
 /* ---- a reply laid out to read at a glance (2026-10-19) ----

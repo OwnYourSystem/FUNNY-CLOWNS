@@ -169,7 +169,7 @@ async function botAsk(text,opts){
     botTurns.push({role:"user",content:said});
     botTurns.push({role:"assistant",content:reply});
     if(botTurns.length>14) botTurns=botTurns.slice(-14);
-    botRender();
+    botRender(); sayLatest();
     if(!SHEET.hidden) try{ $("#bot-input").focus(); }catch(e){}
     return;
   }
@@ -192,7 +192,7 @@ async function botAsk(text,opts){
       src:TURN_OUT+" "+said+" "+todayStr()+" "+pad2(nowD.getHours())+":"+pad2(nowD.getMinutes())});
     if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your own numbers."};
     botTurns.push({role:"assistant",content:res.text});
-    botRender();
+    botRender(); sayLatest();
     try{ $("#bot-input").focus(); }catch(e){}
   }catch(e){
     var msg=BOT_ERR[e&&e.code]||("Something went wrong"+(e&&e.code?" ("+e.code+")":"")+".");
