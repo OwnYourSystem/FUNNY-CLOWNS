@@ -171,3 +171,10 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 ## 2026-10-21: preview (example goals to tap), NOT in production
 
 - Owner: "do 3, example goals to tap". Full regression: 39 browser suites, 836 checks, 0 failures.
+
+## 2026-10-21: production moved to 6f03082 (example goals to tap)
+
+- Owner: "release it". On top of 666544d: 6 example goals to tap on the first-goal screen.
+- Full regression on 6f03082: 39 browser suites, 836 checks, 0 failures; purity 239.
+- Production deployment `dpl_EseVHrUjcKtivGaVajkPcthtdzYE`.
+- Rolling back: `dpl_6CE4wi89HY9VitjytKRJFNCqF7BQ` (666544d, What changed card and demo board).
