@@ -134,3 +134,11 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Findings once a day, asked in a "Something I noticed" card (Keep it / Not now); kept notes go to the tutor.
 - Preview deployment `dpl_AgV8RPe2jKs5XeQffiVCR2k9gyXm`. Full regression: 35 browser suites, 758 checks,
   0 failures; purity 238.
+
+## 2026-10-21: preview abeed3e (read aloud, WCAG 2.2 AA fixes), NOT in production
+
+- Owner: "close the 3 gaps, start with read aloud". Read aloud is built. The automated accessibility
+  audit (tests/a11y.mjs, axe-core 4.10.2 in tests/vendor, MPL-2.0) passes 47 checks after the fixes.
+  The real-phone screen-reader test (notes/screen-reader-test.md) and the user sessions
+  (notes/user-sessions-anxiety.md) need people and are ready to run.
+- Full regression: 37 browser suites, 818 checks, 0 failures; purity 239.

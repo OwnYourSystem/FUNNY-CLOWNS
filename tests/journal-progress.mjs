@@ -67,7 +67,7 @@ await ok("Your week: the goals meter matches the board's overall figure and says
   assert.match(await p.locator(".ph-week").innerText(), new RegExp("All goals\\s+" + v + "%"));
   assert.match(await p.locator(".ph-week").innerText(), /(▲|▼) [\d.]+ points this week|No change this week/);
 });
-await ok("Your week: seven columns, the tallest labelled, a tap reads a day out, and a table carries every value", async () => {
+await ok("Your week: seven columns, the tallest labelled, a tap reads a day out, and each column names its day and count (no second copy as a table)", async () => {
   assert.equal(await p.locator("[data-ph=col]").count(), 7);
   const labelled = await p.locator(".ph-col-v").evaluateAll((l) => l.map((e) => e.textContent).filter(Boolean));
   assert.deepEqual(labelled, ["4"]);
@@ -75,7 +75,8 @@ await ok("Your week: seven columns, the tallest labelled, a tap reads a day out,
   assert.equal(hs[1], 0); assert.ok(hs[4] > hs[2] && hs[2] > hs[0] && hs[0] > hs[3], "heights do not follow the counts: " + hs);
   for (const w of await p.locator(".ph-col-b").evaluateAll((l) => l.map((e) => e.getBoundingClientRect().width))) assert.ok(w <= 24);
   await p.locator("[data-ph=col]").nth(4).click(); assert.match(await p.locator("#ph-cols-read").innerText(), /: 4 steps finished$/);
-  assert.equal(await p.locator(".ph-week table.ph-sr tr").count(), 7);
+  assert.equal(await p.locator(".ph-week table").count(), 0);
+  for (const l of await p.locator("[data-ph=col]").evaluateAll((l) => l.map((e) => e.getAttribute("aria-label")))) assert.match(l, /^\w+day \d{1,2} \w+, \d+ steps?$/);
   for (const h of await p.locator("[data-ph=col]").evaluateAll((l) => l.map((e) => e.getBoundingClientRect().height))) assert.ok(h >= 44);
   assert.equal(await sideways(), false);
 });
