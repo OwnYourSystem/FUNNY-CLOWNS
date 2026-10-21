@@ -126,3 +126,11 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   No side panel. The tutor itself was never removed (api/tutor.js, ANTHROPIC_API_KEY, Opus 5.5 by default).
 - Preview deployment `dpl_5TaH7URzEmKspWzaMpgryaq13BaV` (funny-clowns-git-app-oys-s-projects.vercel.app).
 - Full regression: 35 browser suites, 739 checks, 0 failures; purity 228.
+
+## 2026-10-21: preview 1c2e763 (the board learns from behaviour), NOT in production
+
+- Owner: "the AI agent should learn from user behavior in order to give customized recommendations.
+  It was one of the principles from the very beginning of this project." Recorded in notes/principles.md.
+- Findings once a day, asked in a "Something I noticed" card (Keep it / Not now); kept notes go to the tutor.
+- Preview deployment `dpl_AgV8RPe2jKs5XeQffiVCR2k9gyXm`. Full regression: 35 browser suites, 758 checks,
+  0 failures; purity 238.

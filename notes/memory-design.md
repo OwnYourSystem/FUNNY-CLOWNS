@@ -1,5 +1,14 @@
 # Memory: what the board learns, and the rules it follows
 
+> **Current version: 2026-10-21.** Restored after the 2026-10-20 simplification (see principles.md).
+> Findings now: finishing hours (a note), steps on a good day (changes `normalN`), a lighter weekday
+> (a note, mean of the weekday at most 60% of the other days, 4 or more of that weekday and 10 other
+> days in 8 weeks; the permutation test went with the experiments), and a step skipped 3 or more times
+> in 3 weeks (a note: a smaller first step may help). Asked once a day in a quiet card on Now (phone)
+> or under the easy things (desktop): Keep it / Not now (30 days). The tutor's proposals ask in a
+> Keep this note? sheet. No side panel. Code: `source/parts/110-what-the-tutor-remembers.js`.
+> The table below is the original 2026-10-02 design.
+
 Written 2026-10-02. Code: the `mem*` functions in `delivery-board.html`.
 Tests: `tests/memory.mjs`.
 
