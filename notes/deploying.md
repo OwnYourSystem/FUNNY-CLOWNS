@@ -153,3 +153,8 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Rolling back: `dpl_4mVsS5tWUANNbC3A8HriCKGfjJp2` (b926c96, energy, sequence, AI order suggestion).
 - Not in this release: an in-app note that tells existing users the next step is now chosen by the
   5 rules (principle 6, "no surprise"). Open: confirm ANTHROPIC_API_KEY is set for the tutor.
+
+## 2026-10-21: preview (What changed card, demo board), NOT in production
+
+- Owner: "do 1 and 2". The What changed card for boards from before the release, and the demo board
+  (?demo=session) for the user sessions. Full regression: 38 browser suites, 830 checks, 0 failures.

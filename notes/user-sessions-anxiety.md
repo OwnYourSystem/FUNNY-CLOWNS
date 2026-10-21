@@ -29,7 +29,21 @@ to run 5 to 8 sessions. It is a usability study, not a clinical trial and not th
 - Distress protocol: if a participant becomes upset, stop the task, ask if they want a pause or
   to end, do not coach or counsel. Have local support numbers ready (country helplines and the
   emergency number) and offer them calmly. Note it and do not count it as a failed task.
-- Use the participant's own phone where possible, on the preview link, with a fresh board.
+- Use the participant's own phone where possible, with a fresh board and not signed in.
+
+## The demo board (built 2026-10-21)
+
+Task 1 uses a fresh board. For tasks 2 to 8, open **https://funny-clowns.vercel.app/?demo=session**
+and press "Load the demo board". It asks first and replaces the board on that phone with an example:
+
+- 4 goals: Garden shed (delivery day in 10 days), Quarterly report (work), Plan a weekend away
+  (its delivery day passed 3 days ago), Learn Spanish ("Download a language app" is marked Easy).
+- 3 easy things: Listen to an audiobook, Read before sleep, A short walk.
+- 2 weeks of history, 2 steps a day, so "Something I noticed: a good day is 2 steps" appears on Now.
+
+It never runs for someone who is signed in. After the session, delete the board (You > Backup,
+restore and reset) or clear the browser's site data. Note: Quarterly report is a work goal, so in
+work hours (09:00 to 17:00 on weekdays) Now offers only it; outside them, the other goals.
 
 ## Session plan (45 minutes)
 
@@ -48,8 +62,8 @@ to run 5 to 8 sessions. It is a usability study, not a clinical trial and not th
 3. Look at Now. "What is it asking you to do, and why?"
 4. Skip the step. Then bring it back.
 5. Set your energy to Very low. "How does this screen make you feel?"
-6. A delivery day has passed (seeded). "What would you do here?"
-7. A "Something I noticed" card (seeded). Keep it or Not now, and why.
+6. A delivery day has passed (on the demo board). "What would you do here?"
+7. A "Something I noticed" card (on the demo board). Keep it or Not now, and why.
 8. Ask the assistant something about your day, by voice. Use the speaker to hear the answer.
 
 After each task ask one question: **"How calm did that feel, from 1 (very tense) to 5 (very calm)?"**
