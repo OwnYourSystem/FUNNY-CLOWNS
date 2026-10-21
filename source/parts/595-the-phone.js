@@ -976,7 +976,7 @@ function phGoalEdit(){
   });
 }
 function phNewGoal(){
-  askUser({title:"New goal", fields:[{k:"g",label:"The goal",kind:"text",ph:"For example: Finish the SAP migration"},{k:"s",label:"Its next step (optional)",kind:"text"}],
+  askUser({title:"New goal", fields:[{k:"g",label:"The goal",kind:"text",ph:"For example: Finish the quarterly report"},{k:"s",label:"Its next step (optional)",kind:"text"}],
     ok:"Add it", cancel:"Not now", check:function(v){ return String(v.g||"").trim()?"":"Give the goal a name."; }}).then(function(v){
     if(!v) return;
     try{
@@ -1086,7 +1086,7 @@ function phOnbHtml(){
   return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
     '<h1 class="ph-h1 ph-mt">What are you working on?</h1><p class="ph-lede">One goal and its next step. Pick an example, say it or type it. You can change it later.</p>'+
     phExamples(v)+
-    '<label class="ph-lab" for="ph-goal">Or your own goal</label><input class="ph-in" id="ph-goal" value="'+esc(v.goal)+'" placeholder="For example: Finish the SAP migration">'+
+    '<label class="ph-lab" for="ph-goal">Or your own goal</label><input class="ph-in" id="ph-goal" value="'+esc(v.goal)+'" placeholder="For example: Finish the quarterly report">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-goal" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
     '<label class="ph-lab" for="ph-step">Its next step</label><input class="ph-in" id="ph-step" value="'+esc(v.step)+'" placeholder="For example: Map the old reports">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-step" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+

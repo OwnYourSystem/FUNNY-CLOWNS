@@ -605,8 +605,8 @@ var BRAIN=[
   [/^(?:how (?:far |much )?(?:is|along is|done is) )(.+)$/,
    function(m){ var sb=fuzSub(m[1]); return sb.name+" is "+sb.pct+"%, "+statusOf(sb).label.toLowerCase()+"."; }],
   [/^(?:help|what can you do|what can i say|commands)$/,
-   function(){ return "Say: add a task called weekly review. Bronze database to 40 percent. "+
-     "Done with it. Focus on running. Move it to Alchemy. Repeat it daily. "+
+   function(){ return "Say: add a task called weekly review. Paint the shelf to 40 percent. "+
+     "Done with it. Focus on the garden. Move it to Home. Repeat it daily. "+
      "What is left today. What needs a look. A new task with no main task named goes under the one that is open."; }]
 ];
 
