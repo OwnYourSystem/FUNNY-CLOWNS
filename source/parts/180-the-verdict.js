@@ -22,7 +22,7 @@ function northHit(g,me,sub){
   /* the line can name the goal or the step inside it, so both are read */
   var hay=(g.name+" "+(g.tags||[]).join(" ")+" "+((sub&&sub.name)||"")).toLowerCase();
   /* whole words only. A plain indexOf let "ship" in "Ship the tracker"
-     match "Partnership", which lifted the wrong goal to the top. */
+     match "Friendship", which lifted the wrong goal to the top. */
   return ws.some(function(w){
     return new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(s|es)?\\b").test(hay);
   });
