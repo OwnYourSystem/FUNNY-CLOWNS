@@ -1,6 +1,6 @@
 /* The board (desktop) at the phone's level (owner, 2026-10-20: "keep both on the same level, with different interfaces"):
    steps in their order, no step priority and no own date, Easy, Earlier/Later and drag with Undo, the energy battery,
-   steps on a good day, Delivery days instead of Needs attention, and the passed-day question. The AI order is gone (2026-10-20). */
+   steps on a good day, Delivery days instead of Needs attention, and the passed-day question, and Suggest an order (AI, restored 2026-10-21). */
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
@@ -64,7 +64,8 @@ await ok("the battery on the Do this now strip opens the same energy sheet; Very
   assert.equal((await st()).cap.lvl, 1); assert.match(await p.locator("#now-badge [data-energy-open]").getAttribute("aria-label"), /Very low, set by you/);
   assert.match(await p.locator("#oftad-count").innerText(), /of today.s 1 · energy very low/);
   assert.match(await p.locator("#now-badge").innerText(), /Nothing is needed now/); assert.doesNotMatch(await p.locator("#now-badge").innerText(), /Lay the base/);
-  await p.locator("#now-badge [data-energy-open]").click(); await D().waitFor(); await D().getByRole("button", { name: /^Low/ }).click(); await p.waitForTimeout(300);
+  await p.locator("#now-badge [data-energy-open]").click(); await D().waitFor(); await D().getByRole("button", { name: /^Low/ }).click();
+  await p.waitForFunction(() => /Lay the base/.test(document.querySelector("#now-badge").innerText), null, { timeout: 3000 }).catch(() => {});
   assert.match(await p.locator("#now-badge").innerText(), /Lay the base/, "the Easy step was not offered");
 });
 await ok("the first Good asks how many steps make a good day; the Planner can change it", async () => {
@@ -75,9 +76,20 @@ await ok("the first Good asks how many steps make a good day; the Planner can ch
   const sel = p.locator('#pl-form [data-me="normalN"]'); assert.equal(await sel.inputValue(), "2");
   await sel.selectOption("4"); await p.waitForTimeout(250); assert.equal((await st()).me.normalN, 4);
 });
-await ok("no AI order: no switch on the Planner, no Suggest button, and nothing is sent", async () => {
-  assert.equal(await p.locator("#pl-aiok").count(), 0);
-  await seed(); assert.equal(await p.locator("#sub-bars [data-aiorder-d], [data-ph=aiorder]").count(), 0); assert.equal(sent.length, 0);
+await ok("the Planner has the AI switch: on asks for consent first, off withdraws it", async () => {
+  const sw = p.locator("#pl-aiok"); assert.equal(await sw.getAttribute("aria-pressed"), "false");
+  await sw.click(); await D().waitFor(); assert.match(await D().innerText(), /Anthropic/); await D().getByRole("button", { name: "Send" }).click(); await p.waitForTimeout(300);
+  assert.ok((await st()).me.aiOrderOk); assert.equal(await p.locator("#pl-aiok").getAttribute("aria-pressed"), "true");
+  await p.locator("#pl-aiok").click(); await p.waitForTimeout(250); assert.equal((await st()).me.aiOrderOk, undefined);
+});
+await ok("Suggest an order on the board: consent, the suggestion labelled AI, Use this order, Undo", async () => {
+  await seed();
+  await p.locator("#sub-bars [data-aiorder-d]").click(); await D().waitFor(); await D().getByRole("button", { name: "Send" }).click();
+  await D().waitFor(); assert.deepEqual(sent.pop(), { goal: "Shed", steps: [{ id: "gS1", name: "Lay the base" }, { id: "gS2", name: "Buy timber" }, { id: "gS3", name: "Build the walls" }] });
+  assert.match(await D().innerText(), /Suggested by AI[\s\S]*1\. Build the walls/);
+  await D().getByRole("button", { name: "Use this order" }).click(); await p.waitForTimeout(300);
+  assert.deepEqual(await subs(), ["gS0", "gS3", "gS1", "gS2"]); assert.match(await p.locator("#dk-undo-t").innerText(), /New order for Shed/);
+  await p.locator("#dk-undo-b").click(); await p.waitForTimeout(300); assert.deepEqual(await subs(), ["gS0", "gS1", "gS2", "gS3"]);
 });
 await ok("Delivery days: the strip, the count and the panel speak of pace; a passed day asks, and Keep, No date (with Undo) and Pick a new day answer it", async () => {
   await seed((s, a) => { s.groups[0].due = a[0]; s.groups[1].due = a[1]; }, [day(-2), day(3)]);

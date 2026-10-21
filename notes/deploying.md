@@ -116,4 +116,13 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   board after 21:00, so a night run saw a different board). TEST_CLOCK=off uses the real time.
 - Full regression: 32 browser suites, 695 of 696 checks on the run before the last fix (floor counted
   the chips before the strip redrew; it now waits), purity 216, dose and events clean.
-- QORDEL_ORDER_KEY in Vercel is no longer used by any code; the owner can delete it.
+- (Corrected 2026-10-21: keep QORDEL_ORDER_KEY. The AI order suggestion came back, see below.)
+
+## 2026-10-21: preview ce904ea (the AI restored), NOT in production
+
+- Owner: "Why did you remove AI ... AI is the personal tutor and the coordinator" and "yes, restore both".
+  The AI order suggestion (api/order.js, Claude Haiku 5.5, QORDEL_ORDER_KEY) and the tutor's memory
+  (get_memory, propose_memory, forget_memory; Keep it / Not now sheet; remember / forget in Talk) are back.
+  No side panel. The tutor itself was never removed (api/tutor.js, ANTHROPIC_API_KEY, Opus 5.5 by default).
+- Preview deployment `dpl_5TaH7URzEmKspWzaMpgryaq13BaV` (funny-clowns-git-app-oys-s-projects.vercel.app).
+- Full regression: 35 browser suites, 739 checks, 0 failures; purity 228.
