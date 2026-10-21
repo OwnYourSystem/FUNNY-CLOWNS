@@ -275,3 +275,22 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Built on calendar-test, so it carries the Calendar page and rule 6.
 - The panel board stays as Classic board on You; the older suites test it through that choice.
 - Full suite on web-test: 43 suites, 919 checks, 0 failures (tests/web.mjs, 13 checks with axe).
+
+## 2026-10-21: production moved to ce68b4b (Qordel web, Google Calendar ready, rule 6, flaw 13)
+
+- Owner: "Release it". `app` fast-forwarded 538743e..ce68b4b (web-test). Production deployment
+  `dpl_3iNj1hEBMKvDRsWcKRQFR1HSandA`.
+- Rolling back: `dpl_4osDtE5UrmXaXbnZKBrF7GuGMtVv` (e9ff565). Rolling back brings the owner's goals back into the
+  public page (flaw 13) and the old desktop board as the default.
+- What went live:
+  - flaw 13: new boards start empty; the old seed leaves every board except the owner's signed-in one;
+  - Qordel web as the default on big screens, with Classic board on You;
+  - the Calendar page, which says "coming soon" until the Google client id is set (CAL_CLIENT is empty), so no
+    Google script loads;
+  - rule 6, which does nothing until a calendar is connected;
+  - the tutor's calendar tools and paragraph;
+  - the CSP lines for accounts.google.com/gsi and www.googleapis.com.
+- Checked on the live page: empty seed, SEED_REV 7, the web styles, rule 6, the coming-soon text, none of the 83
+  old goal names.
+- Tests: full suite on web-test 43 suites, 919 checks, 0 failures; after the coming-soon wording, calendar (26),
+  web (13) and purity (259) re-run clean.
