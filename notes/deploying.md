@@ -235,3 +235,22 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Still to apply, in this order, by the owner in the Supabase SQL editor or by a later approved run:
   20261021090000_record_live_schema.sql, 20261021090100_boards_tighten_grants.sql, 20261021_ai_use.sql.
   Until ai_use is applied, api/order.js counts per server instance (the in-memory fallback).
+
+## 2026-10-21: flaw 13, the owner's goals out of the app (app commit b005d51, NOT in production yet)
+
+- Owner: "Remove them every where. But keep them only for my own sign in".
+- The seed is empty (SEED_REV 7). No goal name is left in index.html or delivery-board.html. A new board
+  starts empty; the phone's example goals take the seed's place.
+- A board that holds the old seed loses it once (`unseedBoard`, part 010), matched by the 85 old ids only
+  (ids the app makes are 7 characters or more, so nothing of a person's own can match). A renamed goal or
+  step stays; a person's own step under an old goal stays, and that goal is renamed "My goal". The archive,
+  backlog, docks, board-learned notes and the Restore copy are cleaned the same way.
+- The owner's signed-in board (account id 5b461774-..., the only account in the database) is left as it
+  is. The id is in the code; the address is not. The cloud row holds 15 goals and 83 steps (read
+  2026-10-21).
+- On a device where the owner is NOT signed in (including the claude.ai link), the goals go from that
+  device. The account still has them. The cleaned device forgets its last push, so signing in there weighs
+  both copies and asks; pick "Your account".
+- Still in the public git history of every branch. Rewriting it is the owner's call.
+- Test: tests/unseed.mjs (8 checks). The other suites get a neutral sample board through tests/_sample.mjs,
+  because they were written against a board that already had goals. Full suite: 41 suites, 863 checks, 0 failures.
