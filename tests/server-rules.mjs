@@ -19,7 +19,7 @@ ok("push function: subscribe and unsubscribe from another site are refused; the 
   assert.match(push, /\(path === "subscribe" \|\| path === "unsubscribe"\) && origin && !okOrigin\(origin\)\) return json\(\{ error: "other_site" \}, 403\)/);
   assert.match(push, /if \(path === "tick" && req\.method === "POST"\) \{\s*const secret/);
 });
-ok("push function in the repo matches live version 3: it records counts with push_record", () => { assert.match(push, /db\.rpc\("push_record"/); });
+ok("push function in the repo matches live version 4: it records counts with push_record", () => { assert.match(push, /db\.rpc\("push_record"/); });
 ok("the alert function is in the repo, sends counts only, and needs the tick secret", () => {
   const a = read("supabase/functions/alert/index.ts"); assert.match(a, /x-tick"\) !== cfg\.tick\) return json\(\{ error: "no" \}, 401\)/);
   assert.match(read("supabase/functions/alert/alerts.js"), /This message holds counts only/);

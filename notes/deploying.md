@@ -221,3 +221,17 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - The first migration (record_live_schema) was sent through the Supabase connection and came back
   "cancelled" (a confirmation was declined or timed out). Nothing was applied; the live migration list
   still ends at push_pm_time. The other 2 migrations and the push function deploy were not attempted.
+
+## 2026-10-21: push function version 4 live (flaw 12 closed); migrations still cancelled
+
+- Owner: "Yes" (retry). The first migration was sent a second time and again came back "cancelled".
+  Not retried after that. The live migration list still ends at push_pm_time: none of the 3 is applied.
+- The push function was deployed as **version 4** (verify_jwt off, as before). Read back from the live
+  project: it holds the address rule (only funny-clowns.vercel.app, its previews and localhost get CORS
+  headers; subscribe and unsubscribe from another site get 403 "other_site") and still records counts
+  with push_record. The database's once-a-minute tick sends no Origin, so it is not affected.
+- Rolling back the push function: redeploy the version 3 file (CORS "*") from git history before
+  commit e9ff565 on the app branch.
+- Still to apply, in this order, by the owner in the Supabase SQL editor or by a later approved run:
+  20261021090000_record_live_schema.sql, 20261021090100_boards_tighten_grants.sql, 20261021_ai_use.sql.
+  Until ai_use is applied, api/order.js counts per server instance (the in-memory fallback).
