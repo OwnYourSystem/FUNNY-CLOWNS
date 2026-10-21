@@ -8681,18 +8681,28 @@ function phAiOrder(gid,from){
   var g=gById(gid); if(!g) return;
   var open=g.subs.map(function(id){ return state.subs[id]; }).filter(function(x){ return x&&x.pct<100&&x.status!=="done"; });
   if(open.length<2) return;
+  /* suggestions need an account (2026-10-21): the server answers only a signed-in person */
+  if(!(typeof acct!=="undefined" && acct && acct.access_token)){
+    askUser({title:"Sign in to get suggestions", body:["An AI suggestion needs an account, so only you can use it. Your board stays on this device either way."],
+      ok:"Sign in", cancel:"Not now"}).then(function(yes){ var ab=$("#btn-account"); if(yes && ab) ab.click(); });
+    return;
+  }
   ((state.me&&state.me.aiOrderOk)?Promise.resolve(true):phAiConsent()).then(function(ok){
     if(!ok) return;
     var btn=from&&document.contains(from)?from:document.querySelector('[data-ph="aiorder"]');
     if(btn){ btn.disabled=true; btn.setAttribute("aria-busy","true"); btn.textContent="Asking\u2026"; }
     var done=function(){ if(btn){ btn.disabled=false; btn.removeAttribute("aria-busy"); btn.textContent="Suggest an order"; } };
     var ctl=window.AbortController?new AbortController():null, tm=setTimeout(function(){ if(ctl) ctl.abort(); },25000);
-    fetch("api/order",{method:"POST", headers:{"content-type":"application/json"}, signal:ctl?ctl.signal:undefined,
-      body:JSON.stringify({goal:g.name.slice(0,120), steps:open.map(function(x){ return {id:x.id, name:x.name.slice(0,120)}; })})})
-    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {st:r.status, j:j}; }); })
+    var body=JSON.stringify({goal:g.name.slice(0,120), steps:open.map(function(x){ return {id:x.id, name:x.name.slice(0,120)}; })});
+    var post=function(){ return fetch("api/order",{method:"POST", headers:{"content-type":"application/json", authorization:"Bearer "+((acct&&acct.access_token)||"")},
+        signal:ctl?ctl.signal:undefined, body:body})
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {st:r.status, j:j}; }); }); };
+    /* an hour-old session is refreshed once, as the tutor does */
+    post().then(function(x){ return x.st===401 && acct && acct.refresh_token ? acctRefresh().then(post,function(){ return x; }) : x; })
     .then(function(x){
       clearTimeout(tm); done();
       if(x.st===503 && x.j.error && x.j.error.code==="not_configured") return toast("","The AI suggestion is not switched on yet.");
+      if(x.st===401) return toast("","Sign in again to get suggestions.");
       if(x.st===429) return toast("",(x.j.error&&x.j.error.message)||"Enough suggestions for now. Try again later.");
       if(x.st!==200 || !x.j.ok) return toast("","No suggestion this time. Your order stays.");
       var now=g.subs.filter(function(id){ return open.some(function(o){ return o.id===id; }); });

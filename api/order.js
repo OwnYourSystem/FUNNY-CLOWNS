@@ -14,18 +14,32 @@
        token counts and the time taken.
      - It answers only the same origin: no CORS headers, and a JSON content
        type is required, so another site's page cannot call it.
+     - It answers only a signed-in person (2026-10-21, flaw 1 of the agent
+       review: before, anyone with the address could spend the key). The
+       page sends the Supabase session token; it is checked with Supabase,
+       as the tutor does, and the limits count per person, not per address.
 
    Set in Vercel (Project > Settings > Environment Variables):
      QORDEL_ORDER_KEY    required. Its own key, so that setting it does not
                          switch on the parked tutor (which reads
                          ANTHROPIC_API_KEY). Put a monthly spend limit on it in
-                         the Anthropic console: the limiter below is per warm
-                         instance and is not a budget.
-     ORDER_PER_MIN / ORDER_PER_DAY   optional per-device ceilings (6 / 30)  */
+                         the Anthropic console: the limits below are not a budget.
+     ORDER_PER_MIN / ORDER_PER_DAY   optional per-person ceilings (6 / 30)
+     ORDER_REQUIRE_AUTH  leave unset. "0" skips the sign-in check, for tests only.
+     SUPABASE_URL / SUPABASE_KEY     optional; the project's own by default.
+
+   The limits are durable when the migration 20261021_ai_use.sql is applied:
+   a counter per person and day in Supabase, kept across server instances.
+   Until then, and whenever Supabase cannot answer, each warm instance counts
+   for itself.                                                              */
+import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 
 export const MODEL = "claude-haiku-5-5";
 const PER_MIN = +process.env.ORDER_PER_MIN || 6, PER_DAY = +process.env.ORDER_PER_DAY || 30;
+const SB_URL = process.env.SUPABASE_URL || "https://phicqgnzqnuwugzbgxxw.supabase.co";
+const SB_KEY = process.env.SUPABASE_KEY || "sb_publishable_qfXQ61CVW7cS-Qe_U6Dztg_o0MhKNPm";
+const REQUIRE_AUTH = process.env.ORDER_REQUIRE_AUTH !== "0";
 export const LIMITS = { steps: 15, name: 120, id: 40, bytes: 4000 };
 
 export const SYSTEM =
@@ -73,7 +87,38 @@ export function checkOrder(steps, out) {
   return { order: out.order.slice(), why: out.why.trim().slice(0, 200) };
 }
 
-/* ---- how often: per device, best effort --------------------------------- */
+/* ---- who is asking: a Supabase session, checked as the tutor checks it --- */
+const known = new Map();      /* token hash -> { id, until } */
+async function who(req) {
+  const h = String(req.headers.authorization || "");
+  const tok = h.startsWith("Bearer ") ? h.slice(7).trim() : "";
+  if (!tok) return null;
+  const key = crypto.createHash("sha256").update(tok).digest("hex");
+  const c = known.get(key);
+  if (c && c.until > Date.now()) return { id: c.id, tok };
+  try {
+    const r = await fetch(SB_URL + "/auth/v1/user", { headers: { apikey: SB_KEY, authorization: "Bearer " + tok }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return null;
+    const u = await r.json();
+    if (!u || typeof u.id !== "string") return null;
+    if (known.size > 500) known.clear();
+    known.set(key, { id: u.id, until: Date.now() + 60000 });
+    return { id: u.id, tok };
+  } catch { return null; }
+}
+
+/* ---- how often: per person. Durable in Supabase when the migration is
+   applied (true or false); null means it cannot say, and the instance counts. */
+async function durable(tok) {
+  try {
+    const r = await fetch(SB_URL + "/rest/v1/rpc/ai_use_take", { method: "POST",
+      headers: { apikey: SB_KEY, authorization: "Bearer " + tok, "content-type": "application/json" },
+      body: JSON.stringify({ p_kind: "order", p_per_min: PER_MIN, p_per_day: PER_DAY }), signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const v = await r.json();
+    return typeof v === "boolean" ? v : null;
+  } catch { return null; }
+}
 const hits = new Map();
 function allowed(id) {
   const now = Date.now(), minute = Math.floor(now / 60000), day = Math.floor(now / 86400000);
@@ -84,10 +129,6 @@ function allowed(id) {
   if (hits.size > 2000) hits.clear();
   hits.set(id, h);
   return h.minN <= PER_MIN && h.dayN <= PER_DAY;
-}
-function device(req) {
-  const f = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  return f || String(req.headers["x-real-ip"] || "") || "unknown";
 }
 
 /* ---- the call ----------------------------------------------------------- */
@@ -116,7 +157,13 @@ export default async function handler(req, res) {
   if (!/^application\/json\b/i.test(String(req.headers["content-type"] || ""))) return fail(res, 415, "bad_type", "send JSON");
   if (String(req.headers["sec-fetch-site"] || "") === "cross-site") return fail(res, 403, "cross_site", "same site only");
   if (!on) return fail(res, 503, "not_configured", "The suggestion is not switched on here.");
-  if (!allowed(device(req))) return fail(res, 429, "rate_limited", "Enough suggestions for now. Try again later.", 60);
+  let me = { id: "anon", tok: "" };
+  if (REQUIRE_AUTH) {
+    me = await who(req);
+    if (!me) return fail(res, 401, "auth_required", "Sign in to get suggestions.");
+  }
+  const d = me.tok ? await durable(me.tok) : null;
+  if (d === false || (d === null && !allowed(me.id))) return fail(res, 429, "rate_limited", "Enough suggestions for now. Try again later.", 60);
 
   let input;
   try { input = cleanOrder(typeof req.body === "string" ? JSON.parse(req.body) : req.body); }
