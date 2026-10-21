@@ -266,3 +266,5 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - The CSP in vercel.json now allows accounts.google.com/gsi (script, style, frame, connect) and www.googleapis.com.
 - The tutor's server tool list gains get_calendar and propose_calendar_event, and its prompt a calendar paragraph.
 - Full suite on calendar-test: 42 suites, 894 checks, 0 failures (tests/calendar.mjs, 22 checks).
+- Rule 6 (owner: "keep the simple one and do it"): bookings come first, booked hours shrink the day, a Now line,
+  every calendar shown in Google. Full suite: 42 suites, 906 checks, 0 failures (calendar.mjs, 26 checks).

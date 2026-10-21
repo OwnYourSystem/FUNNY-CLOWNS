@@ -4,10 +4,22 @@ Owner, 2026-10-21: "I want the system to get connected to the Google calendar to
 
 Branch: `calendar-test` (from `app` at 538743e, the flaw 13 work). Not in production.
 
+## Why (owner, 2026-10-21)
+
+People have doctor and hospital visits, school runs and other duties in their personal calendar. These are responsibilities, not goals. A planner for one day must know them: a full battery does not mean 3 steps if 2 hours go to the hospital. The owner asked for the simple version: no travel time and no warm-up window.
+
+## Rule 6: what is booked comes first
+
+- **No task during a booking.** Now says "Booked until 11:00: Dentist." and offers only an easy thing if the person wants one.
+- **Booked hours make the day smaller.** Every 2 hours booked inside the person's day (day start to day end) removes 1 step, never below 1. The board says why: "2.5 hours are booked in your calendar today, so 2 steps."
+- **One line on Now and on the desktop board:** today's bookings that are still to come. In the evening, when nothing more is booked today, it shows tomorrow's first booking, so the person can get ready.
+- **Every calendar the person shows in Google counts** (family or school calendars, for example). Calendars hidden in Google do not count. An invitation that sits in 2 calendars is counted once.
+- **The names stay on the device.** The rules run on the phone. The tutor gets the smaller dose and the busy times, and gets names only if the person allows them.
+
 ## What it does
 
 - **Calendar page.** On the phone: You, then Google Calendar. On the desktop: the Calendar tab. It shows the next 7 days, today first.
-- **Read.** Connect once. Qordel reads every event for the next 7 days: its time, name, whether it blocks time, and its first reminder. It never asks Google for guests, places or notes.
+- **Read.** Connect once. Qordel reads every event for the next 7 days, from the main calendar and every calendar the person shows in Google (up to 10): its time, name, whether it blocks time, and its first reminder. It never asks Google for guests, places or notes. Qordel adds events only to the main calendar.
 - **Write.** Add meeting: a name, a day, a start, an end and an alert. It blocks the time. Add reminder: a name, a day, a time and an alert. It is a 15-minute event that does not block the time; its alert is the reminder.
 - **Delete.** Only events that Qordel added, after a confirm. Google's own events have no Delete.
 - **Talk without the AI.** "What's on my calendar" lists today.
@@ -45,7 +57,7 @@ The cost: after about 1 hour, Refresh opens Google's window again. Usually it cl
 
 1. Use the Google Cloud project that runs Google sign-in for Qordel, or make a new one.
 2. **APIs and services, then Library:** turn on **Google Calendar API**.
-3. **Google Auth Platform (OAuth consent screen), then Data access:** add the scope `https://www.googleapis.com/auth/calendar.events`.
+3. **Google Auth Platform (OAuth consent screen), then Data access:** add 2 scopes: `https://www.googleapis.com/auth/calendar.events` (read and write events) and `https://www.googleapis.com/auth/calendar.calendarlist.readonly` (see which calendars the person has, so a family calendar counts). If the second is not given, Qordel reads only the main calendar.
 4. **Audience:** while the app is in Testing, add yourself (and any testers) as test users. Up to 100 people.
 5. **Clients, then Create client, then Web application.** Under Authorized JavaScript origins, add these 3 addresses. No redirect address is needed.
    - `https://funny-clowns.vercel.app`
@@ -63,7 +75,7 @@ Until step 6, the Calendar page says "Google Calendar is not set up for Qordel y
 
 ## Tests
 
-`tests/calendar.mjs` has 22 checks. It fakes Google's sign-in script and the Calendar API, so no real calendar is touched. It covers:
+`tests/calendar.mjs` has 26 checks (rule 6 included). It fakes Google's sign-in script and the Calendar API, so no real calendar is touched. It covers:
 - connect, read and the fields asked for;
 - the data staying on the device;
 - add meeting, add reminder, delete;
@@ -77,6 +89,6 @@ The suite runs it without the sample board (`TEST_SAMPLE=off`).
 
 ## Not built (yet)
 
-- Using the calendar in the 5 rules (for example, "no task in a meeting", or "a short step when 20 minutes are free"). The rules are the owner's, so this needs a yes first.
+- Travel time before a booking and a "short step only" window. The owner chose to leave these out.
 - Calendars other than the primary one, recurring-event editing, and Outlook.
 - A push cue after a meeting ends (v2 plan P10).
