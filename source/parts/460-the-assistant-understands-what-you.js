@@ -438,6 +438,7 @@ function assist(q,strict){
       try{ return f.a.run(f.vals,f.m); }catch(e){ return e.message||"I could not do that."; }
     }
   }
+  if(MEM_CMD.test(q)) return undefined;   /* these belong to the memory, in BRAIN below */
   var hit=assistMatch(q,strict);
   if(!hit) return undefined;
   if(hit.need.length){
@@ -449,7 +450,18 @@ function assist(q,strict){
   return hit.a.run(hit.vals,hit.m);
 }
 
+var MEM_CMD=/^(?:remember|forget|delete note|what do you know|what have you learned|what do you remember|show (?:my )?memory|erase (?:my )?memory)\b/, MEM_ARM=0;
 var BRAIN=[
+  /* --- what the tutor remembers (restored 2026-10-21) ------------------- */
+  [/^remember (?:that )?(.{3,})$/, function(m){
+    var n=memAdd(asTyped(m[1]),"you"); save(); renderAll(); return "Kept: "+n.t+". Type forget "+memKept().length+" to remove it."; }],
+  [/^(?:what do you know about me|what have you learned(?: about me)?|show (?:my )?memory|what do you remember)$/, function(){ return memSay(); }],
+  [/^(?:forget|delete) (?:note |item |memory )?(\d{1,2})$/, function(m){
+    var k=memKept(), t=k[+m[1]-1]; if(!t) return "There is no note "+m[1]+". Type what do you know about me to see them.";
+    memDrop(t.id); save(); renderAll(); return "Forgotten: "+t.t; }],
+  [/^(?:forget everything|erase (?:my )?memory)$/, function(){
+    if(Date.now()-MEM_ARM>20000){ MEM_ARM=Date.now(); return "That erases every note I keep about how you work. Type it again within 20 seconds to confirm."; }
+    MEM_ARM=0; memErase(); save(); renderAll(); return "Erased. I know nothing about you now except what the board itself holds."; }],
   /* --- what the history says, answered with no model and no network --- */
   [/\b(?:most productive|work best|best time|when do i (?:finish|get|do))\b/, function(){ return evSayWhen(); }],
   [/\bwhat do i (?:skip|dodge|avoid)\b|\bwhy do i skip\b|\bwhat (?:am i|do i keep) skipping\b/, function(){ return evSaySkips(); }],
@@ -596,7 +608,7 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
   journal:{add:jrAdd, data:jrData, check:jrCheckpoint, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
-  mem:{snap:botSnapshot, dose:doseNow}}; }catch(e){}
+  mem:{list:memList, kept:memKept, add:memAdd, keep:memKeep, drop:memDrop, say:memSay, ok:memOk, snap:botSnapshot, dose:doseNow}}; }catch(e){}
 /* When no pattern fits, read the sentence for what it is plainly asking.
    Speech does not arrive in the shape a pattern expects, so this reads the
    verb and takes whatever is left as the name.                            */

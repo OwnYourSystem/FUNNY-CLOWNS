@@ -188,6 +188,8 @@ document.addEventListener("click",function(e){
   if(so){ var ss=state.subs[so.dataset.sid], sd=+so.dataset.sorderD;
     if(ss) phUndoable("Moved "+(sd<0?"earlier":"later")+": "+phCut(ss.name,32),function(){ if(!moveSubOrder(ss.id,sd)) throw new Error(sd<0?"It is already first.":"It is already last."); });
     var sb2=document.querySelector('[data-sorder-d="'+sd+'"][data-sid="'+so.dataset.sid+'"]'); if(sb2) sb2.focus(); return; }
+  var ai=e.target.closest("[data-aiorder-d]");
+  if(ai){ phAiOrder(ai.dataset.aiorderD,ai); return; }
   var o=e.target.closest("[data-ed-open]");
   if(o){ openEd = openEd===o.dataset.edOpen ? "" : o.dataset.edOpen; renderSubs(); return; }
   var d=e.target.closest("[data-del]");

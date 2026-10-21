@@ -20,6 +20,8 @@ function renderPlanner(){
     '<label>Morning brief at<input class="f" type="time" data-me="brief" value="'+esc(me.brief||"07:30")+'"></label>'+
     '<label>Steps on a good day<select class="f" data-me="normalN">'+[1,2,3,4].map(function(n){
       return '<option value="'+n+'"'+(doseN("normal")===n?" selected":"")+">"+n+(n===1?" step":" steps")+"</option>"; }).join("")+'</select></label>'+
+    '<label class="wide">Order suggestions by AI<span class="dayrow"><button type="button" id="pl-aiok" aria-pressed="'+(!!me.aiOrderOk)+'">'+
+      (me.aiOrderOk?"On":"Off")+'</button></span><span class="pl-note">When on, Suggest an order sends a goal\u2019s name and its open step names to Anthropic, an AI company. Nothing else leaves this device.</span></label>'+
     '<div class="wide iconrow"><span class="prev">'+plannerIcon()+'</span>'+
       '<p>The planner badge on the board wears this. Choose one from your phone or your computer.</p>'+
       '<button class="btn" id="pl-icon-pick">Choose a picture</button>'+
@@ -66,6 +68,13 @@ $("#pl-form").addEventListener("input",function(e){
 });
 $("#pl-form").addEventListener("change",function(e){
   if(e.target.dataset.me) { save(); renderVerdict(); }
+});
+$("#pl-form").addEventListener("click",function(e){
+  if(!e.target.closest("#pl-aiok")) return;
+  e.preventDefault();
+  var me=state.me||(state.me=freshMe());
+  if(me.aiOrderOk){ delete me.aiOrderOk; save(); renderPlanner(); var b=$("#pl-aiok"); if(b) b.focus(); }
+  else phAiConsent().then(function(){ renderPlanner(); var b2=$("#pl-aiok"); if(b2) b2.focus(); });
 });
 $("#pl-form").addEventListener("click",function(e){
   var b=e.target.closest("[data-day]"); if(!b) return;

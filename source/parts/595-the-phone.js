@@ -238,6 +238,49 @@ var PH_GRIP='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke=
   root.addEventListener("pointerup",end);
   root.addEventListener("pointercancel",reset);
 })();
+/* AI proposes an order (owner, 2026-10-20). Only the goal's name and its
+   open step names are sent, after the person agreed once; the answer is a
+   suggestion they can use or leave, and Undo takes it back. */
+function phAiConsent(){
+  return askUser({title:"Suggest an order with AI",
+    body:["Qordel sends this goal\u2019s name and its open step names to Anthropic, an AI company, and gets back a suggested order.",
+      "Nothing else leaves this phone: not your journal, check-ins, photo or account. You decide whether to use the order. You can turn this off on You."],
+    ok:"Send", cancel:"Not now"}).then(function(yes){
+    if(!yes) return false;
+    var me=state.me||(state.me=freshMe()); me.aiOrderOk=todayStr(); save(); return true;
+  });
+}
+function phAiOrder(gid,from){
+  var g=gById(gid); if(!g) return;
+  var open=g.subs.map(function(id){ return state.subs[id]; }).filter(function(x){ return x&&x.pct<100&&x.status!=="done"; });
+  if(open.length<2) return;
+  ((state.me&&state.me.aiOrderOk)?Promise.resolve(true):phAiConsent()).then(function(ok){
+    if(!ok) return;
+    var btn=from&&document.contains(from)?from:document.querySelector('[data-ph="aiorder"]');
+    if(btn){ btn.disabled=true; btn.setAttribute("aria-busy","true"); btn.textContent="Asking\u2026"; }
+    var done=function(){ if(btn){ btn.disabled=false; btn.removeAttribute("aria-busy"); btn.textContent="Suggest an order"; } };
+    var ctl=window.AbortController?new AbortController():null, tm=setTimeout(function(){ if(ctl) ctl.abort(); },25000);
+    fetch("api/order",{method:"POST", headers:{"content-type":"application/json"}, signal:ctl?ctl.signal:undefined,
+      body:JSON.stringify({goal:g.name.slice(0,120), steps:open.map(function(x){ return {id:x.id, name:x.name.slice(0,120)}; })})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return {st:r.status, j:j}; }); })
+    .then(function(x){
+      clearTimeout(tm); done();
+      if(x.st===503 && x.j.error && x.j.error.code==="not_configured") return toast("","The AI suggestion is not switched on yet.");
+      if(x.st===429) return toast("",(x.j.error&&x.j.error.message)||"Enough suggestions for now. Try again later.");
+      if(x.st!==200 || !x.j.ok) return toast("","No suggestion this time. Your order stays.");
+      var now=g.subs.filter(function(id){ return open.some(function(o){ return o.id===id; }); });
+      if(x.j.order.join("|")===now.join("|")) return toast("","The AI suggests the same order you have.");
+      var names=x.j.order.map(function(id,i){ var o=state.subs[id]; return (i+1)+". "+(o?o.name:"?"); });
+      askUser({title:"Suggested by AI", body:names.concat([x.j.why||"", "It does not know your constraints, so check it before you use it."]).filter(Boolean),
+        ok:"Use this order", cancel:"Keep mine"}).then(function(yes){
+        if(!yes) return;
+        var g2=gById(gid); if(!g2) return;
+        phUndoable("New order for "+phCut(g2.name,36),function(){ if(!setOpenOrder(g2,x.j.order)) throw new Error("The steps changed meanwhile. Ask again."); });
+      });
+    })
+    .catch(function(){ clearTimeout(tm); done(); toast("","No answer right now. Your order stays."); });
+  });
+}
 /* how many steps make a good day: the person decides; Low and Full follow from it */
 function phGoodN(){
   var me=state.me||(state.me=freshMe()), cur=doseN("normal");
@@ -686,6 +729,7 @@ function phYou(){
     phRow("daystart","Day starts",clockLabel(me.rise||"07:00"))+
     phRow("dayend","Day ends",clockLabel(me.wind))+
     phRow("goodn","Steps on a good day",String(doseN("normal")))+
+    phRow("aiok","Order suggestions by AI",me.aiOrderOk?"On":"Off",true)+
     phRow("easyedit","My easy things",floorState().items.length?String(floorState().items.length):"Add")+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -796,7 +840,7 @@ function phGoalPage(){
     '<span class="ph-bar"><span style="width:'+p+'%"></span></span>'+
     ((g.tags||[]).length?'<p class="ph-note" style="margin-top:8px">'+esc(g.tags.map(function(t){ return "#"+t; }).join(" "))+'</p>':'')+'</div>');
   h.push('<section aria-label="Steps"><div class="ph-row-h"><h2 class="ph-h2">Steps</h2>'+
-    '</div>'+
+    (open.length>1?'<button type="button" class="ph-link" data-ph="aiorder" data-id="'+esc(g.id)+'">Suggest an order</button>':'')+'</div>'+
     (open.length>1?'<p class="ph-note ph-seqnote">Done from top to bottom. Drag the handle to change the order.</p>':''));
   if(!open.length&&!fin.length) h.push('<p class="ph-empty">No steps yet. Press Add a step.</p>');
   else {
@@ -1140,6 +1184,10 @@ function phOnbFinish(add){
     else if(k==="daystart") phDayStart();
     else if(k==="dayend") phDayEnd();
     else if(k==="goodn") phGoodN();
+    else if(k==="aiorder") phAiOrder(id);
+    else if(k==="aiok"){ var am=state.me||(state.me=freshMe());
+      if(am.aiOrderOk){ delete am.aiOrderOk; save(); renderAll(); PH_DRAWN=""; phRender(); var ab=document.querySelector("[data-ph=aiok]"); if(ab) ab.focus(); }
+      else phAiConsent().then(function(){ renderAll(); PH_DRAWN=""; phRender(); var ab2=document.querySelector("[data-ph=aiok]"); if(ab2) ab2.focus(); }); }
     else if(k==="missnew") phMissNew(id);
     else if(k==="missoff"){ var mo=gById(id); if(mo) phUndoable("No date for "+phCut(mo.name,36),function(){ editGoal(mo,"due",""); }); }
     else if(k==="misskeep"){ var mk=gById(id); if(mk){ mk.missAsk=mk.due; save(); renderAll(); PH_DRAWN=""; phRender(); } }

@@ -103,7 +103,8 @@ function renderSubs(){
   $("#edit-group").setAttribute("aria-expanded", openGroupEd?"true":"false");
 
   var nOpen=g.subs.filter(function(id){ var x=state.subs[id]; return x&&x.pct<100&&x.status!=="done"; }).length, k=0;
-  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span></div>':"")+subsShown(g).map(function(id){
+  $("#sub-bars").innerHTML=(nOpen>1?'<div class="seqline"><span>Done from top to bottom. Drag a step to change the order.</span>'+
+      '<button class="btn" data-aiorder-d="'+g.id+'">Suggest an order</button></div>':"")+subsShown(g).map(function(id){
     var s=state.subs[id]; if(!s) return "";
     var st=statusOf(s), dn=s.pct>=100||s.status==="done";
     return '<div class="row" data-sub="'+s.id+'">'+
