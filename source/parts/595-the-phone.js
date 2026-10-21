@@ -120,7 +120,17 @@ function phMini(r,onb){
    can press sets it. A "1" left by the old Classic view row is cleared, so
    whoever chose it gets the phone app back.                              */
 function phClassic(){ try{ var v=localStorage.getItem(PH_KEY); if(v==="1"){ localStorage.removeItem(PH_KEY); v=null; } return v==="test"; }catch(e){ return false; } }
-function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
+/* Qordel web (owner, 2026-10-21: the web version at the level of the phone app, in a design of its own).
+   A big screen gets the same pages, rules and data in its own layout: a sidebar with Now, Talk, Journal,
+   Calendar, Goals and You, and a wide, calm column. The old panel board stays, as Classic board on You,
+   for whoever wants it; the choice is kept in this browser. */
+var PH_WEB_KEY="oys-web";
+function phWebOk(){ try{ return localStorage.getItem(PH_WEB_KEY)!=="classic"; }catch(e){ return true; } }
+function phHere(){ return phIsWeb()?"this computer":"this phone"; }
+function phIsWeb(){ return PH_ON && !(PH_MQ&&PH_MQ.matches); }
+function phWebSet(on){ try{ if(on) localStorage.removeItem(PH_WEB_KEY); else localStorage.setItem(PH_WEB_KEY,"classic"); }catch(e){} location.hash=on?"#/now":"#/board"; phSet(); scrollTo(0,0); }
+(function(){ var b=$("#btn-web"); if(b) b.addEventListener("click",function(){ phWebSet(true); }); })();
+function phWanted(){ if(phClassic()) return false; return !!(PH_MQ&&PH_MQ.matches) || phWebOk(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
 function phGo(r){ if(phRoute()===r && location.hash) phRender(); else location.hash="#/"+r; }
 function phSet(){
@@ -130,6 +140,8 @@ function phSet(){
     root.classList.toggle("ph",on);
     if(!on){ root.classList.remove("ph-old","ph-talk","ph-onb"); }
   }
+  root.classList.toggle("ph-web",phIsWeb());
+  var cb=$("#btn-web"); if(cb) cb.hidden=PH_ON||!!(PH_MQ&&PH_MQ.matches)||phClassic();
   phBarColour();
   phRender();
 }
@@ -334,7 +346,9 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var web=phIsWeb();
+    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
+      :r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -358,6 +372,7 @@ function phRender(){
   if((onb||PH_LOCK[r]) && PH_DRAWN===key){ phMini(r,onb); return; }
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
   PH_DRAWN=key;
+  main.setAttribute("data-route",onb?"onb":r);
   main.innerHTML = (onb||talk||old ? "" : PH_BRAND) + (onb ? phOnbHtml()
     : r==="journal" ? phJournal()
     : r==="jday" ? phJDay()
@@ -671,7 +686,7 @@ function phLearned(){
   var h=[], wl=weekData().log;
   h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Weekly check-in</h1></div>');
   h.push('<section aria-label="Weekly check-in"><div class="ph-row-h"><h2 class="ph-h2">Your check-ins</h2><span class="ph-k">'+(wl.length?wl.length+" kept":"")+'</span></div>'+
-    '<p class="ph-note">Five taps, 1 to 5, once a week if you like. Kept on this phone only. It is not a test and not advice.</p>'+
+    '<p class="ph-note">Five taps, 1 to 5, once a week if you like. Kept on '+phHere()+' only. It is not a test and not advice.</p>'+
     '<div class="ph-grp">'+phRow("week","Check in",weekDue()?"Due":"Done this week")+
     wl.slice(-4).reverse().map(function(x){ var t=0; WEEK_ITEMS.forEach(function(it){ t+=+x[it[0]]||0; });
       return '<div class="ph-rowf"><span>Week '+esc(String(x.k).split("-W")[1]||x.k)+' · '+esc(phShortDate(x.d))+'</span><span class="ph-v">Average '+(Math.round(t/WEEK_ITEMS.length*10)/10)+' of 5</span></div>'; }).join("")+'</div>'+
@@ -689,7 +704,7 @@ function phPressAsk(sel){ var b=$(sel); if(b) b.click(); var t=setInterval(funct
    be edited or removed. Leaving the page closes everything again. */
 function phJournal(){
   var h=[], c=jrCheckpoint();
-  h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on this phone only.</p></div></div>');
+  h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on '+phHere()+' only.</p></div></div>');
   if(c){
     var s=jrSays(c);
     h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-row-h" style="padding:0"><div class="ph-k">Where you left off · '+esc(s.head)+'</div></div>'+
@@ -736,14 +751,14 @@ function phYou(){
       '<span class="ph-av-plus" aria-hidden="true">+</span>')+
     '</label>'+
     '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr" aria-label="'+(ph?"Change your photo":"Add a photo of you")+'">'+
-    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
+    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On "+phHere()+" only")+'</p></div></div>');
   /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
   h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your photo</h2><div class="ph-grp">'+
     (ph ? '<label class="ph-rowb" for="ph-photo-in"><span>Change photo</span><span class="ph-rv">'+PH_CHEV+'</span></label>'+
           phRow("phshow","Show it on every page",ph.show?"On":"Off",true)+
           '<button type="button" class="ph-rowb ph-danger" data-ph="phdel"><span>Remove photo</span></button>'
-        : '<label class="ph-rowb" for="ph-photo-in"><span>Add a photo</span><span class="ph-rv"><span class="ph-v">Kept on this phone only</span>'+PH_CHEV+'</span></label>')+'</div>');
+        : '<label class="ph-rowb" for="ph-photo-in"><span>Add a photo</span><span class="ph-rv"><span class="ph-v">Kept on '+phHere()+' only</span>'+PH_CHEV+'</span></label>')+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your work</h2><div class="ph-grid">'+
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
@@ -759,6 +774,7 @@ function phYou(){
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
     phRow("calendar","Google Calendar",!calSetUp()?"Not set up":calOn()?"Connected":"Connect")+'</div>');
+  if(phIsWeb()) h.push('<h2 class="ph-k ph-gk">On this computer</h2><div class="ph-grp">'+phRow("classic","Classic board","The old board with panels")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
@@ -1244,6 +1260,7 @@ function phOnbFinish(add){
     else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
     else if(k==="calendar") phGo("calendar");
+    else if(k==="classic") phWebSet(false);
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }

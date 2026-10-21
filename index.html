@@ -1665,6 +1665,44 @@ html.ph #jr-check{display:none}
 .ph-booked{padding-top:8px; padding-bottom:8px}
 .ph-booked .ph-k{flex:none; white-space:nowrap}
 .ph-booked .ph-strip-t{white-space:normal; overflow:visible; line-height:1.4}
+/* ---- Qordel web: its own design for a big screen (owner, 2026-10-21) ----
+   The same pages as the phone, laid out for a desk: a sidebar instead of the
+   tab bar, one calm column a little wider than a phone, more air, hover
+   states, and dialogs in the middle of the screen. Nothing here shows on a
+   phone: every rule is under html.ph-web.                                 */
+.ph-side-brand,#ph-tabs .tab-web{display:none}
+html.ph-web{--side:244px}
+html.ph-web #ph-tabs{top:0; bottom:0; left:0; right:auto; width:var(--side); box-sizing:border-box; display:flex; flex-direction:column; align-items:stretch; gap:2px;
+  padding:28px 14px 24px; border-top:0; border-right:1px solid var(--hair); background:var(--panel); -webkit-backdrop-filter:none; backdrop-filter:none}
+html.ph-web #ph-tabs .tab-web{display:flex}
+html.ph-web .ph-side-brand{display:flex; flex-direction:column; gap:2px; padding:0 12px 22px}
+html.ph-web .ph-side-brand .ph-word{font-size:20px; font-weight:700; letter-spacing:-0.02em; text-transform:uppercase}
+html.ph-web .ph-side-brand .ph-by{font-size:12px; color:var(--muted)}
+html.ph-web #ph-tabs a{flex-direction:row; justify-content:flex-start; gap:12px; min-height:44px; padding:0 12px; border-radius:10px; font-size:15px; color:var(--ink-2)}
+html.ph-web #ph-tabs a .ti{width:20px; height:20px}
+html.ph-web #ph-tabs a:hover{background:var(--ph-wash); color:var(--ink)}
+html.ph-web #ph-tabs a[aria-current="page"]{background:var(--ph-wash); color:var(--ink)}
+html.ph-web #ph-tabs a:active{opacity:1}
+html.ph-web #ph-main{max-width:none; margin:0 0 0 var(--side); padding:48px max(48px, calc((100vw - var(--side) - 720px) / 2)) 96px; gap:18px}
+html.ph-web #ph-main>.ph-brand,html.ph-web #ph-mini{display:none !important}
+/* Calendar and Goals are places in the sidebar here, so their "Back to You" goes */
+html.ph-web #ph-main:is([data-route="calendar"],[data-route="goals"]) .ph-nav[href="#/you"]{display:none}
+html.ph-web .ph-dock{position:static; margin:8px 0 0 !important; padding:0; background:none}
+html.ph-web .ph-dock .ph-wide{width:auto; min-width:220px}
+html.ph-web .ph-h1{font-size:2.1rem; letter-spacing:-0.02em}
+html.ph-web .ph-task{font-size:1.6rem}
+html.ph-web .ph-card{padding:24px 26px}
+html.ph-web .ph-acts .ph-btn{flex:0 1 220px}
+html.ph-web :is(.ph-rowb,.ph-tile,.ph-strip):hover{background:var(--ph-wash)}
+html.ph-web .ph-btn:hover{filter:brightness(.97)}
+html.ph-web.ph-onb #ph-main{margin:0 auto; max-width:620px; padding:56px 32px 64px}
+html.ph-web.ph-talk #botsheet{left:var(--side); right:0; top:0; bottom:0; padding:40px max(48px, calc((100vw - var(--side) - 720px) / 2)) 32px}
+html.ph-web #ph-undo{left:calc(var(--side) + 24px); right:auto; bottom:24px; max-width:480px}
+html.ph-web #ph-tbrand{display:none !important}
+/* a dialog on a desk sits in the middle, as on a Mac, not on the bottom edge */
+html.ph-web dialog.ask{margin:auto; width:min(520px,calc(100vw - 48px)); max-width:none; border-radius:22px; border-bottom:1px solid var(--hair)}
+html.ph-web .ask-in{padding-bottom:20px}
+html.ph-web :is(.cursor-ring,.spotlight){display:none !important}
 </style>
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -1686,9 +1724,12 @@ try{var _t=localStorage.getItem("oys-theme");
   <div id="ph-undo" role="status" aria-live="polite" hidden><span id="ph-undo-t"></span><button type="button" id="ph-undo-b">Undo</button></div>
   <main id="ph-main"></main>
   <nav id="ph-tabs" aria-label="Main">
+    <div class="ph-side-brand" aria-hidden="true"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></div>
     <a href="#/now" data-tab="now"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 1 0 18.4a9.2 9.2 0 0 1 0-18.4zm0 4a5.2 5.2 0 1 0 0 10.4a5.2 5.2 0 0 0 0-10.4zm0 2.3a2.9 2.9 0 1 1 0 5.8a2.9 2.9 0 0 1 0-5.8z"/></svg><span>Now</span></a>
     <a href="#/talk" data-tab="talk"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M3.2 4.6h17.6v11.8H9.3L3.2 21.2z"/></svg><span>Talk</span></a>
     <a href="#/journal" data-tab="journal"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v15H7.5A1.5 1.5 0 0 1 6 18.5z"/><path d="M9.5 8h6M9.5 11.5h6"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.7h10.2a2.2 2.2 0 0 1 2.2 2.2v16H7.6a2.4 2.4 0 0 1-2.4-2.4V4.5A1.8 1.8 0 0 1 7 2.7zm2.3 4.4v1.8h6.4V7.1zm0 3.6v1.8h6.4v-1.8z"/></svg><span>Journal</span></a>
+    <a href="#/calendar" data-tab="calendar" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.5h1.8V4.2h6.4V2.5H17v1.7h1.5A2.8 2.8 0 0 1 21.3 7v12.2a2.8 2.8 0 0 1-2.8 2.8h-13a2.8 2.8 0 0 1-2.8-2.8V7a2.8 2.8 0 0 1 2.8-2.8H7zM4.6 10.6v8.6c0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9v-8.6z"/></svg><span>Calendar</span></a>
+    <a href="#/goals" data-tab="goals" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M4.1 3.1h12.3a.9.9 0 0 1 .8 1.3L15.5 8l1.7 3.6a.9.9 0 0 1-.8 1.3H5.9V21H4.1z"/></svg><span>Goals</span></a>
     <a href="#/you" data-tab="you"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.3" r="4.3"/><path d="M4.2 20.6c1.2-4.3 4.2-6.6 7.8-6.6s6.6 2.3 7.8 6.6z"/></svg><span>You</span></a>
   </nav>
 </div>
@@ -1710,6 +1751,7 @@ try{var _t=localStorage.getItem("oys-theme");
       <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
       <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
       <button class="btn" id="btn-account">Sign in</button>
+      <button class="btn take" id="btn-web" hidden>New Qordel</button>
     </div>
   </header>
 
@@ -9018,7 +9060,17 @@ function phMini(r,onb){
    can press sets it. A "1" left by the old Classic view row is cleared, so
    whoever chose it gets the phone app back.                              */
 function phClassic(){ try{ var v=localStorage.getItem(PH_KEY); if(v==="1"){ localStorage.removeItem(PH_KEY); v=null; } return v==="test"; }catch(e){ return false; } }
-function phWanted(){ return !!(PH_MQ&&PH_MQ.matches) && !phClassic(); }
+/* Qordel web (owner, 2026-10-21: the web version at the level of the phone app, in a design of its own).
+   A big screen gets the same pages, rules and data in its own layout: a sidebar with Now, Talk, Journal,
+   Calendar, Goals and You, and a wide, calm column. The old panel board stays, as Classic board on You,
+   for whoever wants it; the choice is kept in this browser. */
+var PH_WEB_KEY="oys-web";
+function phWebOk(){ try{ return localStorage.getItem(PH_WEB_KEY)!=="classic"; }catch(e){ return true; } }
+function phHere(){ return phIsWeb()?"this computer":"this phone"; }
+function phIsWeb(){ return PH_ON && !(PH_MQ&&PH_MQ.matches); }
+function phWebSet(on){ try{ if(on) localStorage.removeItem(PH_WEB_KEY); else localStorage.setItem(PH_WEB_KEY,"classic"); }catch(e){} location.hash=on?"#/now":"#/board"; phSet(); scrollTo(0,0); }
+(function(){ var b=$("#btn-web"); if(b) b.addEventListener("click",function(){ phWebSet(true); }); })();
+function phWanted(){ if(phClassic()) return false; return !!(PH_MQ&&PH_MQ.matches) || phWebOk(); }
 function phRoute(){ var m=String(location.hash||"").match(/^#\/([a-z]+)/); var r=m?m[1]:"now"; return r==="board"?"now":r; }
 function phGo(r){ if(phRoute()===r && location.hash) phRender(); else location.hash="#/"+r; }
 function phSet(){
@@ -9028,6 +9080,8 @@ function phSet(){
     root.classList.toggle("ph",on);
     if(!on){ root.classList.remove("ph-old","ph-talk","ph-onb"); }
   }
+  root.classList.toggle("ph-web",phIsWeb());
+  var cb=$("#btn-web"); if(cb) cb.hidden=PH_ON||!!(PH_MQ&&PH_MQ.matches)||phClassic();
   phBarColour();
   phRender();
 }
@@ -9232,7 +9286,9 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var web=phIsWeb();
+    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
+      :r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -9256,6 +9312,7 @@ function phRender(){
   if((onb||PH_LOCK[r]) && PH_DRAWN===key){ phMini(r,onb); return; }
   if(r==="goal"){ var ga=phArg(); if(ga) PH_GOAL=ga; }
   PH_DRAWN=key;
+  main.setAttribute("data-route",onb?"onb":r);
   main.innerHTML = (onb||talk||old ? "" : PH_BRAND) + (onb ? phOnbHtml()
     : r==="journal" ? phJournal()
     : r==="jday" ? phJDay()
@@ -9569,7 +9626,7 @@ function phLearned(){
   var h=[], wl=weekData().log;
   h.push('<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Weekly check-in</h1></div>');
   h.push('<section aria-label="Weekly check-in"><div class="ph-row-h"><h2 class="ph-h2">Your check-ins</h2><span class="ph-k">'+(wl.length?wl.length+" kept":"")+'</span></div>'+
-    '<p class="ph-note">Five taps, 1 to 5, once a week if you like. Kept on this phone only. It is not a test and not advice.</p>'+
+    '<p class="ph-note">Five taps, 1 to 5, once a week if you like. Kept on '+phHere()+' only. It is not a test and not advice.</p>'+
     '<div class="ph-grp">'+phRow("week","Check in",weekDue()?"Due":"Done this week")+
     wl.slice(-4).reverse().map(function(x){ var t=0; WEEK_ITEMS.forEach(function(it){ t+=+x[it[0]]||0; });
       return '<div class="ph-rowf"><span>Week '+esc(String(x.k).split("-W")[1]||x.k)+' · '+esc(phShortDate(x.d))+'</span><span class="ph-v">Average '+(Math.round(t/WEEK_ITEMS.length*10)/10)+' of 5</span></div>'; }).join("")+'</div>'+
@@ -9587,7 +9644,7 @@ function phPressAsk(sel){ var b=$(sel); if(b) b.click(); var t=setInterval(funct
    be edited or removed. Leaving the page closes everything again. */
 function phJournal(){
   var h=[], c=jrCheckpoint();
-  h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on this phone only.</p></div></div>');
+  h.push('<div class="ph-head"><div><h1 class="ph-h1">Journal</h1><p class="ph-sub">Your checkpoint between days. Kept on '+phHere()+' only.</p></div></div>');
   if(c){
     var s=jrSays(c);
     h.push('<section class="ph-card" aria-label="Where you left off"><div class="ph-row-h" style="padding:0"><div class="ph-k">Where you left off · '+esc(s.head)+'</div></div>'+
@@ -9634,14 +9691,14 @@ function phYou(){
       '<span class="ph-av-plus" aria-hidden="true">+</span>')+
     '</label>'+
     '<input type="file" accept="image/*" id="ph-photo-in" class="ph-sr" aria-label="'+(ph?"Change your photo":"Add a photo of you")+'">'+
-    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On this phone only")+'</p></div></div>');
+    '<div class="ph-me-t"><h1 class="ph-h1">You</h1><p class="ph-sub">'+(who?esc(who):"On "+phHere()+" only")+'</p></div></div>');
   /* sign-in first: it is what carries the board to a second device (owner, 2026-10-19) */
   h.push('<div class="ph-grp">'+phRow("account",who?"Account":"Sign in",who?"":"Use the board on all your devices")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your photo</h2><div class="ph-grp">'+
     (ph ? '<label class="ph-rowb" for="ph-photo-in"><span>Change photo</span><span class="ph-rv">'+PH_CHEV+'</span></label>'+
           phRow("phshow","Show it on every page",ph.show?"On":"Off",true)+
           '<button type="button" class="ph-rowb ph-danger" data-ph="phdel"><span>Remove photo</span></button>'
-        : '<label class="ph-rowb" for="ph-photo-in"><span>Add a photo</span><span class="ph-rv"><span class="ph-v">Kept on this phone only</span>'+PH_CHEV+'</span></label>')+'</div>');
+        : '<label class="ph-rowb" for="ph-photo-in"><span>Add a photo</span><span class="ph-rv"><span class="ph-v">Kept on '+phHere()+' only</span>'+PH_CHEV+'</span></label>')+'</div>');
   h.push('<h2 class="ph-k ph-gk">Your work</h2><div class="ph-grid">'+
     phTile("#/goals","Goals",state.groups.length+" active")+phTile("#/backlog","Backlog",state.backlog.length+" ideas")+
     phTile("#/tags","Tags",tags+" in use")+phTile("#/archive","Archive",state.archive.length+" finished")+'</div>');
@@ -9657,6 +9714,7 @@ function phYou(){
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
     phRow("calendar","Google Calendar",!calSetUp()?"Not set up":calOn()?"Connected":"Connect")+'</div>');
+  if(phIsWeb()) h.push('<h2 class="ph-k ph-gk">On this computer</h2><div class="ph-grp">'+phRow("classic","Classic board","The old board with panels")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
@@ -10142,6 +10200,7 @@ function phOnbFinish(add){
     else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
     else if(k==="calendar") phGo("calendar");
+    else if(k==="classic") phWebSet(false);
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }
