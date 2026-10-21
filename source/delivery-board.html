@@ -1306,6 +1306,14 @@ html.ph .io-priv{min-height:44px}
 .ph-choice{text-align:left}
 .ph-choice>span:first-child{display:flex; flex-direction:column; gap:2px}
 .ph-choice-s{font-size:.82rem; color:var(--muted)}
+/* example goals on the first-goal screen (2026-10-21) */
+.ph-exs{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
+.ph-ex{min-height:60px; display:flex; flex-direction:column; justify-content:center; gap:2px; text-align:left; padding:10px 12px;
+  background:var(--panel); color:var(--ink); border:1px solid var(--hair); border-radius:14px; font:inherit; cursor:pointer}
+.ph-ex-g{font-weight:600; font-size:.95rem; line-height:1.25}
+.ph-ex-s{font-size:.82rem; color:var(--muted); line-height:1.3}
+.ph-ex[aria-pressed="true"]{border-color:var(--ph-pri, var(--ink)); box-shadow:inset 0 0 0 1px var(--ph-pri, var(--ink))}
+.ph-ex:focus-visible{outline:2px solid var(--ph-pri, var(--ink)); outline-offset:2px}
 .ph-tick{flex:none; width:22px; height:22px}
 .ph-easy .ph-tick{border:2px solid var(--rule); border-radius:11px; box-sizing:border-box}
 .ph-easy .ph-choice[aria-checked="true"] .ph-tick{border:0}
@@ -9416,6 +9424,17 @@ function phChoice(k,list,v,label){
       '<span>'+esc(o[1])+(o[2]?'<span class="ph-choice-s">'+esc(o[2])+'</span>':'')+'</span><span class="ph-tick" aria-hidden="true"></span></button>';
   }).join("")+'</div>';
 }
+/* examples to tap (2026-10-21): a first goal without writing or speaking. A tap fills the goal, its
+   first step and Is it work?; the words stay editable. Small, kind first steps, never a deadline. */
+var PH_EX=[["Tidy the home","Clear one shelf","any"],["Get a bit fitter","A 10-minute walk","any"],
+  ["Finish a work project","Write down what is left","work"],["Learn something new","Pick a short course","any"],
+  ["Sort out my paperwork","Find last month\u2019s bills","any"],["Plan a trip","Pick a place to go","any"]];
+function phExamples(v){
+  return '<h2 class="ph-k ph-gk">Pick one to start</h2><div class="ph-exs" role="group" aria-label="Example goals">'+PH_EX.map(function(x,i){
+    return '<button type="button" class="ph-ex" data-ph="onb-ex" data-i="'+i+'" aria-pressed="'+(v.goal===x[0]&&v.step===x[1])+'">'+
+      '<span class="ph-ex-g">'+esc(x[0])+'</span><span class="ph-ex-s">'+esc(x[1])+'</span></button>';
+  }).join("")+'</div>';
+}
 function phOnbHtml(){
   var v=PH_V;
   if(PH_ONB===0) return '<div class="ph-onb"><div class="ph-bt"><div class="ph-word">Qordel</div><div class="ph-by">Powered by OwnYourSystem</div></div>'+
@@ -9482,8 +9501,9 @@ function phOnbHtml(){
       '<button type="button" class="ph-btn ph-pri ph-wide" data-ph="guide-done">Done</button></div>';
   }
   return '<div class="ph-onb"><button type="button" class="ph-link" data-ph="onb-back">Back</button>'+
-    '<h1 class="ph-h1 ph-mt">What are you working on?</h1><p class="ph-lede">Name one goal and its next step. Say it or type it. You can add more later.</p>'+
-    '<label class="ph-lab" for="ph-goal">A goal</label><input class="ph-in" id="ph-goal" value="'+esc(v.goal)+'" placeholder="For example: Finish the SAP migration">'+
+    '<h1 class="ph-h1 ph-mt">What are you working on?</h1><p class="ph-lede">One goal and its next step. Pick an example, say it or type it. You can change it later.</p>'+
+    phExamples(v)+
+    '<label class="ph-lab" for="ph-goal">Or your own goal</label><input class="ph-in" id="ph-goal" value="'+esc(v.goal)+'" placeholder="For example: Finish the SAP migration">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-goal" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
     '<label class="ph-lab" for="ph-step">Its next step</label><input class="ph-in" id="ph-step" value="'+esc(v.step)+'" placeholder="For example: Map the old reports">'+
     '<button type="button" class="ph-mic" data-ph="mic" data-for="ph-step" aria-pressed="false">'+PH_MIC+'<span>Speak</span></button>'+
@@ -9659,6 +9679,10 @@ function phOnbFinish(add){
     else if(k==="guide-later"){ phOnbRead(); var gm=state.me||freshMe(); gm.guideLater=todayStr(); PH_GUIDE=false; PH_ONB=0; PH_DRAWN=""; save(); phGo("now"); }
     else if(k==="onb-back") phOnbStep(!PH_GUIDE&&PH_ONB===PH_ONB_LAST?0:PH_ONB-1);
     else if(k==="onb-done") phOnbFinish(true);
+    else if(k==="onb-ex"){ var xi=+b.getAttribute("data-i"), ex=PH_EX[xi];
+      if(ex){ phOnbRead(); PH_V.goal=ex[0]; PH_V.step=ex[1]; PH_V.where=ex[2]; PH_DRAWN=""; phRender();
+        var nb=document.querySelector('[data-ph="onb-ex"][data-i="'+xi+'"]'); if(nb) nb.focus();
+        var hn=$("#ph-onb-hint"); if(hn) hn.textContent="Filled in: "+ex[0]+", and first "+ex[1].charAt(0).toLowerCase()+ex[1].slice(1)+". Change the words if you like."; } }
     else if(k==="onb-skip") phOnbFinish(false);
     else if(k==="tog"){ phOnbRead(); PH_V[b.getAttribute("data-k")]=b.getAttribute("data-v"); PH_DRAWN=""; phRender(); }
     else if(k==="mic"){ var el=document.getElementById(b.getAttribute("data-for")); if(el) micInto(el,b,function(t){ var n=$("#ph-onb-hint"); if(n) n.textContent=t; }); }
