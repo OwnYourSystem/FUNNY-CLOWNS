@@ -411,6 +411,12 @@ function phNow(){
       '<button type="button" class="ph-btn" data-ph="missoff" data-id="'+esc(mg.id)+'">No date</button></div>'+
       '<button type="button" class="ph-link" data-ph="misskeep" data-id="'+esc(mg.id)+'">Keep it as it is</button></section>'); }
   phMissNote(ms);
+  /* something the board learned from what the person did: asked once, kept only on Keep (2026-10-21) */
+  var lm=memTick();
+  if(lm) h.push('<section class="ph-card ph-learn" aria-label="Something I noticed"><div class="ph-k">Something I noticed</div>'+
+    '<p class="ph-task" style="font-size:1.0625rem">'+esc(lm.t)+'</p>'+(lm.evid?'<p class="ph-why">'+esc(lm.evid)+'</p>':'')+
+    '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="learnkeep" data-id="'+esc(lm.id)+'">Keep it</button>'+
+    '<button type="button" class="ph-btn" data-ph="learnno" data-id="'+esc(lm.id)+'">Not now</button></div></section>');
   var items=state.oftad.concat(state.done), nd=state.done.length;
   h.push('<section aria-label="Today"><div class="ph-row-h"><h2 class="ph-h2">Today</h2><span class="ph-k">'+nd+' of '+items.length+' done</span></div>');
   if(!items.length) h.push('<p class="ph-empty">'+(cur?"Nothing in Today yet. Start the step above, or say what you want to do in Talk.":"Nothing in Today, and nothing is needed.")+'</p>');
@@ -730,6 +736,7 @@ function phYou(){
     phRow("dayend","Day ends",clockLabel(me.wind))+
     phRow("goodn","Steps on a good day",String(doseN("normal")))+
     phRow("aiok","Order suggestions by AI",me.aiOrderOk?"On":"Off",true)+
+    phRow("learn","Learn from what I do",memLearnOn()?"On":"Off",true)+
     phRow("easyedit","My easy things",floorState().items.length?String(floorState().items.length):"Add")+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
@@ -1185,6 +1192,10 @@ function phOnbFinish(add){
     else if(k==="dayend") phDayEnd();
     else if(k==="goodn") phGoodN();
     else if(k==="aiorder") phAiOrder(id);
+    else if(k==="learnkeep"||k==="learnno"){ try{ if(k==="learnkeep") memKeep(id); else memDrop(id,true); }catch(er){ memDrop(id,false); toast("",er.message); }
+      save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="learn"){ var lme=state.me||(state.me=freshMe()); lme.learn=!memLearnOn(); if(lme.learn) delete lme.learn;
+      save(); renderAll(); PH_DRAWN=""; phRender(); var lb=document.querySelector("[data-ph=learn]"); if(lb) lb.focus(); }
     else if(k==="aiok"){ var am=state.me||(state.me=freshMe());
       if(am.aiOrderOk){ delete am.aiOrderOk; save(); renderAll(); PH_DRAWN=""; phRender(); var ab=document.querySelector("[data-ph=aiok]"); if(ab) ab.focus(); }
       else phAiConsent().then(function(){ renderAll(); PH_DRAWN=""; phRender(); var ab2=document.querySelector("[data-ph=aiok]"); if(ab2) ab2.focus(); }); }

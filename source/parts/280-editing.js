@@ -188,6 +188,10 @@ document.addEventListener("click",function(e){
   if(so){ var ss=state.subs[so.dataset.sid], sd=+so.dataset.sorderD;
     if(ss) phUndoable("Moved "+(sd<0?"earlier":"later")+": "+phCut(ss.name,32),function(){ if(!moveSubOrder(ss.id,sd)) throw new Error(sd<0?"It is already first.":"It is already last."); });
     var sb2=document.querySelector('[data-sorder-d="'+sd+'"][data-sid="'+so.dataset.sid+'"]'); if(sb2) sb2.focus(); return; }
+  var lk=e.target.closest("[data-learn-keep],[data-learn-no]");
+  if(lk){ var lid=lk.getAttribute("data-learn-keep")||lk.getAttribute("data-learn-no");
+    try{ if(lk.hasAttribute("data-learn-keep")) memKeep(lid); else memDrop(lid,true); }catch(er){ memDrop(lid,false); toast("",er.message); }
+    save(); renderAll(); return; }
   var ai=e.target.closest("[data-aiorder-d]");
   if(ai){ phAiOrder(ai.dataset.aiorderD,ai); return; }
   var o=e.target.closest("[data-ed-open]");

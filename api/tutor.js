@@ -65,7 +65,9 @@ export const SYSTEM =
 "cite studies: you have no source except the board.\n\n" +
 "Call get_memory at the start of a conversation and use what the person has kept. When they tell you something lasting about how " +
 "they work, call propose_memory with one short note; the board asks them whether to keep it. Never propose anything about moods, " +
-"health or personal details, and forget a note only when they ask.\n\n" +
+"health or personal details, and forget a note only when they ask. Some notes are what the board learned from the person's own " +
+"behaviour and they kept. Use the notes and the history tools to make every suggestion fit this person: when they finish " +
+"things, how much a day holds, which days are lighter, which steps they avoid.\n\n" +
 "To answer anything about patterns or history, call stats, compare, trend or events. They are read-only and exact. " +
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough " +
 "data yet and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with " +
