@@ -236,7 +236,7 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   20261021090000_record_live_schema.sql, 20261021090100_boards_tighten_grants.sql, 20261021_ai_use.sql.
   Until ai_use is applied, api/order.js counts per server instance (the in-memory fallback).
 
-## 2026-10-21: flaw 13, the owner's goals out of the app (app commit b005d51, NOT in production yet)
+## 2026-10-21: flaw 13, the owner's goals out of the app (app commits b005d51, 059f2d3, 538743e; preview dpl_2VA683Xq6WnHhTgbrn6sjCJmqBqM, NOT in production yet)
 
 - Owner: "Remove them every where. But keep them only for my own sign in".
 - The seed is empty (SEED_REV 7). No goal name is left in index.html or delivery-board.html. A new board
@@ -251,6 +251,9 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - On a device where the owner is NOT signed in (including the claude.ai link), the goals go from that
   device. The account still has them. The cleaned device forgets its last push, so signing in there weighs
   both copies and asks; pick "Your account".
-- Still in the public git history of every branch. Rewriting it is the owner's call.
+- Also neutral now: the local help line (used 2 goal names as sample commands), the new-goal example (named
+  the owner's migration) and one code comment. Checked on the preview page: none of the 83 old names is left.
+  The work-word guesser in part 030 keeps product names (sap, datasphere, azure); they are not goals.
+- Still in the git history of every branch. Rewriting it is the owner's call.
 - Test: tests/unseed.mjs (9 checks; the 9th: the help line and the new-goal example no longer use the owner's goals, app 2nd commit). The other suites get a neutral sample board through tests/_sample.mjs,
   because they were written against a board that already had goals. Full suite: 41 suites, 863 checks, 0 failures.
