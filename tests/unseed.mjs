@@ -102,6 +102,11 @@ await ok("any other signed-in account loses the old seed", async () => {
     assert.deepEqual(Object.keys((await o.st()).subs).sort(), ["bk1", "sMine12", "sOwn123"]);
   } finally { await o.ctx.close(); }
 });
+await ok("the examples the app gives are neutral: the help reply and the new-goal example", () => {
+  const h = fs.readFileSync(ROOT + "/index.html", "utf8");
+  assert.match(h, /Paint the shelf to 40 percent\. "\+\s*"Done with it\. Focus on the garden\. Move it to Home\./);
+  assert.match(h, /placeholder="For example: Finish the quarterly report"/);
+});
 await ok("no page errors", () => assert.deepEqual(errs, []));
 await b.close();
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");

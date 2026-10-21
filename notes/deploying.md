@@ -252,5 +252,5 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   device. The account still has them. The cleaned device forgets its last push, so signing in there weighs
   both copies and asks; pick "Your account".
 - Still in the public git history of every branch. Rewriting it is the owner's call.
-- Test: tests/unseed.mjs (8 checks). The other suites get a neutral sample board through tests/_sample.mjs,
+- Test: tests/unseed.mjs (9 checks; the 9th: the help line and the new-goal example no longer use the owner's goals, app 2nd commit). The other suites get a neutral sample board through tests/_sample.mjs,
   because they were written against a board that already had goals. Full suite: 41 suites, 863 checks, 0 failures.
