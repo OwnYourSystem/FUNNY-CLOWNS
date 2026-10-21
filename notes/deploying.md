@@ -257,3 +257,12 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Still in the git history of every branch. Rewriting it is the owner's call.
 - Test: tests/unseed.mjs (9 checks; the 9th: the help line and the new-goal example no longer use the owner's goals, app 2nd commit). The other suites get a neutral sample board through tests/_sample.mjs,
   because they were written against a board that already had goals. Full suite: 41 suites, 863 checks, 0 failures.
+
+## 2026-10-21: Google Calendar on the test branch `calendar-test` (4399c6a), NOT in production
+
+- Owner: "connected to the Google calendar to read and write meetings and reminders ... a new page ... the ai can
+  use it ... Create a branch for test". Design and setup steps: notes/calendar.md.
+- Inactive until the owner creates the Google OAuth client and sends the client id (`CAL_CLIENT` in part 415).
+- The CSP in vercel.json now allows accounts.google.com/gsi (script, style, frame, connect) and www.googleapis.com.
+- The tutor's server tool list gains get_calendar and propose_calendar_event, and its prompt a calendar paragraph.
+- Full suite on calendar-test: 42 suites, 894 checks, 0 failures (tests/calendar.mjs, 22 checks).
