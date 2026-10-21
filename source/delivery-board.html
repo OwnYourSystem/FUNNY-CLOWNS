@@ -1500,6 +1500,8 @@ html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed
 .nowbadge>.nb-say{margin-left:4px}
 @media (prefers-reduced-motion:no-preference){ .say-btn.on svg{animation:saypulse 1.2s ease-in-out infinite} }
 @keyframes saypulse{50%{opacity:.45}}
+.wn-l,.ph-wn-l{margin:8px 0 10px; padding-left:20px; display:flex; flex-direction:column; gap:6px; line-height:1.45}
+.wn-l{font-size:14px; color:var(--ink)}
 .learn .learn-t{margin:6px 0 2px; font-size:14.5px; line-height:1.45; color:var(--ink)}
 .learn .learn-e{margin:0 0 8px; font-size:12.5px; line-height:1.5; color:var(--muted)}
 .plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
@@ -1693,6 +1695,7 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="jr-check" id="jr-check" role="note" aria-label="Where you left off" hidden></div>
     <div class="floor" id="floor" role="group" aria-label="My easy things" hidden></div>
     <div class="floor learn" id="learncard" role="group" aria-label="Something the board noticed" hidden></div>
+    <div class="floor learn" id="wncard" role="group" aria-label="What changed in Qordel" hidden></div>
     <div id="week-nudge" hidden></div>
     <div id="oftad-pick" hidden></div>
     <div class="now-follow" id="est-follow" hidden></div>
@@ -2421,6 +2424,8 @@ function boot(){
   delete s.free; delete s.layout;
   /* sync adds any goal the seed grew since last time, and those arrive
      without the fields toGoals fills in, so it runs on both sides of it */
+  /* a board set up before 2026-10-21 still holds the old settings; it is told once what changed (592) */
+  if(s.wn===undefined) s.wn=(s.me && s.me.done && ("commute" in s.me || "sharp" in s.me)) ? "show" : "none";
   state=s; toGoals(); sync(); toGoals();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
@@ -4454,7 +4459,7 @@ function ioMsg(t){ var m=$("#io-msg"); if(m){ m.textContent=t; clearTimeout(m._t
 
 function renderAll(){
   renderMain(); renderSubs(); renderKpis(); renderAlerts(); renderTick(); renderDocks(); renderSnaps();
-  renderVerdict(); renderFollow(); renderFloor(); renderLearn(); renderWeek(); renderJournal(); phRender();
+  renderVerdict(); renderFollow(); renderFloor(); renderLearn(); renderWn(); renderWeek(); renderJournal(); phRender();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
   if(typeof enhanceSelects==="function") enhanceSelects();
@@ -8381,6 +8386,37 @@ $("#bl-add").addEventListener("click",function(){
 });
 $("#bl-name").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#bl-add").click(); });
 
+/* ---------------- what changed (2026-10-21) ----------------
+   Principle 6 (owner): Qordel is updated often, and a person is never
+   surprised. The release of 2026-10-21 changed how the next step is chosen
+   and took some settings away, so a board that was set up before it is told
+   once, in plain words, on Now (phone) and on the board (desktop). A board
+   from before carries the old settings (commute, sharpest time) that nothing
+   deletes; boot() turns that into wn:"show". New boards never see it.
+   "Got it" puts it away for good.                                         */
+/* a function, not a var: the board can draw before this part has run */
+function wnItems(){ return [
+  "The next step now follows 5 simple rules: your energy, the time of day, the delivery days of your goals, and the order of their steps.",
+  "On a very low day, or near the end of your day, nothing is asked. Your easy things show instead.",
+  "Some settings are gone: goal priority, commute, sharpest time, training and a step’s own date. All your goals and steps are still here.",
+  "New: a speaker button reads a card aloud, and the board can learn from what you do. It always asks before it keeps anything."
+]; }
+function wnOn(){ return state.wn==="show" && !!(state.me && state.me.done); }
+function wnDone(){ state.wn="seen"; save(); renderAll(); if(typeof PH_ON!=="undefined"&&PH_ON){ PH_DRAWN=""; phRender(); } }
+function wnPhone(){
+  if(!wnOn()) return "";
+  return '<section class="ph-card ph-wn" aria-label="What changed in Qordel">'+(typeof sayBtn==="function"?sayBtn("ph-say","Read this card aloud"):"")+
+    '<h2 class="ph-h2">What changed in Qordel</h2><ul class="ph-wn-l">'+wnItems().map(function(t){ return '<li>'+esc(t)+'</li>'; }).join("")+'</ul>'+
+    '<div class="ph-acts"><button type="button" class="ph-btn ph-pri" data-ph="wnok">Got it</button></div></section>';
+}
+function renderWn(){
+  var box=$("#wncard"); if(!box) return;
+  if(!wnOn()){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false;
+  box.innerHTML='<div class="floor-k">What changed in Qordel</div><ul class="wn-l">'+wnItems().map(function(t){ return '<li>'+esc(t)+'</li>'; }).join("")+'</ul>'+
+    '<div class="floor-foot"><button class="btn take" data-wn-ok>Got it</button></div>';
+}
+document.addEventListener("click",function(e){ if(e.target.closest&&e.target.closest("[data-wn-ok]")) wnDone(); });
 /* ---------------- the phone ----------------
    Built 2026-10-15 from the agreed wireframes, for the phone only. Below
    820px the board is four tabs (Now, Talk, Journal, You) on the same engine
@@ -8766,6 +8802,7 @@ function phNow(){
     h.push('<a class="ph-strip" href="#/journal" data-ph="jropen"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
       '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
+  h.push(wnPhone());
   if(cur){
     h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
       '<h2 class="ph-task">'+esc(cur.s.name)+'</h2>'+
@@ -9578,6 +9615,7 @@ function phOnbFinish(add){
     else if(k==="aiorder") phAiOrder(id);
     else if(k==="learnkeep"||k==="learnno"){ try{ if(k==="learnkeep") memKeep(id); else memDrop(id,true); }catch(er){ memDrop(id,false); toast("",er.message); }
       save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="wnok") wnDone();
     else if(k==="readaloud"){ var rme=state.me||(state.me=freshMe()); if(sayOn()){ delete rme.readAloud; sayStop(); } else rme.readAloud=true;
       save(); renderAll(); PH_DRAWN=""; phRender(); var rb=document.querySelector("[data-ph=readaloud]"); if(rb) rb.focus(); }
     else if(k==="learn"){ var lme=state.me||(state.me=freshMe()); lme.learn=!memLearnOn(); if(lme.learn) delete lme.learn;
@@ -9671,6 +9709,59 @@ function phOnbFinish(add){
   if(PH_MQ){ if(PH_MQ.addEventListener) PH_MQ.addEventListener("change",phSet); else if(PH_MQ.addListener) PH_MQ.addListener(phSet); }
   phSet();
 })();
+/* ---------------- the demo board, for user sessions (2026-10-21) ----------------
+   notes/user-sessions-anxiety.md needs a board that already has a passed
+   delivery day, two weeks of history (so "Something I noticed" appears),
+   easy things and a step marked Easy. Open the app with ?demo=session: it
+   asks first, then replaces the board on this device with that example.
+   It never runs for someone signed in, so an account's board is never
+   replaced. The names are examples, not anyone's data.                    */
+function demoBoard(){
+  var s=blankState(), t=todayStr(), now=Date.now(), n, i;
+  s.seedRev=SEED_REV; s.day=t; s.wn="none";
+  s.me={done:true, guided:true, goodSet:true, normalN:3, days:[1,2,3,4,5], work:["09:00","17:00"],
+        rise:"07:00", wind:"22:30", north:"Finish the garden shed before winter", brief:"07:30", icon:""};
+  var add=function(id,name,where,due,steps){
+    s.groups.push({id:id, name:name, subs:[], due:due||"", prio:"mid", tags:[], where:where});
+    steps.forEach(function(x,k){
+      var sid=id+"-"+k, done=x.charAt(0)==="+";
+      s.subs[sid]={id:sid, gid:id, name:done?x.slice(1):x, pct:done?100:0, status:done?"done":"todo", tag:"", upd:addDays(t,-3)};
+      s.groups[s.groups.length-1].subs.push(sid);
+    });
+  };
+  add("dshed","Garden shed","any",addDays(t,10),["+Measure the base","Buy the timber","Lay the base","Build the walls"]);
+  add("dreport","Quarterly report","work","",["Collect the numbers","Write the draft","Send it to Sam"]);
+  add("dtrip","Plan a weekend away","any",addDays(t,-3),["Pick a place","Book a room"]);
+  add("dspan","Learn Spanish","any","",["Download a language app","First lesson"]);
+  s.subs["dspan-0"].easy=true;
+  s.sel="dshed";
+  s.floor={items:[{id:"fd1",t:"Listen to an audiobook"},{id:"fd2",t:"Read before sleep"},{id:"fd3",t:"A short walk"}],log:{}};
+  /* two weeks of history: two steps finished on each of 12 days, one in the morning and one in the afternoon */
+  s.ev=[];
+  for(n=1;n<=14;n++){
+    if(n===6||n===13) continue;
+    var d=new Date(now); d.setDate(d.getDate()-n);
+    for(i=0;i<2;i++){ var e=new Date(d); e.setHours(i?15:9,10,0,0); s.ev.push({t:e.getTime(), k:"done", id:"demo-"+n+"-"+i, g:"dshed"}); }
+  }
+  s.ev.sort(function(a,b){ return a.t-b.t; });
+  s.mem=[]; s.memNo={}; s.hist=[{d:t, v:0, first:1}];
+  return s;
+}
+function demoAsk(){
+  if(!/[?&]demo=session\b/.test(location.search)) return;
+  var clean=function(){ try{ history.replaceState(null,"",location.pathname+(location.hash||"#/now")); }catch(e){} };
+  if(syncMode()==="account"){ clean(); toast("Demo board","Sign out first. The demo board never replaces the board of an account."); return; }
+  askUser({title:"Load the demo board?",
+    body:["For a user session. It replaces the board on this device with an example: 4 goals, a delivery day that has passed, 2 weeks of history and 3 easy things.",
+      "Use it only on a test phone or a fresh board. No backup is made."],
+    ok:"Load the demo board", cancel:"Not now", danger:true}).then(function(yes){
+    clean();
+    if(!yes) return;
+    state=demoBoard(); save();
+    location.replace(location.pathname+"#/now"); location.reload();
+  });
+}
+setTimeout(demoAsk,0);
 /* ---------------- the brain speaks up ----------------
    It already knows what is on fire and what to do next. It used to say so in
    a note that floated over the board a moment after it opened. That note

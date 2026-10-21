@@ -383,6 +383,7 @@ function phNow(){
     h.push('<a class="ph-strip" href="#/journal" data-ph="jropen"><span class="ph-k">'+(ago===1?"Yesterday":ago+" days ago")+'</span>'+
       '<span class="ph-strip-t">Your '+esc(K.name.toLowerCase())+' note is waiting</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   }
+  h.push(wnPhone());
   if(cur){
     h.push('<section class="ph-card" aria-label="Do this now">'+sayBtn("ph-say","Read this card aloud")+'<div class="ph-k ph-hot">'+(cur.mode==="today"?"Now, from Today":"Do this now")+'</div>'+
       '<h2 class="ph-task">'+esc(cur.s.name)+'</h2>'+
@@ -1195,6 +1196,7 @@ function phOnbFinish(add){
     else if(k==="aiorder") phAiOrder(id);
     else if(k==="learnkeep"||k==="learnno"){ try{ if(k==="learnkeep") memKeep(id); else memDrop(id,true); }catch(er){ memDrop(id,false); toast("",er.message); }
       save(); renderAll(); PH_DRAWN=""; phRender(); }
+    else if(k==="wnok") wnDone();
     else if(k==="readaloud"){ var rme=state.me||(state.me=freshMe()); if(sayOn()){ delete rme.readAloud; sayStop(); } else rme.readAloud=true;
       save(); renderAll(); PH_DRAWN=""; phRender(); var rb=document.querySelector("[data-ph=readaloud]"); if(rb) rb.focus(); }
     else if(k==="learn"){ var lme=state.me||(state.me=freshMe()); lme.learn=!memLearnOn(); if(lme.learn) delete lme.learn;

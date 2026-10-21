@@ -13,6 +13,8 @@ function boot(){
   delete s.free; delete s.layout;
   /* sync adds any goal the seed grew since last time, and those arrive
      without the fields toGoals fills in, so it runs on both sides of it */
+  /* a board set up before 2026-10-21 still holds the old settings; it is told once what changed (592) */
+  if(s.wn===undefined) s.wn=(s.me && s.me.done && ("commute" in s.me || "sharp" in s.me)) ? "show" : "none";
   state=s; toGoals(); sync(); toGoals();
   if(!state.hist.length) seedHist();
   if(!state.sel || !gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";

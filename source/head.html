@@ -1500,6 +1500,8 @@ html.ph :is(.ph-btn,.ph-chip).ph-pri:active,html.ph .ph-segb button[aria-pressed
 .nowbadge>.nb-say{margin-left:4px}
 @media (prefers-reduced-motion:no-preference){ .say-btn.on svg{animation:saypulse 1.2s ease-in-out infinite} }
 @keyframes saypulse{50%{opacity:.45}}
+.wn-l,.ph-wn-l{margin:8px 0 10px; padding-left:20px; display:flex; flex-direction:column; gap:6px; line-height:1.45}
+.wn-l{font-size:14px; color:var(--ink)}
 .learn .learn-t{margin:6px 0 2px; font-size:14.5px; line-height:1.45; color:var(--ink)}
 .learn .learn-e{margin:0 0 8px; font-size:12.5px; line-height:1.5; color:var(--muted)}
 .plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
@@ -1693,6 +1695,7 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="jr-check" id="jr-check" role="note" aria-label="Where you left off" hidden></div>
     <div class="floor" id="floor" role="group" aria-label="My easy things" hidden></div>
     <div class="floor learn" id="learncard" role="group" aria-label="Something the board noticed" hidden></div>
+    <div class="floor learn" id="wncard" role="group" aria-label="What changed in Qordel" hidden></div>
     <div id="week-nudge" hidden></div>
     <div id="oftad-pick" hidden></div>
     <div class="now-follow" id="est-follow" hidden></div>
