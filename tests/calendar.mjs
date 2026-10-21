@@ -261,10 +261,10 @@ await ok("the desktop has a Calendar tab with the same page", async () => {
     assert.equal(await o.p.locator("#cal-body [data-cal=meeting]").count(), 1);
   } finally { await o.ctx.close(); }
 });
-await ok("without a client id the row and the page say it is not set up, and nothing loads Google", async () => {
+await ok("without a client id the row and the page say it is coming soon, with no developer words, and nothing loads Google", async () => {
   const o = await open({ setUp: false }); try {
-    await onboard(o.p); await go(o.p, "you"); assert.match(await o.p.locator("[data-ph=calendar]").innerText(), /Not set up/);
-    await go(o.p, "calendar"); assert.match(await main(o.p), /not set up for Qordel yet/); assert.equal(await o.p.locator("[data-cal]").count(), 0);
+    await onboard(o.p); await go(o.p, "you"); assert.match(await o.p.locator("[data-ph=calendar]").innerText(), /Coming soon/);
+    await go(o.p, "calendar"); assert.match(await main(o.p), /coming to Qordel soon/); assert.doesNotMatch(await main(o.p), /client id|notes\//); assert.equal(await o.p.locator("[data-cal]").count(), 0);
     assert.equal(await o.p.evaluate(() => !!document.querySelector('script[src*="accounts.google.com"]')), false);
   } finally { await o.ctx.close(); }
 });
