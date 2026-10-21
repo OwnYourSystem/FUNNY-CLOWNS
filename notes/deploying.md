@@ -212,3 +212,12 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   preview. The server parts wait for the owner: 2 migrations (record, tighten grants) and the push
   function's new address rule are written, not applied or deployed.
 - Full regression: 40 browser suites, 851 checks, 0 failures.
+
+## 2026-10-21: production moved to e9ff565 (AI notice, AI label, Speak wording)
+
+- Owner: "Want all 3, go ahead". Production deployment `dpl_4osDtE5UrmXaXbnZKBrF7GuGMtVv`.
+- Rolling back: `dpl_BtENKpLGeURiMdfVMv2Ahnu54KBF` (9e34323, flaw 1 closed).
+- Full regression on e9ff565: 40 browser suites, 851 checks, 0 failures.
+- The first migration (record_live_schema) was sent through the Supabase connection and came back
+  "cancelled" (a confirmation was declined or timed out). Nothing was applied; the live migration list
+  still ends at push_pm_time. The other 2 migrations and the push function deploy were not attempted.
