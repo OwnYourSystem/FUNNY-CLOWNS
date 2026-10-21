@@ -191,7 +191,7 @@ async function botAsk(text,opts){
     var nowD=new Date(), chk=replyCheck(res.text,{history:TURN_HIST,
       src:TURN_OUT+" "+said+" "+todayStr()+" "+pad2(nowD.getHours())+":"+pad2(nowD.getMinutes())});
     if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your own numbers."};
-    botTurns.push({role:"assistant",content:res.text});
+    var aiTurn={role:"assistant",content:res.text}; botTurns.push(aiTurn); if(AI_TURNS) AI_TURNS.add(aiTurn);
     botRender(); sayLatest();
     try{ $("#bot-input").focus(); }catch(e){}
   }catch(e){

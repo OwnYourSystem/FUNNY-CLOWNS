@@ -34,7 +34,8 @@ function micInto(el,btn,say){
   };
   REC=r; btn.setAttribute("aria-pressed","true"); btn.classList.add("on");
   var told=false; try{ told=localStorage.getItem(MIC_TOLD)==="1"; localStorage.setItem(MIC_TOLD,"1"); }catch(e){}
-  say(told?"Listening. Press Speak again to stop.":"Listening. Your browser turns your voice into text with its own speech service, and the board keeps only the text. Press Speak again to stop.");
+  /* say who hears the voice (2026-10-21, flaw 7 of the agent review): the browser's speech service, which may send the sound to its servers */
+  say(told?"Listening. Press Speak again to stop.":"Listening. Your browser's speech service (Google in Chrome, Apple in Safari) turns your voice into text and may send the sound to its servers. Qordel keeps only the text. Press Speak again to stop.");
   try{ r.start(); }catch(e){ if(REC===r) REC=null; micOff(btn); say("Listening could not start. You can type instead."); }
 }
 (function(){

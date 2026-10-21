@@ -290,6 +290,10 @@ body.flat #canvas{transform:none!important}
 .bot-did{align-self:flex-start; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--muted); padding-left:4px}
 .bot-empty{color:var(--muted); font-size:13px; padding:6px 2px; line-height:1.55}
+/* the AI notice (EU AI Act, Article 50) and the label on an answer from the model (2026-10-21) */
+.bot-ai-note{margin:0; padding:6px 12px 8px; font-size:12.5px; line-height:1.45; color:var(--muted); border-bottom:1px solid var(--hair)}
+.bot-ai{display:inline-block; margin:0 0 4px; padding:1px 7px; border-radius:6px; font-size:11px; font-weight:600; letter-spacing:.04em;
+  color:var(--ink-2); border:1px solid var(--rule)}
 .bot-chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
 .bot-chip{font:inherit; font-size:12px; color:var(--ink-2); background:transparent;
   border:1px solid var(--hair); border-radius:999px; padding:7px 13px; cursor:pointer;
@@ -1346,6 +1350,8 @@ html.ph.ph-talk #bot-input{flex:1 1 100%; min-height:9.5em; padding:14px 16px; b
 html.ph.ph-talk .bot-pend{order:2}
 html.ph.ph-talk .bot-chips{order:3}
 html.ph.ph-talk .bot-note{order:3}
+/* the AI notice sits under the chips, just above the answers, so the writing box stays at the top (2026-10-21) */
+html.ph.ph-talk .bot-ai-note{order:3; border-bottom:0; padding:2px 2px 8px}
 html.ph.ph-talk .bot-log{order:4; flex:0 0 auto; max-height:none; overflow:visible; flex-direction:column-reverse; padding-right:0}
 /* a reply that reads at a glance: a card, short paragraphs set justified,
    lists as rows with hairlines, headings small; the head stays on top */
@@ -1987,6 +1993,7 @@ try{var _t=localStorage.getItem("oys-theme");
         <button class="mini" id="bot-min" title="Close the assistant">Close</button>
       </span>
     </div>
+    <p class="bot-ai-note" id="bot-ai-note"></p>
     <div class="bot-log" id="bot-log"></div>
     <div class="bot-pend" id="bot-pend" role="status" aria-live="polite" hidden></div>
     <div class="bot-chips" id="bot-chips"></div>
@@ -5613,7 +5620,8 @@ function micInto(el,btn,say){
   };
   REC=r; btn.setAttribute("aria-pressed","true"); btn.classList.add("on");
   var told=false; try{ told=localStorage.getItem(MIC_TOLD)==="1"; localStorage.setItem(MIC_TOLD,"1"); }catch(e){}
-  say(told?"Listening. Press Speak again to stop.":"Listening. Your browser turns your voice into text with its own speech service, and the board keeps only the text. Press Speak again to stop.");
+  /* say who hears the voice (2026-10-21, flaw 7 of the agent review): the browser's speech service, which may send the sound to its servers */
+  say(told?"Listening. Press Speak again to stop.":"Listening. Your browser's speech service (Google in Chrome, Apple in Safari) turns your voice into text and may send the sound to its servers. Qordel keeps only the text. Press Speak again to stop.");
   try{ r.start(); }catch(e){ if(REC===r) REC=null; micOff(btn); say("Listening could not start. You can type instead."); }
 }
 (function(){
@@ -7238,15 +7246,28 @@ $("#bot-log").addEventListener("click",function(e){
   var i=$("#bot-input"), t=r.querySelector(".bot-rt"); if(!i||!t) return;
   i.value=t.textContent; try{ i.focus(); }catch(er){}
 });
+/* EU AI Act, Article 50 (2026-10-21): the person is told, always and plainly, when an AI is involved.
+   Simple commands are answered on the device by the board's own reader, with no AI; an answer that came
+   from the AI model carries an "AI" label. AI_TURNS remembers those answers without adding a field to
+   the turns, which are passed to the model as they are. */
+var AI_TURNS=(typeof WeakSet==="function")?new WeakSet():null;
+function botAiNote(){
+  var n=$("#bot-ai-note"); if(!n) return;
+  n.textContent=modelThere()
+    ? "Answers marked AI come from an AI model (Claude, by Anthropic). It sees your question and only the numbers it asks for, never your journal or check-ins. It can make mistakes. Simple commands are handled on this device."
+    : "Simple commands are handled on this device, with no AI. When you are signed in, other questions can go to an AI model (Claude, by Anthropic).";
+}
 function botRender(){
-  var log=$("#bot-log"); log.innerHTML=""; pendRender();
+  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote();
   if(!botTurns.length){
     var e=document.createElement("p"); e.className="bot-empty";
-    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything."+
-      ((botSample||!proxyReady())?"":" Questions it cannot answer itself go to a hosted model, which sees your question and only the numbers it asks for.");
+    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything.";
     log.appendChild(e); return;
   }
-  botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
+  botTurns.forEach(function(t){
+    var d=botBubble(t.role==="user"?"you":"bot",t.content);
+    if(d && AI_TURNS && AI_TURNS.has(t)){ var l=document.createElement("span"); l.className="bot-ai"; l.textContent="AI"; l.setAttribute("aria-label","Answer from an AI model"); d.insertBefore(l,d.firstChild); }
+  });
   log.scrollTop=log.scrollHeight;
 }
 /* ---------------- the journal, in the chat ----------------
@@ -7481,7 +7502,7 @@ async function botAsk(text,opts){
     var nowD=new Date(), chk=replyCheck(res.text,{history:TURN_HIST,
       src:TURN_OUT+" "+said+" "+todayStr()+" "+pad2(nowD.getHours())+":"+pad2(nowD.getMinutes())});
     if(!chk.ok) res={text:"I held that answer back: "+chk.why+". Ask again and I will stay with your own numbers."};
-    botTurns.push({role:"assistant",content:res.text});
+    var aiTurn={role:"assistant",content:res.text}; botTurns.push(aiTurn); if(AI_TURNS) AI_TURNS.add(aiTurn);
     botRender(); sayLatest();
     try{ $("#bot-input").focus(); }catch(e){}
   }catch(e){

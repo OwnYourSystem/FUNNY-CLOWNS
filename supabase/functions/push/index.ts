@@ -10,8 +10,19 @@ import webpush from "npm:web-push@3.6.7";
 import { cleanSub, dueKind, localParts, MAX_ROWS, validEndpoint, b64url } from "./schedule.js";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type, apikey, authorization", "access-control-allow-methods": "GET, POST, OPTIONS" };
-const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "content-type": "application/json", "cache-control": "no-store" } });
+/* Browsers may call this only from Qordel's own pages (2026-10-21, flaw 12 of the agent review: it
+   answered "*"). The database's own once-a-minute call sends no Origin, so /tick is not affected. A page
+   on another site gets no CORS headers, and its subscribe or unsubscribe is refused outright. */
+const ORIGINS = [/^https:\/\/funny-clowns\.vercel\.app$/, /^https:\/\/funny-clowns-[a-z0-9-]+-oys-s-projects\.vercel\.app$/,
+  /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
+const okOrigin = (o: string) => ORIGINS.some((r) => r.test(o));
+function cors(req: Request): Record<string, string> {
+  const o = req.headers.get("origin") || "";
+  const h: Record<string, string> = { "access-control-allow-headers": "content-type, apikey, authorization", "access-control-allow-methods": "GET, POST, OPTIONS", vary: "origin" };
+  if (okOrigin(o)) h["access-control-allow-origin"] = o;
+  return h;
+}
+const reply = (req: Request) => (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...cors(req), "content-type": "application/json", "cache-control": "no-store" } });
 const b64u = (u8: Uint8Array) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const SUBJECT = "https://funny-clowns.vercel.app";
 
@@ -33,10 +44,13 @@ async function vapid(): Promise<{ pub: string; priv: string }> {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  const json = reply(req), origin = req.headers.get("origin");
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) });
   const path = new URL(req.url).pathname.replace(/\/+$/, "").split("/").pop();
   try {
     if (path === "config" && req.method === "GET") return json({ key: (await vapid()).pub });
+
+    if ((path === "subscribe" || path === "unsubscribe") && origin && !okOrigin(origin)) return json({ error: "other_site" }, 403);
 
     if (path === "subscribe" && req.method === "POST") {
       const text = await req.text(); if (text.length > 2000) return json({ error: "too_large" }, 413);
@@ -85,6 +99,8 @@ Deno.serve(async (req: Request) => {
           }
         }));
       }
+      /* health record: counts only. It must never stop or slow a send, so a failure here is ignored. */
+      try { await db.rpc("push_record", { p_due: due.length, p_sent: sent, p_gone: gone, p_failed: due.length - sent - gone }); } catch (_e) { /* ignored */ }
       return json({ ok: true, due: due.length, sent, gone });
     }
     return json({ error: "not_found" }, 404);

@@ -818,14 +818,27 @@ $("#bot-log").addEventListener("click",function(e){
   var i=$("#bot-input"), t=r.querySelector(".bot-rt"); if(!i||!t) return;
   i.value=t.textContent; try{ i.focus(); }catch(er){}
 });
+/* EU AI Act, Article 50 (2026-10-21): the person is told, always and plainly, when an AI is involved.
+   Simple commands are answered on the device by the board's own reader, with no AI; an answer that came
+   from the AI model carries an "AI" label. AI_TURNS remembers those answers without adding a field to
+   the turns, which are passed to the model as they are. */
+var AI_TURNS=(typeof WeakSet==="function")?new WeakSet():null;
+function botAiNote(){
+  var n=$("#bot-ai-note"); if(!n) return;
+  n.textContent=modelThere()
+    ? "Answers marked AI come from an AI model (Claude, by Anthropic). It sees your question and only the numbers it asks for, never your journal or check-ins. It can make mistakes. Simple commands are handled on this device."
+    : "Simple commands are handled on this device, with no AI. When you are signed in, other questions can go to an AI model (Claude, by Anthropic).";
+}
 function botRender(){
-  var log=$("#bot-log"); log.innerHTML=""; pendRender();
+  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote();
   if(!botTurns.length){
     var e=document.createElement("p"); e.className="bot-empty";
-    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything."+
-      ((botSample||!proxyReady())?"":" Questions it cannot answer itself go to a hosted model, which sees your question and only the numbers it asks for.");
+    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything.";
     log.appendChild(e); return;
   }
-  botTurns.forEach(function(t){ botBubble(t.role==="user"?"you":"bot",t.content); });
+  botTurns.forEach(function(t){
+    var d=botBubble(t.role==="user"?"you":"bot",t.content);
+    if(d && AI_TURNS && AI_TURNS.has(t)){ var l=document.createElement("span"); l.className="bot-ai"; l.textContent="AI"; l.setAttribute("aria-label","Answer from an AI model"); d.insertBefore(l,d.firstChild); }
+  });
   log.scrollTop=log.scrollHeight;
 }
