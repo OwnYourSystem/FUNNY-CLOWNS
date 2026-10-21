@@ -167,7 +167,7 @@ function renderAll(){
   renderVerdict(); renderFollow(); renderFloor(); renderLearn(); renderWn(); renderWeek(); renderJournal(); phRender();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
-  if(typeof renderCalendar==="function") renderCalendar();
+  if(typeof renderCalendar==="function"){ renderCalendar(); renderBooked(); }
   if(typeof enhanceSelects==="function") enhanceSelects();
   /* content can change a panel's height, so re-separate before measuring */
 }

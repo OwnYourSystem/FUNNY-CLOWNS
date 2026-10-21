@@ -1657,6 +1657,14 @@ html.ph #jr-check{display:none}
 .cal-sw[aria-checked="true"]>.ph-rv>.ph-switch{background:var(--ph-pri,var(--accent))}
 @media (max-width:600px){ .cal-main{flex-direction:column; gap:2px} .cal-tm{width:auto} }
 .cal .cal-acts:first-child{margin-top:4px}
+/* rule 6 on the desktop board: what is booked today, or tomorrow's first booking */
+.booked{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--hair); border-radius:12px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:14px}
+.booked[hidden]{display:none}
+.booked-k{font-weight:600; color:var(--ink-2)}
+/* rule 6 on the phone: the bookings are the point, so they wrap rather than cut off */
+.ph-booked{padding-top:8px; padding-bottom:8px}
+.ph-booked .ph-k{flex:none; white-space:nowrap}
+.ph-booked .ph-strip-t{white-space:normal; overflow:visible; line-height:1.4}
 </style>
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -1718,6 +1726,7 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <section class="view is-on" id="v-board" aria-label="Board">
 
+  <a class="booked" id="booked-line" href="#/calendar" hidden></a>
   <div id="canvas">
   <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
 

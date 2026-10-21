@@ -1657,6 +1657,14 @@ html.ph #jr-check{display:none}
 .cal-sw[aria-checked="true"]>.ph-rv>.ph-switch{background:var(--ph-pri,var(--accent))}
 @media (max-width:600px){ .cal-main{flex-direction:column; gap:2px} .cal-tm{width:auto} }
 .cal .cal-acts:first-child{margin-top:4px}
+/* rule 6 on the desktop board: what is booked today, or tomorrow's first booking */
+.booked{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--hair); border-radius:12px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:14px}
+.booked[hidden]{display:none}
+.booked-k{font-weight:600; color:var(--ink-2)}
+/* rule 6 on the phone: the bookings are the point, so they wrap rather than cut off */
+.ph-booked{padding-top:8px; padding-bottom:8px}
+.ph-booked .ph-k{flex:none; white-space:nowrap}
+.ph-booked .ph-strip-t{white-space:normal; overflow:visible; line-height:1.4}
 </style>
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -1718,6 +1726,7 @@ try{var _t=localStorage.getItem("oys-theme");
 
   <section class="view is-on" id="v-board" aria-label="Board">
 
+  <a class="booked" id="booked-line" href="#/calendar" hidden></a>
   <div id="canvas">
   <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
 
@@ -3664,6 +3673,8 @@ function northHit(g,me,sub){
         delivery day; otherwise of the goal that matches what you said
         matters most; otherwise of the goal at the top of your list.
      5. In work hours only work goals; outside them only the other goals.
+     6. What is booked in your calendar comes first: no task during it,
+        and booked hours make the day smaller (part 196).
    Nothing else is weighed: no hidden scores, no "stalled" pressure.      */
 var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
@@ -3684,7 +3695,8 @@ function energyWhy(l,n){
        : l===4 ? "Your energy is full, so today can carry more." : "";
 }
 function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
-function doseNow(){
+function doseNow(){ return calDose(doseBase(),state.me||freshMe()); }
+function doseBase(){
   var cap=state.cap;
   if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
     var L=ENERGY[cap.lvl], ln=doseN(L.band,cap.lvl);
@@ -3740,6 +3752,7 @@ function restWhy(c,dz,me){
   if(c.wound) return "Your day is over. Rest.";
   if(c.early) return "Your day starts at "+c.rise+".";
   if(dz.lvl===1) return "Your energy is very low, so nothing is needed today.";
+  var bk=calBookedNow(CAL_LIST,new Date()); if(bk) return "Booked until "+bk.to+": "+bk.t+".";
   if(lateDay(me,c.now)) return "It is the last part of your day, so nothing more is needed.";
   return "";
 }
@@ -4009,6 +4022,68 @@ function calSummary(evs,days,now,names){
   out.push(free===null?"Nothing more is booked today.":free===0?"Busy right now.":"Free for "+free+" minutes before the next busy slot.");
   return out.join("\n");
 }
+
+/* ---- rule 6, commitments come first (owner, 2026-10-21) ----
+   A booking in the calendar is something the person must do: a doctor, a
+   school run, a hospital visit. It is not weighed against the goals; it
+   comes first. During a booking the board asks for nothing, and booked
+   time makes the day smaller: every 2 hours booked is one step less, never
+   below one. Kept simple on purpose: no travel time, no warm-up window.
+   CAL_LIST is the calendar kept on this device; a store part fills it
+   when the page loads and part 415 when it changes.                    */
+var CAL_LIST=[];
+/* the booking happening now, as {t, to}, or null */
+function calBookedNow(evs,now){
+  now=now||new Date();
+  var hit=null;
+  calOnDay(evs,dstr(now)).forEach(function(ev){
+    if(!hit && ev.busy && calStart(ev)<=now && calEnd(ev)>now) hit={t:ev.t, to:calHM(calEnd(ev))};
+  });
+  return hit;
+}
+/* booked minutes today inside the person's day (day start to day end) */
+function calBookedMin(evs,day,me){
+  var a=new Date(day+"T"+((me&&me.rise)||"07:00")+":00"), b=new Date(day+"T"+((me&&me.wind)||"22:30")+":00");
+  if(b<=a) b.setDate(b.getDate()+1);
+  var min=0;
+  calOnDay(evs,day).forEach(function(ev){
+    if(!ev.busy) return;
+    var s=calStart(ev), e=calEnd(ev);
+    if(s<a) s=a; if(e>b) e=b;
+    if(e>s) min+=Math.round((e-s)/60000);
+  });
+  return min;
+}
+/* the dose, made smaller by what is booked today */
+function calDose(dz,me){
+  var min=calBookedMin(CAL_LIST,todayStr(),me), cut=Math.floor(min/120);
+  if(!cut || dz.n<=1) return dz;
+  var n=Math.max(1,dz.n-cut), h=Math.round(min/30)/2;
+  dz.n=n; dz.booked=min;
+  dz.why=(dz.why?dz.why+" ":"")+h+(h===1?" hour is":" hours are")+" booked in your calendar today, so "+n+(n===1?" step.":" steps.");
+  return dz;
+}
+/* what Now says about the calendar: today's bookings still to come, or in the
+   evening (nothing more today) tomorrow's first one, to get ready for */
+function calAhead(evs,now){
+  now=now||new Date();
+  var today=calOnDay(evs,dstr(now)).filter(function(ev){ return ev.all || calEnd(ev)>now; });
+  if(today.some(function(ev){ return !ev.all; })) return {when:"Today", list:today};
+  var t=new Date(now); t.setDate(t.getDate()+1);
+  var first=calOnDay(evs,dstr(t)).filter(function(ev){ return !ev.all; })[0];
+  return first ? {when:"Tomorrow", list:[first]} : today.length ? {when:"Today", list:today} : null;
+}
+function calAheadText(a){
+  if(!a) return "";
+  var l=a.list.slice(0,3).map(function(ev){ return (ev.all?"All day":calHM(calStart(ev)))+" "+ev.t; });
+  return l.join(", ")+(a.list.length>3?", and "+(a.list.length-3)+" more":"");
+}
+/* the calendar kept on this device (part 415 writes it), read when the page
+   loads, so rule 6 sees it from the first draw */
+function calKept(){
+  try{ var c=JSON.parse(localStorage.getItem(KEY+".cal")||"null"); return (c&&c.on&&c.ev)||[]; }catch(e){ return []; }
+}
+CAL_LIST=calKept();
 /* ---------------- clock ---------------- */
 function weekNo(d){ var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
   var dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn);
@@ -4549,7 +4624,7 @@ function renderAll(){
   renderVerdict(); renderFollow(); renderFloor(); renderLearn(); renderWn(); renderWeek(); renderJournal(); phRender();
   if(typeof renderTags==="function"){ renderTags(); renderBacklog(); renderArchive(); }
   if(typeof renderPlanner==="function") renderPlanner();
-  if(typeof renderCalendar==="function") renderCalendar();
+  if(typeof renderCalendar==="function"){ renderCalendar(); renderBooked(); }
   if(typeof enhanceSelects==="function") enhanceSelects();
   /* content can change a panel's height, so re-separate before measuring */
 }
@@ -5861,14 +5936,17 @@ function mirrorToday(){
    event (never guests, places or notes), and deletes only what it added. */
 var CAL_CLIENT="";   /* Google's OAuth client id for Qordel: public, set by the owner (notes/calendar.md) */
 var CAL_SCOPE="https://www.googleapis.com/auth/calendar.events";
-var CAL_API="https://www.googleapis.com/calendar/v3/calendars/primary/events";
+/* the list of the person's calendars, so a family or school calendar counts too (rule 6) */
+var CAL_LIST_SCOPE="https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+var CAL_BASE="https://www.googleapis.com/calendar/v3";
+var CAL_API=CAL_BASE+"/calendars/primary/events";
 var CAL_GIS="https://accounts.google.com/gsi/client";
 var CAL_DAYS=7, CAL_BEFORE=[[0,"At the time"],[5,"5 minutes before"],[10,"10 minutes before"],[30,"30 minutes before"],[60,"1 hour before"]];
 var calTok=null, calMsg="", calWork=false;
 
 function calKey(){ return KEY+".cal"; }
 function calStore(){ try{ return JSON.parse(localStorage.getItem(calKey())||"null")||{}; }catch(e){ return {}; } }
-function calSave(c){ try{ localStorage.setItem(calKey(),JSON.stringify(c)); }catch(e){} }
+function calSave(c){ try{ localStorage.setItem(calKey(),JSON.stringify(c)); }catch(e){} CAL_LIST=(c&&c.on&&c.ev)||[]; }
 function calOn(){ return !!calStore().on; }
 function calEvents(){ return calStore().ev||[]; }
 function calNamesOk(){ return !!calStore().names; }
@@ -5897,7 +5975,7 @@ function calAuth(first){
   return calGis().then(function(){
     return new Promise(function(ok,no){
       var oa=google.accounts.oauth2;
-      var c=oa.initTokenClient({client_id:CAL_CLIENT, scope:CAL_SCOPE,
+      var c=oa.initTokenClient({client_id:CAL_CLIENT, scope:CAL_SCOPE+" "+CAL_LIST_SCOPE,
         callback:function(r){
           if(!r || r.error || !r.access_token) return no(new Error(r&&r.error==="access_denied"?"Google access was not given, so nothing changed.":"Google did not give access. Try again."));
           if(oa.hasGrantedAllScopes && !oa.hasGrantedAllScopes(r,CAL_SCOPE)) return no(new Error("Qordel needs to see and change your calendar events. Tick that box in Google's window."));
@@ -5923,28 +6001,47 @@ function calApi(method,url,body){
     return fetch(url,{method:method, headers:{authorization:"Bearer "+tok, "content-type":"application/json"}, body:body?JSON.stringify(body):undefined});
   }).then(function(r){
     if(r.status===401) calForget();
-    if(!r.ok) throw new Error(calErr(r.status));
+    if(!r.ok){ var er=new Error(calErr(r.status)); er.status=r.status; throw er; }
     return r.status===204 ? null : r.json();
   });
 }
 /* Google's event, cut down to what Qordel keeps */
-function calShape(x){
+function calShape(x,cal){
   var p=(x.extendedProperties&&x.extendedProperties.private)||{}, all=!!(x.start&&x.start.date);
+  if(cal && cal!=="primary") p={};   /* Qordel adds only to the main calendar, and deletes only there */
   var o=((x.reminders||{}).overrides||[])[0];
   return {id:String(x.id||""), t:String(x.summary||"(no title)").slice(0,200),
     s:all?x.start.date:x.start.dateTime, e:all?x.end.date:x.end.dateTime, all:all,
     busy:!all && x.transparency!=="transparent", mine:(p.qordel==="meeting"||p.qordel==="reminder")?p.qordel:"", rem:o?o.minutes:null};
 }
 function calSort(ev){ return ev.sort(function(a,b){ return calStart(a)-calStart(b); }); }
+/* the calendars the person shows in Google (up to 10); the main one if the list cannot be read */
+function calWhich(){
+  return calApi("GET",CAL_BASE+"/users/me/calendarList?minAccessRole=reader&fields="+encodeURIComponent("items(id,primary,selected)"))
+    .then(function(j){
+      var ids=((j&&j.items)||[]).filter(function(x){ return x.primary||x.selected; }).map(function(x){ return x.primary?"primary":x.id; });
+      if(ids.indexOf("primary")<0) ids.unshift("primary");
+      return ids.slice(0,10);
+    },function(e){ if(e.status===401) throw e; return ["primary"]; });
+}
 function calRefresh(){
   var from=new Date(); from.setHours(0,0,0,0);
   var to=new Date(from); to.setDate(to.getDate()+CAL_DAYS);
   var q="?timeMin="+encodeURIComponent(from.toISOString())+"&timeMax="+encodeURIComponent(to.toISOString())+
-    "&singleEvents=true&orderBy=startTime&maxResults=250&fields="+encodeURIComponent("items(id,summary,start,end,transparency,status,reminders,extendedProperties/private)");
-  return calApi("GET",CAL_API+q).then(function(j){
-    var c=calStore(); c.on=true; c.at=Date.now();
-    c.ev=calSort(((j&&j.items)||[]).filter(function(x){ return x.status!=="cancelled" && x.start; }).map(calShape));
-    calSave(c); return c.ev;
+    "&singleEvents=true&orderBy=startTime&maxResults=250&fields="+encodeURIComponent("items(id,iCalUID,summary,start,end,transparency,status,reminders,extendedProperties/private)");
+  return calWhich().then(function(ids){
+    var first=null;
+    return Promise.all(ids.map(function(id){
+      return calApi("GET",CAL_BASE+"/calendars/"+encodeURIComponent(id)+"/events"+q).then(function(j){
+        return ((j&&j.items)||[]).filter(function(x){ return x.status!=="cancelled" && x.start; }).map(function(x){ var s=calShape(x,id); s.u=x.iCalUID||""; return s; });
+      },function(e){ if(!first) first=e; return null; });
+    })).then(function(lists){
+      if(lists.every(function(l){ return l===null; })) throw first;
+      /* an event in two calendars (an invitation) is shown once */
+      var seen={}, ev=[];
+      lists.forEach(function(l){ (l||[]).forEach(function(x){ var k=x.u?x.u+"|"+x.s:""; if(k&&seen[k]) return; if(k) seen[k]=1; delete x.u; ev.push(x); }); });
+      var c=calStore(); c.on=true; c.at=Date.now(); c.ev=calSort(ev); calSave(c); return c.ev;
+    });
   });
 }
 function calLocal(d){ return dstr(d)+"T"+calHM(d)+":00"; }
@@ -5959,7 +6056,7 @@ function calAdd(o){
     reminders:{useDefault:false, overrides:[{method:"popup", minutes:+o.before||0}]},
     extendedProperties:{private:{qordel:o.kind}}};
   return calApi("POST",CAL_API,body).then(function(x){
-    var c=calStore(); c.ev=calSort((c.ev||[]).concat([calShape(x)])); calSave(c); return x;
+    var c=calStore(); c.ev=calSort((c.ev||[]).concat([calShape(x,"primary")])); calSave(c); return x;
   });
 }
 function calDel(id){
@@ -5973,6 +6070,7 @@ function calOff(){
   var t=calToken();
   try{ if(t && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(t,function(){}); }catch(e){}
   calForget(); try{ localStorage.removeItem(calKey()); }catch(e){}
+  CAL_LIST=[];
 }
 
 /* ---- the page: the same on the phone and on the desktop ---- */
@@ -5990,7 +6088,8 @@ function calBody(ph){
   if(!calOn()){
     h.push('<p class="cal-lede">Connect your Google Calendar. Qordel reads your meetings for the next 7 days, and you can add meetings and reminders from here.</p>'+
       '<ul class="cal-facts"><li>Google sends the calendar straight to this device. Qordel’s server does not keep it.</li>'+
-      '<li>Qordel reads only the time, name and reminder of each event, never guests, places or notes.</li>'+
+      '<li>Qordel reads only the time, name and reminder of each event, never guests, places or notes, from the calendars you show in Google (family and school calendars too).</li>'+
+      '<li>What is booked comes first: no task during it, and a busy day asks for fewer steps.</li>'+
       '<li>Qordel deletes only what Qordel added.</li>'+
       '<li>The tutor sees when you are busy. It sees meeting names only if you turn that on.</li></ul>'+
       '<div class="cal-acts"><button type="button" class="'+P+'" data-cal="connect"'+(calWork?' disabled':'')+'>Connect Google Calendar</button></div>'+msg);
@@ -6026,7 +6125,15 @@ function renderCalendar(){
   el.innerHTML=calBody(false);
   if(calOn()) calGis().catch(function(){});
 }
+/* rule 6 on the desktop board: one line, a link to the Calendar tab */
+function renderBooked(){
+  var el=$("#booked-line"); if(!el) return;
+  var a=calOn()?calAhead(CAL_LIST,new Date()):null;
+  el.hidden=!a; if(!a){ el.innerHTML=""; return; }
+  el.innerHTML='<span class="booked-k">'+(a.when==="Today"?"Booked today":"Tomorrow")+'</span><span>'+esc(calAheadText(a))+'</span>';
+}
 function calPaint(){
+  renderBooked();
   renderCalendar();
   if(typeof PH_ON!=="undefined" && PH_ON && phRoute()==="calendar"){ PH_DRAWN=""; phRender(); }
 }
@@ -6371,7 +6478,8 @@ var BOT_RULES=
 "health or personal details, and forget a note only when they ask. Some notes are what the board learned from the person's own "+
 "behaviour and they kept. Use the notes and the history tools to make every suggestion fit this person: when they finish "+
 "things, how much a day holds, which days are lighter, which steps they avoid.\n\n"+
-"If the person has connected Google Calendar, call get_calendar before you suggest when to do something, plan around the busy "+
+"If the person has connected Google Calendar, what is booked there comes first: a doctor, a school run, a hospital visit. "+
+"Call get_calendar before you suggest when to do something, plan around the busy "+
 "times, and suggest a step that fits the free time before the next meeting. Meeting names are hidden unless the person allows "+
 "them; never ask for them. To put a meeting or a reminder in the calendar, call propose_calendar_event: the person sees it filled "+
 "in and presses Add. Never say it is in the calendar before that. You cannot delete calendar events.\n\n"+
@@ -9173,6 +9281,10 @@ function phNow(){
   h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
     '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
     '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+phEnergy()+'</div></header>');
+  /* rule 6: what is booked today, or in the evening tomorrow's first booking; the Calendar page has the rest */
+  var ah=calOn()?calAhead(CAL_LIST,d):null;
+  if(ah) h.push('<a class="ph-strip ph-booked" href="#/calendar"><span class="ph-k">'+(ah.when==="Today"?"Booked today":"Tomorrow")+'</span>'+
+    '<span class="ph-strip-t">'+esc(calAheadText(ah))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())

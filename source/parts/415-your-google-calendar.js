@@ -10,14 +10,17 @@
    event (never guests, places or notes), and deletes only what it added. */
 var CAL_CLIENT="";   /* Google's OAuth client id for Qordel: public, set by the owner (notes/calendar.md) */
 var CAL_SCOPE="https://www.googleapis.com/auth/calendar.events";
-var CAL_API="https://www.googleapis.com/calendar/v3/calendars/primary/events";
+/* the list of the person's calendars, so a family or school calendar counts too (rule 6) */
+var CAL_LIST_SCOPE="https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+var CAL_BASE="https://www.googleapis.com/calendar/v3";
+var CAL_API=CAL_BASE+"/calendars/primary/events";
 var CAL_GIS="https://accounts.google.com/gsi/client";
 var CAL_DAYS=7, CAL_BEFORE=[[0,"At the time"],[5,"5 minutes before"],[10,"10 minutes before"],[30,"30 minutes before"],[60,"1 hour before"]];
 var calTok=null, calMsg="", calWork=false;
 
 function calKey(){ return KEY+".cal"; }
 function calStore(){ try{ return JSON.parse(localStorage.getItem(calKey())||"null")||{}; }catch(e){ return {}; } }
-function calSave(c){ try{ localStorage.setItem(calKey(),JSON.stringify(c)); }catch(e){} }
+function calSave(c){ try{ localStorage.setItem(calKey(),JSON.stringify(c)); }catch(e){} CAL_LIST=(c&&c.on&&c.ev)||[]; }
 function calOn(){ return !!calStore().on; }
 function calEvents(){ return calStore().ev||[]; }
 function calNamesOk(){ return !!calStore().names; }
@@ -46,7 +49,7 @@ function calAuth(first){
   return calGis().then(function(){
     return new Promise(function(ok,no){
       var oa=google.accounts.oauth2;
-      var c=oa.initTokenClient({client_id:CAL_CLIENT, scope:CAL_SCOPE,
+      var c=oa.initTokenClient({client_id:CAL_CLIENT, scope:CAL_SCOPE+" "+CAL_LIST_SCOPE,
         callback:function(r){
           if(!r || r.error || !r.access_token) return no(new Error(r&&r.error==="access_denied"?"Google access was not given, so nothing changed.":"Google did not give access. Try again."));
           if(oa.hasGrantedAllScopes && !oa.hasGrantedAllScopes(r,CAL_SCOPE)) return no(new Error("Qordel needs to see and change your calendar events. Tick that box in Google's window."));
@@ -72,28 +75,47 @@ function calApi(method,url,body){
     return fetch(url,{method:method, headers:{authorization:"Bearer "+tok, "content-type":"application/json"}, body:body?JSON.stringify(body):undefined});
   }).then(function(r){
     if(r.status===401) calForget();
-    if(!r.ok) throw new Error(calErr(r.status));
+    if(!r.ok){ var er=new Error(calErr(r.status)); er.status=r.status; throw er; }
     return r.status===204 ? null : r.json();
   });
 }
 /* Google's event, cut down to what Qordel keeps */
-function calShape(x){
+function calShape(x,cal){
   var p=(x.extendedProperties&&x.extendedProperties.private)||{}, all=!!(x.start&&x.start.date);
+  if(cal && cal!=="primary") p={};   /* Qordel adds only to the main calendar, and deletes only there */
   var o=((x.reminders||{}).overrides||[])[0];
   return {id:String(x.id||""), t:String(x.summary||"(no title)").slice(0,200),
     s:all?x.start.date:x.start.dateTime, e:all?x.end.date:x.end.dateTime, all:all,
     busy:!all && x.transparency!=="transparent", mine:(p.qordel==="meeting"||p.qordel==="reminder")?p.qordel:"", rem:o?o.minutes:null};
 }
 function calSort(ev){ return ev.sort(function(a,b){ return calStart(a)-calStart(b); }); }
+/* the calendars the person shows in Google (up to 10); the main one if the list cannot be read */
+function calWhich(){
+  return calApi("GET",CAL_BASE+"/users/me/calendarList?minAccessRole=reader&fields="+encodeURIComponent("items(id,primary,selected)"))
+    .then(function(j){
+      var ids=((j&&j.items)||[]).filter(function(x){ return x.primary||x.selected; }).map(function(x){ return x.primary?"primary":x.id; });
+      if(ids.indexOf("primary")<0) ids.unshift("primary");
+      return ids.slice(0,10);
+    },function(e){ if(e.status===401) throw e; return ["primary"]; });
+}
 function calRefresh(){
   var from=new Date(); from.setHours(0,0,0,0);
   var to=new Date(from); to.setDate(to.getDate()+CAL_DAYS);
   var q="?timeMin="+encodeURIComponent(from.toISOString())+"&timeMax="+encodeURIComponent(to.toISOString())+
-    "&singleEvents=true&orderBy=startTime&maxResults=250&fields="+encodeURIComponent("items(id,summary,start,end,transparency,status,reminders,extendedProperties/private)");
-  return calApi("GET",CAL_API+q).then(function(j){
-    var c=calStore(); c.on=true; c.at=Date.now();
-    c.ev=calSort(((j&&j.items)||[]).filter(function(x){ return x.status!=="cancelled" && x.start; }).map(calShape));
-    calSave(c); return c.ev;
+    "&singleEvents=true&orderBy=startTime&maxResults=250&fields="+encodeURIComponent("items(id,iCalUID,summary,start,end,transparency,status,reminders,extendedProperties/private)");
+  return calWhich().then(function(ids){
+    var first=null;
+    return Promise.all(ids.map(function(id){
+      return calApi("GET",CAL_BASE+"/calendars/"+encodeURIComponent(id)+"/events"+q).then(function(j){
+        return ((j&&j.items)||[]).filter(function(x){ return x.status!=="cancelled" && x.start; }).map(function(x){ var s=calShape(x,id); s.u=x.iCalUID||""; return s; });
+      },function(e){ if(!first) first=e; return null; });
+    })).then(function(lists){
+      if(lists.every(function(l){ return l===null; })) throw first;
+      /* an event in two calendars (an invitation) is shown once */
+      var seen={}, ev=[];
+      lists.forEach(function(l){ (l||[]).forEach(function(x){ var k=x.u?x.u+"|"+x.s:""; if(k&&seen[k]) return; if(k) seen[k]=1; delete x.u; ev.push(x); }); });
+      var c=calStore(); c.on=true; c.at=Date.now(); c.ev=calSort(ev); calSave(c); return c.ev;
+    });
   });
 }
 function calLocal(d){ return dstr(d)+"T"+calHM(d)+":00"; }
@@ -108,7 +130,7 @@ function calAdd(o){
     reminders:{useDefault:false, overrides:[{method:"popup", minutes:+o.before||0}]},
     extendedProperties:{private:{qordel:o.kind}}};
   return calApi("POST",CAL_API,body).then(function(x){
-    var c=calStore(); c.ev=calSort((c.ev||[]).concat([calShape(x)])); calSave(c); return x;
+    var c=calStore(); c.ev=calSort((c.ev||[]).concat([calShape(x,"primary")])); calSave(c); return x;
   });
 }
 function calDel(id){
@@ -122,6 +144,7 @@ function calOff(){
   var t=calToken();
   try{ if(t && window.google && google.accounts && google.accounts.oauth2) google.accounts.oauth2.revoke(t,function(){}); }catch(e){}
   calForget(); try{ localStorage.removeItem(calKey()); }catch(e){}
+  CAL_LIST=[];
 }
 
 /* ---- the page: the same on the phone and on the desktop ---- */
@@ -139,7 +162,8 @@ function calBody(ph){
   if(!calOn()){
     h.push('<p class="cal-lede">Connect your Google Calendar. Qordel reads your meetings for the next 7 days, and you can add meetings and reminders from here.</p>'+
       '<ul class="cal-facts"><li>Google sends the calendar straight to this device. Qordel’s server does not keep it.</li>'+
-      '<li>Qordel reads only the time, name and reminder of each event, never guests, places or notes.</li>'+
+      '<li>Qordel reads only the time, name and reminder of each event, never guests, places or notes, from the calendars you show in Google (family and school calendars too).</li>'+
+      '<li>What is booked comes first: no task during it, and a busy day asks for fewer steps.</li>'+
       '<li>Qordel deletes only what Qordel added.</li>'+
       '<li>The tutor sees when you are busy. It sees meeting names only if you turn that on.</li></ul>'+
       '<div class="cal-acts"><button type="button" class="'+P+'" data-cal="connect"'+(calWork?' disabled':'')+'>Connect Google Calendar</button></div>'+msg);
@@ -175,7 +199,15 @@ function renderCalendar(){
   el.innerHTML=calBody(false);
   if(calOn()) calGis().catch(function(){});
 }
+/* rule 6 on the desktop board: one line, a link to the Calendar tab */
+function renderBooked(){
+  var el=$("#booked-line"); if(!el) return;
+  var a=calOn()?calAhead(CAL_LIST,new Date()):null;
+  el.hidden=!a; if(!a){ el.innerHTML=""; return; }
+  el.innerHTML='<span class="booked-k">'+(a.when==="Today"?"Booked today":"Tomorrow")+'</span><span>'+esc(calAheadText(a))+'</span>';
+}
 function calPaint(){
+  renderBooked();
   renderCalendar();
   if(typeof PH_ON!=="undefined" && PH_ON && phRoute()==="calendar"){ PH_DRAWN=""; phRender(); }
 }

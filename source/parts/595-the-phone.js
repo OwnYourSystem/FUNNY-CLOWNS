@@ -383,6 +383,10 @@ function phNow(){
   h.push('<header class="ph-today"><div class="ph-today-k"><span class="ph-k">'+PH_DAYS[d.getDay()]+' \u00b7 Week '+weekNo(d)+'</span>'+
     '<time class="ph-clock" id="ph-clock">'+phClock(d)+'</time></div>'+
     '<div class="ph-head"><h1 class="ph-h1">'+d.getDate()+' '+PH_MONTHS[d.getMonth()]+' '+d.getFullYear()+'</h1>'+phEnergy()+'</div></header>');
+  /* rule 6: what is booked today, or in the evening tomorrow's first booking; the Calendar page has the rest */
+  var ah=calOn()?calAhead(CAL_LIST,d):null;
+  if(ah) h.push('<a class="ph-strip ph-booked" href="#/calendar"><span class="ph-k">'+(ah.when==="Today"?"Booked today":"Tomorrow")+'</span>'+
+    '<span class="ph-strip-t">'+esc(calAheadText(ah))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())

@@ -58,3 +58,59 @@ function calSummary(evs,days,now,names){
   out.push(free===null?"Nothing more is booked today.":free===0?"Busy right now.":"Free for "+free+" minutes before the next busy slot.");
   return out.join("\n");
 }
+
+/* ---- rule 6, commitments come first (owner, 2026-10-21) ----
+   A booking in the calendar is something the person must do: a doctor, a
+   school run, a hospital visit. It is not weighed against the goals; it
+   comes first. During a booking the board asks for nothing, and booked
+   time makes the day smaller: every 2 hours booked is one step less, never
+   below one. Kept simple on purpose: no travel time, no warm-up window.
+   CAL_LIST is the calendar kept on this device; a store part fills it
+   when the page loads and part 415 when it changes.                    */
+var CAL_LIST=[];
+/* the booking happening now, as {t, to}, or null */
+function calBookedNow(evs,now){
+  now=now||new Date();
+  var hit=null;
+  calOnDay(evs,dstr(now)).forEach(function(ev){
+    if(!hit && ev.busy && calStart(ev)<=now && calEnd(ev)>now) hit={t:ev.t, to:calHM(calEnd(ev))};
+  });
+  return hit;
+}
+/* booked minutes today inside the person's day (day start to day end) */
+function calBookedMin(evs,day,me){
+  var a=new Date(day+"T"+((me&&me.rise)||"07:00")+":00"), b=new Date(day+"T"+((me&&me.wind)||"22:30")+":00");
+  if(b<=a) b.setDate(b.getDate()+1);
+  var min=0;
+  calOnDay(evs,day).forEach(function(ev){
+    if(!ev.busy) return;
+    var s=calStart(ev), e=calEnd(ev);
+    if(s<a) s=a; if(e>b) e=b;
+    if(e>s) min+=Math.round((e-s)/60000);
+  });
+  return min;
+}
+/* the dose, made smaller by what is booked today */
+function calDose(dz,me){
+  var min=calBookedMin(CAL_LIST,todayStr(),me), cut=Math.floor(min/120);
+  if(!cut || dz.n<=1) return dz;
+  var n=Math.max(1,dz.n-cut), h=Math.round(min/30)/2;
+  dz.n=n; dz.booked=min;
+  dz.why=(dz.why?dz.why+" ":"")+h+(h===1?" hour is":" hours are")+" booked in your calendar today, so "+n+(n===1?" step.":" steps.");
+  return dz;
+}
+/* what Now says about the calendar: today's bookings still to come, or in the
+   evening (nothing more today) tomorrow's first one, to get ready for */
+function calAhead(evs,now){
+  now=now||new Date();
+  var today=calOnDay(evs,dstr(now)).filter(function(ev){ return ev.all || calEnd(ev)>now; });
+  if(today.some(function(ev){ return !ev.all; })) return {when:"Today", list:today};
+  var t=new Date(now); t.setDate(t.getDate()+1);
+  var first=calOnDay(evs,dstr(t)).filter(function(ev){ return !ev.all; })[0];
+  return first ? {when:"Tomorrow", list:[first]} : today.length ? {when:"Today", list:today} : null;
+}
+function calAheadText(a){
+  if(!a) return "";
+  var l=a.list.slice(0,3).map(function(ev){ return (ev.all?"All day":calHM(calStart(ev)))+" "+ev.t; });
+  return l.join(", ")+(a.list.length>3?", and "+(a.list.length-3)+" more":"");
+}

@@ -10,6 +10,8 @@
         delivery day; otherwise of the goal that matches what you said
         matters most; otherwise of the goal at the top of your list.
      5. In work hours only work goals; outside them only the other goals.
+     6. What is booked in your calendar comes first: no task during it,
+        and booked hours make the day smaller (part 196).
    Nothing else is weighed: no hidden scores, no "stalled" pressure.      */
 var DOSE_N={low:1,normal:3,high:5};
 /* a normal day is 3 until the person keeps a finding that says otherwise */
@@ -30,7 +32,8 @@ function energyWhy(l,n){
        : l===4 ? "Your energy is full, so today can carry more." : "";
 }
 function energyLvl(v){ v=Math.round(+v); return v>=1&&v<=4 ? v : 0; }
-function doseNow(){
+function doseNow(){ return calDose(doseBase(),state.me||freshMe()); }
+function doseBase(){
   var cap=state.cap;
   if(cap && cap.d===todayStr() && energyLvl(cap.lvl)){
     var L=ENERGY[cap.lvl], ln=doseN(L.band,cap.lvl);
@@ -86,6 +89,7 @@ function restWhy(c,dz,me){
   if(c.wound) return "Your day is over. Rest.";
   if(c.early) return "Your day starts at "+c.rise+".";
   if(dz.lvl===1) return "Your energy is very low, so nothing is needed today.";
+  var bk=calBookedNow(CAL_LIST,new Date()); if(bk) return "Booked until "+bk.to+": "+bk.t+".";
   if(lateDay(me,c.now)) return "It is the last part of your day, so nothing more is needed.";
   return "";
 }
