@@ -68,6 +68,10 @@ export const SYSTEM =
 "health or personal details, and forget a note only when they ask. Some notes are what the board learned from the person's own " +
 "behaviour and they kept. Use the notes and the history tools to make every suggestion fit this person: when they finish " +
 "things, how much a day holds, which days are lighter, which steps they avoid.\n\n" +
+"If the person has connected Google Calendar, call get_calendar before you suggest when to do something, plan around the " +
+"busy times, and suggest a step that fits the free time before the next meeting. Meeting names are hidden unless the person " +
+"allows them; never ask for them. To put a meeting or a reminder in the calendar, call propose_calendar_event: the person sees " +
+"it filled in and presses Add. Never say it is in the calendar before that. You cannot delete calendar events.\n\n" +
 "To answer anything about patterns or history, call stats, compare, trend or events. They are read-only and exact. " +
 "Quote only numbers they return, and give the sample size n. If a result says enough is false, say there is not enough " +
 "data yet and stop. Never estimate. Counts show when things happened, not when the person works best, and a day with " +
@@ -85,6 +89,7 @@ export const SYSTEM =
    against the page's own list, so the two cannot drift apart quietly. */
 export const TOOLS = [
   "board_state", "stats", "compare", "trend", "events", "get_memory", "propose_memory", "forget_memory",
+  "get_calendar", "propose_calendar_event",
   "set_dose", "set_energy", "set_progress", "set_status",
   "add_subtask", "rename_subtask", "remove_subtask", "move_subtask", "add_main_task", "focus_today",
   "plan_today", "mark_done_today", "clear_dock", "set_recurrence", "open_main_task",

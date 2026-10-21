@@ -604,6 +604,9 @@ var BRAIN=[
    }],
   [/^(?:how (?:far |much )?(?:is|along is|done is) )(.+)$/,
    function(m){ var sb=fuzSub(m[1]); return sb.name+" is "+sb.pct+"%, "+statusOf(sb).label.toLowerCase()+"."; }],
+  /* Google Calendar, read on this device (part 415) */
+  [/^(?:what(?:'s| is) on my calendar(?: today)?|whats on my calendar(?: today)?|(?:show )?my calendar(?: today)?|calendar|(?:my )?meetings(?: today)?|what meetings do i have(?: today)?)$/,
+   function(){ return calSpeak(); }],
   [/^(?:help|what can you do|what can i say|commands)$/,
    function(){ return "Say: add a task called weekly review. Paint the shelf to 40 percent. "+
      "Done with it. Focus on the garden. Move it to Home. Repeat it daily. "+
@@ -620,7 +623,8 @@ try{ window.__board={brain:function(t){ return localBrain(t); },ask:function(t){
   week:{set:weekSet, data:weekData, due:weekDue, note:weekNote, clear:weekClear, key:weekKeyOf},
   journal:{add:jrAdd, data:jrData, check:jrCheckpoint, card:jrCardOn, split:jrSplit, day:jrDay, clear:jrClear},
   floor:{set:floorSet, toggle:floorToggle, state:floorState, today:floorToday, days:floorDays, met:floorMet}, est:{set:estSet, state:estState, answer:estAnswer, ratio:estRatio, line:estCompareLine, tidy:estTidy}, rules:BOT_RULES, distress:function(t){ return DISTRESS.test(t); },
-  mem:{list:memList, kept:memKept, add:memAdd, keep:memKeep, drop:memDrop, say:memSay, ok:memOk, tick:memTick, find:memFindings, snap:botSnapshot, dose:doseNow}}; }catch(e){}
+  mem:{list:memList, kept:memKept, add:memAdd, keep:memKeep, drop:memDrop, say:memSay, ok:memOk, tick:memTick, find:memFindings, snap:botSnapshot, dose:doseNow},
+  cal:{events:calEvents, tutor:calForTutor, propose:calPropose, say:calSpeak, next:calNext, free:calFreeMin, tools:function(){ return botTools().map(function(t){ return t.name; }); }}}; }catch(e){}
 /* When no pattern fits, read the sentence for what it is plainly asking.
    Speech does not arrive in the shape a pattern expects, so this reads the
    verb and takes whatever is left as the name.                            */

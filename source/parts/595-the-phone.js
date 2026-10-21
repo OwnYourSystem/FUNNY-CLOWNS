@@ -32,7 +32,7 @@ function phNav(href,label){ return '<a class="ph-nav" href="'+href+'" aria-label
 /* where Back (and a swipe in from the left edge) goes from here */
 function phParent(){
   var r=phRoute();
-  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned") return "#/you";
+  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar") return "#/you";
   if(r==="goal") return "#/goals";
   if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
@@ -334,7 +334,7 @@ function phDays(){
 }
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
-    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var on=a.getAttribute("data-tab")===(r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -370,6 +370,7 @@ function phRender(){
     : r==="tags" ? phTags()
     : r==="planner" ? phPlanner()
     : r==="learned" ? phLearned()
+    : r==="calendar" ? phCalendar()
     : (talk||old) ? ""
     : phNow());
   phMini(r,onb);
@@ -752,12 +753,18 @@ function phYou(){
     phRow("easyedit","My easy things",floorState().items.length?String(floorState().items.length):"Add")+
     phRow("remind","Reminders",remOn?((c.am?clockLabel(c.amAt):"")+(c.am&&c.pm?" and ":"")+(c.pm?clockLabel(c.pmAt):"")||"Both off"):"Off")+
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
-    phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+'</div>');
+    phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
+    phRow("calendar","Google Calendar",!calSetUp()?"Not set up":calOn()?"Connected":"Connect")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Data and look</h2><div class="ph-grp">'+
     phRow("backup","Backup, restore and reset","")+phRow("theme","Theme",th.charAt(0).toUpperCase()+th.slice(1),true)+'</div>');
   return h.join("");
+}
+/* Google Calendar, its own page (owner, 2026-10-21); part 415 draws the body for the phone and the desktop */
+function phCalendar(){
+  if(calOn()) calGis().catch(function(){});
+  return '<div>'+phNav("#/you","You")+'<h1 class="ph-h1">Calendar</h1><p class="ph-sub">Your Google Calendar for the next 7 days.</p></div>'+calBody(true);
 }
 function phTile(href,t,s){ return '<a class="ph-tile" href="'+href+'"><span>'+esc(t)+'</span><span class="ph-k">'+esc(s)+'</span>'+PH_CHEV+'</a>'; }
 /* a row that opens something has a chevron; one that switches at once (noChev) has not */
@@ -1232,6 +1239,7 @@ function phOnbFinish(add){
     else if(k==="remind") $("#btn-remind").click();
     else if(k==="remtest") phTestNote();
     else if(k==="planner") phGo("planner");
+    else if(k==="calendar") phGo("calendar");
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }

@@ -6,7 +6,8 @@ var I_TAGS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 var I_BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h9"/></svg>';
 var I_ARCH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4"/></svg>';
 var I_PLAN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
-var PAGES=[["board","Board",I_BOARD],["planner","Planner",I_PLAN],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
+var I_CAL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+var PAGES=[["board","Board",I_BOARD],["planner","Planner",I_PLAN],["calendar","Calendar",I_CAL],["tags","Tags",I_TAGS],["backlog","Backlog",I_BACK],["archive","Archive",I_ARCH]];
 
 (function(){
   var rail=$("#rail");
