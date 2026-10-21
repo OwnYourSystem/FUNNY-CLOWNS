@@ -64,13 +64,21 @@ await page.evaluate(([KEY]) => {
 }, [KEY]);
 await page.reload(); await page.waitForSelector(".row.pick");
 const ask = async (q) => { await page.evaluate((q) => window.__board.ask(q), q); await page.waitForTimeout(500); };
-const log = () => page.evaluate(() => [...document.querySelectorAll("#bot-log .bot-msg")].map((d) => d.className.replace("bot-msg ", "") + ": " + d.textContent));
+/* an answer from the model carries an "AI" label (2026-10-21, EU AI Act Article 50): shown here as "[AI] " */
+const log = () => page.evaluate(() => [...document.querySelectorAll("#bot-log .bot-msg")].map((d) => { const l = d.querySelector(".bot-ai"), c = d.cloneNode(true);
+  const x = c.querySelector(".bot-ai"); if (x) x.remove(); return d.className.replace("bot-msg ", "") + ": " + (l ? "[AI] " : "") + c.textContent; }));
 const clear = () => page.evaluate(() => document.querySelector("#bot-clear").click());
 
 // 1. offline answers never touch the proxy
 upstream = [];
 await ask("what do i skip");
-await ok("a question the board can answer itself makes no call", async () => { assert.equal(upstream.length, 0); });
+await ok("a question the board can answer itself makes no call, and its answer has no AI label", async () => {
+  assert.equal(upstream.length, 0); const l = await log(); assert.ok(l.length >= 2); assert.ok(!l.some((x) => x.includes("[AI]")), l.join("\n"));
+});
+await ok("Talk says plainly, all the time, when an AI is involved (signed in: Claude by Anthropic, what it sees, it can make mistakes)", async () => {
+  const n = await page.evaluate(() => document.querySelector("#bot-ai-note").textContent);
+  assert.match(n, /^Answers marked AI come from an AI model \(Claude, by Anthropic\)/); assert.match(n, /never your journal or check-ins/); assert.match(n, /It can make mistakes/);
+});
 
 // 2. a real chat turn with a tool round
 queue = [
@@ -90,7 +98,7 @@ await ok("the answer quotes numbers the page computed locally (checked against a
   }, KEY);
   const l = (await log()).join("\n");
   assert.ok(exp.n >= 20 && exp.morning >= 15, JSON.stringify(exp));
-  assert.ok(l.includes("bot: In the last 30 days: " + exp.n + " finished, morning " + exp.morning + "."), l + " / expected " + JSON.stringify(exp));
+  assert.ok(l.includes("bot: [AI] In the last 30 days: " + exp.n + " finished, morning " + exp.morning + "."), l + " / expected " + JSON.stringify(exp));
 });
 await ok("the first request has the context tag and only allowed tools, no system from the page", async () => {
   const m0 = turn1[0].messages[0]; assert.match(m0.content, /^\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}; today's dose: normal\] Tell me what you notice/);

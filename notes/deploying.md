@@ -187,3 +187,28 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   agent plan). Until then each server instance counts per person.
 - Also on the owner: a monthly spend limit on QORDEL_ORDER_KEY in the Anthropic console.
 - Full regression: 39 browser suites, 840 checks, 0 failures.
+
+## 2026-10-21: production moved to 9e34323 (flaw 1 closed: Suggest an order needs sign-in)
+
+- Owner: "release it". Production deployment `dpl_BtENKpLGeURiMdfVMv2Ahnu54KBF`.
+- Rolling back: `dpl_EseVHrUjcKtivGaVajkPcthtdzYE` (6f03082, example goals). Rolling back reopens flaw 1.
+- Full regression on 9e34323: 39 browser suites, 840 checks, 0 failures.
+
+## 2026-10-21: live database read for flaw 2 (read-only, nothing changed)
+
+- Supabase project `phicqgnzqnuwugzbgxxw` ("deliveries-board") runs in **eu-north-1** (Stockholm).
+- boards: row-level security on, 4 own-row rules for signed-in people. Sound. Browser roles hold every
+  table privilege (Supabase default), TRUNCATE included; not reachable through REST. Tightening written
+  in 20261021090100_boards_tighten_grants.sql, NOT applied.
+- push_status, push_hourly, push_alerts, 2 views, 3 owner-rights functions and 2 jobs were live with no
+  file in the repo. Recorded in 20261021090000_record_live_schema.sql (idempotent), NOT applied.
+- The 3 owner-rights functions are callable only by the server role. Sound.
+- Edge functions: push (version 3) and alert. The repo now holds both as they are live; the push
+  function's new address rule (flaw 12) is in the repo, NOT deployed.
+
+## 2026-10-21: preview 8d16e70 (flaws 2, 12, 5 AI notice, 7), NOT in production
+
+- Owner: "release it, then do 2, 3 and 4". The app part (AI notice, AI label, Speak wording) is in the
+  preview. The server parts wait for the owner: 2 migrations (record, tighten grants) and the push
+  function's new address rule are written, not applied or deployed.
+- Full regression: 40 browser suites, 851 checks, 0 failures.

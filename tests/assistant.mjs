@@ -37,6 +37,10 @@ await ok("an Assistant button in the header opens a plain chat and Escape closes
   assert.equal(await p.locator("#botsheet").isHidden(), true); assert.equal(await btn.getAttribute("aria-expanded"), "false");
   await btn.click(); await p.locator("#botsheet").waitFor({ state: "visible" });
 });
+await ok("signed out, Talk says simple commands run on this device with no AI, and names the AI model it can use when signed in", async () => {
+  const n = await p.evaluate(() => { window.__board.openSheet(); return document.querySelector("#bot-ai-note").textContent; });
+  assert.match(n, /^Simple commands are handled on this device, with no AI\. When you are signed in, other questions can go to an AI model \(Claude, by Anthropic\)\.$/);
+});
 await ok("help lists what it can do, by group, and says check-ins are private", async () => {
   const r = await say("help"); for (const g of ["TODAY", "STEPS", "GOALS", "SETTINGS", "EASY THINGS", "CHECK-IN", "JOURNAL", "GO TO"]) assert.ok(r.includes(g), g);
   assert.match(r, /private/);

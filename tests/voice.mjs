@@ -40,6 +40,8 @@ const botCount = (p) => p.evaluate(() => document.querySelectorAll("#bot-log .bo
     assert.equal(r.started, true); assert.match(r.lang, /^en/); assert.equal(r.interim, true);
     assert.equal(await p.locator("#bot-mic").getAttribute("aria-pressed"), "true");
     assert.match(await p.locator("#bot-note").innerText(), /speech service/);
+    /* it says who hears the voice (2026-10-21, flaw 7): the service by name, and that the sound may leave the device */
+    assert.match(await p.locator("#bot-note").innerText(), /Google in Chrome, Apple in Safari\) turns your voice into text and may send the sound to its servers\. Qordel keeps only the text/);
   });
   await ok("the words land in the box and nothing is sent or changed until Send", async () => {
     const n = await botCount(p); await hear(p, "I would like to journal my day");
