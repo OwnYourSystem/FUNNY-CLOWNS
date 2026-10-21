@@ -142,3 +142,14 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   The real-phone screen-reader test (notes/screen-reader-test.md) and the user sessions
   (notes/user-sessions-anxiety.md) need people and are ready to run.
 - Full regression: 37 browser suites, 818 checks, 0 failures; purity 239.
+
+## 2026-10-21: production moved to abeed3e (5 rules, AI restored, learning, read aloud, WCAG fixes)
+
+- Owner: "release it". Everything since b926c96: desktop parity (7d04733); the 5 rules and the right
+  column removed (4e80a03); the AI order suggestion and the tutor's memory restored (ce904ea); learning
+  from behaviour (1c2e763); read aloud and the WCAG 2.2 AA fixes (abeed3e).
+- Full regression on abeed3e: 37 browser suites, 818 checks, 0 failures; purity 239.
+- Production deployment `dpl_AmgQNBgD9ux5mQa3SvYBTeLFuwne`.
+- Rolling back: `dpl_4mVsS5tWUANNbC3A8HriCKGfjJp2` (b926c96, energy, sequence, AI order suggestion).
+- Not in this release: an in-app note that tells existing users the next step is now chosen by the
+  5 rules (principle 6, "no surprise"). Open: confirm ANTHROPIC_API_KEY is set for the tutor.
