@@ -16,8 +16,8 @@ function boot2(){
   if(!state.hist) state.hist=[]; if(!state.log) state.log=[];
   if(!state.groups) state.groups=[]; if(!state.subs) state.subs={};
   toGoals();
+  sync(); unseedHere();
   if(!state.sel||!gById(state.sel)) state.sel=state.groups.length?state.groups[0].id:"";
-  sync();
   if(!state.hist.length) seedHist();
   rollRecurring(); save(); renderAll();
 }

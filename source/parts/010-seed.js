@@ -2,102 +2,66 @@
 "use strict";
 
 /* ===============================================================
-   SEED  —  the shipped board.
-   Bump SEED_REV whenever this list changes. On load the board adds
-   what is new, relocates what moved and renames what was renamed,
-   and NEVER overwrites progress, status or anything you have
-   edited yourself. Deleted items stay deleted.
-   pct/ago are placeholder figures for items that predate the real
-   data; everything added later starts at 0 and todo.
+   SEED  —  what a new board starts with: nothing.
+   Up to revision 6 this list held the owner's own goals, and every new
+   board got them (flaw 13, 2026-10-21). A new board now starts empty and
+   the first-goal screen offers examples instead. Bump SEED_REV whenever
+   this list changes. On load the board adds what is new and NEVER
+   overwrites progress, status or anything you have edited yourself.
 ================================================================*/
-var SEED_REV = 6;
+var SEED_REV = 7;
 var RETIRED = ["tch","enb"];   /* withdrawn; a group goes only if it ends up empty */
+var SEED=[];
 
-var SEED=[
- {id:"svc",name:"Service Desk + client requests",subs:[
-   {id:"svc1",name:"Service Desk project updates",pct:70,ago:2,status:"doing"}]},
- {id:"vgd",name:"Vanguard",subs:[
-   {id:"vg1",name:"Stakeholders identification",pct:100,ago:11,status:"done"},
-   {id:"vg2",name:"Team Building notifications",pct:60,ago:4,status:"doing"},
-   {id:"vg3",name:"Survey Set up for Esbjerg",pct:30,ago:9,status:"doing"},
-   {id:"vg4",name:"Prompting Copilot Tutorial — video",pct:100,ago:17,status:"done"},
-   {id:"vg5",name:"Excel in Copilot — video",pct:75,ago:3,status:"doing"},
-   {id:"vg6",name:"SAP data in Copilot — video",pct:20,ago:16,status:"doing"},
-   {id:"vg7",name:"Agents — video",pct:0,ago:30,status:"todo"},
-   {id:"vg8",name:"Frameworks — video",pct:0,ago:30,status:"todo"},
-   {id:"vg9",name:"Esbjerg Meeting plans → Travel Plan",pct:40,ago:5,status:"doing"},
-   {id:"tc1",name:"Start up the IT Teams Channel for users about AI specially",pct:15,ago:21,status:"doing"}]},
- {id:"llm",name:"Local LLM Sunscape",subs:[
-   {id:"ll7",name:"Present the DSP Playbook solution as use case",pct:5,ago:19,status:"doing",tag:"Planning"},
-   {id:"ll1",name:"Sandbox architecture design",pct:55,ago:1,status:"doing"},
-   {id:"ll2",name:"Compliance assessment → rules from Leon",pct:25,ago:12,status:"blocked"},
-   {id:"ll3",name:"Security assessment",pct:10,ago:8,status:"doing"},
-   {id:"ll4",name:"Cost estimation",pct:0,ago:30,status:"todo"},
-   {id:"ll5",name:"Risk assessment",pct:0,ago:30,status:"todo"},
-   {id:"ll6",name:"Recommendation document",pct:0,ago:30,status:"todo"},
-   {id:"ll8",name:"Fine Tuning",pct:0,ago:0,status:"todo"}]},
- {id:"sap",name:"SAP",subs:[
-   {id:"sp1",name:"Discovery: define scope, stakeholders, and data sources for SAP Datasphere & Analytics",pct:0,ago:0,status:"todo"},
-   {id:"sp2",name:"Backlog seeding workshop: capture initial epics and acceptance criteria",pct:0,ago:0,status:"todo"},
-   {id:"sp3",name:"SAP Migration Issues",pct:0,ago:0,status:"todo"},
-   {id:"sp4",name:"SAP Datasphere Mastering",pct:0,ago:0,status:"todo"},
-   {id:"sp5",name:"Follow the Learning portal sessions",pct:0,ago:0,status:"todo"},
-   {id:"sp6",name:"SAP Analytical Cloud Mastering",pct:0,ago:0,status:"todo"},
-   {id:"sp7",name:"Becoming a monster in customizing the models and metadata",pct:0,ago:0,status:"todo"},
-   {id:"en1",name:"SAP Datasphere and SAP Analytics",pct:45,ago:4,status:"doing"},
-   {id:"en3",name:"Power BI re-structuring after the SAP Cloud goes live",pct:10,ago:6,status:"doing"}]},
- {id:"ofm",name:"OFM",subs:[
-   {id:"of1",name:"Solve the problem of Refresh in RV_STRM_GAS_DER_STRM",pct:0,ago:0,status:"todo"},
-   {id:"of2",name:"Live Data extraction",pct:0,ago:0,status:"todo"}]},
- {id:"grs",name:"Partnership",subs:[
-   {id:"gs1",name:"Rune",pct:50,ago:7,status:"doing"},
-   {id:"gs2",name:"On SAC (Maintanance)",pct:35,ago:3,status:"doing"},
-   {id:"gs3",name:"On PowerPlatform",pct:20,ago:15,status:"doing"},
-   {id:"gs4",name:"On SAC (finance)",pct:15,ago:10,status:"doing"}]},
- {id:"alc",name:"Alchemy",subs:[
-   {id:"al5",name:"terraform set up and bronze db reshuffle",pct:0,ago:0,status:"todo"},
-   {id:"al1",name:"ADF Update on Landing Zone",pct:80,ago:2,status:"doing"},
-   {id:"al3",name:"Terraform and Databricks IaC approach",pct:35,ago:9,status:"doing"},
-   {id:"al4",name:"Automate the update landing to Bronze",pct:25,ago:14,status:"doing"},
-   {id:"al2",name:"Bronze Database on Databricks",pct:60,ago:5,status:"doing"}]},
- {id:"aut",name:"Automation Debt",subs:[
-   {id:"au1",name:"azure cybersecurity",pct:40,ago:6,status:"doing"},
-   {id:"au4",name:"sap datasphere requests via DSP CLI",pct:0,ago:0,status:"todo"},
-   {id:"au2",name:"Databricks",pct:30,ago:11,status:"doing"},
-   {id:"au3",name:"Datasphere CLI ( as POC)",pct:20,ago:18,status:"doing"},
-   {id:"au5",name:"ADF best practices",pct:0,ago:0,status:"todo"},
-   {id:"svc2",name:"copilot ai agent projects",pct:45,ago:6,status:"doing"},
-   {id:"au7",name:"power platform solutions",pct:0,ago:0,status:"todo"}]},
- {id:"ppm",name:"Power Platform management",subs:[
-   {id:"pp1",name:"Relocate Power Apps and Power Automate Flows in Solution Box",pct:45,ago:8,status:"doing"}]},
- {id:"anb",name:"ai native bootcamp",subs:[
-   {id:"an1",name:"ML concepts and practices",pct:0,ago:0,status:"todo"},
-   {id:"en2",name:"AI Bootcamp tier 2: LLMs",pct:30,ago:13,status:"doing"}]},
- {id:"apd",name:"Applications development",subs:[
-   {id:"ap1",name:"ETF Adviser",pct:0,ago:0,status:"todo"},
-   {id:"ap2",name:"Life-Brain",pct:0,ago:0,status:"todo"},
-   {id:"ap3",name:"Mind Anchor",pct:0,ago:0,status:"todo"},
-   {id:"ap4",name:"Verbatim",pct:0,ago:0,status:"todo"},
-   {id:"ap5",name:"Tysk-DK",pct:0,ago:0,status:"todo"},
-   {id:"ap6",name:"Property Evaluation",pct:0,ago:0,status:"todo"}]},
- {id:"oys",name:"OYS_Version3",subs:[
-   {id:"oy1",name:"OYS Tracker",pct:0,ago:0,status:"todo"},
-   {id:"oy2",name:"UDEMY AIGP Course",pct:0,ago:0,status:"todo"},
-   {id:"oy3",name:"Other courses NIST, DORA, ISO …?",pct:0,ago:0,status:"todo"},
-   {id:"oy4",name:"Get the certificate",pct:0,ago:0,status:"todo"}]},
- {id:"tcs",name:"The Compromised Stack",subs:[
-   {id:"tc9",name:"Obsidian + Claude set up",pct:0,ago:0,status:"todo"},
-   {id:"tc8",name:"Start chapter 0",pct:0,ago:0,status:"todo"}]},
- {id:"shr",name:"Shredding and Mastering",subs:[
-   {id:"sh1",name:"Daily training Shredding",pct:0,ago:0,status:"todo"},
-   {id:"sh2",name:"Airbike",pct:0,ago:0,status:"todo"},
-   {id:"sh3",name:"Running",pct:0,ago:0,status:"todo"},
-   {id:"sh4",name:"Workout",pct:0,ago:0,status:"todo"}]},
- {id:"bks",name:"Books To Read",subs:[
-   {id:"bk1",name:"The order of Time",pct:0,ago:0,status:"todo"},
-   {id:"bk2",name:"When Breath Becomes Air",pct:0,ago:0,status:"todo"},
-   {id:"bk3",name:"Reality is not what it seems",pct:0,ago:0,status:"todo"}]}
-];
+/* The ids those old goals and steps had. Ids only: the names are gone from
+   the app. Every id the app makes itself is 7 characters or more, so these
+   2 to 4 character ids can only ever be the old seed. */
+var OLD_SEED=[
+ "svc","svc1","vgd","vg1","vg2","vg3","vg4","vg5","vg6","vg7","vg8","vg9","tc1","llm","ll7","ll1",
+ "ll2","ll3","ll4","ll5","ll6","ll8","sap","sp1","sp2","sp3","sp4","sp5","sp6","sp7","en1","en3",
+ "ofm","of1","of2","grs","gs1","gs2","gs3","gs4","alc","al5","al1","al3","al4","al2","aut","au1",
+ "au4","au2","au3","au5","svc2","au7","ppm","pp1","anb","an1","en2","apd","ap1","ap2","ap3","ap4",
+ "ap5","ap6","oys","oy1","oy2","oy3","oy4","tcs","tc9","tc8","shr","sh1","sh2","sh3","sh4","bks",
+ "bk1","bk2","bk3","tch","enb"];
+/* Takes the old seed out of one board, once. A goal or step the person
+   renamed is theirs and stays. A seed goal that holds steps of their own
+   stays too, under a plain name, so their steps keep a home. Notes the board
+   learned about an old step go with it. Returns how many things went. */
+function unseedBoard(st){
+  if(!st || st.unseeded) return 0;
+  var ids={}, ue=st.ue||{}, gone=0;
+  OLD_SEED.forEach(function(id){ ids[id]=1; });
+  function own(id){ return !!ue[id+"|name"]; }
+  var subs=st.subs||{};
+  Object.keys(subs).forEach(function(id){ if(ids[id] && !own(id)){ delete subs[id]; gone++; } });
+  function keepGoal(g){
+    if(!g || !ids[g.id]) return true;
+    g.subs=(g.subs||[]).filter(function(s){ return !!subs[s]; });
+    if(own(g.id)) return true;
+    if(g.subs.length){ g.name="My goal"; return true; }
+    gone++; return false;
+  }
+  function trim(g){ if(g && g.subs) g.subs=g.subs.filter(function(s){ return !!subs[s]; }); return g; }
+  st.groups=(st.groups||[]).filter(keepGoal).map(trim);
+  st.archive=(st.archive||[]).filter(keepGoal).map(trim);
+  st.backlog=(st.backlog||[]).filter(function(b){
+    if(!b.goal) return true;
+    var k=keepGoal(b.goal); trim(b.goal);
+    if(k && ids[b.goal.id] && !own(b.goal.id)) b.t=b.goal.name;
+    return k;
+  });
+  ["oftad","plan","done"].forEach(function(z){
+    st[z]=(st[z]||[]).filter(function(c){ return !ids[c.id] || !!subs[c.id]; });
+  });
+  if(st.mem) st.mem=st.mem.filter(function(m){ return !(m.key && /^skip-/.test(m.key) && ids[m.key.slice(5)] && !subs[m.key.slice(5)]); });
+  if(st.memNo) Object.keys(st.memNo).forEach(function(k){ if(/^skip-/.test(k) && ids[k.slice(5)] && !subs[k.slice(5)]) delete st.memNo[k]; });
+  if(st.sel && ids[st.sel] && !st.groups.some(function(g){ return g.id===st.sel; })) st.sel=st.groups.length?st.groups[0].id:"";
+  /* a device that had pushed to an account forgets when, so signing in again
+     weighs both copies instead of pushing this cleaned one over the account */
+  if(gone) st.syncedAt=0;
+  st.unseeded=1;
+  return gone;
+}
 
 var KEY="oys-min-deliveries-v1";
 var STATUSES=[["todo","Todo"],["doing","Doing"],["blocked","Blocked"],["done","Done"]];
