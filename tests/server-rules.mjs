@@ -19,7 +19,13 @@ ok("push function: subscribe and unsubscribe from another site are refused; the 
   assert.match(push, /\(path === "subscribe" \|\| path === "unsubscribe"\) && origin && !okOrigin\(origin\)\) return json\(\{ error: "other_site" \}, 403\)/);
   assert.match(push, /if \(path === "tick" && req\.method === "POST"\) \{\s*const secret/);
 });
-ok("push function in the repo matches live version 4: it records counts with push_record", () => { assert.match(push, /db\.rpc\("push_record"/); });
+ok("push function in the repo matches live version 5: it records counts with push_record", () => { assert.match(push, /db\.rpc\("push_record"/); });
+ok("push function: only the live app (and localhost) may sign up; a preview's sign-up is refused and its old one removed", () => {
+  const LIVE = (0, eval)(push.match(/const LIVE = (\[[\s\S]*?\]);/)[1]); const live = (o) => LIVE.some((r) => r.test(o));
+  for (const o of ["https://funny-clowns.vercel.app", "http://localhost:8731", "http://127.0.0.1:8731"]) assert.ok(live(o), o);
+  for (const o of ["https://funny-clowns-k3jfdvlgs-oys-s-projects.vercel.app", "https://funny-clowns-git-app-oys-s-projects.vercel.app", "https://evil.example"]) assert.ok(!live(o), o);
+  assert.match(push, /if \(origin && !liveOrigin\(origin\)\) \{\s*const gone = await db\.from\("push_subs"\)\.delete\(\)\.eq\("endpoint", row\.endpoint\)\.eq\("auth", row\.auth\);[\s\S]*?return json\(\{ error: "live_app_only" \}, 403\);/);
+});
 ok("the alert function is in the repo, sends counts only, and needs the tick secret", () => {
   const a = read("supabase/functions/alert/index.ts"); assert.match(a, /x-tick"\) !== cfg\.tick\) return json\(\{ error: "no" \}, 401\)/);
   assert.match(read("supabase/functions/alert/alerts.js"), /This message holds counts only/);

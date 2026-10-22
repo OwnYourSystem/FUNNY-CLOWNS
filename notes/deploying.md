@@ -294,3 +294,17 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   old goal names.
 - Tests: full suite on web-test 43 suites, 919 checks, 0 failures; after the coming-soon wording, calendar (26),
   web (13) and purity (259) re-run clean.
+
+## 2026-10-22: reminders from an old preview; push function version 5
+
+- Owner: notifications open an old version (screenshot: a "...-oys-s-projects.vercel.app" address, "Normal day",
+  "Something else"). Cause: 2 reminder sign-ups, both the owner's Android Chrome. Sign-up 7 (18 October, 07:30,
+  never changed) was made on a test preview; that preview's frozen code shows the notification and opens itself.
+  Sign-up 5 (6 October, times changed 19 October, 06:30 and 18:30) is the live app.
+- Deleting sign-up 7 through the Supabase connection came back "cancelled" (as the migrations did). Not retried.
+  The owner removes the preview's notification permission in Chrome; the next send then fails as gone and the
+  function deletes the row. Or, in the SQL editor: `delete from public.push_subs where id = 7;`
+- Push function version 5 (app commit after ce68b4b): only https://funny-clowns.vercel.app and localhost may sign
+  up. A preview's sign-up is refused (403 live_app_only) and the device's earlier preview sign-up is deleted.
+  Previews may still turn reminders off. The app already shows a calm message when a sign-up fails.
+- tests/server-rules.mjs: 10 checks, 0 failures.
