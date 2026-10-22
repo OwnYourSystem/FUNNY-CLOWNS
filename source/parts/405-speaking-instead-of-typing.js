@@ -19,6 +19,7 @@ function micInto(el,btn,say){
   r.onresult=function(e){
     got=""; for(var i=0;i<e.results.length;i++) got+=e.results[i][0].transcript;
     el.value=(base?base+" ":"")+got.trim();
+    try{ el.dispatchEvent(new Event("input")); }catch(e){}
   };
   r.onerror=function(e){
     var k=e&&e.error;

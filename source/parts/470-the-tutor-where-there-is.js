@@ -156,7 +156,7 @@ async function botAsk(text,opts){
   if(!said) return;
   PEND=null; pendRender();                         /* a new sentence replaces a waiting question */
   micStop();
-  $("#bot-input").value="";
+  $("#bot-input").value=""; botFit();
   /* the board answers its own commands first: no model, no network, no wait */
   var reply=null, care=DISTRESS.test(said);
   if(care) reply=SAFE_REPLY;
@@ -207,11 +207,10 @@ async function botAsk(text,opts){
 
 (function(){
   botOpen(false);   /* it opens when you ask for it, never on its own */
-  var chips=[["Help","help"],
+  /* 3 things to ask, no more (2026-10-22); help still answers when typed */
+  var chips=[["What should I do now?","what should i do now"],
              ["What is left today?","what is left today"],
-             ["Make today a rough day","make today a rough day"],
-             ["What needs attention?","what needs attention"],
-             ["How am I doing this week?","how am i doing this week"]];
+             ["Make today lighter","make today a rough day"]];
   var box=$("#bot-chips");
   chips.forEach(function(c){
     var b=document.createElement("button");
@@ -230,6 +229,7 @@ $("#bot-send").addEventListener("click",function(e){
   e.stopPropagation();
   var v=$("#bot-input").value.trim(); if(v) botAsk(v);
 });
+$("#bot-input").addEventListener("input",botFit);
 $("#bot-input").addEventListener("keydown",function(e){
   if(e.key==="Enter"){ e.preventDefault(); var v=this.value.trim(); if(v) botAsk(v); }
 });

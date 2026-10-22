@@ -1339,23 +1339,6 @@ html.ph .io-priv{min-height:44px}
 #ph-tbrand{display:none}
 html.ph.ph-talk #ph-tbrand{display:flex; margin:0 auto 0 0}
 html.ph.ph-talk .sheet-head{justify-content:space-between}
-/* ---- Talk: you write at the top, in a big box (2026-10-19) ----
-   The box sits where the eye starts, under the name. The answer comes just
-   below the chips, newest first, so the question and its answer stay
-   together on screen. The sheet scrolls as one page.                    */
-html.ph.ph-talk #botsheet{overflow-y:auto}
-html.ph.ph-talk .sheet-head{order:0}
-html.ph.ph-talk .bot-ask{order:1; flex-wrap:wrap; justify-content:flex-end; margin-top:4px}
-html.ph.ph-talk #bot-input{flex:1 1 100%; min-height:9.5em; padding:14px 16px; border-radius:18px; line-height:1.45; background:var(--panel); border:1px solid var(--rule)}
-html.ph.ph-talk .bot-pend{order:2}
-html.ph.ph-talk .bot-chips{order:3}
-html.ph.ph-talk .bot-note{order:3}
-/* the AI notice sits under the chips, just above the answers, so the writing box stays at the top (2026-10-21) */
-html.ph.ph-talk .bot-ai-note{order:3; border-bottom:0; padding:2px 2px 8px}
-html.ph.ph-talk .bot-log{order:4; flex:0 0 auto; max-height:none; overflow:visible; flex-direction:column-reverse; padding-right:0}
-/* a reply that reads at a glance: a card, short paragraphs set justified,
-   lists as rows with hairlines, headings small; the head stays on top */
-html.ph.ph-talk .sheet-head{position:sticky; top:-12px; z-index:3; background:var(--ground); margin:-12px -16px 0; padding:12px 16px 10px}
 .ph-big{margin:48px 0 0; font-size:2rem; line-height:1.12; font-weight:600; letter-spacing:-.02em}
 .ph-lede{margin:0; font-size:1rem; line-height:1.5; color:var(--ink-2)}
 .ph-mt{margin-top:4px}
@@ -1703,6 +1686,61 @@ html.ph-web #ph-tbrand{display:none !important}
 html.ph-web dialog.ask{margin:auto; width:min(520px,calc(100vw - 48px)); max-width:none; border-radius:22px; border-bottom:1px solid var(--hair)}
 html.ph-web .ask-in{padding-bottom:20px}
 html.ph-web :is(.cursor-ring,.spotlight){display:none !important}
+/* ---- Talk, made calm (owner, 2026-10-22: "make it much more simple ... more space and an eye-friendly view") ----
+   The conversation has the screen. One rounded bar at the bottom takes the words, with the microphone and
+   the send arrow inside it, as in the messaging apps people already know; it grows as you write. The newest
+   answer sits at the bottom, next to where you type. With nothing said yet: a greeting, one question, 3
+   things to ask and the AI notice. The name, the long help text and Clear are gone; New chat shows once
+   there is a chat. Text is larger, answers are plain text on the page, not boxes.                     */
+.bot-title{display:none}
+.bot-ico{display:none}
+html.ph.ph-talk #botsheet{display:flex; flex-direction:column; overflow:hidden; padding:0; gap:0}
+html.ph.ph-talk :is(#ph-tbrand,.bot-mark,.bot-name,#bot-min,#ph-mini){display:none !important}
+html.ph.ph-talk .sheet-head{order:0; position:static; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin:0; padding:10px 20px 4px; background:none; border:0}
+html.ph.ph-talk.ph-has-me .sheet-head{padding-right:20px}
+html.ph.ph-talk .bot-title{display:block; margin:0; font-size:1.75rem; line-height:1.2; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+html.ph.ph-talk #bot-clear{min-height:44px; padding:0 6px; border:0; background:none; box-shadow:none; color:var(--ink-2); font-size:1rem; font-weight:500}
+html.ph.ph-talk #botsheet:not(.bot-has) #bot-clear{visibility:hidden}
+html.ph.ph-talk .bot-log{order:1; flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto; overscroll-behavior:contain;
+  display:flex; flex-direction:column; gap:22px; margin:0; padding:12px 20px 20px; border:0}
+html.ph.ph-talk .bot-turn{gap:12px}
+html.ph.ph-talk .bot-msg,html.ph.ph-talk .bot-msg :is(p,.bot-p){font-size:1.0625rem; line-height:1.55; text-align:left; hyphens:manual}
+html.ph.ph-talk :is(.bot-t,.bot-p){text-align:left; hyphens:manual; -webkit-hyphens:manual}
+html.ph.ph-talk .bot-msg.bot{padding:0; background:none; border:0; border-radius:0; box-shadow:none; color:var(--ink)}
+html.ph.ph-talk .bot-msg.you{max-width:85%; padding:10px 16px; border-radius:20px; border-bottom-right-radius:6px; background:var(--ph-wash); color:var(--ink)}
+html.ph.ph-talk .bot-empty{margin:auto 0 0; padding:0 2px}
+html.ph.ph-talk .bot-hi{margin:0; font-size:1.0625rem; color:var(--ink-2)}
+html.ph.ph-talk .bot-q{margin:4px 0 0; font-size:1.75rem; line-height:1.2; font-weight:600; letter-spacing:-.015em; color:var(--ink)}
+html.ph.ph-talk .bot-pend{order:2; margin:0 20px 8px}
+html.ph.ph-talk .bot-chips{order:3; display:none}
+html.ph.ph-talk #botsheet:not(.bot-has) .bot-chips{display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin:0; padding:0 20px 14px}
+html.ph.ph-talk .bot-chip{min-height:44px; padding:0 16px; border-radius:22px; border:1px solid var(--rule); background:none; color:var(--ink); font-size:1rem; text-align:left}
+html.ph.ph-talk .bot-ai-note{order:4; display:none}
+html.ph.ph-talk #botsheet:not(.bot-has) .bot-ai-note{display:block; margin:0; padding:0 20px 12px; border:0; font-size:.8125rem; line-height:1.45; color:var(--muted)}
+html.ph.ph-talk .bot-note{order:5; margin:0 20px 8px; font-size:.875rem; color:var(--ink-2)}
+html.ph.ph-talk .bot-ask{order:6; display:flex; flex-wrap:nowrap; align-items:flex-end; justify-content:flex-start; gap:4px;
+  margin:0 12px 10px; padding:4px 4px 4px 18px; border:1px solid var(--hair); border-radius:26px; background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.06)}
+html.ph.ph-talk .bot-ask:focus-within{border-color:var(--rule)}
+html.ph.ph-talk #bot-input{flex:1 1 auto; min-width:0; min-height:0; max-height:160px; margin:0; padding:10px 0; border:0; border-radius:0;
+  background:none; box-shadow:none; outline:none; resize:none; font-size:1.0625rem; line-height:1.45; color:var(--ink)}
+html.ph.ph-talk #bot-input::placeholder{color:var(--muted)}
+html.ph.ph-talk :is(#bot-mic,#bot-send,#bot-stop){flex:none; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
+  min-height:44px; padding:0; border:0; border-radius:50%; box-shadow:none}
+html.ph.ph-talk :is(#bot-send,#bot-stop)[hidden]{display:none}
+html.ph.ph-talk .bot-ico{display:block}
+html.ph.ph-talk #bot-mic svg{width:20px; height:20px}
+html.ph.ph-talk .bot-btxt{position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0}
+html.ph.ph-talk #bot-mic{background:none; color:var(--ink-2)}
+html.ph.ph-talk #bot-mic[aria-pressed="true"]{background:var(--accent-wash); color:var(--accent-ink)}
+html.ph.ph-talk #bot-send{background:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph.ph-talk .bot-ask:not(.bot-typed) #bot-send{background:var(--inset); color:var(--muted)}
+html.ph.ph-talk #bot-stop{background:var(--ink); color:var(--ground)}
+/* the web: the same, in the middle column */
+html.ph-web.ph-talk #botsheet{padding:28px max(24px, calc((100vw - var(--side) - 760px) / 2)) 24px}
+html.ph-web.ph-talk :is(.sheet-head,.bot-log,.bot-chips,.bot-ai-note,.bot-note,.bot-pend){padding-left:0; padding-right:0; margin-left:0; margin-right:0}
+html.ph-web.ph-talk #botsheet:not(.bot-has) :is(.bot-chips,.bot-ai-note){padding-left:0; padding-right:0}
+html.ph-web.ph-talk .bot-ask{margin:0 0 8px}
 </style>
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -2067,8 +2105,9 @@ try{var _t=localStorage.getItem("oys-theme");
       <span class="ph-brand" id="ph-tbrand"><span class="ph-bt"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></span></span>
       <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
       <span class="bot-name">Assistant</span>
+      <h1 class="bot-title">Talk</h1>
       <span class="bot-tools">
-        <button class="mini" id="bot-clear" title="Start over">Clear</button>
+        <button class="mini" id="bot-clear" title="Start over">New chat</button>
         <button class="mini" id="bot-min" title="Close the assistant">Close</button>
       </span>
     </div>
@@ -2077,10 +2116,10 @@ try{var _t=localStorage.getItem("oys-theme");
     <div class="bot-pend" id="bot-pend" role="status" aria-live="polite" hidden></div>
     <div class="bot-chips" id="bot-chips"></div>
     <div class="bot-ask">
-      <textarea class="f" id="bot-input" rows="1" autocomplete="off" enterkeyhint="send" placeholder="Tell me what to change, or ask a question" aria-label="Message the assistant"></textarea>
-      <button class="btn mic" id="bot-mic" type="button" aria-pressed="false" aria-label="Speak instead of typing"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span>Speak</span></button>
-      <button class="btn" id="bot-send">Send</button>
-      <button class="btn" id="bot-stop" hidden>Stop</button>
+      <textarea class="f" id="bot-input" rows="1" autocomplete="off" enterkeyhint="send" placeholder="Ask or tell me anything" aria-label="Message the assistant"></textarea>
+      <button class="btn mic" id="bot-mic" type="button" aria-pressed="false" aria-label="Speak instead of typing"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span class="bot-btxt">Speak</span></button>
+      <button class="btn" id="bot-send"><svg class="bot-ico" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 16V4.5M4.8 9.5 10 4.3l5.2 5.2"/></svg><span class="bot-btxt">Send</span></button>
+      <button class="btn" id="bot-stop" hidden><svg class="bot-ico" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="2.5"/></svg><span class="bot-btxt">Stop</span></button>
     </div>
     <p class="bot-note" id="bot-note" hidden></p>
   </div>
@@ -5795,6 +5834,7 @@ function micInto(el,btn,say){
   r.onresult=function(e){
     got=""; for(var i=0;i<e.results.length;i++) got+=e.results[i][0].transcript;
     el.value=(base?base+" ":"")+got.trim();
+    try{ el.dispatchEvent(new Event("input")); }catch(e){}
   };
   r.onerror=function(e){
     var k=e&&e.error;
@@ -7748,11 +7788,21 @@ function botAiNote(){
     ? "Answers marked AI come from an AI model (Claude, by Anthropic). It sees your question and only the numbers it asks for, never your journal or check-ins. It can make mistakes. Simple commands are handled on this device."
     : "Simple commands are handled on this device, with no AI. When you are signed in, other questions can go to an AI model (Claude, by Anthropic).";
 }
+/* Talk, made calm (owner, 2026-10-22: "make it much more simple"): with nothing said yet, a greeting and
+   one question; the 3 ideas and the AI notice sit under it. Once there is a conversation they step aside. */
+function botGreet(){ var h=new Date().getHours(); return h>=5&&h<12?"Good morning.":h>=12&&h<18?"Good afternoon.":"Good evening."; }
+/* the writing bar grows with what is written, up to about 6 lines, and knows whether there is anything to send */
+function botFit(){
+  var i=$("#bot-input"); if(!i) return;
+  i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,160)+"px";
+  var a=i.parentNode; if(a) a.classList.toggle("bot-typed",!!i.value.trim());
+}
 function botRender(){
-  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote();
+  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote(); botFit();
+  var sh=$("#botsheet"); if(sh) sh.classList.toggle("bot-has",botTurns.length>0);
   if(!botTurns.length){
-    var e=document.createElement("p"); e.className="bot-empty";
-    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything.";
+    var e=document.createElement("div"); e.className="bot-empty";
+    e.innerHTML='<p class="bot-hi">'+esc(botGreet())+'</p><p class="bot-q">What do you need?</p>';
     log.appendChild(e); return;
   }
   botTurns.forEach(function(t){
@@ -7958,7 +8008,7 @@ async function botAsk(text,opts){
   if(!said) return;
   PEND=null; pendRender();                         /* a new sentence replaces a waiting question */
   micStop();
-  $("#bot-input").value="";
+  $("#bot-input").value=""; botFit();
   /* the board answers its own commands first: no model, no network, no wait */
   var reply=null, care=DISTRESS.test(said);
   if(care) reply=SAFE_REPLY;
@@ -8009,11 +8059,10 @@ async function botAsk(text,opts){
 
 (function(){
   botOpen(false);   /* it opens when you ask for it, never on its own */
-  var chips=[["Help","help"],
+  /* 3 things to ask, no more (2026-10-22); help still answers when typed */
+  var chips=[["What should I do now?","what should i do now"],
              ["What is left today?","what is left today"],
-             ["Make today a rough day","make today a rough day"],
-             ["What needs attention?","what needs attention"],
-             ["How am I doing this week?","how am i doing this week"]];
+             ["Make today lighter","make today a rough day"]];
   var box=$("#bot-chips");
   chips.forEach(function(c){
     var b=document.createElement("button");
@@ -8032,6 +8081,7 @@ $("#bot-send").addEventListener("click",function(e){
   e.stopPropagation();
   var v=$("#bot-input").value.trim(); if(v) botAsk(v);
 });
+$("#bot-input").addEventListener("input",botFit);
 $("#bot-input").addEventListener("keydown",function(e){
   if(e.key==="Enter"){ e.preventDefault(); var v=this.value.trim(); if(v) botAsk(v); }
 });

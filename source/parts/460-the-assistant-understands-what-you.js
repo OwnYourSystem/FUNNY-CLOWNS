@@ -833,11 +833,21 @@ function botAiNote(){
     ? "Answers marked AI come from an AI model (Claude, by Anthropic). It sees your question and only the numbers it asks for, never your journal or check-ins. It can make mistakes. Simple commands are handled on this device."
     : "Simple commands are handled on this device, with no AI. When you are signed in, other questions can go to an AI model (Claude, by Anthropic).";
 }
+/* Talk, made calm (owner, 2026-10-22: "make it much more simple"): with nothing said yet, a greeting and
+   one question; the 3 ideas and the AI notice sit under it. Once there is a conversation they step aside. */
+function botGreet(){ var h=new Date().getHours(); return h>=5&&h<12?"Good morning.":h>=12&&h<18?"Good afternoon.":"Good evening."; }
+/* the writing bar grows with what is written, up to about 6 lines, and knows whether there is anything to send */
+function botFit(){
+  var i=$("#bot-input"); if(!i) return;
+  i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,160)+"px";
+  var a=i.parentNode; if(a) a.classList.toggle("bot-typed",!!i.value.trim());
+}
 function botRender(){
-  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote();
+  var log=$("#bot-log"); log.innerHTML=""; pendRender(); botAiNote(); botFit();
+  var sh=$("#botsheet"); if(sh) sh.classList.toggle("bot-has",botTurns.length>0);
   if(!botTurns.length){
-    var e=document.createElement("p"); e.className="bot-empty";
-    e.textContent="Type what you want to change, or ask a question. I can change goals, steps, Today, Waiting, your hours and your settings. Type help to see everything.";
+    var e=document.createElement("div"); e.className="bot-empty";
+    e.innerHTML='<p class="bot-hi">'+esc(botGreet())+'</p><p class="bot-q">What do you need?</p>';
     log.appendChild(e); return;
   }
   botTurns.forEach(function(t){
