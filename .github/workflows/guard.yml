@@ -1,0 +1,65 @@
+# The second line of defence. The edit guard stops an agent in the session;
+# this stops anything that slipped past it (a Bash write, a hand edit) before
+# it reaches `app`.
+name: guard
+
+on:
+  pull_request:
+    branches: [app]
+  push:
+    branches: [app]
+
+permissions:
+  contents: read
+
+jobs:
+  ownership:
+    name: Every changed file has an owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: List changed files by owner
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          chmod +x .claude/hooks/owner-of.sh
+          fail=0
+          echo "| File | Owner |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          while read -r f; do
+            [ -z "$f" ] && continue
+            o="$(.claude/hooks/owner-of.sh "$f")"
+            echo "| \`$f\` | $o |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$o" = "none" ]; then
+              echo "::error file=$f::No owner in .claude/owners. Lead must add a rule first."
+              fail=1
+            fi
+          done < <(git diff --name-only "$base" HEAD)
+          exit $fail
+
+  build:
+    name: index.html matches the source parts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and compare
+        run: |
+          cp index.html /tmp/committed.html
+          sh source/build.sh
+          if ! cmp -s index.html /tmp/committed.html; then
+            echo "::error file=index.html::index.html differs from the build. Edit source/parts, then let Lead run source/build.sh."
+            exit 1
+          fi
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('tests/package.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix tests
+      - run: npm test --prefix tests

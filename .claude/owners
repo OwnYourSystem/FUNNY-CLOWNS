@@ -1,0 +1,123 @@
+# Who may write which path. One rule per line: <glob> <owner>.
+# Read top to bottom; the FIRST match wins. A path with no match has no owner,
+# and no agent may write it. Paths are relative to the repo root.
+# Change this file only through Lead, with the owner's yes.
+
+# --- exceptions first ------------------------------------------------------
+source/parts/110-*              assistant
+source/parts/592-*              lead
+source/parts/*.screen.js        board
+
+# --- Engine: the rules, the state, the device store -------------------------
+source/parts/010-*              engine
+source/parts/020-*              engine
+source/parts/030-*              engine
+source/parts/040-*              engine
+source/parts/050-*              engine
+source/parts/060-*              engine
+source/parts/070-*              engine
+source/parts/090-*              engine
+source/parts/140-*              engine
+source/parts/150-*              engine
+source/parts/160-*              engine
+source/parts/165-*              engine
+source/parts/170-*              engine
+source/parts/180-*              engine
+source/parts/190-*              engine
+source/parts/196-*              engine
+source/parts/280-*              engine
+
+# --- Platform: account, sync, push, backup, hosting ------------------------
+source/parts/330-*              platform
+source/parts/340-*              platform
+source/parts/350-*              platform
+source/parts/360-*              platform
+source/parts/390-*              platform
+source/parts/410-*              platform
+source/parts/415-*              platform
+source/parts/500-*              platform
+source/parts/510-*              platform
+source/parts/520-*              platform
+sw.js                           platform
+supabase/*                      platform
+vercel.json                     platform
+robots.txt                      platform
+
+# --- Assistant: typed assistant, speech, AI behind the server line ----------
+source/parts/400-*              assistant
+source/parts/405-*              assistant
+source/parts/406-*              assistant
+source/parts/440-*              assistant
+source/parts/450-*              assistant
+source/parts/460-*              assistant
+source/parts/462-*              assistant
+source/parts/470-*              assistant
+api/*                           assistant
+package.json                    assistant
+package-lock.json               assistant
+
+# --- Phone: the phone app (split 595 as 595-1-now.js, 595-2-talk.js, ...) ---
+source/parts/595-*              phone
+source/styles/*phone*           phone
+manifest.webmanifest            phone
+icon-*.png                      phone
+apple-touch-icon.png            phone
+badge-96.png                    phone
+
+# --- Board: every desktop screen --------------------------------------------
+source/parts/200-*              board
+source/parts/210-*              board
+source/parts/220-*              board
+source/parts/230-*              board
+source/parts/240-*              board
+source/parts/250-*              board
+source/parts/260-*              board
+source/parts/270-*              board
+source/parts/290-*              board
+source/parts/300-*              board
+source/parts/310-*              board
+source/parts/320-*              board
+source/parts/370-*              board
+source/parts/380-*              board
+source/parts/420-*              board
+source/parts/430-*              board
+source/parts/480-*              board
+source/parts/490-*              board
+source/parts/530-*              board
+source/parts/540-*              board
+source/parts/550-*              board
+source/parts/560-*              board
+source/parts/570-*              board
+source/parts/580-*              board
+source/parts/590-*              board
+source/parts/594-*              board
+source/parts/598-*              board
+source/parts/600-*              board
+source/styles/*desktop*         board
+
+# --- Tester, Compliance ------------------------------------------------------
+tests/*                         tester
+governance/*                    compliance
+legal/*                         compliance
+.well-known/*                   compliance
+
+# --- Lead: the build, the shipped file, the team itself ----------------------
+source/styles/*                 lead
+source/head.html                lead
+source/head-end.html            lead
+source/tail.html                lead
+source/build.sh                 lead
+source/build-app.sh             lead
+source/delivery-board.html      lead
+index.html                      lead
+tasks/*                         lead
+README.md                       lead
+HANDOFF.md                      lead
+notes/*                         lead
+.vercelignore                   lead
+.gitattributes                  lead
+.gitignore                      lead
+.nojekyll                       lead
+CLAUDE.md                       lead
+.claude/*                       lead
+.github/*                       lead

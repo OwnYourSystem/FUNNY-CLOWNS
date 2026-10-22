@@ -1,0 +1,386 @@
+</style>
+<!--ARTIFACT-HEAD-END-->
+</head>
+<body>
+<!--ARTIFACT-BODY-START-->
+<script>
+/* Read before anything paints, so a viewer who picked light never sees the
+   dark board flash past first. No choice stored means follow the system. */
+try{var _t=localStorage.getItem("oys-theme");
+  if(_t==="light"||_t==="dark") document.documentElement.setAttribute("data-theme",_t);
+}catch(e){}
+</script>
+<div id="sbar" aria-hidden="true"></div>
+<canvas id="river" aria-hidden="true"></canvas>
+<div id="dk-undo" role="status" aria-live="polite" hidden><span id="dk-undo-t"></span><button type="button" class="btn" id="dk-undo-b">Undo</button></div>
+<div id="ph">
+  <div id="ph-back"><a class="ph-nav" href="#/you" aria-label="Back to You"><svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg><span>You</span></a><span id="ph-back-t"></span></div>
+  <a id="ph-mini" href="#/you" aria-label="You" hidden></a>
+  <div id="ph-undo" role="status" aria-live="polite" hidden><span id="ph-undo-t"></span><button type="button" id="ph-undo-b">Undo</button></div>
+  <main id="ph-main"></main>
+  <nav id="ph-tabs" aria-label="Main">
+    <div class="ph-side-brand" aria-hidden="true"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></div>
+    <a href="#/now" data-tab="now"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 1 0 18.4a9.2 9.2 0 0 1 0-18.4zm0 4a5.2 5.2 0 1 0 0 10.4a5.2 5.2 0 0 0 0-10.4zm0 2.3a2.9 2.9 0 1 1 0 5.8a2.9 2.9 0 0 1 0-5.8z"/></svg><span>Now</span></a>
+    <a href="#/talk" data-tab="talk"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4z"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M3.2 4.6h17.6v11.8H9.3L3.2 21.2z"/></svg><span>Talk</span></a>
+    <a href="#/journal" data-tab="journal"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v15H7.5A1.5 1.5 0 0 1 6 18.5z"/><path d="M9.5 8h6M9.5 11.5h6"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.7h10.2a2.2 2.2 0 0 1 2.2 2.2v16H7.6a2.4 2.4 0 0 1-2.4-2.4V4.5A1.8 1.8 0 0 1 7 2.7zm2.3 4.4v1.8h6.4V7.1zm0 3.6v1.8h6.4v-1.8z"/></svg><span>Journal</span></a>
+    <a href="#/calendar" data-tab="calendar" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.5h1.8V4.2h6.4V2.5H17v1.7h1.5A2.8 2.8 0 0 1 21.3 7v12.2a2.8 2.8 0 0 1-2.8 2.8h-13a2.8 2.8 0 0 1-2.8-2.8V7a2.8 2.8 0 0 1 2.8-2.8H7zM4.6 10.6v8.6c0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9v-8.6z"/></svg><span>Calendar</span></a>
+    <a href="#/goals" data-tab="goals" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M4.1 3.1h12.3a.9.9 0 0 1 .8 1.3L15.5 8l1.7 3.6a.9.9 0 0 1-.8 1.3H5.9V21H4.1z"/></svg><span>Goals</span></a>
+    <a href="#/you" data-tab="you"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.3" r="4.3"/><path d="M4.2 20.6c1.2-4.3 4.2-6.6 7.8-6.6s6.6 2.3 7.8 6.6z"/></svg><span>You</span></a>
+    <a href="#/tour/1" data-tab="tour" class="tab-web tab-help"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.4a2.4 2.4 0 1 1 3.4 2.2c-.7.3-1.1.9-1.1 1.6v.4M12 16.6v.1"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 1 0 18.4a9.2 9.2 0 0 1 0-18.4zm-.1 4.6a3.3 3.3 0 0 0-3.3 2.6l1.8.4a1.5 1.5 0 1 1 2.1 1.6c-1.2.5-1.9 1.5-1.9 2.8v.4h1.8v-.4c0-.6.3-1 .8-1.2a3.3 3.3 0 0 0-1.3-6.2zM11 15.8v1.8h1.8v-1.8z"/></svg><span>How it works</span></a>
+  </nav>
+</div>
+<div class="wrap">
+<div id="scroll">
+
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">Qordel &middot; Live board</div>
+      <div class="clockline">
+        <span class="dateline" id="dateline">&nbsp;</span>
+        <span class="clock" id="clock">--:--:--</span>
+        <span class="wk" id="wk"></span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="btn-assistant" aria-expanded="false" aria-controls="botsheet">Assistant</button>
+      <button class="btn" id="btn-theme" aria-label="Colour theme"><span id="theme-ico"></span><span id="theme-label">System</span></button>
+      <button class="btn" id="btn-motion" aria-pressed="false"><span class="dot"></span>Flight off</button>
+      <button class="btn" id="btn-remind" aria-pressed="false"><span class="dot"></span>Reminders off</button>
+      <button class="btn" id="btn-account">Sign in</button>
+      <button class="btn take" id="btn-web" hidden>New Qordel</button>
+    </div>
+  </header>
+
+  <div class="tick" id="tick" hidden aria-label="Delivery days">
+    <div class="tick-badge"><span class="tick-dot"></span><span id="tick-tag">Delivery days</span></div>
+    <div class="tick-win"><div class="tick-run" id="tick-run"></div></div>
+    <button class="tick-hold" id="tick-hold" aria-pressed="false" aria-label="Hold the banner">
+      <svg class="stop" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="3.4" height="10" rx="1"/><rect x="8.6" y="2" width="3.4" height="10" rx="1"/></svg>
+      <svg class="go" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2.2 12 7l-9 4.8z"/></svg>
+    </button>
+  </div>
+
+  <nav class="rail" id="rail" aria-label="Pages"></nav>
+
+  <section class="view is-on" id="v-board" aria-label="Board">
+
+  <a class="booked" id="booked-line" href="#/calendar" hidden></a>
+  <div id="canvas">
+  <section class="nowbadge" data-panel="now" aria-label="What to do now" id="now-badge"></section>
+
+  <section class="panel oftad-panel" data-panel="oftad">
+    <div class="p-head">
+      <div>
+        <div class="p-title">Today</div>
+        <div class="p-note" id="oftad-note">What you are doing today, sized to today&rsquo;s dose. Each card says why it is here.</div>
+      </div>
+      <div class="p-tools"><button class="mini" data-jr-write="">Journal</button><button class="mini" id="oftad-clear">Clear</button></div>
+    </div>
+    <div class="jr-check" id="jr-check" role="note" aria-label="Where you left off" hidden></div>
+    <div class="floor" id="floor" role="group" aria-label="My easy things" hidden></div>
+    <div class="floor learn" id="learncard" role="group" aria-label="Something the board noticed" hidden></div>
+    <div class="floor learn" id="wncard" role="group" aria-label="What changed in Qordel" hidden></div>
+    <div id="week-nudge" hidden></div>
+    <div id="oftad-pick" hidden></div>
+    <div class="now-follow" id="est-follow" hidden></div>
+    <div class="drop" id="oftad"></div>
+    <div class="dock-foot"><span id="oftad-count"></span><span id="oftad-flash"></span></div>
+  </section>
+
+  <div class="panel" data-panel="plan">
+      <div class="p-head">
+        <div>
+          <div class="p-title">Waiting &mdash; <span id="plan-date"></span></div>
+          <div class="p-note">Queued, and carried over from earlier days. None of it is today&rsquo;s job unless you pull it into Today.</div>
+        </div>
+        <div class="p-tools"><button class="mini" id="plan-clear">Clear</button></div>
+      </div>
+      <div class="drop" id="plan"></div>
+      <div class="dock-foot"><span id="plan-count"></span><button class="mini" id="plan-more" hidden></button><span id="plan-roll"></span></div>
+  </div>
+
+
+  <section class="kpis" data-panel="kpis" aria-label="Summary">
+    <div class="kpi k-trend">
+      <div class="k-label">Overall</div>
+      <div class="k-val" id="kpi-overall">0%</div>
+      <svg class="spark" id="spark" viewBox="0 0 260 44" role="img" aria-label="Overall completion, last 14 days"></svg>
+      <div class="k-sub"><span class="delta up" id="kpi-delta"></span> <span id="kpi-delta-sub"></span></div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Subtasks finished</div>
+      <div class="k-val" id="kpi-done">0</div>
+      <div class="k-sub" id="kpi-done-sub">of 0</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Delivery days</div>
+      <div class="k-val" id="kpi-alert">0</div>
+      <div class="k-sub" id="kpi-alert-sub">none set</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Done today</div>
+      <div class="k-val" id="kpi-today">0/0</div>
+      <div class="k-sub" id="kpi-today-sub">of the day&rsquo;s plan</div>
+    </div>
+  </section>
+
+  <div class="panel mains" data-panel="mains">
+      <div class="p-head">
+        <div>
+          <div class="p-title">Goals</div>
+          </div>
+        <div class="p-tools"><div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-main" class="seek-in" type="search" placeholder="Search goals and tags" aria-label="Search goals" autocomplete="off"></div><button class="mini" id="tv-main" aria-pressed="false">Table</button></div>
+      </div>
+      <div id="filterbar" hidden></div>
+      <div class="bars" id="main-bars"></div>
+      <div id="main-editor"></div>
+      <div class="axis" id="axis-main"></div>
+      <div id="main-table" hidden></div>
+      <div class="addrow" id="add-main-row">
+        <input class="f" id="ng-name" placeholder="New goal" aria-label="New goal">
+        <button class="btn" id="ng-add">Add</button>
+        <button class="btn" id="ng-back" title="Keep it in the Backlog until you are ready to work on it">To backlog</button>
+      </div>
+    </div>
+
+  <div class="panel subs" data-panel="subs">
+      <div class="p-head">
+        <div>
+          <div class="p-title">Subtasks &mdash; <span id="sub-title">&nbsp;</span></div>
+        </div>
+        <div class="p-tools">
+          <button class="pen" id="edit-group" aria-expanded="false" aria-label="Edit this main task"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L6 12l-3 1 1-3z"/></svg></button>
+          <button class="mini" id="tv-sub" aria-pressed="false">Table</button>
+        </div>
+      </div>
+      <div id="group-editor"></div>
+      <div class="addrow" id="add-sub-row">
+        <input class="f" id="ns-name" placeholder="New subtask" aria-label="New subtask name">
+        <select class="f s" id="ns-rep" aria-label="How often it repeats"></select>
+        <button class="btn" id="ns-add">Add</button>
+      </div>
+      <div class="bars" id="sub-bars"></div>
+      <div class="axis" id="axis-sub"></div>
+      <div id="sub-table" hidden></div>
+  </div>
+
+
+
+  <div class="panel" data-panel="done">
+      <div class="p-head">
+        <div>
+          <div class="p-title">Done today</div>
+        </div>
+        <div class="p-tools"><button class="mini" id="done-clear">Clear</button></div>
+      </div>
+      <div class="drop done-zone" id="done"></div>
+      <div class="dock-foot"><span id="done-count"></span></div>
+      <div class="daylog" id="daylog"></div>
+  </div>
+
+  <section class="panel" data-panel="alerts">
+    <div class="p-head">
+      <div>
+        <div class="p-title">Delivery days</div>
+        <div class="p-note">Goals with a delivery day, nearest first, and the pace that keeps each on time. A day that has passed asks you for a new one.</div>
+      </div>
+    </div>
+    <div class="alerts" id="alerts"></div>
+  </section>
+
+  </div>
+
+  </section>
+
+  <section class="view" id="v-tags" aria-label="Tags">
+    <div class="vhead">
+      <h2>Tags</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-tags" class="seek-in" type="search" placeholder="Search tags and goals" aria-label="Search"></div>
+    </div>
+    <div class="tag-grid" id="tag-grid"></div>
+    <div class="vhead" style="margin-top:34px"><h2>Goals under the picked tags</h2></div>
+    <div class="goal-list" id="tag-goals"></div>
+  </section>
+
+  <section class="view" id="v-backlog" aria-label="Backlog">
+    <div class="vhead">
+      <h2>Backlog</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-back" class="seek-in" type="search" placeholder="Search the backlog" aria-label="Search"></div>
+    </div>
+    <div class="addrow" id="backlog-add">
+      <input class="f" id="bl-name" placeholder="Something for a free hour" aria-label="Backlog item">
+      <button class="btn" id="bl-add">Add</button>
+    </div>
+    <div class="goal-list" id="backlog-list"></div>
+  </section>
+
+  <section class="view" id="v-archive" aria-label="Archive">
+    <div class="vhead">
+      <h2>Archive</h2>
+      <div class="seek"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input id="seek-arch" class="seek-in" type="search" placeholder="Search finished goals" aria-label="Search"></div>
+    </div>
+    <div class="goal-list" id="archive-list"></div>
+  </section>
+
+  <section class="view" id="v-calendar" aria-label="Calendar">
+    <div class="vhead"><h2>Calendar</h2></div>
+    <div id="cal-body"></div>
+  </section>
+
+  <section class="view" id="v-planner" aria-label="Planner">
+    <div class="vhead">
+      <h2>Planner</h2>
+      <button class="btn" id="pl-interview">Interview me again</button>
+    </div>
+    <div class="nowc" id="now-card-2"></div>
+    <input type="file" id="pl-icon-file" accept="image/*" hidden>
+
+    <div class="plgrid">
+      <section class="panel flat" aria-label="Your week">
+        <div class="p-head"><div><div class="p-title">Your week</div>
+          <div class="p-note">What the planner is allowed to assume about an ordinary day.</div></div></div>
+        <div class="plform" id="pl-form"></div>
+      </section>
+
+      <section class="panel flat" aria-label="Which goals are work">
+        <div class="p-head"><div><div class="p-title">Which goals are work</div>
+          <div class="p-note">Work goals are suggested only in work hours, the others only outside them.</div></div></div>
+        <div class="wherelist" id="pl-where"></div>
+      </section>
+    </div>
+
+    <section class="panel flat" aria-label="What it is holding back">
+      <div class="p-head"><div><div class="p-title">Held back until later</div>
+        <div class="p-note">Everything it refused in this hour, and when each one opens again.</div></div></div>
+      <div id="pl-held"></div>
+    </section>
+
+    <section class="panel flat" aria-label="Weekly check-in" id="week-panel">
+      <div class="p-head"><div><div class="p-title">Weekly check-in</div>
+        <div class="p-note">Five taps, 1 (low) to 5 (high), once a week if you like. It stays on this device only: it is not synced, not in the backup text, and the tutor and the notes never see it. It is not a test and not advice.</div></div>
+        <div class="p-tools"><button class="mini" id="week-open" data-week-open>Check in</button></div></div>
+      <div id="week-body"></div>
+      <div class="dock-foot"><button class="mini" id="week-erase">Delete my check-ins</button></div>
+    </section>
+
+    <section class="panel flat" aria-label="Journal" id="jr-panel">
+      <div class="p-head"><div><div class="p-title">Journal</div>
+        <div class="p-note">What you got done and what comes next, written at the end of a day or the start of one. Each entry keeps its date and time. It stays on this device only: it is not synced, not in the backup text, and a reset keeps it.</div></div>
+        <div class="p-tools"><button class="mini" data-jr-write="">Write</button></div></div>
+      <div id="jr-body"></div>
+      <div class="dock-foot"><button class="mini" id="jr-erase">Delete my journal</button></div>
+    </section>
+
+  </section>
+
+  <div id="interview" hidden>
+    <div class="card">
+      <div class="iv-top"><span class="iv-k" id="iv-step">1 of 8</span>
+        <button class="btn" id="iv-quit">Leave it</button></div>
+      <div class="iv-dots" id="iv-dots"></div>
+      <h3 id="iv-q">&nbsp;</h3>
+      <p class="lede" id="iv-note">&nbsp;</p>
+      <div id="iv-body"></div>
+      <div class="iv-acts">
+        <button class="btn" id="iv-back">Back</button>
+        <button class="btn take" id="iv-next">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="account" hidden>
+    <div class="card">
+      <h3>Your account</h3>
+      <p class="lede" id="acct-where"></p>
+
+      <div id="acct-in">
+        <button class="btn" id="acct-google">Continue with Google</button>
+        <div class="sep">OR</div>
+        <label>Email<input class="f" id="acct-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label>Password<input class="f" id="acct-pass" type="password" autocomplete="current-password" placeholder="8 characters or more"></label>
+        <div class="row-btns">
+          <button class="btn" id="acct-signin">Sign in</button>
+          <button class="btn" id="acct-signup">Create account</button>
+        </div>
+      </div>
+
+      <div id="acct-out" hidden>
+        <p class="lede" style="margin-bottom:8px">Signed in as</p>
+        <div id="acct-who"></div>
+        <div class="row-btns">
+          <button class="btn" id="acct-sync">Save now</button>
+          <button class="btn" id="acct-restore" hidden>Restore this device&rsquo;s copy</button>
+          <button class="btn danger" id="acct-signout">Sign out</button>
+        </div>
+        <p class="hint" id="acct-last" style="margin-top:10px"></p>
+      </div>
+
+      <div id="acct-choose" hidden>
+        <p class="lede" style="margin-bottom:10px">Both of these have work in them. Which one is the real board?</p>
+        <button class="btn wide-btn" data-choose="mine"><span id="choose-mine"></span></button>
+        <button class="btn wide-btn" data-choose="theirs"><span id="choose-theirs"></span></button>
+      </div>
+
+      <p id="acct-msg" hidden></p>
+      <div class="row-btns"><button class="btn" id="acct-close">Close</button></div>
+    </div>
+  </div>
+
+  <footer>
+    <button class="btn" id="btn-backup" aria-haspopup="dialog">Backup, restore and reset</button>
+    <dialog class="ask" id="backup" aria-labelledby="backup-t">
+      <div class="ask-in">
+        <h3 id="backup-t">Backup, restore and reset</h3>
+        <div class="d-body">
+        <p style="margin:0">Your board lives in this browser only, so the saved file and the web link each keep their own. Move one across by copying the text below, then pasting it in on the other device and loading it.</p>
+        <textarea id="io" spellcheck="false" aria-label="Backup data"></textarea>
+        <label class="io-priv"><input type="checkbox" id="io-private" checked> Include my journal, weekly check-ins and photo</label>
+        <p class="io-note">With this on, the file holds your private notes. Keep it where only you can open it. Signing in never sends them anywhere.</p>
+        <div class="row-btns">
+          <button class="btn" id="io-dump">Show backup</button>
+          <button class="btn" id="io-load">Load pasted backup</button>
+          <button class="btn" id="io-save">Save as file</button>
+          <input type="file" id="io-file" accept="application/json">
+        </div>
+        <div class="row-btns" id="snap-row"></div>
+        <div class="row-btns">
+          <button class="btn danger" id="io-reset">Reset to the shipped list</button>
+          <span id="io-msg"></span>
+        </div>
+      </div>
+        <div class="ask-acts"><button type="button" class="btn" id="backup-close">Close</button></div>
+      </div>
+    </dialog>
+    <p style="margin:0" id="where-note"></p>
+  <p style="margin:0" id="revnote"></p>
+  </footer>
+
+</div><!-- #scroll -->
+
+  <div id="flashnote" role="status" aria-live="polite" hidden></div>
+  <div id="botsheet" hidden>
+    <div class="sheet-head">
+      <span class="ph-brand" id="ph-tbrand"><span class="ph-bt"><span class="ph-word">Qordel</span><span class="ph-by">Powered by OwnYourSystem</span></span></span>
+      <span class="bot-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.7 3.5h12.6a3.2 3.2 0 0 1 3.2 3.2v6.6a3.2 3.2 0 0 1-3.2 3.2H11.5L7.2 20.3v-3.8H5.7a3.2 3.2 0 0 1-3.2-3.2V6.7a3.2 3.2 0 0 1 3.2-3.2Z"/><path d="M8 12.8V10.4M12 12.8V8.2M16 12.8V6.6"/></svg></span>
+      <span class="bot-name">Assistant</span>
+      <h1 class="bot-title">Talk</h1>
+      <span class="bot-tools">
+        <button class="mini" id="bot-clear" title="Start over">New chat</button>
+        <button class="mini" id="bot-min" title="Close the assistant">Close</button>
+      </span>
+    </div>
+    <p class="bot-ai-note" id="bot-ai-note"></p>
+    <div class="bot-log" id="bot-log"></div>
+    <div class="bot-pend" id="bot-pend" role="status" aria-live="polite" hidden></div>
+    <div class="bot-chips" id="bot-chips"></div>
+    <div class="bot-ask">
+      <textarea class="f" id="bot-input" rows="1" autocomplete="off" enterkeyhint="send" placeholder="Ask or tell me anything" aria-label="Message the assistant"></textarea>
+      <button class="btn mic" id="bot-mic" type="button" aria-pressed="false" aria-label="Speak instead of typing"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"/></svg><span class="bot-btxt">Speak</span></button>
+      <button class="btn" id="bot-send"><svg class="bot-ico" viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 16V4.5M4.8 9.5 10 4.3l5.2 5.2"/></svg><span class="bot-btxt">Send</span></button>
+      <button class="btn" id="bot-stop" hidden><svg class="bot-ico" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="2.5"/></svg><span class="bot-btxt">Stop</span></button>
+    </div>
+    <p class="bot-note" id="bot-note" hidden></p>
+  </div>
+
+</div>
+<script>

@@ -1,0 +1,133 @@
+/* reading aloud (2026-10-21): one speaker button, top right of a card, after each reply */
+.say-btn{display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border:0; border-radius:50%; background:transparent; color:var(--muted, #6f6679); cursor:pointer; flex:none}
+.say-btn:hover{color:var(--ink, currentColor)}
+.say-btn:focus-visible{outline:2px solid currentColor; outline-offset:2px}
+.say-btn.on{color:var(--ph-pri, #2C1332); background:color-mix(in srgb, currentColor 12%, transparent)}
+.ph-card{position:relative}
+.ph-card>.ph-say{position:absolute; top:6px; right:6px}
+.ph-card:has(>.ph-say)>.ph-say+*{padding-right:44px}
+.bot-msg.bot{position:relative}
+.bot-msg.bot>.bot-say{display:flex; width:36px; height:36px; margin:2px 0 -6px -8px}
+.nowbadge>.nb-say{margin-left:4px}
+@media (prefers-reduced-motion:no-preference){ .say-btn.on svg{animation:saypulse 1.2s ease-in-out infinite} }
+@keyframes saypulse{50%{opacity:.45}}
+.wn-l,.ph-wn-l{margin:8px 0 10px; padding-left:20px; display:flex; flex-direction:column; gap:6px; line-height:1.45}
+.wn-l{font-size:14px; color:var(--ink)}
+.learn .learn-t{margin:6px 0 2px; font-size:14.5px; line-height:1.45; color:var(--ink)}
+.learn .learn-e{margin:0 0 8px; font-size:12.5px; line-height:1.5; color:var(--muted)}
+.plform .pl-note{display:block; text-transform:none; letter-spacing:normal; font-family:inherit; font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5}
+.editor .more summary{cursor:pointer; font-size:13px; color:var(--ink-2); padding:6px 0}
+.editor .more .hint{font-size:12px; color:var(--muted); margin:2px 0 8px}
+.nb-en{display:inline-flex; align-items:center; gap:6px}
+.nb-en .ph-bat{width:14px; height:22px}
+#dk-undo{display:none}
+html:not(.ph) #dk-undo:not([hidden]){display:flex; align-items:center; gap:14px; position:fixed; z-index:60; left:50%; bottom:24px; transform:translateX(-50%);
+  max-width:min(560px,calc(100vw - 32px)); padding:8px 8px 8px 18px; border-radius:14px; background:var(--ink); color:var(--panel); font-size:14px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#dk-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#dk-undo-b{flex:none; min-height:40px}
+#ph-undo{display:none}
+html.ph #ph-undo:not([hidden]){display:flex; position:fixed; z-index:58; left:12px; right:12px; bottom:calc(80px + env(safe-area-inset-bottom,0px));
+  align-items:center; gap:12px; min-height:52px; box-sizing:border-box; padding:4px 6px 4px 16px; border-radius:16px;
+  background:var(--ink); color:var(--ground); font-size:.882rem; box-shadow:0 8px 24px rgba(0,0,0,.22)}
+html.ph:has(.ph-dock) #ph-undo:not([hidden]){bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+#ph-undo-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+#ph-undo-b{flex:0 0 auto; font:inherit; font-weight:700; min-height:44px; min-width:64px; padding:0 14px; border:0; border-radius:12px;
+  background:color-mix(in srgb, var(--ground) 16%, transparent); color:var(--ground)}
+.ask-grab{display:none}
+html.ph .ask-grab{display:block; width:40px; height:5px; border-radius:3px; background:var(--rule); margin:-12px auto 12px; cursor:grab}
+html.ph dialog.ask h3{touch-action:none}
+/* Talk: the tab already says Talk */
+html.ph.ph-talk .bot-mark,html.ph.ph-talk .bot-name{display:none}
+html.ph.ph-talk .sheet-head{justify-content:flex-end}
+/* ---- the top of Now, the week from the air, the journal (2026-10-18) ---- */
+.ph-today{display:flex; flex-direction:column; gap:2px}
+.ph-today-k{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+/* the energy level: one battery beside the date (owner, 2026-10-20). Its
+   colour is the only colour on Now besides the buttons, and it has its own
+   number of bars and its own word, so colour is never the only sign. */
+.ph-enb{font:inherit; display:inline-flex; align-items:center; gap:8px; min-height:52px; padding:4px 14px 4px 10px; border-radius:26px;
+  border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer; text-align:left}
+.ph-enb .ph-bat{width:20px; height:32px; flex:none}
+.ph-enb-t{display:flex; flex-direction:column; line-height:1.2}
+.ph-enb-n{font-size:0.8824rem; font-weight:600}
+.ph-enb-s{font-size:0.7059rem; color:var(--muted)}
+.ph-bat .body{fill:none; stroke-width:2.4}
+.ph-bat .cap{stroke:none}
+.ph-bat .off{fill:none}
+.ph-bat1 .body{stroke:var(--bat1)} .ph-bat1 .cap,.ph-bat1 .on{fill:var(--bat1)}
+.ph-bat2 .body{stroke:var(--bat2)} .ph-bat2 .cap,.ph-bat2 .on{fill:var(--bat2)}
+.ph-bat3 .body{stroke:var(--bat3)} .ph-bat3 .cap,.ph-bat3 .on{fill:var(--bat3)}
+.ph-bat4 .body{stroke:var(--bat4)} .ph-bat4 .cap,.ph-bat4 .on{fill:var(--bat4)}
+.ph-clock{font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ink); letter-spacing:.04em}
+.ph-week{display:flex; flex-direction:column; gap:10px}
+.ph-week .ph-row-h{padding-bottom:0}
+.ph-stat{display:flex; flex-direction:column; gap:2px; padding:12px 14px; border-radius:18px; border:1px solid var(--hair); background:var(--panel); min-width:0}
+.ph-stat-l{font-size:.824rem; color:var(--ink-2)}
+.ph-stat-v{font-size:1.65rem; font-weight:600; line-height:1.15; color:var(--ink)}
+.ph-stat-v small{font-size:.824rem; font-weight:500; color:var(--ink-2)}
+.ph-stat-d{font-size:.765rem; color:var(--muted)}
+.ph-meter{display:block; height:8px; margin:6px 0 4px; border-radius:4px; background:var(--ph-wash); overflow:hidden}
+.ph-meter span{display:block; height:100%; border-radius:4px; background:var(--ink-2)}
+.ph-cols-w{padding:12px 8px 6px; border-radius:18px; border:1px solid var(--hair); background:var(--panel)}
+.ph-cols-read{margin:0 6px 6px; min-height:1.3em; font-size:.824rem; color:var(--ink-2)}
+.ph-cols{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); align-items:end}
+.ph-col{display:flex; flex-direction:column; align-items:center; gap:4px; min-height:44px; padding:0; border:0; border-radius:10px; background:transparent; font:inherit; color:var(--ink-2)}
+.ph-col-v{font-size:.765rem; font-weight:600; color:var(--ink); min-height:1.2em}
+.ph-col-t{display:flex; align-items:flex-end; justify-content:center; width:100%; height:84px; border-bottom:1px solid var(--rule)}
+.ph-col-b{display:block; width:min(24px,60%); min-height:0; border-radius:4px 4px 0 0; background:var(--ink-2)}
+.ph-col-x{font-size:.765rem}
+.ph-col.is-today .ph-col-x{font-weight:600; color:var(--ink)}
+.ph-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.ph-jr-e .ph-line b{font-weight:600; color:var(--ink-2)}
+.ph-btn.ph-danger{color:var(--accent-ink)}
+/* your photo: large on You, small at the top right of every other page (2026-10-18) */
+.ph-av-b{position:relative; overflow:visible; cursor:pointer}
+.ph-av img{width:100%; height:100%; border-radius:50%; object-fit:cover; display:block}
+.ph-av-plus{position:absolute; right:-2px; bottom:-2px; width:20px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:var(--ph-pri); color:var(--ph-on-pri); font-size:15px; font-weight:700; line-height:1; box-shadow:0 0 0 2px var(--ground)}
+.ph-av-b:active{opacity:.8}
+#ph-mini{display:none}
+html.ph.ph-has-me #ph-mini:not([hidden]){display:flex; position:absolute; z-index:20; top:calc(env(safe-area-inset-top,0px) + 18px); right:10px;
+  width:44px; height:44px; align-items:center; justify-content:center; border-radius:22px}
+html.ph.ph-old.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:61; top:calc(env(safe-area-inset-top,0px) + 6px)}
+html.ph.ph-talk.ph-has-me #ph-mini:not([hidden]){position:fixed; z-index:51; top:calc(env(safe-area-inset-top,0px) + 12px)} /* level with Clear in the sticky head */
+#ph-mini img{width:34px; height:34px; border-radius:17px; object-fit:cover; box-shadow:0 0 0 2px var(--panel)}
+#ph-mini:active{opacity:.7}
+html.ph.ph-has-me .ph-today-k{padding-right:48px}
+html.ph.ph-has-me .ph-today .ph-head{margin-top:12px}
+html.ph.ph-talk.ph-has-me .sheet-head{padding-right:64px}
+html.ph.ph-old.ph-has-me #ph-back{padding-right:60px}
+label.ph-rowb{cursor:pointer}
+/* Backlog, Archive, Tags, Planner and What the board learned as phone pages (2026-10-18) */
+.ph-search{min-height:44px}
+.ph-chips{display:flex; flex-wrap:wrap; gap:8px}
+.ph-tchip{display:inline-flex; align-items:baseline; gap:8px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--rule);
+  background:var(--panel); color:var(--ink); font:inherit; font-size:.941rem}
+.ph-tchip-n{font-size:.765rem; color:var(--muted)}
+.ph-tchip[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+.ph-tchip[aria-pressed="true"] .ph-tchip-n{color:var(--ph-on-pri); opacity:.8}
+.ph-where{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:4px 8px 4px 14px; border-top:1px solid var(--hair); font-size:.882rem}
+.ph-where:first-child{border-top:0}
+.ph-where span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere}
+.ph-where .ph-sel-s{flex:0 0 auto; max-width:52%}
+.ph-held .ph-v{text-align:right; max-width:60%}
+.ph-mem{padding:14px}
+.ph-mem .ph-line{margin:0}
+.ph-danger-l{color:var(--accent-ink); padding:8px 0 0; min-height:44px}
+.ph-form .ph-h2{margin-top:6px}
+/* the interview, on the phone: plum, body type, 44px choices */
+html.ph #interview .card{border-color:var(--hair)}
+html.ph .iv-k{font-family:var(--font); font-size:.824rem; letter-spacing:0; text-transform:none; color:var(--muted)}
+html.ph .iv-dots i.on{background:var(--ink)}
+html.ph #interview h3{font-weight:600; font-size:1.176rem}
+html.ph #interview .lede{font-size:.882rem}
+html.ph #iv-body label{font-family:var(--font); font-size:.882rem; letter-spacing:0; text-transform:none; color:var(--ink-2)}
+html.ph .ivpick button{min-height:44px; color:var(--ink); font-size:.941rem; border-color:var(--rule)}
+html.ph .ivpick button[aria-pressed="true"]{border-color:var(--ph-pri); background:var(--ph-wash)}
+html.ph #interview .dayrow button,html.ph #interview .feedrow button{font-family:var(--font); letter-spacing:0; text-transform:none; min-height:44px; min-width:44px}
+html.ph #interview .dayrow button[aria-pressed="true"],html.ph #interview .feedrow button[aria-pressed="true"]{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph .iv-acts .btn{min-height:44px; font-size:1rem}
+html.ph .iv-acts .btn.take{background:var(--ph-pri); border-color:var(--ph-pri); color:var(--ph-on-pri); font-weight:600}
+html.ph .ask-acts.ask-more{flex-direction:column; align-items:stretch}
+html.ph .ask-acts.ask-more .btn{flex:0 0 auto; width:100%; justify-content:center; min-height:48px}
+html.ph #jr-check{display:none}

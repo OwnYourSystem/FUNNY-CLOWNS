@@ -1,0 +1,187 @@
+/* ---- Google Calendar, its own page (part 415), phone and desktop ---- */
+#cal-body{max-width:760px}
+.cal-lede{margin:8px 0 6px; font-size:15px; line-height:1.5; color:var(--ink)}
+.cal-facts{margin:8px 0 4px; padding-left:20px; color:var(--ink-2); font-size:14px; line-height:1.5}
+.cal-acts{display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 6px}
+.cal-acts .ph-btn{flex:1 1 140px}
+.cal-msg{margin:6px 0; min-height:1.2em; font-size:14px; color:var(--ink-2)}
+.cal-when,.cal-note,.cal-none{margin:4px 0; font-size:13px; color:var(--muted)}
+.cal-day{margin-top:16px}
+.cal-dh{margin:0 0 6px; font-size:13px; font-weight:600; color:var(--ink-2)}
+.cal-grp{list-style:none; margin:0; padding:0; border:1px solid var(--hair); border-radius:14px; overflow:hidden; background:var(--panel)}
+.cal-ev{display:flex; align-items:center; gap:12px; min-height:48px; padding:8px 14px; border-top:1px solid var(--hair)}
+.cal-ev:first-child{border-top:0}
+.cal-main{flex:1 1 auto; min-width:0; display:flex; align-items:baseline; gap:12px}
+.cal-tm{flex:none; width:118px; font-family:var(--mono); font-size:12.5px; color:var(--ink-2)}
+.cal-t{flex:1 1 auto; min-width:0; overflow-wrap:anywhere; font-size:15px; color:var(--ink)}
+.cal-free .cal-t{color:var(--ink-2)}
+.cal-tag{display:inline-block; margin-left:4px; padding:1px 8px; border-radius:999px; background:var(--inset); color:var(--ink-2); font-size:12px}
+.cal-del{flex:none; min-height:44px; min-width:44px; padding:0 12px; font:inherit; font-size:14px; color:var(--accent-ink); background:transparent; border:0; border-radius:10px; cursor:pointer}
+.cal-sw{display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:8px 14px; font:inherit; font-size:15px; color:var(--ink); background:transparent; border:0; text-align:left; cursor:pointer}
+.cal-sw[aria-checked="true"]>.ph-rv>.ph-switch{background:var(--ph-pri,var(--accent))}
+@media (max-width:600px){ .cal-main{flex-direction:column; gap:2px} .cal-tm{width:auto} }
+.cal .cal-acts:first-child{margin-top:4px}
+/* rule 6 on the desktop board: what is booked today, or tomorrow's first booking */
+.booked{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:0 0 14px; padding:10px 14px; border:1px solid var(--hair); border-radius:12px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:14px}
+.booked[hidden]{display:none}
+.booked-k{font-weight:600; color:var(--ink-2)}
+/* rule 6 on the phone: the bookings are the point, so they wrap rather than cut off */
+.ph-booked{padding-top:8px; padding-bottom:8px}
+.ph-booked .ph-k{flex:none; white-space:nowrap}
+.ph-booked .ph-strip-t{white-space:normal; overflow:visible; line-height:1.4}
+/* ---- Qordel web: its own design for a big screen (owner, 2026-10-21) ----
+   The same pages as the phone, laid out for a desk: a sidebar instead of the
+   tab bar, one calm column a little wider than a phone, more air, hover
+   states, and dialogs in the middle of the screen. Nothing here shows on a
+   phone: every rule is under html.ph-web.                                 */
+.ph-side-brand,#ph-tabs .tab-web{display:none}
+html.ph-web{--side:244px}
+html.ph-web #ph-tabs{top:0; bottom:0; left:0; right:auto; width:var(--side); box-sizing:border-box; display:flex; flex-direction:column; align-items:stretch; gap:2px;
+  padding:28px 14px 24px; border-top:0; border-right:1px solid var(--hair); background:var(--panel); -webkit-backdrop-filter:none; backdrop-filter:none}
+html.ph-web #ph-tabs .tab-web{display:flex}
+html.ph-web .ph-side-brand{display:flex; flex-direction:column; gap:2px; padding:0 12px 22px}
+html.ph-web .ph-side-brand .ph-word{font-size:20px; font-weight:700; letter-spacing:-0.02em; text-transform:uppercase}
+html.ph-web .ph-side-brand .ph-by{font-size:12px; color:var(--muted)}
+html.ph-web #ph-tabs a{flex-direction:row; justify-content:flex-start; gap:12px; min-height:44px; padding:0 12px; border-radius:10px; font-size:15px; color:var(--ink-2)}
+html.ph-web #ph-tabs a .ti{width:20px; height:20px}
+html.ph-web #ph-tabs a:hover{background:var(--ph-wash); color:var(--ink)}
+html.ph-web #ph-tabs a[aria-current="page"]{background:var(--ph-wash); color:var(--ink)}
+html.ph-web #ph-tabs a:active{opacity:1}
+html.ph-web #ph-main{max-width:none; margin:0 0 0 var(--side); padding:48px max(48px, calc((100vw - var(--side) - 720px) / 2)) 96px; gap:18px}
+html.ph-web #ph-main>.ph-brand,html.ph-web #ph-mini{display:none !important}
+/* Calendar and Goals are places in the sidebar here, so their "Back to You" goes */
+html.ph-web #ph-main:is([data-route="calendar"],[data-route="goals"]) .ph-nav[href="#/you"]{display:none}
+html.ph-web .ph-dock{position:static; margin:8px 0 0 !important; padding:0; background:none}
+html.ph-web .ph-dock .ph-wide{width:auto; min-width:220px}
+html.ph-web .ph-h1{font-size:2.1rem; letter-spacing:-0.02em}
+html.ph-web .ph-task{font-size:1.6rem}
+html.ph-web .ph-card{padding:24px 26px}
+html.ph-web .ph-acts .ph-btn{flex:0 1 220px}
+html.ph-web :is(.ph-rowb,.ph-tile,.ph-strip):hover{background:var(--ph-wash)}
+html.ph-web .ph-btn:hover{filter:brightness(.97)}
+html.ph-web.ph-onb #ph-main{margin:0 auto; max-width:620px; padding:56px 32px 64px}
+html.ph-web.ph-talk #botsheet{left:var(--side); right:0; top:0; bottom:0; padding:40px max(48px, calc((100vw - var(--side) - 720px) / 2)) 32px}
+html.ph-web #ph-undo{left:calc(var(--side) + 24px); right:auto; bottom:24px; max-width:480px}
+html.ph-web #ph-tbrand{display:none !important}
+/* a dialog on a desk sits in the middle, as on a Mac, not on the bottom edge */
+html.ph-web dialog.ask{margin:auto; width:min(520px,calc(100vw - 48px)); max-width:none; border-radius:22px; border-bottom:1px solid var(--hair)}
+html.ph-web .ask-in{padding-bottom:20px}
+html.ph-web :is(.cursor-ring,.spotlight){display:none !important}
+/* ---- Talk, made calm (owner, 2026-10-22: "make it much more simple ... more space and an eye-friendly view") ----
+   The conversation has the screen. One rounded bar at the bottom takes the words, with the microphone and
+   the send arrow inside it, as in the messaging apps people already know; it grows as you write. The newest
+   answer sits at the bottom, next to where you type. With nothing said yet: a greeting, one question, 3
+   things to ask and the AI notice. The name, the long help text and Clear are gone; New chat shows once
+   there is a chat. Text is larger, answers are plain text on the page, not boxes.                     */
+.bot-title{display:none}
+.bot-ico{display:none}
+html.ph.ph-talk #botsheet{display:flex; flex-direction:column; overflow:hidden; padding:0; gap:0}
+html.ph.ph-talk :is(#ph-tbrand,.bot-mark,.bot-name,#bot-min,#ph-mini){display:none !important}
+html.ph.ph-talk .sheet-head{order:0; position:static; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin:0; padding:10px 20px 4px; background:none; border:0}
+html.ph.ph-talk.ph-has-me .sheet-head{padding-right:20px}
+html.ph.ph-talk .bot-title{display:block; margin:0; font-size:1.75rem; line-height:1.2; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+html.ph.ph-talk #bot-clear{min-height:44px; padding:0 6px; border:0; background:none; box-shadow:none; color:var(--ink-2); font-size:1rem; font-weight:500}
+html.ph.ph-talk #botsheet:not(.bot-has) #bot-clear{visibility:hidden}
+html.ph.ph-talk .bot-log{order:1; flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto; overscroll-behavior:contain;
+  display:flex; flex-direction:column; gap:22px; margin:0; padding:12px 20px 20px; border:0}
+html.ph.ph-talk .bot-turn{gap:12px}
+html.ph.ph-talk .bot-msg,html.ph.ph-talk .bot-msg :is(p,.bot-p){font-size:1.0625rem; line-height:1.55; text-align:left; hyphens:manual}
+html.ph.ph-talk :is(.bot-t,.bot-p){text-align:left; hyphens:manual; -webkit-hyphens:manual}
+html.ph.ph-talk .bot-msg .bot-p+.bot-p{margin-top:10px}
+html.ph.ph-talk .bot-msg.bot{padding:0; background:none; border:0; border-radius:0; box-shadow:none; color:var(--ink)}
+html.ph.ph-talk .bot-msg.you{max-width:85%; padding:10px 16px; border-radius:20px; border-bottom-right-radius:6px; background:var(--ph-wash); color:var(--ink)}
+html.ph.ph-talk .bot-empty{margin:auto 0 0; padding:0 2px}
+html.ph.ph-talk .bot-hi{margin:0; font-size:1.0625rem; color:var(--ink-2)}
+html.ph.ph-talk .bot-q{margin:4px 0 0; font-size:1.75rem; line-height:1.2; font-weight:600; letter-spacing:-.015em; color:var(--ink)}
+html.ph.ph-talk .bot-pend{order:2; margin:0 20px 8px}
+html.ph.ph-talk .bot-chips{order:3; display:none}
+html.ph.ph-talk #botsheet:not(.bot-has) .bot-chips{display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin:0; padding:0 20px 14px}
+html.ph.ph-talk .bot-chip{min-height:44px; padding:0 16px; border-radius:22px; border:1px solid var(--rule); background:none; color:var(--ink); font-size:1rem; text-align:left}
+html.ph.ph-talk .bot-ai-note{order:4; display:none}
+html.ph.ph-talk #botsheet:not(.bot-has) .bot-ai-note{display:block; margin:0; padding:0 20px 12px; border:0; font-size:.8125rem; line-height:1.45; color:var(--muted)}
+html.ph.ph-talk .bot-note{order:5; margin:0 20px 8px; font-size:.875rem; color:var(--ink-2)}
+html.ph.ph-talk .bot-ask{order:6; display:flex; flex-wrap:nowrap; align-items:flex-end; justify-content:flex-start; gap:4px;
+  margin:0 12px 10px; padding:4px 4px 4px 18px; border:1px solid var(--hair); border-radius:26px; background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.06)}
+html.ph.ph-talk .bot-ask:focus-within{border-color:var(--rule)}
+html.ph.ph-talk #bot-input{flex:1 1 auto; min-width:0; min-height:0; max-height:160px; margin:0; padding:10px 0; border:0; border-radius:0;
+  background:none; box-shadow:none; outline:none; resize:none; font-size:1.0625rem; line-height:1.45; color:var(--ink)}
+html.ph.ph-talk #bot-input::placeholder{color:var(--muted)}
+html.ph.ph-talk :is(#bot-mic,#bot-send,#bot-stop){flex:none; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
+  min-height:44px; padding:0; border:0; border-radius:50%; box-shadow:none}
+html.ph.ph-talk :is(#bot-send,#bot-stop)[hidden]{display:none}
+html.ph.ph-talk .bot-ico{display:block}
+html.ph.ph-talk #bot-mic svg{width:20px; height:20px}
+html.ph.ph-talk .bot-btxt{position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0}
+html.ph.ph-talk #bot-mic{background:none; color:var(--ink-2)}
+html.ph.ph-talk #bot-mic[aria-pressed="true"]{background:var(--accent-wash); color:var(--accent-ink)}
+html.ph.ph-talk #bot-send{background:var(--ph-pri); color:var(--ph-on-pri)}
+html.ph.ph-talk .bot-ask:not(.bot-typed) #bot-send{background:var(--inset); color:var(--muted)}
+html.ph.ph-talk #bot-stop{background:var(--ink); color:var(--ground)}
+/* the web: the same, in the middle column */
+html.ph-web.ph-talk #botsheet{padding:28px max(24px, calc((100vw - var(--side) - 760px) / 2)) 24px}
+html.ph-web.ph-talk :is(.sheet-head,.bot-log,.bot-chips,.bot-ai-note,.bot-note,.bot-pend){padding-left:0; padding-right:0; margin-left:0; margin-right:0}
+html.ph-web.ph-talk #botsheet:not(.bot-has) :is(.bot-chips,.bot-ai-note){padding-left:0; padding-right:0}
+html.ph-web.ph-talk .bot-ask{margin:0 0 8px}
+/* ---- the tour (part 596, 2026-10-22): 8 slides, a small moving demo each, always one tap away ---- */
+.tour{display:flex; flex-direction:column; gap:16px}
+.tour-top{display:flex; align-items:center; justify-content:space-between; min-height:44px}
+.tour-of{font-variant-numeric:tabular-nums}
+.tour-demo{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  min-height:210px; padding:22px; border-radius:26px; border:1px solid var(--hair);
+  background:radial-gradient(120% 90% at 15% 0%, color-mix(in srgb, var(--ph-pri, var(--accent)) 30%, transparent), transparent 62%),
+    radial-gradient(90% 80% at 100% 100%, color-mix(in srgb, var(--win) 14%, transparent), transparent 60%), var(--panel)}
+.tour-demo::after{content:""; position:absolute; inset:-40%; background:conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--ph-pri, var(--accent)) 10%, transparent), transparent 40%);
+  animation:td-spin 14s linear infinite; pointer-events:none; filter:blur(28px); opacity:.7}
+.tour-demo>*{position:relative; z-index:1}
+.td-k{display:block; font-size:12px; color:var(--muted)}
+.td-card{display:flex; flex-direction:column; gap:4px; width:min(300px,100%); padding:14px 16px; border-radius:18px; background:var(--ground); border:1px solid var(--hair); box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+.td-card b{font-size:17px}
+.td-why{font-size:13px; color:var(--ink-2)}
+.td-btn{align-self:flex-start; margin-top:6px; padding:7px 16px; border-radius:16px; background:var(--ph-pri, var(--accent)); color:var(--ph-on-pri, #fff); font-size:13px; font-weight:600}
+.td-list{display:flex; flex-direction:column; gap:6px; width:min(300px,100%)}
+.td-row{display:block; height:32px; line-height:32px; padding:0 14px; border-radius:12px; background:var(--ground); border:1px solid var(--hair); font-size:14px}
+.td-in{animation:td-in 4.8s var(--ease) infinite}
+.td-pulse .td-btn{animation:td-pulse 4.8s var(--ease) infinite}
+.td-bat{display:flex; gap:5px; padding:6px; border:2px solid var(--ink-2); border-radius:10px}
+.td-bat i{display:block; width:22px; height:34px; border-radius:4px; background:var(--win)}
+.td-bat i.td-off{animation:td-drain 4.8s var(--ease) infinite}
+.td-swap{position:relative; height:24px; width:220px; text-align:center; font-weight:600}
+.td-swap span{position:absolute; inset:0; animation:td-a 4.8s var(--ease) infinite}
+.td-swap span+span{animation-name:td-b}
+.td-time{display:flex; flex-direction:column; gap:6px; width:min(300px,100%)}
+.td-blk{display:block; padding:8px 12px; border-radius:12px; background:color-mix(in srgb, var(--ph-pri, var(--accent)) 22%, var(--ground)); font-size:14px; animation:td-slide 4.8s var(--ease) infinite}
+.td-b2{animation-delay:.3s}
+.td-chat{display:flex; flex-direction:column; gap:8px; width:min(320px,100%)}
+.td-you{align-self:flex-end; padding:8px 14px; border-radius:16px; border-bottom-right-radius:5px; background:var(--ph-wash, var(--inset)); font-size:14px; animation:td-in 4.8s var(--ease) infinite}
+.td-bot{align-self:flex-start; font-size:14px; line-height:1.45; animation:td-late 4.8s var(--ease) infinite}
+.td-order .td-row{transform:translateY(0); animation:td-sort 4.8s var(--ease) infinite}
+.td-two{display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(340px,100%)}
+.td-note{padding:12px; border-radius:14px; background:var(--ground); border:1px solid var(--hair); font-size:13px; line-height:1.4}
+.td-press{animation:td-press 4.8s var(--ease) infinite}
+@keyframes td-spin{to{transform:rotate(360deg)}}
+@keyframes td-in{0%,12%{opacity:0; transform:translateY(10px)} 26%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-late{0%,38%{opacity:0; transform:translateY(10px)} 52%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-pulse{0%,30%,100%{transform:none} 40%{transform:scale(1.08)} 50%{transform:none}}
+@keyframes td-press{0%,40%{transform:none; filter:none} 48%{transform:scale(.92)} 56%,100%{transform:none; filter:brightness(1.25)}}
+@keyframes td-drain{0%,30%{background:var(--win)} 45%,85%{background:var(--rule)} 100%{background:var(--win)}}
+@keyframes td-a{0%,30%{opacity:1} 40%,88%{opacity:0} 100%{opacity:1}}
+@keyframes td-b{0%,30%{opacity:0} 40%,88%{opacity:1} 100%{opacity:0}}
+@keyframes td-slide{0%,10%{opacity:0; transform:translateX(30px)} 25%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-sort{0%,30%{transform:translateY(0)} 50%,88%{transform:translateY(calc((var(--o) - var(--d)) * 38px))} 100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){ .tour-demo *,.tour-demo::after{animation:none !important} .td-in,.td-bot,.td-blk{opacity:1} }
+.tour-card{position:relative}
+.tour-t{font-size:1.6rem; margin:0 36px 6px 0}
+.tour-s{font-size:1.0625rem; line-height:1.5}
+.tour-new{display:inline-block; margin-bottom:8px; padding:2px 10px; border-radius:999px; background:var(--ph-pri, var(--accent)); color:var(--ph-on-pri, #fff); font-size:12px; font-weight:600}
+.tour-acts{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+.tour-acts .ph-btn{flex:1 1 140px}
+.tour-dots{display:flex; justify-content:center; gap:2px}
+.tour-dot{position:relative; width:28px; height:28px; padding:0; border:0; background:none; cursor:pointer}
+.tour-dot::before{content:""; position:absolute; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%; background:var(--rule); transition:width .2s, margin .2s}
+.tour-dot[aria-current="step"]::before{width:22px; margin-left:-11px; border-radius:4px; background:var(--ink)}
+.tour-dnew::after{content:""; position:absolute; right:4px; top:5px; width:5px; height:5px; border-radius:50%; background:var(--ph-pri, var(--accent))}
+.tour-nav{display:flex; gap:10px}
+.tour-nav .ph-btn{flex:1 1 0}
+.tour-nav .ph-btn[disabled]{opacity:.4}
+html.ph-web #ph-tabs .tab-help{margin-top:auto}
