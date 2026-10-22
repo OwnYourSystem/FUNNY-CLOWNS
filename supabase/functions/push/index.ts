@@ -16,6 +16,12 @@ const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SE
 const ORIGINS = [/^https:\/\/funny-clowns\.vercel\.app$/, /^https:\/\/funny-clowns-[a-z0-9-]+-oys-s-projects\.vercel\.app$/,
   /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
 const okOrigin = (o: string) => ORIGINS.some((r) => r.test(o));
+/* Only the live app may sign up for reminders (2026-10-22). A test preview is its own web address, with its
+   own frozen copy of the app on the phone: a sign-up made there kept sending reminders that opened the old
+   version. A preview may still turn reminders off, and when it tries to sign up, any old sign-up of that
+   device for the preview is removed. */
+const LIVE = [/^https:\/\/funny-clowns\.vercel\.app$/, /^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/];
+const liveOrigin = (o: string) => LIVE.some((r) => r.test(o));
 function cors(req: Request): Record<string, string> {
   const o = req.headers.get("origin") || "";
   const h: Record<string, string> = { "access-control-allow-headers": "content-type, apikey, authorization", "access-control-allow-methods": "GET, POST, OPTIONS", vary: "origin" };
@@ -56,6 +62,11 @@ Deno.serve(async (req: Request) => {
       const text = await req.text(); if (text.length > 2000) return json({ error: "too_large" }, 413);
       const c = cleanSub(JSON.parse(text)); if (c.err) return json({ error: c.err }, 400);
       const row = c.row!;
+      if (origin && !liveOrigin(origin)) {
+        const gone = await db.from("push_subs").delete().eq("endpoint", row.endpoint).eq("auth", row.auth);
+        if (gone.error) throw gone.error;
+        return json({ error: "live_app_only" }, 403);
+      }
       const old = await db.from("push_subs").select("updated_at").eq("endpoint", row.endpoint).maybeSingle();
       if (old.data) {
         if (Date.now() - Date.parse(old.data.updated_at) < 10000) return json({ ok: true, same: true });
