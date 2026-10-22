@@ -83,11 +83,11 @@ await ok("Your week: seven columns, the tallest labelled, a tap reads a day out,
 
 /* ---------- 2. the journal keeps its words to itself ---------- */
 await ok("Now says yesterday's note is waiting, without what it says", async () => {
-  const s = await p.locator(".ph-strip").innerText(); assert.match(s, /note is waiting/); assert.doesNotMatch(s, PRIVATE);
+  const s = await p.locator(".ph-strip[data-ph=jropen]").innerText(); assert.match(s, /note is waiting/); assert.doesNotMatch(s, PRIVATE);
   assert.doesNotMatch(await p.locator("#ph-main").innerText(), PRIVATE);
 });
 await ok("the strip opens the Journal with yesterday's note shown", async () => {
-  await p.locator(".ph-strip").click(); await p.waitForTimeout(300);
+  await p.locator(".ph-strip[data-ph=jropen]").click(); await p.waitForTimeout(300);
   assert.equal(await p.evaluate(() => location.hash), "#/journal"); assert.match(await p.locator("#ph-main").innerText(), /Call the bank/);
 });
 await ok("the Journal shows days, not words; Show it opens yesterday's note and leaving closes it", async () => {

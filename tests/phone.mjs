@@ -109,7 +109,7 @@ await ok("Journal: write the end of the day with the dialog, and it is listed wi
 await ok("yesterday's note shows as one line on Now, and opens the Journal", async () => {
   await p.evaluate(([JKEY, YEST]) => { localStorage.setItem(JKEY, JSON.stringify({ v: 1, log: [{ id: "j1", at: new Date(Date.now() - 864e5).toISOString(), d: YEST, tm: "21:40", kind: "end", a: "Shipped", b: "Call the bank" }] })); }, [JKEY, YEST]);
   await p.reload(); await p.waitForSelector("#ph-main"); await go("now");
-  const s = p.locator(".ph-strip"); assert.match(await s.innerText(), /yesterday/i);
+  const s = p.locator(".ph-strip[data-ph=jropen]"); assert.match(await s.innerText(), /yesterday/i);
   /* builds from 2026-10-18 say the note is waiting; its words show on the Journal page the strip opens */
   if (/note is waiting/.test(await s.innerText())) assert.doesNotMatch(await s.innerText(), /Call the bank/); else assert.match(await s.innerText(), /Call the bank/);
   await s.click(); await p.waitForTimeout(250); assert.equal(await p.evaluate(() => location.hash), "#/journal"); assert.match(await p.locator("#ph-main").innerText(), /where you left off/i);

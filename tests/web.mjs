@@ -28,9 +28,9 @@ await ok("a big screen gets Qordel web: the first-run screen in the middle, no s
 });
 await p.click("[data-ph=onb-next]"); await p.waitForTimeout(250);
 await p.fill("#ph-goal", "Garden Shed"); await p.fill("#ph-step", "Buy the timber"); await p.click("[data-ph=onb-done]"); await p.waitForTimeout(600);
-await ok("after the first goal: a sidebar with the brand and 6 places, in order, Now marked", async () => {
+await ok("after the first goal: a sidebar with the brand, 6 places and How it works, in order, Now marked", async () => {
   assert.equal(await p.locator("#ph-tabs").isVisible(), true);
-  assert.deepEqual(await p.locator("#ph-tabs a").evaluateAll((l) => l.filter((a) => a.offsetParent).map((a) => a.textContent.trim())), ["Now", "Talk", "Journal", "Calendar", "Goals", "You"]);
+  assert.deepEqual(await p.locator("#ph-tabs a").evaluateAll((l) => l.filter((a) => a.offsetParent).map((a) => a.textContent.trim())), ["Now", "Talk", "Journal", "Calendar", "Goals", "You", "How it works"]);
   assert.match(await p.locator(".ph-side-brand").innerText(), /Qordel\s+Powered by OwnYourSystem/i);
   const s = await box("#ph-tabs"); assert.equal(s.x, 0); assert.equal(s.height, 900); assert.ok(s.width >= 220 && s.width <= 260);
   assert.equal(await cur(), "now"); assert.equal(await p.locator('[aria-label="Do this now"]').count() >= 1, true);

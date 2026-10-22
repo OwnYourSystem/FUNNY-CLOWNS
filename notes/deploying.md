@@ -339,3 +339,10 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Owner's fix, one of: (a) add ANTHROPIC_WORKSPACE_ID (the workspace id from the Anthropic console) in Vercel for
   all environments, or (b) replace QORDEL_ORDER_KEY with a key created inside a workspace. Then
   /api/tutor?verify=1 must say works: true.
+
+## 2026-10-22: the tour on `tour-test` (from talk-test), NOT in production
+
+- 8 animated slides (part 594), reached from You, the web sidebar, Now and Talk; New badges for slides added later
+  (each slide has a since date). tests/tour.mjs (14). phone, journal-progress and web updated for the extra Now line
+  and the extra sidebar item. Full suite: 45 suites, 950 checks, 0 failures.
+- To add a slide later: one entry in TOUR (part 594) with a since date, and a demo in tourDemo.
