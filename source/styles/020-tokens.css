@@ -1,0 +1,64 @@
+/* dark-first: the bare :root is the intended look; light is the swap */
+:root{
+  color-scheme: dark;
+  --ground:#08080A; --panel:#0F0F12; --raised:#16161B; --inset:rgba(255,255,255,.06);
+  --ink:#ECECEF; --ink-2:#9A9AA6; --muted:#8A8A95;
+  --hair:rgba(255,255,255,.075); --rule:rgba(255,255,255,.17);
+  --accent:#FF3B30; --accent-ink:#FF7A72; --accent-wash:rgba(255,59,48,.10);
+  --bat1:#FF6B5E; --bat2:#FF9F43; --bat3:#F5C542; --bat4:#7BC86C;
+  --glow:0 0 20px -4px rgba(255,59,48,.55);
+  /* Progress is not an alarm. Work under way is orange, work finished is
+     green, and red is kept for the things that actually want you.      */
+  --run:#FF8A3D; --run-glow:0 0 20px -5px rgba(255,138,61,.6);
+  --win:#3FCF8E; --win-glow:0 0 18px -6px rgba(63,207,142,.5);
+  /* Five bands, so a glance is enough: nothing, a quarter, half, most,
+     all. One hue walking from cold grey through orange into green.   */
+  --b0:#85858F; --b25:#FF6B3D; --b50:#FF9F1C; --b75:#D6CF3A; --b100:#3FCF8E;
+  --grain:.05;
+  /* Neumorphism: one surface, lit from the top left. The phone shell carves
+     everything out of --nm-bg, so a raised thing throws a dark shadow down
+     and right and catches a highlight up and left, and a sunken thing does
+     the same inverted. It needs a mid tone to read, so the phone ground is
+     lifted off the near-black the desktop uses.                          */
+  --nm-bg:#17171D; --nm-hi:rgba(255,255,255,.055); --nm-lo:rgba(0,0,0,.72);
+  --nm-out:-6px -6px 14px var(--nm-hi), 6px 6px 14px var(--nm-lo);
+  --nm-out-sm:-3px -3px 8px var(--nm-hi), 3px 3px 8px var(--nm-lo);
+  --nm-in:inset -4px -4px 10px var(--nm-hi), inset 4px 4px 10px var(--nm-lo);
+  --nm-in-sm:inset -2px -2px 5px var(--nm-hi), inset 2px 2px 5px var(--nm-lo);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --font:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme: light;
+    --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
+    --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
+    --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
+    --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
+    --glow:0 0 18px -6px rgba(228,36,24,.5);
+    --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+    --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
+    --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
+    --grain:.03;
+    --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
+  }
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --ground:#EFEFEC; --panel:#FFFFFF; --raised:#F6F6F3; --inset:rgba(10,10,14,.07);
+  --ink:#0B0B0E; --ink-2:#55555F; --muted:#62626B;
+  --hair:rgba(10,10,14,.10); --rule:rgba(10,10,14,.22);
+  --accent:#E42418; --accent-ink:#B81C12; --accent-wash:rgba(228,36,24,.08);
+  --bat1:#C62E24; --bat2:#C2611A; --bat3:#A17800; --bat4:#4C8A23;
+  --glow:0 0 18px -6px rgba(228,36,24,.5);
+  --run:#A84B00; --run-glow:0 0 16px -7px rgba(199,90,0,.5);
+  --win:#127D51; --win-glow:0 0 16px -7px rgba(18,125,81,.45);
+  --b0:#66666F; --b25:#C2391A; --b50:#9C5B00; --b75:#6F6F0E; --b100:#127D51;
+  --grain:.03;
+  --nm-bg:#E7E7E2; --nm-hi:rgba(255,255,255,.95); --nm-lo:rgba(160,160,152,.55);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
