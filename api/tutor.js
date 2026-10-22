@@ -231,6 +231,8 @@ function fail(res, status, code, message, extra) {
 
 export default async function handler(req, res) {
   const t0 = Date.now();
+  /* the page asks once whether the tutor is switched on here (2026-10-22); the answer is yes or no, never the key */
+  if (req.method === "GET") { res.setHeader("cache-control", "no-store"); return res.status(200).json({ configured: !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) }); }
   if (req.method !== "POST") return fail(res, 405, "method", "POST only");
   if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) return fail(res, 503, "not_configured", "The tutor is not switched on here.");
 

@@ -377,8 +377,12 @@ function suggestFor(s){
     var n=0; a.kw.forEach(function(k){ if(w.indexOf(k)>=0||String(s).toLowerCase().indexOf(k)>=0) n++; });
     return {a:a,n:n};
   }).filter(function(x){ return x.n>0; }).sort(function(x,y){ return y.n-x.n; }).slice(0,3);
-  if(!scored.length) return "I did not find something to do in that. Type help to see everything I can do.";
-  return "I did not find a command in that. The closest things I can do:\n"+scored.map(function(x){ return "- "+x.a.ex; }).join("\n")+"\nType help for everything.";
+  var ai=(typeof TUTOR_PROXY!=="undefined" && TUTOR_PROXY && !(acct&&acct.access_token)) ? "\nSign in on You, and the AI tutor can answer questions like this one." : "";
+  /* a guess is offered only when the sentence clearly points at it; otherwise the 3 things anyone can ask */
+  var strong=scored.filter(function(x){ return x.n>=2; });
+  var q=function(t){ return "\u201c"+t+"\u201d"; };
+  if(strong.length) return "I did not catch that. Did you mean "+strong.map(function(x){ return q(x.a.ex); }).join(" or ")+"?"+ai;
+  return "I did not catch that. You can ask "+q("What should I do now?")+", "+q("What is left today?")+" or "+q("Make today lighter")+"."+ai+"\n\nType help to see everything I can do.";
 }
 var FLOW=null;
 function assistExtract(a,m){
@@ -541,14 +545,7 @@ var BRAIN=[
    }],
   /* let the board choose */
   [/^(?:what should i do(?: today| now)?|pick (?:my |one |a )?task|choose(?: for me| one)?|decide(?: for me)?|give me one|one task)$/,
-   function(){
-     if(state.oftad.length)
-       return "Today is already set: "+state.oftad.map(function(c){ return cardName(c); }).join(", ")+".";
-     var p=pickToday();
-     if(!p) return "Nothing left to pick. Everything is done, blocked or already taken.";
-     takePick(p.s.id);
-     return p.s.name+". "+p.why;
-   }],
+   function(){ return pickReply(); }],
   [/^(?:not that|something else|another one|skip it|no, ?something else)$/,
    function(){
      var p=pickToday();
@@ -686,10 +683,52 @@ function guessIntent(s){
    model is there to talk, only the exact patterns act and everything else
    is a conversation, so strict leaves the guesser out.                    */
 var STRICT=false;
+/* ---- plain sentences, without the AI (owner, 2026-10-22: "the chatbot is still dysfunctional") ----
+   People do not type commands. "I don't feel good today, what task can I take?" must get a kind, useful
+   answer on this phone, signed in or not. Two things are read from a whole sentence, before the commands:
+   that the person feels low (the day is made a low day, as the tutor does with set_dose rough), and that
+   they ask what to do (the board's pick). Distress is caught earlier, in botAsk, and never lands here. */
+var LOWDAY=/\b(?:(?:do ?n[o']?t|dont|not|never) feel(?:ing)? (?:so |very |too |that |all that |really )?(?:good|well|great|okay|ok|fine|right|myself|like it)|feel(?:ing)? (?:still |so |very |really |a bit |kind of |pretty |quite )*(?:bad|sick|ill|unwell|tired|exhausted|awful|terrible|low|down|drained|overwhelmed|stressed|anxious|sad|weak|rough|lousy|horrible|off)|(?:i'?m|i am|im) (?:still |so |very |really |a bit |pretty |quite |just )*(?:tired|exhausted|sick|ill|unwell|worn out|drained|overwhelmed|stressed|burnt out|burned out|not well|not ok(?:ay)?|not feeling (?:well|good|great)|low|down|knackered|wiped out)|low energy|no energy|out of energy|bad day|rough day|hard day|tough day|a headache|migraine|(?:have|got) a cold|slept (?:badly|poorly|bad)|did ?n[o']?t sleep|could ?n[o']?t sleep|no sleep)\b/;
+var PICKQ=/\b(?:what|which)\b[^.?!]{0,30}\b(?:task|step|thing|job|work)s?\b[^.?!]{0,24}\b(?:can|should|could|shall|do) i\b|\bwhat (?:can|should|could|shall) i (?:do|take|start|work on|pick|focus on)\b|\b(?:give|suggest|pick|find)(?: me)? (?:a|one|some|something|anything|the next)\b[^.?!]{0,16}\b(?:task|step|thing|to do)\b|\bwhat(?:'?s| is) (?:my )?next\b/;
+function pickReply(){
+  if(state.oftad.length)
+    return "Today is already set: "+state.oftad.map(function(c){ return cardName(c); }).join(", ")+".";
+  var p=pickToday();
+  if(!p){
+    var v=verdict();
+    if(v.rest) return v.why+" Nothing more is needed now.";
+    var f=floorState().items;
+    if(doseNow().band==="low") return f.length ? "One of your easy things is enough today: "+f.slice(0,3).map(function(x){ return x.t; }).join(", ")+"." :
+      "Nothing is needed today. If you want one small thing, mark a step Easy on its page, or add your easy things on You.";
+    return "Nothing left to pick. Everything is done, blocked or already taken.";
+  }
+  takePick(p.s.id);
+  return p.s.name+". "+p.why;
+}
+function lowDayReply(){
+  var dz=doseNow(), was=dz.lvl;
+  if(!(dz.band==="low")) setEnergy(2);
+  var head=(was&&was<=2) ? "Today is already a low day." : "I am sorry you do not feel well. I made today a low day.";
+  return head+"\n\n"+pickReply()+(was&&was<=2?"":"\n\nSay normal day to change it back.");
+}
+/* a hello or a thank-you gets a short, warm answer and the way back to the day */
+function smallTalk(s){
+  if(/^(?:hi|hello|hey|hej|hallo|good (?:morning|afternoon|evening)|morning|yo)(?: there| qordel)?[!.]*$/.test(s)) return botGreet().replace(".","!")+" What do you need?";
+  if(/^(?:how are you|how are you doing|how is it going|how'?s it going|what'?s up|sup)\??$/.test(s)) return "I am fine, thank you. How is your day going? Tell me how you feel, or ask what to do now.";
+  if(/^(?:thanks?(?: you)?(?: so much| a lot)?|thank you|thx|ty|great|perfect|nice|cool|ok(?:ay)?|good|got it)[!.]*$/.test(s)) return "You are welcome. I am here when you need the next step.";
+  if(/^(?:bye|goodbye|good night|see you|later)[!.]*$/.test(s)) return "Take care. One step was enough today if you did one.";
+  return null;
+}
 function localBrain(said,strict){
   SPOKE=spoken(said);
   var s=SPOKE.q;
   if(!s) return null;
+  /* a question waiting for an answer (the journal, a missing detail) gets the answer first, as typed */
+  if(!FLOW){
+    var st=smallTalk(s); if(st) return st;
+    if(LOWDAY.test(s)) return lowDayReply();
+    if(PICKQ.test(s) && !/^(?:help|what can i (?:say|ask|do|type))\??$/.test(s)) return pickReply();
+  }
   STRICT=!!strict;
   try{
     var asked=assist(s,!!strict);

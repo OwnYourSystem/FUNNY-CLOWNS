@@ -52,6 +52,15 @@ function wireTrim(){
   while(i<wire.length && !wireStartsTurn(wire[i])) i++;
   wire=wire.slice(i);
 }
+/* The tutor switches itself on (2026-10-22). The page asks the server once whether its AI key is set; only a
+   yes turns it on, so a page that was told it is on stays on. Before this a hand-set switch kept it off. */
+var TUTOR_ASKED=false;
+function tutorProbe(){
+  if(TUTOR_ASKED||TUTOR_PROXY) return; TUTOR_ASKED=true;
+  if(!(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")) return;
+  try{ fetch(TUTOR_URL,{method:"GET",cache:"no-store"}).then(function(r){ return r.ok?r.json():null; })
+    .then(function(j){ if(j&&j.configured===true){ TUTOR_PROXY=true; try{ botAiNote(); }catch(e){} } }).catch(function(){}); }catch(e){}
+}
 function proxyReady(){ return TUTOR_PROXY && (location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1"); }
 function coded(code,msg){ var e=new Error(msg||code); e.code=code; return e; }
 function tutorPost(payload,signal){
@@ -164,7 +173,8 @@ async function botAsk(text,opts){
     try{ reply=localBrain(said,modelThere()); }
     catch(err){ reply=nearMiss((err&&err.message)||"I could not do that."); }
   }
-  if(reply===null && !botSample && !proxyReady()) reply=suggestFor(said);
+  /* signed out, or with no tutor here, the board answers on its own and says what it can do */
+  if(reply===null && !botSample && !(proxyReady() && acct && acct.access_token)) reply=suggestFor(said);
   if(reply!==null){
     botTurns.push({role:"user",content:said});
     botTurns.push({role:"assistant",content:reply});
@@ -207,6 +217,7 @@ async function botAsk(text,opts){
 
 (function(){
   botOpen(false);   /* it opens when you ask for it, never on its own */
+  tutorProbe();
   /* 3 things to ask, no more (2026-10-22); help still answers when typed */
   var chips=[["What should I do now?","what should i do now"],
              ["What is left today?","what is left today"],
