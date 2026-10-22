@@ -317,3 +317,13 @@ Written 2026-10-05, after the live site was found 20 commits behind.
 - Checks updated for the new design: brand (Talk layout, the bar grows, Send plum only with text), phone (New chat
   only with a chat), hig2 and journal-progress (no photo on Talk).
 - Full suite: 43 suites, 921 checks, 0 failures.
+
+## 2026-10-22: Talk understands plain sentences; the tutor switches itself on (talk-test, NOT in production)
+
+- Owner's test: "I don't feel good today, what task can I take?" answered with unrelated commands. Causes: the
+  tutor was off in the app (TUTOR_PROXY=false since it was built), and the local brain knew only set phrases.
+- GET /api/tutor now answers {configured: true|false}; the page turns the tutor on only on a yes.
+- Local brain: low-day sentences (set energy Low, offer the easy step), "what can I do"-style questions (the pick),
+  small talk; an honest fallback with the 3 starter questions. A waiting question (journal) always comes first.
+- New tests/talk-sense.mjs (12). Updated: assistant, tutor-api (GET), tutor-e2e (signed-out reply). The 3 golden
+  scripts ignore "Failed to load resource" (the local server has no /api/tutor). Full suite: 44 suites, 933 checks.

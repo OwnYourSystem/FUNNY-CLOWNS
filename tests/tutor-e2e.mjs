@@ -200,7 +200,8 @@ await ask("Tell me something encouraging about my week");
 await ok("signed out: no upstream call (the old local guesser still reads it)", async () => { assert.equal(upstream.length, 0); });
 await clear();
 await ask("Tell me what you notice about my mornings");
-await ok("signed out and nothing for the local brain to do: says to sign in", async () => { assert.equal(upstream.length, 0); assert.match((await log()).join("\n"), /Sign in to talk to the tutor/); });
+/* since 2026-10-22 the board answers by itself when signed out, and says the tutor needs a sign-in */
+await ok("signed out and nothing for the local brain to do: answers by itself and says to sign in for the tutor", async () => { assert.equal(upstream.length, 0); assert.match((await log()).join("\n"), /Sign in on You, and the AI tutor can answer questions like this one\./); });
 
 await ok("no page errors", async () => { assert.deepEqual(errs.filter((e) => !/Failed to load resource/.test(e)), []); });
 console.log(results.join("\n")); console.log(results.some((r) => r.startsWith("FAIL")) ? "SOME FAILED" : "ALL PASSED (" + results.length + ")");

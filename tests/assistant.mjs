@@ -138,9 +138,9 @@ await ok("go to a page and search by words", async () => {
   await say("search for migration"); assert.equal(await p.evaluate(() => document.querySelector(".seek-in").value), "migration");
   await say("clear the search"); assert.equal(await p.evaluate(() => document.querySelector(".seek-in").value), "");
 });
-await ok("a sentence it cannot place gets the closest things it can do, and no change", async () => {
+await ok("a sentence it cannot place says so plainly, offers the 3 starter questions, and changes nothing", async () => {
   const before = JSON.stringify((await st()).subs);
-  const r = await say("the moon is purple and my deadline is vibes"); assert.match(r, /closest|did not find/i); assert.equal(JSON.stringify((await st()).subs), before);
+  const r = await say("the moon is purple and my deadline is vibes"); assert.match(r, /^I did not catch that\. You can ask \u201cWhat should I do now\?\u201d/); assert.doesNotMatch(r, /buy milk|closest/i); assert.equal(JSON.stringify((await st()).subs), before);
 });
 await ok("a step name that matches nothing offers real names", async () => {
   const { subs } = await names(); const w = subs[0].split(" ")[0];

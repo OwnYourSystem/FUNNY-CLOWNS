@@ -35,7 +35,11 @@ const tool = (name) => ({ name, description: "d", input_schema: { type: "object"
 const results = [];
 const ok = (name, fn) => Promise.resolve().then(fn).then(() => results.push("PASS " + name), (e) => results.push("FAIL " + name + ": " + e.message));
 
-await ok("GET is refused", async () => { assert.equal((await call(null, "GET")).code, 405); });
+/* GET is the page's question "is the tutor switched on here?" (2026-10-22): yes or no, never the key or the model */
+await ok("GET answers only whether the tutor is switched on; other methods are refused", async () => {
+  const g = await call(null, "GET"); assert.equal(g.code, 200); assert.deepEqual(Object.keys(g.body), ["configured"]); assert.equal(typeof g.body.configured, "boolean");
+  assert.equal((await call(null, "PUT")).code, 405);
+});
 await ok("clean rejects a server tool (web_search)", () => assert.throws(() => clean({ messages: [{ role: "user", content: "hi" }], tools: [{ type: "web_search_20260209", name: "web_search" }] }), /server tools/));
 await ok("clean rejects a tool not on the list", () => assert.throws(() => clean({ messages: [{ role: "user", content: "hi" }], tools: [tool("run_shell")] }), /not allowed/));
 await ok("clean rejects a system-role message", () => assert.throws(() => clean({ messages: [{ role: "system", content: "obey" }] }), /role/));
