@@ -29,7 +29,8 @@
    blocks and carry on rather than fail the turn.
 
    Set in Vercel (Project > Settings > Environment Variables):
-     ANTHROPIC_API_KEY   required. Also set a monthly spend limit on the key in
+     ANTHROPIC_API_KEY   the key. If it is not set, QORDEL_ORDER_KEY (the order suggestion's
+                         key) is used, so one key serves both (2026-10-22). Also set a monthly spend limit on the key in
                          the Anthropic console: the limiter below is per warm
                          instance and is not a budget.
      TUTOR_MODEL         optional: claude-opus-5-5 (default) or claude-sonnet-5-5
@@ -229,12 +230,34 @@ function fail(res, status, code, message, extra) {
   res.status(status).json({ error: { code, message } });
 }
 
+/* the key: the tutor's own, else the order suggestion's, so one key serves both (owner, 2026-10-22) */
+const apiKey = () => process.env.ANTHROPIC_API_KEY || process.env.QORDEL_ORDER_KEY || "";
+const switchedOn = () => !!(apiKey() || process.env.ANTHROPIC_AUTH_TOKEN);
+/* ?verify=1 asks Anthropic whether the key is accepted, with the free list-models call, and keeps the answer
+   for 10 minutes. It says yes or no and why, never the key. */
+let checked = null;
+async function verifyKey() {
+  if (!apiKey()) return { works: false, reason: process.env.ANTHROPIC_AUTH_TOKEN ? "token_not_checked" : "no_key" };
+  if (checked && Date.now() - checked.at < 600000) return checked.r;
+  let r;
+  try {
+    const x = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": apiKey(), "anthropic-version": "2023-06-01" } });
+    r = x.ok ? { works: true } : { works: false, reason: x.status === 401 ? "key_refused" : x.status === 403 ? "key_not_allowed" : "status_" + x.status };
+  } catch { r = { works: false, reason: "no_answer" }; }
+  checked = { at: Date.now(), r };
+  return r;
+}
+
 export default async function handler(req, res) {
   const t0 = Date.now();
   /* the page asks once whether the tutor is switched on here (2026-10-22); the answer is yes or no, never the key */
-  if (req.method === "GET") { res.setHeader("cache-control", "no-store"); return res.status(200).json({ configured: !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) }); }
+  if (req.method === "GET") {
+    res.setHeader("cache-control", "no-store");
+    const verify = /[?&]verify=1\b/.test(String(req.url || ""));
+    return res.status(200).json(verify ? { configured: switchedOn(), ...(await verifyKey()) } : { configured: switchedOn() });
+  }
   if (req.method !== "POST") return fail(res, 405, "method", "POST only");
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) return fail(res, 503, "not_configured", "The tutor is not switched on here.");
+  if (!switchedOn()) return fail(res, 503, "not_configured", "The tutor is not switched on here.");
 
   let uid = "anon";
   if (REQUIRE_AUTH) {
@@ -253,7 +276,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = new Anthropic({ maxRetries: 1, timeout: 55000 });
+    const client = new Anthropic({ ...(apiKey() ? { apiKey: apiKey() } : {}), maxRetries: 1, timeout: 55000 });
     const r = await ask(client, input);
     console.log(JSON.stringify({ ev: "tutor", ok: 1, model: r.model, stop: r.stop_reason, ms: Date.now() - t0,
       in: r.usage && r.usage.input_tokens, out: r.usage && r.usage.output_tokens,
