@@ -133,6 +133,17 @@ delete process.env.ANTHROPIC_API_KEY;
 const mod3 = await import((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js?t=nokey" + Date.now());
 const r9 = out(); await mod3.default(mk("POST", { messages: [{ role: "user", content: "hi" }] }, {}), r9);
 await ok("no API key configured says not_configured", () => { assert.equal(r9.code, 503); assert.equal(r9.body.error.code, "not_configured"); });
+/* one key for both (2026-10-22): with no ANTHROPIC_API_KEY, the order suggestion's QORDEL_ORDER_KEY switches the tutor on */
+const getOn = async (url) => { const o = out(); await mod3.default({ method: "GET", url, headers: {} }, o); return o; };
+delete process.env.QORDEL_ORDER_KEY;
+const v0 = await getOn("/api/tutor?verify=1");
+await ok("the key check with no key says no_key, and nothing else", () => { assert.deepEqual(v0.body, { configured: false, works: false, reason: "no_key" }); });
+process.env.QORDEL_ORDER_KEY = "test-not-a-real-key";
+const g1 = await getOn("/api/tutor");
+await ok("the order suggestion's key alone switches the tutor on, and the answer never holds the key", () => {
+  assert.deepEqual(g1.body, { configured: true }); assert.doesNotMatch(JSON.stringify(g1.body), /test-not-a-real-key/);
+});
+delete process.env.QORDEL_ORDER_KEY;
 
 console.log = realLog;
 console.log(results.join("\n"));
