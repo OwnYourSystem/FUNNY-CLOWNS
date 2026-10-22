@@ -14,6 +14,8 @@ Owner: "Park it here." Nothing is in progress. Everything below is pushed.
 
 ## Waiting on the owner
 
+0. **Remove the old preview's reminders on the phone** (2026-10-22): Chrome, Settings, Site settings, Notifications, block every "funny-clowns-...-oys-s-projects.vercel.app" entry; keep funny-clowns.vercel.app. Or in the Supabase SQL editor: `delete from public.push_subs where id = 7;`. Push version 5 stops previews from signing up again.
+
 1. **The Google Client ID**, to turn the calendar on. The steps are in notes/calendar.md: the Calendar API, 2 permissions, test users, the 3 web addresses. Never send the client secret.
 2. **The 3 database migrations**, in this order: record_live_schema, boards_tighten_grants, ai_use. They were cancelled twice through the connection. Paste them into the Supabase SQL editor, or approve the next try.
 3. **ANTHROPIC_API_KEY** for the tutor in production: confirm it is set. Also set a spend limit on QORDEL_ORDER_KEY.
