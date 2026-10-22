@@ -170,7 +170,9 @@ export default async function handler(req, res) {
   catch (e) { return e instanceof Bad ? fail(res, e.status, e.code, e.message) : fail(res, 400, "bad_request", "send a JSON object"); }
 
   try {
-    const client = new Anthropic({ apiKey: process.env.QORDEL_ORDER_KEY, maxRetries: 1, timeout: 20000 });
+    /* a key not scoped to one workspace must name it on every call (2026-10-22) */
+    const ws = process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID } : {};
+    const client = new Anthropic({ apiKey: process.env.QORDEL_ORDER_KEY, defaultHeaders: ws, maxRetries: 1, timeout: 20000 });
     const r = await ask(client, input);
     console.log(JSON.stringify({ ev: "order", model: r.model, stop: r.stop_reason, ms: Date.now() - t0,
       in: r.usage && r.usage.input_tokens, out: r.usage && r.usage.output_tokens, n: input.steps.length }));

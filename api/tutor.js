@@ -29,6 +29,7 @@
    blocks and carry on rather than fail the turn.
 
    Set in Vercel (Project > Settings > Environment Variables):
+     ANTHROPIC_WORKSPACE_ID optional: the workspace to use when the key is not scoped to one.
      ANTHROPIC_API_KEY   the key. If it is not set, QORDEL_ORDER_KEY (the order suggestion's
                          key) is used, so one key serves both (2026-10-22). Also set a monthly spend limit on the key in
                          the Anthropic console: the limiter below is per warm
@@ -233,6 +234,9 @@ function fail(res, status, code, message, extra) {
 /* the key: the tutor's own, else the order suggestion's, so one key serves both (owner, 2026-10-22) */
 const apiKey = () => process.env.ANTHROPIC_API_KEY || process.env.QORDEL_ORDER_KEY || "";
 const switchedOn = () => !!(apiKey() || process.env.ANTHROPIC_AUTH_TOKEN);
+/* a key made for the whole organization, not one workspace, must name the workspace on every call (2026-10-22:
+   Anthropic refused the owner's key with "not scoped to a workspace"); ANTHROPIC_WORKSPACE_ID names it */
+const wsHeaders = () => (process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID } : {});
 /* ?verify=1 asks Anthropic whether the key is accepted, with the free list-models call, and keeps the answer
    for 10 minutes. It says yes or no and why, never the key. */
 let checked = null;
@@ -241,7 +245,7 @@ async function verifyKey() {
   if (checked && Date.now() - checked.at < 600000) return checked.r;
   let r;
   try {
-    const x = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": apiKey(), "anthropic-version": "2023-06-01" } });
+    const x = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": apiKey(), "anthropic-version": "2023-06-01", ...wsHeaders() } });
     if (x.ok) r = { works: true };
     else {
       /* Anthropic's own words (for example, a credit balance too low), short, with the key cut out if it ever appeared */
@@ -281,7 +285,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = new Anthropic({ ...(apiKey() ? { apiKey: apiKey() } : {}), maxRetries: 1, timeout: 55000 });
+    const client = new Anthropic({ ...(apiKey() ? { apiKey: apiKey() } : {}), defaultHeaders: wsHeaders(), maxRetries: 1, timeout: 55000 });
     const r = await ask(client, input);
     console.log(JSON.stringify({ ev: "tutor", ok: 1, model: r.model, stop: r.stop_reason, ms: Date.now() - t0,
       in: r.usage && r.usage.input_tokens, out: r.usage && r.usage.output_tokens,
