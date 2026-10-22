@@ -44,10 +44,11 @@ await ok("Talk: Clear can be taken back for 6 seconds", async () => {
   await p.locator("#ph-undo-b").click(); await p.waitForTimeout(200);
   assert.equal(await p.locator("#bot-log .bot-msg").count(), n); assert.equal(await p.locator("#ph-undo").isVisible(), false);
 });
-await ok("Talk: your photo sits level with Clear and covers nothing", async () => {
-  const r = await p.evaluate(() => { const a = document.getElementById("ph-mini").getBoundingClientRect(), c = document.getElementById("bot-clear").getBoundingClientRect();
-    return { dy: Math.abs((a.top + a.height / 2) - (c.top + c.height / 2)), overlap: !(a.left >= c.right || a.right <= c.left || a.top >= c.bottom || a.bottom <= c.top) }; });
-  assert.ok(r.dy <= 2, "off by " + r.dy); assert.equal(r.overlap, false);
+/* Talk, made calm (2026-10-22): the chat has the screen, so Talk shows its title and New chat only, no photo */
+await ok("Talk: no photo in the corner; the title and New chat do not overlap", async () => {
+  const r = await p.evaluate(() => { const m = document.getElementById("ph-mini"), t = document.querySelector("#botsheet .bot-title").getBoundingClientRect(), c = document.getElementById("bot-clear").getBoundingClientRect();
+    return { photo: !!(m && m.getClientRects().length), overlap: !(t.right <= c.left || t.left >= c.right || t.bottom <= c.top || t.top >= c.bottom) }; });
+  assert.equal(r.photo, false); assert.equal(r.overlap, false);
 });
 await ok("the weekly check-in page fits: no sideways scroll", async () => {
   await go("learned");

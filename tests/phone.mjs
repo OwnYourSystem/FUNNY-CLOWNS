@@ -389,7 +389,9 @@ await ok("nav: nothing said twice: no bar above the step form, no count beside S
   await go("goals"); await p.locator(".ph-goal").first().click(); await p.waitForTimeout(250);
   assert.equal(await p.locator("section[aria-label=Steps] .ph-row-h .ph-k").count(), 0);
   await p.locator("[data-ph=step]").first().click(); await p.waitForTimeout(250); assert.equal(await p.locator("#ph-main > div .ph-bar").count(), 0);
-  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); assert.equal(await p.locator(".bot-name").isVisible(), false); assert.equal(await p.locator("#bot-clear").isVisible(), true);
+  await tap('#ph-tabs [data-tab="talk"]'); await p.waitForTimeout(250); assert.equal(await p.locator(".bot-name").isVisible(), false);
+  /* Talk, made calm (2026-10-22): New chat shows only once there is a chat */
+  assert.equal(await p.locator("#bot-clear").isVisible(), (await p.locator("#bot-log .bot-turn").count()) > 0);
   await go("you");
 });
 await ok("nav: a sheet has a grabber; a short pull springs back, a long pull closes it", async () => {

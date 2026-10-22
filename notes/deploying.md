@@ -308,3 +308,12 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   up. A preview's sign-up is refused (403 live_app_only) and the device's earlier preview sign-up is deleted.
   Previews may still turn reminders off. The app already shows a calm message when a sign-up fails.
 - tests/server-rules.mjs: 10 checks, 0 failures.
+
+## 2026-10-22: Talk made calm, on the test branch `talk-test`, NOT in production
+
+- Owner: "The talk page is disappointing ... Make it as simple as possible. Give user more space and eyes friendly
+  View." The chat has the screen; one rounded bar at the bottom with the microphone and send inside; empty state:
+  greeting, "What do you need?", 3 ideas, the AI notice; New chat once there is a chat; plain, larger answers.
+- Checks updated for the new design: brand (Talk layout, the bar grows, Send plum only with text), phone (New chat
+  only with a chat), hig2 and journal-progress (no photo on Talk).
+- Full suite: 43 suites, 921 checks, 0 failures.

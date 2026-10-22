@@ -152,8 +152,10 @@ await ok("photo: picking one keeps a 256px square JPEG on this phone, outside th
   assert.equal(await p.locator("label.ph-av-b img").count(), 1); assert.equal(await mini(), null, "You shows the small one too");
   assert.match(await p.locator("#ph-main").innerText(), /Change photo/);
 });
-await ok("photo: the small photo is at the top right of every page, leads to You, and covers nothing", async () => {
-  for (const r of ["now", "journal", "goals", "talk", "backlog"]) {
+/* every page but Talk: since 2026-10-22 the chat has the screen and Talk shows no photo */
+await ok("photo: the small photo is at the top right of every page but Talk, leads to You, and covers nothing", async () => {
+  await go("talk"); assert.equal(await p.evaluate(() => { const m = document.getElementById("ph-mini"); return !!(m && m.getClientRects().length); }), false, "a photo on Talk");
+  for (const r of ["now", "journal", "goals", "backlog"]) {
     await go(r); const m = await mini(); assert.ok(m && m.img, "no photo on " + r);
     assert.ok(m.w >= 44 && m.h >= 44, r + " target " + m.w + "x" + m.h); assert.ok(m.x > 390 - 70 && m.y < 90, r + " not top right: " + JSON.stringify(m));
     const boxes = await p.evaluate((sels) => sels.map((sel) => [sel, [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden")

@@ -82,9 +82,10 @@ await ok("with reminders off, there is no test row", async () => {
   assert.equal(await p.locator("[data-ph=remtest]").count(), 0);
 });
 /* 2026-10-19: the name on every page, plum only on buttons, and Talk writes at the top */
-await ok("every page starts with the name in capitals and Powered by OwnYourSystem", async () => {
+/* Talk starts with its own title since 2026-10-22, so the chat has the screen; every other page starts with the name */
+await ok("every page but Talk starts with the name in capitals and Powered by OwnYourSystem", async () => {
   await p.evaluate(() => document.fonts.ready);
-  for (const r of ["now", "journal", "you", "goals", "backlog", "planner", "talk"]) {
+  for (const r of ["now", "journal", "you", "goals", "backlog", "planner"]) {
     await p.evaluate((r) => { location.hash = "#/" + r; }, r); await p.waitForTimeout(250);
     const b = await p.evaluate(() => { const e = [...document.querySelectorAll(".ph-brand")].find((x) => x.getClientRects().length); if (!e) return null;
       const w = e.querySelector(".ph-word"); return { word: w.textContent, by: (e.querySelector(".ph-by") || {}).textContent, font: getComputedStyle(w).fontFamily, caps: getComputedStyle(w).textTransform, top: e.getBoundingClientRect().top }; });
@@ -92,24 +93,45 @@ await ok("every page starts with the name in capitals and Powered by OwnYourSyst
   }
   assert.equal(await p.evaluate(() => document.fonts.check('600 20px "Schibsted Grotesk"')), true, "the app font did not load");
 });
-await ok("Talk: a big box at the top to write in, above the chips and the answers", async () => {
+/* Talk, made calm (owner, 2026-10-22): the conversation has the screen and one rounded bar at the bottom takes the words */
+await ok("Talk: a title, a greeting and 3 ideas when empty; one rounded bar at the bottom with the microphone and send inside", async () => {
   await p.evaluate(() => { location.hash = "#/talk"; }); await p.waitForTimeout(300);
-  const g = await p.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const i = document.getElementById("bot-input");
-    return { tag: i.tagName, inTop: r("#bot-input").top, inH: r("#bot-input").height, chips: r("#bot-chips").top, log: r("#bot-log").top }; });
-  assert.equal(g.tag, "TEXTAREA"); assert.ok(g.inTop < 140, "box top " + g.inTop); assert.ok(g.inH >= 120, "box height " + g.inH);
-  assert.ok(g.chips > g.inTop + g.inH && g.log > g.chips, JSON.stringify(g));
+  const g = await p.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), i = document.getElementById("bot-input");
+    return { tag: i.tagName, title: document.querySelector("#botsheet .bot-title").textContent, q: (document.querySelector("#bot-log .bot-q") || {}).textContent,
+      chips: [...document.querySelectorAll("#bot-chips .bot-chip")].map((c) => c.textContent), bar: r(".bot-ask"), inH: r("#bot-input").height,
+      mic: r("#bot-mic"), send: r("#bot-send"), tabs: r("#ph-tabs").top, brand: getComputedStyle(document.getElementById("ph-tbrand")).display,
+      clear: getComputedStyle(document.getElementById("bot-clear")).visibility, note: getComputedStyle(document.getElementById("bot-ai-note")).display }; });
+  assert.equal(g.tag, "TEXTAREA"); assert.equal(g.title, "Talk"); assert.equal(g.q, "What do you need?");
+  assert.deepEqual(g.chips, ["What should I do now?", "What is left today?", "Make today lighter"]);
+  assert.ok(g.bar.bottom <= g.tabs && g.tabs - g.bar.bottom < 24, "the bar is not just above the tabs: " + JSON.stringify(g.bar));
+  assert.ok(g.inH < 60, "the empty box is " + g.inH + "px tall");
+  for (const b of [g.mic, g.send]) assert.ok(b.left >= g.bar.left && b.right <= g.bar.right + 1 && b.height >= 44, "a button is not inside the bar");
+  assert.equal(g.brand, "none"); assert.equal(g.clear, "hidden"); assert.equal(g.note, "block");
 });
-await ok("Talk: Enter sends; the newest question and its answer come first, under the box", async () => {
+await ok("Talk: Enter sends; the newest question and its answer are at the bottom, next to the bar; then New chat shows", async () => {
   for (const q of ["help", "what is left today?"]) { await p.fill("#bot-input", q); await p.keyboard.press("Enter"); await p.waitForTimeout(700); }
   const t = await p.evaluate(() => [...document.querySelectorAll("#bot-log .bot-turn")].map((x) => ({ q: x.querySelector(".bot-msg.you").textContent, a: !!x.querySelector(".bot-msg.bot"), top: x.getBoundingClientRect().top })));
   assert.equal(t.length, 2); assert.ok(t.every((x) => x.a), "a question has no answer under it");
-  assert.equal(t[1].q, "what is left today?"); assert.ok(t[1].top < t[0].top, "the newest turn is not first");
+  assert.equal(t[1].q, "what is left today?"); assert.ok(t[1].top > t[0].top, "the newest turn is not last");
   assert.equal(await p.inputValue("#bot-input"), "");
+  const s = await p.evaluate(() => ({ clear: getComputedStyle(document.getElementById("bot-clear")).visibility, chips: getComputedStyle(document.getElementById("bot-chips")).display,
+    bottom: (() => { const l = document.getElementById("bot-log"); return l.scrollHeight - l.scrollTop - l.clientHeight; })() }));
+  assert.equal(s.clear, "visible"); assert.equal(s.chips, "none"); assert.ok(s.bottom < 4, "not scrolled to the newest answer");
 });
-await ok("plum is on buttons only: Send is plum, the page, the cards and your words are not", async () => {
+await ok("Talk: the bar grows with what is written, up to about 6 lines, and shrinks after sending", async () => {
+  const h1 = await p.evaluate(() => document.getElementById("bot-input").getBoundingClientRect().height);
+  await p.fill("#bot-input", "one\ntwo\nthree\nfour"); const h4 = await p.evaluate(() => document.getElementById("bot-input").getBoundingClientRect().height);
+  await p.fill("#bot-input", Array(20).fill("line").join("\n")); const h20 = await p.evaluate(() => document.getElementById("bot-input").getBoundingClientRect().height);
+  assert.ok(h4 > h1 + 40, h1 + " to " + h4); assert.ok(h20 <= 161, "grew to " + h20);
+  await p.fill("#bot-input", ""); assert.ok((await p.evaluate(() => document.getElementById("bot-input").getBoundingClientRect().height)) < 60);
+});
+await ok("plum is on buttons only: Send is plum once there is something to send, grey before; the page, the cards and your words are not", async () => {
+  assert.notEqual(await p.evaluate(() => getComputedStyle(document.getElementById("bot-send")).backgroundColor), "rgb(44, 19, 50)", "Send is plum with nothing to send");
+  await p.fill("#bot-input", "x");
   const c = await p.evaluate(() => ({ send: getComputedStyle(document.getElementById("bot-send")).backgroundColor, you: getComputedStyle(document.querySelector(".bot-msg.you")).backgroundColor,
     sheet: getComputedStyle(document.getElementById("botsheet")).backgroundColor, tab: getComputedStyle(document.querySelector('#ph-tabs [aria-current="page"]')).color }));
   assert.equal(c.send, "rgb(44, 19, 50)"); for (const k of ["you", "sheet", "tab"]) assert.ok(!/44, 19, 50|216, 194, 224/.test(c[k]), k + " is plum: " + c[k]);
+  await p.fill("#bot-input", "");
 });
 /* 2026-10-19: replies laid out to read at a glance, with the words unchanged */
 await ok("Talk: a list reply becomes headings with counts and rows that open the step; its words are unchanged", async () => {
