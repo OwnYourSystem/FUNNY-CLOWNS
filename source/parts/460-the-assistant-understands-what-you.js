@@ -725,6 +725,7 @@ function localBrain(said,strict){
   if(!s) return null;
   /* a question waiting for an answer (the journal, a missing detail) gets the answer first, as typed */
   if(!FLOW){
+    var ta=tourAnswer(s); if(ta) return ta;
     var st=smallTalk(s); if(st) return st;
     if(LOWDAY.test(s)) return lowDayReply();
     if(PICKQ.test(s) && !/^(?:help|what can i (?:say|ask|do|type))\??$/.test(s)) return pickReply();

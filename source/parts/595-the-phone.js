@@ -32,7 +32,7 @@ function phNav(href,label){ return '<a class="ph-nav" href="'+href+'" aria-label
 /* where Back (and a swipe in from the left edge) goes from here */
 function phParent(){
   var r=phRoute();
-  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar") return "#/you";
+  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||r==="tour") return "#/you";
   if(r==="goal") return "#/goals";
   if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
@@ -347,8 +347,8 @@ function phDays(){
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
     var web=phIsWeb();
-    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
-      :r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&r==="tour"?"tour":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
+      :r==="tour"?"you":r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -386,6 +386,7 @@ function phRender(){
     : r==="planner" ? phPlanner()
     : r==="learned" ? phLearned()
     : r==="calendar" ? phCalendar()
+    : r==="tour" ? phTour()
     : (talk||old) ? ""
     : phNow());
   phMini(r,onb);
@@ -402,6 +403,11 @@ function phNow(){
   var ah=calOn()?calAhead(CAL_LIST,d):null;
   if(ah) h.push('<a class="ph-strip ph-booked" href="#/calendar"><span class="ph-k">'+(ah.when==="Today"?"Booked today":"Tomorrow")+'</span>'+
     '<span class="ph-strip-t">'+esc(calAheadText(ah))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
+  /* the tour: once for someone new, and again when slides were added since they last opened it */
+  var tnew=tourNewCount(), tfirst=!tourSeen();
+  if(tfirst||tnew){ var ti=0; if(!tfirst) TOUR.some(function(x,j){ if(tourNew(x)){ ti=j; return true; } return false; });
+    h.push('<a class="ph-strip ph-tourstrip" href="#/tour/'+(ti+1)+'"><span class="ph-k">'+(tfirst?"New here?":"New in Qordel")+'</span>'+
+      '<span class="ph-strip-t">'+(tfirst?"How Qordel works, in 1 minute":tnew+(tnew===1?" new thing to see":" new things to see"))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>'); }
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())
@@ -774,6 +780,9 @@ function phYou(){
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
     phRow("calendar","Google Calendar",!calSetUp()?"Coming soon":calOn()?"Connected":"Connect")+'</div>');
+  /* the tour, always here (2026-10-22) */
+  var tn=tourNewCount();
+  h.push('<h2 class="ph-k ph-gk">Learn</h2><div class="ph-grp">'+phRow("tour","How Qordel works",tn?tn+" new":"1 minute")+'</div>');
   if(phIsWeb()) h.push('<h2 class="ph-k ph-gk">On this computer</h2><div class="ph-grp">'+phRow("classic","Classic board","The old board with panels")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');
@@ -1261,6 +1270,7 @@ function phOnbFinish(add){
     else if(k==="planner") phGo("planner");
     else if(k==="calendar") phGo("calendar");
     else if(k==="classic") phWebSet(false);
+    else if(k==="tour") location.hash="#/tour/1";
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }

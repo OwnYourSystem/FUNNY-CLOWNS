@@ -1742,6 +1742,68 @@ html.ph-web.ph-talk #botsheet{padding:28px max(24px, calc((100vw - var(--side) -
 html.ph-web.ph-talk :is(.sheet-head,.bot-log,.bot-chips,.bot-ai-note,.bot-note,.bot-pend){padding-left:0; padding-right:0; margin-left:0; margin-right:0}
 html.ph-web.ph-talk #botsheet:not(.bot-has) :is(.bot-chips,.bot-ai-note){padding-left:0; padding-right:0}
 html.ph-web.ph-talk .bot-ask{margin:0 0 8px}
+/* ---- the tour (part 596, 2026-10-22): 8 slides, a small moving demo each, always one tap away ---- */
+.tour{display:flex; flex-direction:column; gap:16px}
+.tour-top{display:flex; align-items:center; justify-content:space-between; min-height:44px}
+.tour-of{font-variant-numeric:tabular-nums}
+.tour-demo{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  min-height:210px; padding:22px; border-radius:26px; border:1px solid var(--hair);
+  background:radial-gradient(120% 90% at 15% 0%, color-mix(in srgb, var(--ph-pri, var(--accent)) 30%, transparent), transparent 62%),
+    radial-gradient(90% 80% at 100% 100%, color-mix(in srgb, var(--win) 14%, transparent), transparent 60%), var(--panel)}
+.tour-demo::after{content:""; position:absolute; inset:-40%; background:conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--ph-pri, var(--accent)) 10%, transparent), transparent 40%);
+  animation:td-spin 14s linear infinite; pointer-events:none; filter:blur(28px); opacity:.7}
+.tour-demo>*{position:relative; z-index:1}
+.td-k{display:block; font-size:12px; color:var(--muted)}
+.td-card{display:flex; flex-direction:column; gap:4px; width:min(300px,100%); padding:14px 16px; border-radius:18px; background:var(--ground); border:1px solid var(--hair); box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+.td-card b{font-size:17px}
+.td-why{font-size:13px; color:var(--ink-2)}
+.td-btn{align-self:flex-start; margin-top:6px; padding:7px 16px; border-radius:16px; background:var(--ph-pri, var(--accent)); color:var(--ph-on-pri, #fff); font-size:13px; font-weight:600}
+.td-list{display:flex; flex-direction:column; gap:6px; width:min(300px,100%)}
+.td-row{display:block; height:32px; line-height:32px; padding:0 14px; border-radius:12px; background:var(--ground); border:1px solid var(--hair); font-size:14px}
+.td-in{animation:td-in 4.8s var(--ease) infinite}
+.td-pulse .td-btn{animation:td-pulse 4.8s var(--ease) infinite}
+.td-bat{display:flex; gap:5px; padding:6px; border:2px solid var(--ink-2); border-radius:10px}
+.td-bat i{display:block; width:22px; height:34px; border-radius:4px; background:var(--win)}
+.td-bat i.td-off{animation:td-drain 4.8s var(--ease) infinite}
+.td-swap{position:relative; height:24px; width:220px; text-align:center; font-weight:600}
+.td-swap span{position:absolute; inset:0; animation:td-a 4.8s var(--ease) infinite}
+.td-swap span+span{animation-name:td-b}
+.td-time{display:flex; flex-direction:column; gap:6px; width:min(300px,100%)}
+.td-blk{display:block; padding:8px 12px; border-radius:12px; background:color-mix(in srgb, var(--ph-pri, var(--accent)) 22%, var(--ground)); font-size:14px; animation:td-slide 4.8s var(--ease) infinite}
+.td-b2{animation-delay:.3s}
+.td-chat{display:flex; flex-direction:column; gap:8px; width:min(320px,100%)}
+.td-you{align-self:flex-end; padding:8px 14px; border-radius:16px; border-bottom-right-radius:5px; background:var(--ph-wash, var(--inset)); font-size:14px; animation:td-in 4.8s var(--ease) infinite}
+.td-bot{align-self:flex-start; font-size:14px; line-height:1.45; animation:td-late 4.8s var(--ease) infinite}
+.td-order .td-row{transform:translateY(0); animation:td-sort 4.8s var(--ease) infinite}
+.td-two{display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(340px,100%)}
+.td-note{padding:12px; border-radius:14px; background:var(--ground); border:1px solid var(--hair); font-size:13px; line-height:1.4}
+.td-press{animation:td-press 4.8s var(--ease) infinite}
+@keyframes td-spin{to{transform:rotate(360deg)}}
+@keyframes td-in{0%,12%{opacity:0; transform:translateY(10px)} 26%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-late{0%,38%{opacity:0; transform:translateY(10px)} 52%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-pulse{0%,30%,100%{transform:none} 40%{transform:scale(1.08)} 50%{transform:none}}
+@keyframes td-press{0%,40%{transform:none; filter:none} 48%{transform:scale(.92)} 56%,100%{transform:none; filter:brightness(1.25)}}
+@keyframes td-drain{0%,30%{background:var(--win)} 45%,85%{background:var(--rule)} 100%{background:var(--win)}}
+@keyframes td-a{0%,30%{opacity:1} 40%,88%{opacity:0} 100%{opacity:1}}
+@keyframes td-b{0%,30%{opacity:0} 40%,88%{opacity:1} 100%{opacity:0}}
+@keyframes td-slide{0%,10%{opacity:0; transform:translateX(30px)} 25%,88%{opacity:1; transform:none} 100%{opacity:0}}
+@keyframes td-sort{0%,30%{transform:translateY(0)} 50%,88%{transform:translateY(calc((var(--o) - var(--d)) * 38px))} 100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){ .tour-demo *,.tour-demo::after{animation:none !important} .td-in,.td-bot,.td-blk{opacity:1} }
+.tour-card{position:relative}
+.tour-t{font-size:1.6rem; margin:0 36px 6px 0}
+.tour-s{font-size:1.0625rem; line-height:1.5}
+.tour-new{display:inline-block; margin-bottom:8px; padding:2px 10px; border-radius:999px; background:var(--ph-pri, var(--accent)); color:var(--ph-on-pri, #fff); font-size:12px; font-weight:600}
+.tour-acts{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+.tour-acts .ph-btn{flex:1 1 140px}
+.tour-dots{display:flex; justify-content:center; gap:2px}
+.tour-dot{position:relative; width:28px; height:28px; padding:0; border:0; background:none; cursor:pointer}
+.tour-dot::before{content:""; position:absolute; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px; border-radius:50%; background:var(--rule); transition:width .2s, margin .2s}
+.tour-dot[aria-current="step"]::before{width:22px; margin-left:-11px; border-radius:4px; background:var(--ink)}
+.tour-dnew::after{content:""; position:absolute; right:4px; top:5px; width:5px; height:5px; border-radius:50%; background:var(--ph-pri, var(--accent))}
+.tour-nav{display:flex; gap:10px}
+.tour-nav .ph-btn{flex:1 1 0}
+.tour-nav .ph-btn[disabled]{opacity:.4}
+html.ph-web #ph-tabs .tab-help{margin-top:auto}
 </style>
 <!--ARTIFACT-HEAD-END-->
 </head>
@@ -1770,6 +1832,7 @@ try{var _t=localStorage.getItem("oys-theme");
     <a href="#/calendar" data-tab="calendar" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2.5h1.8V4.2h6.4V2.5H17v1.7h1.5A2.8 2.8 0 0 1 21.3 7v12.2a2.8 2.8 0 0 1-2.8 2.8h-13a2.8 2.8 0 0 1-2.8-2.8V7a2.8 2.8 0 0 1 2.8-2.8H7zM4.6 10.6v8.6c0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9v-8.6z"/></svg><span>Calendar</span></a>
     <a href="#/goals" data-tab="goals" class="tab-web"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M4.1 3.1h12.3a.9.9 0 0 1 .8 1.3L15.5 8l1.7 3.6a.9.9 0 0 1-.8 1.3H5.9V21H4.1z"/></svg><span>Goals</span></a>
     <a href="#/you" data-tab="you"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.3" r="4.3"/><path d="M4.2 20.6c1.2-4.3 4.2-6.6 7.8-6.6s6.6 2.3 7.8 6.6z"/></svg><span>You</span></a>
+    <a href="#/tour/1" data-tab="tour" class="tab-web tab-help"><svg class="ti ti-o" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.4a2.4 2.4 0 1 1 3.4 2.2c-.7.3-1.1.9-1.1 1.6v.4M12 16.6v.1"/></svg><svg class="ti ti-f" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 1 0 18.4a9.2 9.2 0 0 1 0-18.4zm-.1 4.6a3.3 3.3 0 0 0-3.3 2.6l1.8.4a1.5 1.5 0 1 1 2.1 1.6c-1.2.5-1.9 1.5-1.9 2.8v.4h1.8v-.4c0-.6.3-1 .8-1.2a3.3 3.3 0 0 0-1.3-6.2zM11 15.8v1.8h1.8v-1.8z"/></svg><span>How it works</span></a>
   </nav>
 </div>
 <div class="wrap">
@@ -7681,6 +7744,7 @@ function localBrain(said,strict){
   if(!s) return null;
   /* a question waiting for an answer (the journal, a missing detail) gets the answer first, as typed */
   if(!FLOW){
+    var ta=tourAnswer(s); if(ta) return ta;
     var st=smallTalk(s); if(st) return st;
     if(LOWDAY.test(s)) return lowDayReply();
     if(PICKQ.test(s) && !/^(?:help|what can i (?:say|ask|do|type))\??$/.test(s)) return pickReply();
@@ -9039,6 +9103,114 @@ function renderWn(){
     '<div class="floor-foot"><button class="btn take" data-wn-ok>Got it</button></div>';
 }
 document.addEventListener("click",function(e){ if(e.target.closest&&e.target.closest("[data-wn-ok]")) wnDone(); });
+/* ---------------- the tour ----------------
+   How Qordel works, always one tap away (owner, 2026-10-22: "a static
+   introduction which explores all the services ... always available ...
+   animated slides"). 8 slides, one idea each: a sentence, a small moving
+   demo drawn with the app's own cards, Try it (opens that page) and Ask
+   about this (Talk answers it, with or without the AI). Swipe on a phone,
+   arrow keys on a computer. With reduced motion the demos stand still.
+   A slide added later gets a since date and shows New to whoever saw the
+   tour before it. Nothing here leaves the device.                       */
+var TOUR=[
+  {k:"now", t:"One step, in the right order", s:"Now shows the one thing to do next, and why. Start it, or skip it for another.",
+   go:"now", ask:"How does Now choose my step?",
+   a:"Now follows 6 rules: your energy, the last part of your day, steps you marked Easy, the goal with the nearest delivery day, work goals only in work hours, and what is booked in your calendar. It shows one step and says why. Skip gives you another.", since:"2026-10-20"},
+  {k:"energy", t:"Your energy sizes the day", s:"Tap the battery. On a low day the board asks for less, and only easy things.",
+   go:"now", ask:"What does my energy change?",
+   a:"Full gives a bigger day, Good a normal one, Low only easy things or a step you marked Easy, and Very low asks for nothing. Tap the battery on Now, or tell Talk how you feel.", since:"2026-10-20"},
+  {k:"calendar", t:"What is booked comes first", s:"Connect Google Calendar. A doctor's visit or a school run makes the day smaller, and no task is asked during it.",
+   go:"calendar", ask:"How does the calendar change my day?",
+   a:"Every 2 hours booked removes one step, never below one. During a booking Now asks for nothing. Now shows what is still booked today, or in the evening tomorrow's first booking. Names stay on your device.", since:"2026-10-21"},
+  {k:"talk", t:"Talk, in plain words", s:"Type or speak. Say how you feel or what to change. Signed in, the AI tutor helps with the rest.",
+   go:"talk", ask:"What can Talk do?",
+   a:"Talk changes goals, steps, Today and your settings, and answers what to do now. Say “I don't feel good” and the day becomes a low day. Signed in, an AI tutor (Claude, by Anthropic) answers what the board cannot, and every AI answer is marked AI.", since:"2026-10-22"},
+  {k:"goals", t:"Goals and their steps", s:"Give a goal a delivery day and steps in order. Suggest an order puts them in a sensible sequence.",
+   go:"goals", ask:"How do goals and steps work?",
+   a:"A goal holds steps in the order you do them. A delivery day makes it come first when it is near. Suggest an order asks the AI for a sensible sequence, and you decide whether to use it.", since:"2026-10-20"},
+  {k:"journal", t:"The journal", s:"Close the day in a few words, and pick up tomorrow where you left off.",
+   go:"journal", ask:"What is the journal for?",
+   a:"Start of day and End of day are 2 short notes: what you did and what comes next. They stay on this device. Ask Talk “where did I leave off?” to read them back.", since:"2026-10-19"},
+  {k:"learn", t:"It learns, with your yes", s:"The board notices patterns, like when you finish things. A pattern becomes a note only when you press Keep.",
+   go:"you", ask:"What does Qordel learn about me?",
+   a:"It counts when you finish things, how much a day holds, lighter weekdays and steps you skip. It proposes a note, and only your Keep keeps it. You can switch learning off on You.", since:"2026-10-21"},
+  {k:"private", t:"Yours, and private", s:"Your board, journal and calendar stay with you. The AI sees your question and the numbers it asks for, never your journal.",
+   go:"you", ask:"What stays private?",
+   a:"Signed out, everything stays in this browser. Signed in, your board is kept in your account so it follows you. The journal, the weekly check-in and calendar names stay on the device. The AI sees your question and the numbers its tools return.", since:"2026-10-19"}
+];
+var TOUR_KEY="oys-tour";
+function tourSeen(){ try{ return localStorage.getItem(TOUR_KEY)||""; }catch(e){ return ""; } }
+function tourMark(){ try{ localStorage.setItem(TOUR_KEY,todayStr()); }catch(e){} }
+/* during a visit, New is measured against the last visit before it, so the badges stay while the person looks */
+var TOUR_PREV=null;
+function tourNew(x){ var s=TOUR_PREV!==null?TOUR_PREV:tourSeen(); return !!s && x.since>s; }
+function tourNewCount(){ var s=tourSeen(); return TOUR.filter(function(x){ return !!s && x.since>s; }).length; }
+var TOUR_I=0;
+function tourArg(){ var m=String(location.hash||"").match(/^#\/tour\/(\d+)/); return m?Math.max(0,Math.min(TOUR.length-1,+m[1]-1)):0; }
+/* the small moving demo of each slide, drawn with the app's own pieces; decoration only */
+function tourDemo(k){
+  var D={
+    now:'<div class="td-card td-pulse"><span class="td-k">Do this now</span><b>Buy the timber</b><span class="td-why">Garden shed is for Friday; this is its next step.</span><span class="td-btn">Start it</span></div><div class="td-list td-in"><span class="td-k">Today</span><span class="td-row">Buy the timber</span></div>',
+    energy:'<div class="td-bat"><i></i><i></i><i class="td-off"></i><i class="td-off"></i></div><div class="td-swap"><span>3 steps today</span><span>1 easy step</span></div>',
+    calendar:'<div class="td-time"><span class="td-blk">10:00 Doctor</span><span class="td-blk td-b2">15:30 School run</span></div><div class="td-swap"><span>3 steps today</span><span>2 steps today</span></div>',
+    talk:'<div class="td-chat"><span class="td-you">I don’t feel good today</span><span class="td-bot">I made today a low day. One easy step: a 10-minute walk.</span></div>',
+    goals:'<div class="td-list td-order"><span class="td-k">Garden shed \u00b7 Suggest an order</span><span class="td-row" style="--d:0;--o:2">Build the walls</span><span class="td-row" style="--d:1;--o:0">Buy the timber</span><span class="td-row" style="--d:2;--o:1">Lay the base</span></div>',
+    journal:'<div class="td-two"><span class="td-note"><span class="td-k">Morning</span>Start of day</span><span class="td-note td-in"><span class="td-k">Evening</span>Finished the base. Tomorrow: walls.</span></div>',
+    learn:'<div class="td-card"><span class="td-k">I noticed</span><b>You finish most in the morning.</b><span class="td-btn td-press">Keep it</span></div>',
+    "private":'<div class="td-two"><span class="td-note"><span class="td-k">On your device</span>Board, journal, calendar</span><span class="td-note"><span class="td-k">The AI sees</span>Your question, the numbers it asks for</span></div>'
+  };
+  return '<div class="tour-demo td-'+k+'" aria-hidden="true">'+(D[k]||"")+'</div>';
+}
+function tourHtml(){
+  var i=TOUR_I=tourArg(), x=TOUR[i], n=TOUR.length;
+  return '<div class="tour" role="region" aria-roledescription="slides" aria-label="How Qordel works">'+
+    '<div class="tour-top"><a class="ph-nav" href="#/now" data-tour="close" aria-label="Close the tour">'+PH_BACKI+'<span>Close</span></a>'+
+      '<span class="ph-k tour-of">'+(i+1)+' of '+n+'</span></div>'+
+    tourDemo(x.k)+
+    '<section class="ph-card tour-card" aria-live="polite" aria-label="'+esc(x.t)+'">'+sayBtn("ph-say","Read this slide aloud")+
+      (tourNew(x)?'<span class="tour-new">New</span>':'')+
+      '<h1 class="ph-h1 tour-t">'+esc(x.t)+'</h1><p class="ph-why tour-s">'+esc(x.s)+'</p>'+
+      '<div class="tour-acts"><a class="ph-btn" href="#/'+x.go+'" data-tour="try">Try it</a><button type="button" class="ph-btn" data-tour="ask">Ask about this</button></div></section>'+
+    '<div class="tour-dots" role="group" aria-label="Slides">'+TOUR.map(function(y,j){
+      return '<button type="button" class="tour-dot'+(tourNew(y)?' tour-dnew':'')+'" data-tour="to" data-i="'+j+'" aria-label="Slide '+(j+1)+' of '+n+': '+esc(y.t)+'"'+(j===i?' aria-current="step"':'')+'></button>'; }).join("")+'</div>'+
+    '<div class="tour-nav"><button type="button" class="ph-btn" data-tour="prev"'+(i===0?' disabled':'')+'>Back</button>'+
+      (i<n-1?'<button type="button" class="ph-btn ph-pri" data-tour="next">Next</button>':'<a class="ph-btn ph-pri" href="#/now" data-tour="done">Done</a>')+'</div></div>';
+}
+function phTour(){ if(TOUR_PREV===null) TOUR_PREV=tourSeen(); tourMark(); return tourHtml(); }
+function tourGo(i){ i=Math.max(0,Math.min(TOUR.length-1,i)); location.hash="#/tour/"+(i+1); }
+/* Talk answers the slides' own questions, with or without the AI */
+function tourAnswer(s){
+  var q=String(s||"").toLowerCase().replace(/[?!.]+$/,"").trim();
+  for(var i=0;i<TOUR.length;i++) if(TOUR[i].ask.toLowerCase().replace(/[?!.]+$/,"")===q) return TOUR[i].a;
+  if(/^(?:how does qordel work|how does this (?:app )?work|show (?:me )?the tour|tour|introduction|intro)$/.test(q)){ setTimeout(function(){ tourGo(0); },400); return "Here is a 1-minute tour of Qordel. You can open it any time from You."; }
+  return null;
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("[data-tour]"); if(!b) return;
+  var k=b.getAttribute("data-tour");
+  if(k==="next") tourGo(TOUR_I+1);
+  else if(k==="prev") tourGo(TOUR_I-1);
+  else if(k==="to") tourGo(+b.getAttribute("data-i"));
+  else if(k==="ask"){
+    var x=TOUR[TOUR_I]; location.hash="#/talk";
+    setTimeout(function(){ try{ botAsk(x.ask); }catch(err){} },350);
+  }
+});
+document.addEventListener("keydown",function(e){
+  if(!/^#\/tour/.test(location.hash||"") || e.target.closest&&e.target.closest("input,textarea,select,dialog")) return;
+  if(e.key==="ArrowRight"){ e.preventDefault(); tourGo(TOUR_I+1); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); tourGo(TOUR_I-1); }
+  else if(e.key==="Escape"){ location.hash="#/now"; }
+});
+(function(){
+  var x0=null, y0=0;
+  document.addEventListener("touchstart",function(e){ if(!/^#\/tour/.test(location.hash||"")||!e.touches[0]) return; x0=e.touches[0].clientX; y0=e.touches[0].clientY; },{passive:true});
+  document.addEventListener("touchend",function(e){
+    if(x0===null||!e.changedTouches[0]) return;
+    var dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0; x0=null;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5) tourGo(TOUR_I+(dx<0?1:-1));
+  },{passive:true});
+})();
 /* ---------------- the phone ----------------
    Built 2026-10-15 from the agreed wireframes, for the phone only. Below
    820px the board is four tabs (Now, Talk, Journal, You) on the same engine
@@ -9073,7 +9245,7 @@ function phNav(href,label){ return '<a class="ph-nav" href="'+href+'" aria-label
 /* where Back (and a swipe in from the left edge) goes from here */
 function phParent(){
   var r=phRoute();
-  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar") return "#/you";
+  if(r==="goals"||PH_OLD[r]||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||r==="tour") return "#/you";
   if(r==="goal") return "#/goals";
   if(r==="jday") return "#/journal";
   if(r==="step"){ var x=state.subs[phArg()]; return x?"#/goal/"+encodeURIComponent(x.gid):"#/goals"; }
@@ -9388,8 +9560,8 @@ function phDays(){
 function phTabsMark(r){
   Array.prototype.forEach.call(document.querySelectorAll("#ph-tabs [data-tab]"),function(a){
     var web=phIsWeb();
-    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
-      :r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
+    var on=a.getAttribute("data-tab")===(web&&r==="calendar"?"calendar":web&&r==="tour"?"tour":web&&(r==="goals"||r==="goal"||r==="step")?"goals"
+      :r==="tour"?"you":r==="goals"||r==="goal"||r==="step"||r==="backlog"||r==="archive"||r==="tags"||r==="planner"||r==="learned"||r==="calendar"||PH_OLD[r]?"you":r==="jday"?"journal":r);
     if(on) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
   });
 }
@@ -9427,6 +9599,7 @@ function phRender(){
     : r==="planner" ? phPlanner()
     : r==="learned" ? phLearned()
     : r==="calendar" ? phCalendar()
+    : r==="tour" ? phTour()
     : (talk||old) ? ""
     : phNow());
   phMini(r,onb);
@@ -9443,6 +9616,11 @@ function phNow(){
   var ah=calOn()?calAhead(CAL_LIST,d):null;
   if(ah) h.push('<a class="ph-strip ph-booked" href="#/calendar"><span class="ph-k">'+(ah.when==="Today"?"Booked today":"Tomorrow")+'</span>'+
     '<span class="ph-strip-t">'+esc(calAheadText(ah))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>');
+  /* the tour: once for someone new, and again when slides were added since they last opened it */
+  var tnew=tourNewCount(), tfirst=!tourSeen();
+  if(tfirst||tnew){ var ti=0; if(!tfirst) TOUR.some(function(x,j){ if(tourNew(x)){ ti=j; return true; } return false; });
+    h.push('<a class="ph-strip ph-tourstrip" href="#/tour/'+(ti+1)+'"><span class="ph-k">'+(tfirst?"New here?":"New in Qordel")+'</span>'+
+      '<span class="ph-strip-t">'+(tfirst?"How Qordel works, in 1 minute":tnew+(tnew===1?" new thing to see":" new things to see"))+'</span><span class="ph-strip-go">'+PH_CHEV+'</span></a>'); }
   /* someone who set up before the guide existed gets it here, until it is done; Later hides it for today */
   var gme=state.me||{};
   if(gme.done && !gme.guided && gme.guideLater!==todayStr())
@@ -9815,6 +9993,9 @@ function phYou(){
     (remOn&&"Notification" in window&&Notification.permission==="granted"?phRow("remtest","Send a test reminder","",true):"")+
     phRow("planner","Work hours, days and more",clockLabel(me.work[0])+" to "+clockLabel(me.work[1]))+
     phRow("calendar","Google Calendar",!calSetUp()?"Coming soon":calOn()?"Connected":"Connect")+'</div>');
+  /* the tour, always here (2026-10-22) */
+  var tn=tourNewCount();
+  h.push('<h2 class="ph-k ph-gk">Learn</h2><div class="ph-grp">'+phRow("tour","How Qordel works",tn?tn+" new":"1 minute")+'</div>');
   if(phIsWeb()) h.push('<h2 class="ph-k ph-gk">On this computer</h2><div class="ph-grp">'+phRow("classic","Classic board","The old board with panels")+'</div>');
   h.push('<h2 class="ph-k ph-gk">Private</h2><div class="ph-grp">'+
     phRow("learned","Weekly check-in",weekDue()?"Due":"Done")+'</div>');
@@ -10302,6 +10483,7 @@ function phOnbFinish(add){
     else if(k==="planner") phGo("planner");
     else if(k==="calendar") phGo("calendar");
     else if(k==="classic") phWebSet(false);
+    else if(k==="tour") location.hash="#/tour/1";
     else if(k==="week"){ var wp=weekAsk(); if(wp && wp.then) wp.then(function(){ if(phRoute()==="learned"){ PH_DRAWN=""; phRender(); } }); }
     else if(k==="backup") $("#btn-backup").click();
     else if(k==="bknow"){ $("#btn-backup").click(); var sv=$("#io-save"); if(sv) try{ sv.focus(); }catch(er){} }
