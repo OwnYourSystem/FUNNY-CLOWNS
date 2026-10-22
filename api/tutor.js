@@ -242,7 +242,12 @@ async function verifyKey() {
   let r;
   try {
     const x = await fetch("https://api.anthropic.com/v1/models?limit=1", { headers: { "x-api-key": apiKey(), "anthropic-version": "2023-06-01" } });
-    r = x.ok ? { works: true } : { works: false, reason: x.status === 401 ? "key_refused" : x.status === 403 ? "key_not_allowed" : "status_" + x.status };
+    if (x.ok) r = { works: true };
+    else {
+      /* Anthropic's own words (for example, a credit balance too low), short, with the key cut out if it ever appeared */
+      let said = ""; try { const j = await x.json(); said = String((j.error && (j.error.type + ": " + j.error.message)) || "").split(apiKey()).join("[key]").slice(0, 200); } catch {}
+      r = { works: false, reason: x.status === 401 ? "key_refused" : x.status === 403 ? "key_not_allowed" : "status_" + x.status, said };
+    }
   } catch { r = { works: false, reason: "no_answer" }; }
   checked = { at: Date.now(), r };
   return r;
