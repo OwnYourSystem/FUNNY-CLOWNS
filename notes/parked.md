@@ -27,7 +27,7 @@ Owner: "release everything remained and make it clean for the next development s
 
 0. **Remove the old preview's reminders on the phone:** Chrome, Settings, Site settings, Notifications, block every "funny-clowns-...-oys-s-projects.vercel.app" entry; keep funny-clowns.vercel.app. Or in the Supabase SQL editor: `delete from public.push_subs where id = 7;`.
 1. **The Google Client ID**, to turn the calendar on. The steps are in notes/calendar.md. Never send the client secret.
-2. **The 3 database migrations**, in this order: record_live_schema, boards_tighten_grants, ai_use. Paste them into the Supabase SQL editor, or approve the next try.
+2. **The database migrations.** boards_tighten_grants is applied (2026-10-22; anon now has nothing on boards). record_live_schema and ai_use timed out twice through the connection after 60 seconds and did not run. Paste each file from supabase/migrations into the Supabase SQL editor, or approve the next try.
 3. **A spend limit** on QORDEL_ORDER_KEY.
 4. **The default GitHub branch** is still the birthday-gifts branch. Set it to `app`.
 5. **Delete the merged branches** listed above.
