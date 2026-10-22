@@ -327,3 +327,15 @@ Written 2026-10-05, after the live site was found 20 commits behind.
   small talk; an honest fallback with the 3 starter questions. A waiting question (journal) always comes first.
 - New tests/talk-sense.mjs (12). Updated: assistant, tutor-api (GET), tutor-e2e (signed-out reply). The 3 golden
   scripts ignore "Failed to load resource" (the local server has no /api/tutor). Full suite: 44 suites, 933 checks.
+
+## 2026-10-22: why the AI never answered (talk-test)
+
+- The owner had set QORDEL_ORDER_KEY in all environments. The tutor read only ANTHROPIC_API_KEY, so it saw no key.
+  It now falls back to QORDEL_ORDER_KEY.
+- GET /api/tutor?verify=1 on the preview: configured true, works false. Anthropic: "This API key is not scoped to a
+  workspace, so this request must include the anthropic-workspace-id header". The same key serves "Suggest an
+  order", so that has never worked either.
+- Tutor, order and the key check now send anthropic-workspace-id from ANTHROPIC_WORKSPACE_ID when set.
+- Owner's fix, one of: (a) add ANTHROPIC_WORKSPACE_ID (the workspace id from the Anthropic console) in Vercel for
+  all environments, or (b) replace QORDEL_ORDER_KEY with a key created inside a workspace. Then
+  /api/tutor?verify=1 must say works: true.

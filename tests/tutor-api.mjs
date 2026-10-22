@@ -143,6 +143,18 @@ const g1 = await getOn("/api/tutor");
 await ok("the order suggestion's key alone switches the tutor on, and the answer never holds the key", () => {
   assert.deepEqual(g1.body, { configured: true }); assert.doesNotMatch(JSON.stringify(g1.body), /test-not-a-real-key/);
 });
+/* a key not scoped to a workspace: the check names the workspace from ANTHROPIC_WORKSPACE_ID (2026-10-22) */
+{
+  const realFetch = globalThis.fetch; let seen = null;
+  globalThis.fetch = async (u, o) => { seen = o.headers; return new Response(JSON.stringify({ data: [] }), { status: 200 }); };
+  process.env.ANTHROPIC_WORKSPACE_ID = "wrkspc_test";
+  const mod4 = await import((process.env.APP_ROOT || "/home/user/FUNNY-CLOWNS") + "/api/tutor.js?t=ws" + Date.now());
+  const o = out(); await mod4.default({ method: "GET", url: "/api/tutor?verify=1", headers: {} }, o);
+  await ok("the key check sends the workspace when one is set, and reports a working key", () => {
+    assert.equal(seen["anthropic-workspace-id"], "wrkspc_test"); assert.deepEqual(o.body, { configured: true, works: true });
+  });
+  globalThis.fetch = realFetch; delete process.env.ANTHROPIC_WORKSPACE_ID;
+}
 delete process.env.QORDEL_ORDER_KEY;
 
 console.log = realLog;
