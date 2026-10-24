@@ -1,7 +1,7 @@
 /* The engine is the part of the board that decides: the size of the day, the picks, the reasons, the numbers.
    It must run with no page. This test reads the source parts and fails if an engine part reaches for the page,
    for browser storage, or for a timer. It also fails if index.html is not what the parts build.            */
-const fs=require("fs"), path=require("path"), cp=require("child_process");
+const fs=require("fs"), path=require("path");
 const ROOT=(process.env.APP_ROOT||require("path").join(__dirname,".."))+"/source", PARTS=path.join(ROOT,"parts");
 const {parse,kindOf,walk}=require(__dirname+"/engine-classify.cjs");
 const files=fs.readdirSync(PARTS).sort();
@@ -24,7 +24,9 @@ for(const s of body){
   } else if(isEngineFile(f)){ engineStmts++; check("engine statement at "+f+":"+full.slice(s.start,s.start+50).replace(/\n/g," ")+" is clean",k==="engine",k); }
 }
 check("there are engine functions to check",engineFns>50,String(engineFns));
-const built=cp.execSync("cd "+ROOT+" && LC_ALL=C sh -c 'cat head.html parts/*.js tail.html'",{maxBuffer:1<<28}).toString();
+/* Build the expected output in Node so this works on every OS (the shell
+   one-liner used LC_ALL=C which is POSIX-only and fails on Windows cmd.exe). */
+const built=fs.readFileSync(path.join(ROOT,"head.html"),"utf8")+full+fs.readFileSync(path.join(ROOT,"tail.html"),"utf8");
 check("source/delivery-board.html is what the parts build",fs.readFileSync(path.join(ROOT,"delivery-board.html"),"utf8")===built);
 check("index.html is what the parts build",fs.readFileSync(path.join(ROOT,"..","index.html"),"utf8")===built);
 console.log("engine functions checked:",engineFns,"top-level statements checked:",engineStmts);

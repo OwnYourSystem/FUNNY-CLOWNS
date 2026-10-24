@@ -4,12 +4,14 @@
    touched. The page gets a test client id in place of the empty one. */
 import { createRequire } from "node:module";
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW_MODULE || "/opt/node22/lib/node_modules/playwright");
 const KEY = "oys-min-deliveries-v1";
 const URL = process.env.BOARD_URL || "http://localhost:8731/index.html";
-const ROOT = process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROOT = process.env.APP_ROOT || path.dirname(fileURLToPath(import.meta.url)).replace(/[/\\]tests$/, "");
 const results = []; const ok = async (n, f) => { try { await f(); results.push("PASS " + n); } catch (e) { results.push("FAIL " + n + ": " + e.message); } };
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";   /* the service worker fetches the page after the first load; the route must see that too */
 const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });

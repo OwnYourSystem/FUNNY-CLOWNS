@@ -2,11 +2,12 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW_MODULE || "/opt/node22/lib/node_modules/playwright");
 const KEY = "oys-min-deliveries-v1";
-const ROOT = (process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, ""));
+const ROOT = (process.env.APP_ROOT || fileURLToPath(new globalThis.URL("..", import.meta.url)));
 
 // ---- scripted "Anthropic" ------------------------------------------------
 let queue = [], upstream = [];
@@ -24,7 +25,7 @@ await new Promise((r) => mock.listen(0, r));
 process.env.ANTHROPIC_BASE_URL = "http://127.0.0.1:" + mock.address().port;
 process.env.ANTHROPIC_API_KEY = "test-key";
 process.env.TUTOR_REQUIRE_AUTH = "0";
-const { default: handler } = await import(ROOT + "/api/tutor.js");
+const { default: handler } = await import(pathToFileURL(path.join(ROOT, "api", "tutor.js")).href);
 
 // ---- the site: static files + the real handler ----------------------------
 const site = http.createServer(async (q, s) => {

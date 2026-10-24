@@ -2,13 +2,14 @@
    empty, the names are gone from the app, and a board that holds the old seed loses it once, except the owner's
    signed-in board. The board below uses the old ids with made-up names, so the owner's goals are not copied here. */
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW_MODULE || "/opt/node22/lib/node_modules/playwright");
 const KEY = "oys-min-deliveries-v1", OWNER = "5b461774-5e32-4ea1-ab09-9760fb3429c8";
 const URL = process.env.BOARD_URL || "http://localhost:8731/index.html";
-const ROOT = process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROOT = process.env.APP_ROOT || fileURLToPath(new globalThis.URL("..", import.meta.url));
 const results = []; const ok = async (n, f) => { try { await f(); results.push("PASS " + n); } catch (e) { results.push("FAIL " + n + ": " + e.message); } };
 const b = await chromium.launch({ executablePath: process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const errs = [];

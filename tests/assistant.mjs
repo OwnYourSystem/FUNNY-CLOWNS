@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 const require = createRequire(import.meta.url);
@@ -150,7 +151,7 @@ await ok("distress still gets the fixed calm reply, ahead of everything", async 
   const r = await say("I want to kill myself"); assert.match(r, /doctor|crisis line/);
 });
 await ok("every tool the page hands a model is in the hosted allowlist, and the reverse", async () => {
-  const names_ = await p.evaluate(() => window.__board.modelTools().map((t) => t.name)); const src = fs.readFileSync((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/api/tutor.js", "utf8");
+  const names_ = await p.evaluate(() => window.__board.modelTools().map((t) => t.name)); const src = fs.readFileSync((process.env.APP_ROOT || fileURLToPath(new globalThis.URL("..", import.meta.url))) + "/api/tutor.js", "utf8");
   const list = src.match(/export const TOOLS = \[([\s\S]*?)\];/)[1].match(/"([a-z_]+)"/g).map((x) => x.replace(/"/g, ""));
   assert.deepEqual([...names_].sort(), [...list].sort());
 });
