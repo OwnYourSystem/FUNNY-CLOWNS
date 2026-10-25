@@ -3,7 +3,7 @@
    the rest is checked as text. It cannot prove what is deployed; the deploy notes say what is live. */
 import fs from "node:fs";
 import assert from "node:assert/strict";
-const ROOT = process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROOT = process.env.APP_ROOT || (() => { const u = new globalThis.URL("..", import.meta.url); return u.protocol === "file:" ? decodeURIComponent(u.pathname.replace(/^\/([A-Za-z]:)/, "$1")).replace(/\/$/, "") : u.pathname.replace(/\/$/, ""); })();
 const read = (p) => fs.readFileSync(ROOT + "/" + p, "utf8");
 const results = []; const ok = (n, f) => { try { f(); results.push("PASS " + n); } catch (e) { results.push("FAIL " + n + ": " + e.message); } };
 

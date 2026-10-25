@@ -2,6 +2,7 @@
    and editable, Now has the week from the air, and the top of Now has the date
    with its year, the week and a running clock. */
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PW_MODULE || "/opt/node22/lib/node_modules/playwright");
@@ -134,7 +135,7 @@ await ok("Remove asks first; removing a day's last entry goes back to the Journa
   assert.equal(await p.locator("[data-ph=jday]").count(), 1);
 });
 /* ---------- your photo on You, and small on every other page ---------- */
-const PHOTO = (process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/apple-touch-icon.png";
+const PHOTO = (process.env.APP_ROOT || fileURLToPath(new globalThis.URL("..", import.meta.url))) + "/apple-touch-icon.png";
 const mini = async () => p.evaluate(() => { const m = document.getElementById("ph-mini"); if (!m || m.hidden || !m.getClientRects().length) return null; const r = m.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height, img: !!m.querySelector("img") }; });
 const overlaps = (a, b) => a && b && !(a.x + a.w <= b.x || b.x + b.width <= a.x || a.y + a.h <= b.y || b.y + b.height <= a.y);
 await ok("photo: none yet, so no small photo anywhere, and You offers Add a photo", async () => {

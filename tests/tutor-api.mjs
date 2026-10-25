@@ -1,6 +1,11 @@
 import http from "node:http";
 import fs from "node:fs";
 import assert from "node:assert/strict";
+import { pathToFileURL, fileURLToPath } from "node:url";
+/* ROOT_URL is always a file:// URL so dynamic import() works on Windows */
+const ROOT_URL = process.env.APP_ROOT
+  ? pathToFileURL(process.env.APP_ROOT.replace(/\/$/, "") + "/").href.replace(/\/$/, "")
+  : new globalThis.URL("..", import.meta.url).href.replace(/\/$/, "");
 
 let mode = "ok", seen = [], lastHeaders = null;
 const server = http.createServer((q, s) => {
@@ -25,7 +30,7 @@ process.env.TUTOR_REQUIRE_AUTH = "0";
 process.env.TUTOR_PER_MIN = "5";
 
 const logs = []; const realLog = console.log; console.log = (...a) => logs.push(a.join(" "));
-const mod = await import((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/api/tutor.js?t=" + Date.now());
+const mod = await import(ROOT_URL + "/api/tutor.js?t=" + Date.now());
 const { default: handler, clean, SYSTEM, TOOLS } = mod;
 
 const mk = (method, body, headers = {}) => ({ method, body, headers });
@@ -55,7 +60,8 @@ await ok("clean keeps thinking and tool blocks, drops extra keys, sorts tools", 
 });
 
 await ok("the page's tool names are exactly the allowed list", () => {
-  const src = fs.readFileSync((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/source/delivery-board.html", "utf8");
+  const rootPath = process.env.APP_ROOT || fileURLToPath(new globalThis.URL("..", import.meta.url));
+  const src = fs.readFileSync(rootPath.replace(/\/$/, "") + "/source/delivery-board.html", "utf8");
   const i = src.indexOf("function botTools(){"), j = src.indexOf("function toolRun(");
   const names = [...src.slice(i, j).matchAll(/\n  \{name:"([a-z_]+)"/g)].map((m) => m[1]);
   assert.deepEqual([...names].sort(), [...TOOLS].sort());
@@ -126,11 +132,11 @@ await ok("the per-minute limit stops a runaway loop", () => { assert.equal(r7.co
 
 // auth on
 process.env.TUTOR_REQUIRE_AUTH = "1";
-const mod2 = await import((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/api/tutor.js?t=auth" + Date.now());
+const mod2 = await import(ROOT_URL + "/api/tutor.js?t=auth" + Date.now());
 const r8 = out(); await mod2.default(mk("POST", { messages: [{ role: "user", content: "hi" }] }, {}), r8);
 await ok("no token, no answer (401 auth_required)", () => { assert.equal(r8.code, 401); assert.equal(r8.body.error.code, "auth_required"); });
 delete process.env.ANTHROPIC_API_KEY;
-const mod3 = await import((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/api/tutor.js?t=nokey" + Date.now());
+const mod3 = await import(ROOT_URL + "/api/tutor.js?t=nokey" + Date.now());
 const r9 = out(); await mod3.default(mk("POST", { messages: [{ role: "user", content: "hi" }] }, {}), r9);
 await ok("no API key configured says not_configured", () => { assert.equal(r9.code, 503); assert.equal(r9.body.error.code, "not_configured"); });
 /* one key for both (2026-10-22): with no ANTHROPIC_API_KEY, the order suggestion's QORDEL_ORDER_KEY switches the tutor on */
@@ -148,7 +154,7 @@ await ok("the order suggestion's key alone switches the tutor on, and the answer
   const realFetch = globalThis.fetch; let seen = null;
   globalThis.fetch = async (u, o) => { seen = o.headers; return new Response(JSON.stringify({ data: [] }), { status: 200 }); };
   process.env.ANTHROPIC_WORKSPACE_ID = "wrkspc_test";
-  const mod4 = await import((process.env.APP_ROOT || new globalThis.URL("..", import.meta.url).pathname.replace(/\/$/, "")) + "/api/tutor.js?t=ws" + Date.now());
+  const mod4 = await import(ROOT_URL + "/api/tutor.js?t=ws" + Date.now());
   const o = out(); await mod4.default({ method: "GET", url: "/api/tutor?verify=1", headers: {} }, o);
   await ok("the key check sends the workspace when one is set, and reports a working key", () => {
     assert.equal(seen["anthropic-workspace-id"], "wrkspc_test"); assert.deepEqual(o.body, { configured: true, works: true });
