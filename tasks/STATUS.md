@@ -4,7 +4,26 @@ Lead reads this first in every session and updates it at the end of every
 wave. "Built" = tests pass. "Proven" = worked for a real person on a real
 device.
 
-Last update: 2026-10-22, wave 0 (team setup).
+Last update: 2026-10-25, wave 1 in progress (see "Wave 1 progress" below).
+
+## Wave 1 progress (2026-10-25)
+- Cards written: `tasks/101-test-baseline.md`, `102-split-phone.md`, `103-governance-legal.md`.
+- 101 tester: DONE and merged (commit `9a3cb24`). Baseline on Windows: 47 suites,
+  941 checks, 0 failures; `tests/BASELINE.md` added; Windows path fixes landed;
+  flaw 13 confirmed (no owner goal in the seed).
+- 102 phone and 103 compliance: NOT STARTED. Blocked by a worktree lock: a
+  leftover node worker holds `.claude/worktrees/agent-...` so a new worktree
+  cannot be made (harness mkdir is not idempotent). Owner chose: keep worktrees,
+  unlock by reboot. After reboot, run `claude --agent lead` and say "continue
+  wave 1"; remove `.claude/worktrees`, then launch phone, then compliance.
+- Worktree-base proof: DONE. A worktree made from `app` carries only what is in
+  `app` (it lacked Wave 0). So a dependency must be merged to `app` before a
+  dependent writer's worktree is made, or split across two waves. Wave 1's three
+  writers are independent, so no risk this wave.
+- Flagged for the owner at wave close: worktrees under OneDrive are fragile
+  (the folder locks after each writer). Options were offered; owner picked
+  reboot-and-keep for now.
+
 
 ## Flaws from the 21 Oct review
 
