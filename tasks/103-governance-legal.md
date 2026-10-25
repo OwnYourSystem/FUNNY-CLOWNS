@@ -1,7 +1,7 @@
 # 103 Processing record, subcontractors, privacy and terms drafts
 
-Status: in progress
-Owner's yes: not yet
+Status: done (merged 9a13271; security-review signed; photo fix d3b5464)
+Owner's yes: not yet (read privacy.md and confirm it matches what you believe the app does)
 
 ## Summit word it serves
 Trust. A person hands us their day; the record and the plain privacy words

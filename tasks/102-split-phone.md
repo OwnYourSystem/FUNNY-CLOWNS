@@ -1,7 +1,7 @@
 # 102 Split the phone file into five parts
 
-Status: in progress
-Owner's yes: not yet
+Status: done (merged f22a8cf; tester signed 1ece7c1; index.html byte-identical)
+Owner's yes: not yet (open on a real phone and walk all five tabs)
 
 ## Summit word it serves
 Phone-first. The phone app is one 1,357-line file; split by tab so each
